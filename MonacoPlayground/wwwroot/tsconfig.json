@@ -1,0 +1,11 @@
+{
+	"compilerOptions": {
+		"checkJs": true
+	},
+	"files": [
+		"app.js"
+	],
+	"include": [
+		"**/*.d.ts"
+	]
+}
