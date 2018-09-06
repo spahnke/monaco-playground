@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Content Remove="wwwroot\app.ts" />
+    <Content Remove="wwwroot\code-editor.ts" />
   </ItemGroup>
 
   <ItemGroup>
@@ -15,6 +16,7 @@
 
   <ItemGroup>
     <TypeScriptCompile Include="wwwroot\app.ts" />
+    <TypeScriptCompile Include="wwwroot\code-editor.ts" />
   </ItemGroup>
 
 </Project>
