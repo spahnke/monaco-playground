@@ -3,12 +3,11 @@
 	private zoomFactor: number = 1;
 	private whitespaceVisible: boolean = false;
 
-	static create(element: HTMLElement, language: string): Promise<CodeEditor> {
+	static create(element: HTMLElement): Promise<CodeEditor> {
 		return new Promise(resolve => {
 			require.config({ paths: { vs: "monaco/min/vs" } });
 			require(["vs/editor/editor.main"], () => {
 				resolve(new CodeEditor(monaco.editor.create(element, {
-					language,
 					theme: "vs",
 					mouseWheelZoom: true,
 					automaticLayout: true,
@@ -24,8 +23,10 @@
 		console.log("editor", this);
 	}
 
-	setContent(content: string) {
-		this.editor.setValue(content);
+	setContents(content: string, language?: string, fileName?: string) {
+		const uri = monaco.Uri.parse(fileName || "app.js");
+		const model = monaco.editor.createModel(content, language || "javascript", uri);
+		this.editor.setModel(model);
 	}
 
 	getText(): string {
