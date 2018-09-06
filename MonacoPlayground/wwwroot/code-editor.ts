@@ -10,7 +10,8 @@
 				resolve(new CodeEditor(monaco.editor.create(element, {
 					language,
 					theme: "vs",
-					mouseWheelZoom: true
+					mouseWheelZoom: true,
+					automaticLayout: true,
 				})));
 			});
 		});
