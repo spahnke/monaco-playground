@@ -10,6 +10,14 @@
                 "${workspaceFolder}/MonacoPlayground/MonacoPlayground.csproj"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "type": "typescript",
+            "tsconfig": "MonacoPlayground/wwwroot/tsconfig.json",
+            "option": "watch",
+            "problemMatcher": [
+                "$tsc-watch"
+            ]
         }
     ]
 }
