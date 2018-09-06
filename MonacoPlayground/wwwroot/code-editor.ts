@@ -91,6 +91,7 @@
 		this.zoom(this.zoomFactor - 0.1);
 	}
 
+	// reset of zoom does not work atm when using mouse wheel zoom simultaniously (cf. https://github.com/Microsoft/monaco-editor/issues/196)
 	resetZoom() {
 		this.zoom(1);
 	}
