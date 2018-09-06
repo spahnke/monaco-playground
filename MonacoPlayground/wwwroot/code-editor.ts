@@ -32,12 +32,8 @@
 		return this.editor.getValue();
 	}
 
-	focus(): boolean {
-		if (this.editor) {
-			this.editor.focus();
-			return true;
-		}
-		return false;
+	focus() {
+		this.editor.focus();
 	}
 
 	setReadonly(value: boolean) {
