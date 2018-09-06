@@ -18,9 +18,9 @@
 
 	private constructor(editor: monaco.editor.IStandaloneCodeEditor) {
 		this.editor = editor;
+		this.configureJavascriptSettings();
 		this.addCommands();
-		console.log("monaco", editor);
-		console.log("code editor", this);
+		console.log("editor", this);
 	}
 
 	setContent(content: string) {
@@ -124,6 +124,32 @@
 
 	destroy() {
 		this.editor.dispose();
+	}
+
+	private configureJavascriptSettings() {
+		// validation settings
+		monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+			noSemanticValidation: false,
+			noSyntaxValidation: false,
+		});
+
+		// compiler options
+		monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+			target: monaco.languages.typescript.ScriptTarget.ES2018,
+			checkJs: true,
+			allowJs: true,
+			allowNonTsExtensions: true, // not documented in the typings but important to get syntax/semantic validation working
+		});
+
+		monaco.languages.typescript.javascriptDefaults.addExtraLib(`
+declare class Facts {
+	/**
+	 * Returns the next fact
+	 * 
+	 * [Online documentation](http://www.google.de)
+	 */
+	static next(): string;
+}`, "test.d.ts");
 	}
 
 	private addCommands() {
