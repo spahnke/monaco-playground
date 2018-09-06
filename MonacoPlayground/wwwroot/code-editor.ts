@@ -139,7 +139,9 @@
 			allowNonTsExtensions: true, // not documented in the typings but important to get syntax/semantic validation working
 		});
 
-		monaco.languages.typescript.javascriptDefaults.addExtraLib(`
+		const libraries: ILibrary[] = [
+			{
+				contents: `
 declare class Facts {
 	/**
 	 * Returns the next fact
@@ -147,7 +149,22 @@ declare class Facts {
 	 * [Online documentation](http://www.google.de)
 	 */
 	static next(): string;
-}`, "test.d.ts");
+}`,
+				language: "typescript",
+				filePath: "test.d.ts"
+			},
+			{
+				contents: "var baz = 42",
+				language: "javascript",
+				filePath: "baz.js"
+			}
+		];
+
+		for (const library of libraries) {
+			// TODO should make peek/goto definition work but leads to an error
+			monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, library.filePath);
+			monaco.editor.createModel(library.contents, library.language, monaco.Uri.parse(library.filePath));
+		}
 	}
 
 	private addCommands() {
@@ -157,25 +174,8 @@ declare class Facts {
 	}
 }
 
-
-
-
-//-----------------------------------------------------------------------------------------
-// diff editor:
-//const originalModel = monaco.editor.createModel("var foo = 'bar';", "javascript");
-//const modifiedModel = monaco.editor.createModel("var test = 42", "javascript");
-
-//const diffEditor = monaco.editor.createDiffEditor(document.querySelector(".diff"), {
-//	automaticLayout: true,
-//	contextmenu: true,
-//	enableSplitViewResizing: false,
-//	hover: { enabled: true },
-//	ignoreTrimWhitespace: true,
-//	originalEditable: true,
-//	readOnly: false,
-//	theme: "vs"
-//});
-//diffEditor.setModel({
-//	original: originalModel,
-//	modified: modifiedModel
-//});
+interface ILibrary {
+	contents: string;
+	language: string;
+	filePath: string;
+}
