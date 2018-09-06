@@ -1,11 +1,9 @@
 {
 	"compilerOptions": {
-		"checkJs": true
+		"target": "es2018",
+		"strict": true,
+		"strictNullChecks": false,
+		"sourceMap": true
 	},
-	"files": [
-		"app.js"
-	],
-	"include": [
-		"**/*.d.ts"
-	]
+	"compileOnSave":  true
 }
