@@ -1,5 +1,6 @@
 ﻿export class CodeEditor {
 	private editor: monaco.editor.IStandaloneCodeEditor;
+	private resources: monaco.IDisposable[] = [];
 	private zoomFactor: number = 1;
 	private whitespaceVisible: boolean = false;
 
@@ -120,7 +121,16 @@
 		return word === null ? null : word.word;
 	}
 
+	addLibrary(library: ILibrary) {
+		// TODO should make peek/goto definition work but leads to an error
+		this.resources.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, library.filePath));
+		this.resources.push(monaco.editor.createModel(library.contents, library.language, monaco.Uri.parse(library.filePath)));
+	}
+
 	destroy() {
+		for (const resource of this.resources)
+			resource.dispose();
+		this.editor.getModel().dispose();
 		this.editor.dispose();
 	}
 
@@ -160,17 +170,15 @@ declare class Facts {
 			}
 		];
 
-		for (const library of libraries) {
-			// TODO should make peek/goto definition work but leads to an error
-			monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, library.filePath);
-			monaco.editor.createModel(library.contents, library.language, monaco.Uri.parse(library.filePath));
-		}
+		for (const library of libraries)
+			this.addLibrary(library);
 	}
 
 	private addCommands() {
-		this.editor.addCommand(monaco.KeyCode.US_EQUAL | monaco.KeyMod.CtrlCmd, () => this.zoomIn(), null);
-		this.editor.addCommand(monaco.KeyCode.US_MINUS | monaco.KeyMod.CtrlCmd, () => this.zoomOut(), null);
-		this.editor.addCommand(monaco.KeyCode.KEY_0 | monaco.KeyMod.CtrlCmd, () => this.resetZoom(), null);
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, () => this.zoomIn(), null);
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), null);
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom(), null);
+		this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_W, () => this.toggleWhitespaces(), null);
 	}
 }
 
