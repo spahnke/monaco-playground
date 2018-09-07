@@ -26,6 +26,7 @@
 	}
 
 	setContents(content: string, language?: string, fileName?: string) {
+		this.disposeModel();
 		const uri = monaco.Uri.parse(fileName || "app.js");
 		const model = monaco.editor.createModel(content, language || "javascript", uri);
 		this.editor.setModel(model);
@@ -122,6 +123,10 @@
 		return word === null ? null : word.word;
 	}
 
+	addChangeListener(listener: () => void) {
+		this.editor.onDidChangeModelContent(e => listener());
+	}
+
 	addLibrary(library: ILibrary) {
 		// TODO should make peek/goto definition work but leads to an error
 		this.resources.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, library.filePath));
@@ -131,7 +136,7 @@
 	destroy() {
 		for (const resource of this.resources)
 			resource.dispose();
-		this.editor.getModel().dispose();
+		this.disposeModel();
 		this.editor.dispose();
 	}
 
@@ -180,6 +185,12 @@ declare class Facts {
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), null);
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom(), null);
 		this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_W, () => this.toggleWhitespaces(), null);
+	}
+
+	private disposeModel() {
+		const currentModel = this.editor.getModel();
+		if (currentModel)
+			currentModel.dispose();
 	}
 }
 
