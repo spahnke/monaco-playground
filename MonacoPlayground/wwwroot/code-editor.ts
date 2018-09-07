@@ -5,8 +5,8 @@
 
 	static create(element: HTMLElement): Promise<CodeEditor> {
 		return new Promise(resolve => {
-			require.config({ paths: { vs: "monaco/min/vs" } });
-			require(["vs/editor/editor.main"], () => {
+			(<any>window).require.config({ paths: { vs: "monaco/min/vs" } });
+			(<any>window).require(["vs/editor/editor.main"], () => {
 				resolve(new CodeEditor(monaco.editor.create(element, {
 					theme: "vs",
 					mouseWheelZoom: true,

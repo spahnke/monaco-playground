@@ -13,7 +13,11 @@
 </head>
 <body>
 	<div class="editor"></div>
+	<script src="lib/bluebird.min.js"></script>
 	<script src="monaco/dev/vs/loader.js"></script>
 	<script src="app.js" type="module"></script>
+	<script nomodule>
+		require(["app.ie.js"], function () { });
+	</script>
 </body>
 </html>

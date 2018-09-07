@@ -19,4 +19,6 @@
     <TypeScriptCompile Include="wwwroot\code-editor.ts" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties wwwroot_4tsconfig_1ie_1json__JSONSchema="http://json.schemastore.org/tsconfig" /></VisualStudio></ProjectExtensions>
+
 </Project>
