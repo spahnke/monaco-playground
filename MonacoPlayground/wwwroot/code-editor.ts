@@ -118,7 +118,7 @@
 		this.editor.updateOptions({ renderWhitespace: this.whitespaceVisible ? "boundary" : "none" });
 	}
 
-	getCurrentWord(): string {
+	getCurrentWord(): string | null {
 		const word = this.editor.getModel().getWordAtPosition(this.editor.getPosition());
 		return word === null ? null : word.word;
 	}
@@ -182,10 +182,10 @@ declare class Facts {
 	}
 
 	private addCommands() {
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, () => this.zoomIn(), null);
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), null);
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom(), null);
-		this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_W, () => this.toggleWhitespaces(), null);
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, () => this.zoomIn(), "");
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), "");
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom(), "");
+		this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_W, () => this.toggleWhitespaces(), "");
 	}
 
 	private disposeModel() {

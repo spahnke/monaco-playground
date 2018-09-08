@@ -1,7 +1,7 @@
 export abstract class AsyncWorker {
 	private worker: Worker;
 	private id: number;
-	private currentOperation: Promise<ProcessResult>;
+	private currentOperation: Promise<ProcessResult> | null;
 
 	constructor(workerPath: string) {
 		this.worker = new Worker(workerPath);

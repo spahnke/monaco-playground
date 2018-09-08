@@ -2,7 +2,7 @@ import { CodeEditor } from "./code-editor.js";
 import { EsLint } from "./eslint.js";
 
 async function main() {
-	const editor = await CodeEditor.create(document.querySelector(".editor"));
+	const editor = await CodeEditor.create(document.querySelector(".editor") as HTMLElement);
 	editor.setContents(`class Foo {
 	/**
 	 * The class Foo
@@ -20,7 +20,7 @@ foo.bar = Facts.next();`);
 	const config = await fetch("eslintrc.json").then(r => r.json());
 	const linter = new EsLint(config);
 
-	document.querySelector("#lint").addEventListener("click", async () => {
+	document.querySelector("#lint")!.addEventListener("click", async () => {
 		const result = await linter.lint(editor.getText());
 		console.log(result);
 	});
