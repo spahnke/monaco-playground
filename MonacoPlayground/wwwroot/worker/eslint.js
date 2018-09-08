@@ -1,4 +1,4 @@
-importScripts("/lib/eslint.js");
+importScripts("/lib/eslint/eslint.js");
 var linter = new eslint();
 
 function lint(code, config) {
