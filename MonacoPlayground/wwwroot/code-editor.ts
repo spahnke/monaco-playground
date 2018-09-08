@@ -133,6 +133,13 @@
 		this.resources.push(monaco.editor.createModel(library.contents, library.language, monaco.Uri.parse(library.filePath)));
 	}
 
+	async getJavaScriptWorker(): Promise<any> {
+		if (this.editor.getModel().getModeId() !== "javascript")
+			throw new Error("Only available for JavaScript documents.")
+		const worker = await monaco.languages.typescript.getJavaScriptWorker();
+		return await worker(this.editor.getModel().uri);
+	}
+
 	destroy() {
 		for (const resource of this.resources)
 			resource.dispose();
