@@ -62,10 +62,8 @@
 	}
 
 	gotoLine(line: number) {
-		this.editor.setPosition({
-			lineNumber: line,
-			column: 1
-		});
+		this.editor.setPosition({ lineNumber: line, column: 1 });
+		this.editor.revealLineInCenterIfOutsideViewport(line);
 	}
 
 	getOffset(): number {
@@ -73,7 +71,9 @@
 	}
 
 	gotoOffset(offset: number) {
-		this.editor.setPosition(this.editor.getModel().getPositionAt(offset));
+		const position = this.editor.getModel().getPositionAt(offset);
+		this.editor.setPosition(position);
+		this.editor.revealPositionInCenterIfOutsideViewport(position);
 	}
 
 	zoom(zoomFactor: number) {
