@@ -4,6 +4,7 @@ var linter = new eslint();
 addEventListener("message", function(e) {
     postMessage({
         id: e.data.id,
-        messages: linter.verify(e.data.code, e.data.config)
+        success: true,
+        data: linter.verify(e.data.code, e.data.config)
     });
 });

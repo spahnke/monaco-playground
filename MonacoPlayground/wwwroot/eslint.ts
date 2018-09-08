@@ -11,8 +11,9 @@ export class EsLint extends AsyncWorker implements Linter {
 
 	async lint(code: string): Promise<LintDiagnostic[]> {
 		const result = await this.process({ code, config: this.config });
-		const diagnostics: EsLintDiagnostic[] = result.messages;
-		return diagnostics.map(x => this.transformDiagnostic(x));
+		if (!result.success)
+			return [];
+		return result.data.map((x: EsLintDiagnostic) => this.transformDiagnostic(x));
 	}
 
 	private transformDiagnostic(diagnostic: EsLintDiagnostic): LintDiagnostic {
