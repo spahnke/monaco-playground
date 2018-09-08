@@ -4,12 +4,8 @@
 		"ecmaVersion": 2018
 	},
 	"rules": {
-		"no-unused-vars": "warn",
-		"no-undef": "error",
+		"no-unused-vars": "error",
 		"semi": "warn",
 		"curly": "warn"
-	},
-	"globals": {
-		"Facts": true
 	}
 }
