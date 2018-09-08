@@ -7,7 +7,7 @@ export abstract class AsyncWorker {
 		this.id = 0;
 	}
 
-	process(data: any): Promise<any> {
+	protected process(data: any): Promise<any> {
 		return new Promise(resolve => {
 			const id = ++this.id;
 			const handler = (e: MessageEvent) => {
