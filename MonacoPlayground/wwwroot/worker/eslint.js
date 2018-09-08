@@ -8,6 +8,6 @@ function lint(code, config) {
 addEventListener("message", function(e) {
     postMessage({
         id: e.data.id,
-        result: lint(e.data.code, e.data.config)
+        messages: lint(e.data.code, e.data.config)
     });
 });
