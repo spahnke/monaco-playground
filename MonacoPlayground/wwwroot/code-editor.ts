@@ -10,8 +10,9 @@
 			(<any>window).require(["vs/editor/editor.main"], () => {
 				resolve(new CodeEditor(monaco.editor.create(element, {
 					language: language,
+					fontSize: 12,
 					theme: "vs",
-					mouseWheelZoom: true,
+					mouseWheelZoom: false,
 					automaticLayout: true,
 				})));
 			});
@@ -81,7 +82,7 @@
 			return;
 
 		this.zoomFactor = zoomFactor;
-		this.editor.updateOptions({ fontSize: 14 * this.zoomFactor })
+		this.editor.updateOptions({ fontSize: 12 * this.zoomFactor })
 	}
 
 	zoomIn() {
