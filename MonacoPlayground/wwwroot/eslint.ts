@@ -22,7 +22,7 @@ export class EsLint extends AsyncWorker implements Linter {
 			columnEnd: diagnostic.endColumn,
 			line: diagnostic.line,
 			lineEnd: diagnostic.endLine,
-			severity: diagnostic.severity === 2 ? LintSeverity.error : LintSeverity.warning,
+			severity: diagnostic.severity,
 			fix: diagnostic.fix ? this.transformFix(diagnostic.fix) : undefined
 		};
 	}

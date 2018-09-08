@@ -13,9 +13,9 @@ export interface LintDiagnostic {
 }
 
 export enum LintSeverity {
-	info,
-	warning,
-	error
+	info = 0,
+	warning = 1,
+	error = 2
 }
 
 export interface LintFix {
