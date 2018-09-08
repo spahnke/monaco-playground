@@ -35,7 +35,7 @@ export abstract class AsyncWorker {
 	}
 }
 
-export interface ProcessResult {
+interface ProcessResult {
 	id: number;
 	success: boolean;
 	data: any;
