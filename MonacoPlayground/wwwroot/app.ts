@@ -1,5 +1,5 @@
 import { CodeEditor } from "./code-editor.js";
-import { Linter } from "./linter.js";
+import { EsLint } from "./eslint.js";
 
 async function main() {
 	const editor = await CodeEditor.create(document.querySelector(".editor"));
@@ -18,7 +18,7 @@ const foo = new Foo();
 foo.bar = Facts.next();`);
 	
 	const config = await fetch("eslintrc.json").then(r => r.json());
-	const linter = new Linter(config);
+	const linter = new EsLint(config);
 
 	document.querySelector("#lint").addEventListener("click", async () => {
 		const result = await linter.lint(editor.getText());

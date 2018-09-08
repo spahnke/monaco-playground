@@ -1,10 +1,10 @@
 import { AsyncWorker } from "./async-worker.js";
 
-export class Linter extends AsyncWorker {
+export class EsLint extends AsyncWorker {
 	private config: any;
 
 	constructor(config: any) {
-		super("worker/linter.js");
+		super("worker/eslint.js");
 		this.config = config;
 	}
 
