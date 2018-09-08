@@ -1,4 +1,4 @@
-import { AsyncWorker } from "./async-worker";
+import { AsyncWorker } from "./async-worker.js";
 
 export class Linter extends AsyncWorker {
 
