@@ -1,8 +1,6 @@
 import { CodeEditor } from "./code-editor.js";
 import { Linter } from "./linter.js";
 
-const linter = new Linter();
-
 async function main() {
 	const editor = await CodeEditor.create(document.querySelector(".editor"));
 	editor.setContents(`class Foo {
@@ -20,9 +18,10 @@ const foo = new Foo();
 foo.bar = Facts.next();`);
 	
 	const config = await fetch("eslintrc.json").then(r => r.json());
-	
+	const linter = new Linter(config);
+
 	document.querySelector("#lint").addEventListener("click", async () => {
-		const result = await linter.lint(editor.getText(), config);
+		const result = await linter.lint(editor.getText());
 		console.log(result);
 	});
 }
