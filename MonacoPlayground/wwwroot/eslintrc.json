@@ -6,7 +6,8 @@
 	"rules": {
 		"no-unused-vars": "warn",
 		"no-undef": "error",
-		"semi": "warn"
+		"semi": "warn",
+		"curly": "warn"
 	},
 	"globals": {
 		"Facts": true

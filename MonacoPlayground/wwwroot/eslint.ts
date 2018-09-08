@@ -1,5 +1,5 @@
 import { AsyncWorker } from "./async-worker.js";
-import { Linter, LintDiagnostic, LintSeverity } from "./linter.js";
+import { Linter, LintDiagnostic, LintSeverity, LintFix } from "./linter.js";
 
 export class EsLint extends AsyncWorker implements Linter {
 	private config: any;
@@ -12,7 +12,7 @@ export class EsLint extends AsyncWorker implements Linter {
 	async lint(code: string): Promise<LintDiagnostic[]> {
 		const result = await this.process({ code, config: this.config });
 		const diagnostics: EsLintDiagnostic[] = result.messages;
-		return diagnostics.map(this.transformDiagnostic);
+		return diagnostics.map(x => this.transformDiagnostic(x));
 	}
 
 	private transformDiagnostic(diagnostic: EsLintDiagnostic): LintDiagnostic {
@@ -22,7 +22,18 @@ export class EsLint extends AsyncWorker implements Linter {
 			columnEnd: diagnostic.endColumn,
 			line: diagnostic.line,
 			lineEnd: diagnostic.endLine,
-			severity: diagnostic.severity === 2 ? LintSeverity.error : LintSeverity.warning
+			severity: diagnostic.severity === 2 ? LintSeverity.error : LintSeverity.warning,
+			fix: diagnostic.fix ? this.transformFix(diagnostic.fix) : undefined
+		};
+	}
+
+	private transformFix(fix: EsLintFix): LintFix {
+		return {
+			range: {
+				start: fix.range[0],
+				end: fix.range[1]
+			},
+			text: fix.text
 		};
 	}
 }
@@ -36,4 +47,10 @@ interface EsLintDiagnostic {
 	nodeType: string;
 	ruleId: string;
 	severity: number;
+	fix?: EsLintFix;
+}
+
+interface EsLintFix {
+	range: [number, number];
+	text: string;
 }
