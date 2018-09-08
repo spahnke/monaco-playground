@@ -150,6 +150,7 @@
 		// compiler options
 		monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
 			target: monaco.languages.typescript.ScriptTarget.ES2018,
+			alwaysStrict: true,
 			checkJs: true,
 			allowJs: true,
 			allowNonTsExtensions: true, // not documented in the typings but important to get syntax/semantic validation working
