@@ -6,6 +6,6 @@
 		"strictNullChecks": false,
 		"sourceMap": true
 	},
-	"exclude": [ "lib", "monaco" ],
+	"exclude": [ "lib" ],
 	"compileOnSave":  true
 }

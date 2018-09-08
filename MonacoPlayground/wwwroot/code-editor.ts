@@ -6,7 +6,7 @@
 
 	static create(element: HTMLElement, language?: string): Promise<CodeEditor> {
 		return new Promise(resolve => {
-			(<any>window).require.config({ paths: { vs: "monaco/min/vs" } });
+			(<any>window).require.config({ paths: { vs: "lib/monaco/min/vs" } });
 			(<any>window).require(["vs/editor/editor.main"], () => {
 				resolve(new CodeEditor(monaco.editor.create(element, {
 					language: language,
