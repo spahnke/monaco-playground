@@ -19,22 +19,7 @@ async function main() {
 const foo = new Foo();
 foo.bar = Facts.next();`);
 	
-	const config = {
-		parserOptions: {
-			ecmaVersion: 2018,
-			ecmaFeatures: {
-				impliedStrict: true
-			},
-		},
-		rules: {
-			"no-unused-vars": "warn",
-			"no-undef": "error",
-			"semi": "warn"
-		},
-		globals: {
-			Facts: true,
-		}
-	};
+	const config = await fetch("eslintrc.json").then(r => r.json());
 	
 	document.querySelector("#lint").addEventListener("click", async () => {
 		const result = await linter.lint(editor.getText(), config);
