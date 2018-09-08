@@ -1,0 +1,11 @@
+{
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"MonacoPlayground/wwwroot/*.js": { "when": "$(basename).ts" },
+		"MonacoPlayground/wwwroot/*.js.map": true
+	}
+}
