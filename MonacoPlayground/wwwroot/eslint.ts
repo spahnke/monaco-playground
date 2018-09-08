@@ -1,5 +1,5 @@
 import { AsyncWorker } from "./async-worker.js";
-import { Linter, LintDiagnostic, LintSeverity, LintFix } from "./linter.js";
+import { Linter, LintDiagnostic, LintFix } from "./linter.js";
 
 export class EsLint extends AsyncWorker implements Linter {
 	private config: any;
