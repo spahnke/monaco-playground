@@ -1,4 +1,6 @@
-﻿export class CodeEditor {
+﻿import { Linter } from "./linter.js";
+
+export class CodeEditor {
 	private editor: monaco.editor.IStandaloneCodeEditor;
 	private resources: monaco.IDisposable[] = [];
 	private zoomFactor: number = 1;
@@ -119,7 +121,7 @@
 		this.editor.updateOptions({ renderWhitespace: this.whitespaceVisible ? "boundary" : "none" });
 	}
 
-	getCurrentWord(): string {
+	getCurrentWord(): string | null {
 		const word = this.editor.getModel().getWordAtPosition(this.editor.getPosition());
 		return word === null ? null : word.word;
 	}
@@ -141,6 +143,23 @@
 		const worker = await monaco.languages.typescript.getJavaScriptWorker();
 		return await worker(this.editor.getModel().uri);
 	}
+	
+	setLinter(linter: Linter) {
+		linter.setEditor(this.editor);
+		this.editor.onDidChangeModelContent(async e => {
+			const model = this.editor.getModel();
+			if (!model || model.getModeId() !== linter.getLanguage())
+				return;
+			
+			const diagnostics = await linter.lint(this.getText());
+			if (diagnostics === null)
+				return;
+			
+			monaco.editor.setModelMarkers(model, "linter", diagnostics.map(x => x.marker));
+		});
+
+		// TODO register CodeActionProvider if linter provides code fixes
+	}
 
 	destroy() {
 		for (const resource of this.resources)
@@ -159,6 +178,7 @@
 		// compiler options
 		monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
 			target: monaco.languages.typescript.ScriptTarget.ES2018,
+			alwaysStrict: true,
 			checkJs: true,
 			allowJs: true,
 			allowNonTsExtensions: true, // not documented in the typings but important to get syntax/semantic validation working
@@ -190,10 +210,10 @@ declare class Facts {
 	}
 
 	private addCommands() {
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, () => this.zoomIn(), null);
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), null);
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom(), null);
-		this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_W, () => this.toggleWhitespaces(), null);
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, () => this.zoomIn(), "");
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), "");
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom(), "");
+		this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_W, () => this.toggleWhitespaces(), "");
 	}
 
 	private disposeModel() {

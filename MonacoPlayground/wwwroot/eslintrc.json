@@ -1,0 +1,20 @@
+{
+	"$schema": "https://schemastore.azurewebsites.net/schemas/json/eslintrc.json",
+	"parserOptions": {
+		"ecmaVersion": 2018
+	},
+	"rules": {
+		"no-unused-vars": "error",
+		"semi": "warn",
+		"curly": "warn",
+		"eqeqeq": "warn",
+		"quotes": [
+			"warn",
+			"double",
+			{
+				"avoidEscape": true,
+				"allowTemplateLiterals": true
+			}
+		]
+	}
+}
