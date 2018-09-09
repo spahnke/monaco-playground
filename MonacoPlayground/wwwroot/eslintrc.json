@@ -6,6 +6,15 @@
 	"rules": {
 		"no-unused-vars": "error",
 		"semi": "warn",
-		"curly": "warn"
+		"curly": "warn",
+		"eqeqeq": "warn",
+		"quotes": [
+			"warn",
+			"double",
+			{
+				"avoidEscape": true,
+				"allowTemplateLiterals": true
+			}
+		]
 	}
 }
