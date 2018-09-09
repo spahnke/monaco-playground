@@ -1,5 +1,5 @@
 import { CodeEditor } from "./code-editor.js";
-import { EsLint } from "./eslint.js";
+import { EsLint } from "./linter/eslint.js";
 
 async function main() {
 	const editor = await CodeEditor.create(document.querySelector(".editor") as HTMLElement);

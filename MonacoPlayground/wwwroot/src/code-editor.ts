@@ -1,4 +1,4 @@
-﻿import { Linter } from "./linter.js";
+﻿import { Linter } from "./linter/linter.js";
 
 export class CodeEditor {
 	private editor: monaco.editor.IStandaloneCodeEditor;
@@ -143,7 +143,7 @@ export class CodeEditor {
 		const worker = await monaco.languages.typescript.getJavaScriptWorker();
 		return await worker(this.editor.getModel().uri);
 	}
-	
+
 	setLinter(linter: Linter) {
 		linter.setEditor(this.editor);
 		this.editor.onDidChangeModelContent(async e => {

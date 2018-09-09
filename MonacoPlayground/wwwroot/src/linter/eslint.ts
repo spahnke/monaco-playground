@@ -1,4 +1,4 @@
-import { AsyncWorker } from "./async-worker.js";
+import { AsyncWorker } from "../async-worker.js";
 import { Linter, LintDiagnostic, LintFix } from "./linter.js";
 
 export class EsLint extends AsyncWorker implements Linter {
@@ -6,7 +6,7 @@ export class EsLint extends AsyncWorker implements Linter {
 	private editor: monaco.editor.ICodeEditor | null = null;
 
 	constructor(config: any) {
-		super("worker/eslint.js");
+		super("worker/eslint-worker.js");
 		this.config = config;
 	}
 

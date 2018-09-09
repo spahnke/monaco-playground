@@ -5,7 +5,7 @@
 		"**/.hg": true,
 		"**/CVS": true,
 		"**/.DS_Store": true,
-		"MonacoPlayground/wwwroot/*.js": { "when": "$(basename).ts" },
-		"MonacoPlayground/wwwroot/*.js.map": true
+		"MonacoPlayground/wwwroot/src/**/*.js": { "when": "$(basename).ts" },
+		"MonacoPlayground/wwwroot/src/**/*.js.map": true
 	}
 }
