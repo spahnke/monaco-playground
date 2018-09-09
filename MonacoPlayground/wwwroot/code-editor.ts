@@ -130,7 +130,8 @@
 
 	addLibrary(library: ILibrary) {
 		// TODO should make peek/goto definition work but leads to an error
-		this.resources.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, library.filePath));
+		if (library.filePath.endsWith("d.ts"))
+			this.resources.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, library.filePath));
 		this.resources.push(monaco.editor.createModel(library.contents, library.language, monaco.Uri.parse(library.filePath)));
 	}
 
@@ -178,7 +179,7 @@ declare class Facts {
 				filePath: "test.d.ts"
 			},
 			{
-				contents: "var baz = 42",
+				contents: "var baz = {}; baz.test = 1",
 				language: "javascript",
 				filePath: "baz.js"
 			}
