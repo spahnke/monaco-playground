@@ -30,6 +30,31 @@
 		const uri = monaco.Uri.parse(fileName || "app.js");
 		const model = monaco.editor.createModel(content, language || "javascript", uri);
 		this.editor.setModel(model);
+
+		monaco.editor.setModelMarkers(this.editor.getModel(), "linter", [
+			{
+				startLineNumber: 13,
+				startColumn: 7,
+				endLineNumber: 13,
+				endColumn: 10,
+				message: "No no no no!",
+				severity: monaco.MarkerSeverity.Info,
+				source: "ESLint"
+			}
+		]);
+		setTimeout(() => {
+			monaco.editor.setModelMarkers(this.editor.getModel(), "linter", [
+				{
+					startLineNumber: 12,
+					startColumn: 7,
+					endLineNumber: 12,
+					endColumn: 10,
+					message: "No no no no!",
+					severity: monaco.MarkerSeverity.Warning,
+					source: "ESLint"
+				}
+			]);
+		}, 5000);
 	}
 
 	getText(): string {
