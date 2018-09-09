@@ -3,27 +3,11 @@ export interface Linter {
 }
 
 export interface LintDiagnostic {
-	message: string;
-	line: number;
-	lineEnd?: number;
-	column: number;
-	columnEnd?: number;
-	severity: LintSeverity;
+	marker: monaco.editor.IMarkerData;
 	fix?: LintFix;
 }
 
-export enum LintSeverity {
-	info = 0,
-	warning = 1,
-	error = 2
-}
-
 export interface LintFix {
-	range: Range;
+	range: monaco.IRange;
 	text: string;
-}
-
-export interface Range {
-	start: number;
-	end: number;
 }

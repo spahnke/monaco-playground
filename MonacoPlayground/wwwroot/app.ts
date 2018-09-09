@@ -18,7 +18,7 @@ const foo = new Foo();
 foo.bar = Facts.next();`);
 	
 	const config = await fetch("eslintrc.json").then(r => r.json());
-	const linter = new EsLint(config);
+	const linter = new EsLint((<any>editor).editor, config);
 
 	document.querySelector("#lint")!.addEventListener("click", async () => {
 		const result = await linter.lint(editor.getText());
