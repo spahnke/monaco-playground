@@ -4,6 +4,7 @@ import { Linter, LintDiagnostic, LintFix } from "./linter.js";
 export class EsLint extends AsyncWorker implements Linter {
 	private config: any;
 	private editor: monaco.editor.ICodeEditor | null = null;
+	private currentDiagnostics: LintDiagnostic[] = [];
 
 	constructor(config: any) {
 		super("worker/eslint-worker.js");
@@ -26,7 +27,8 @@ export class EsLint extends AsyncWorker implements Linter {
 		if (diagnostics.length === 1 && diagnostics[0].fatal)
 			return null;
 
-		return diagnostics.map(x => this.transformDiagnostic(x));
+		this.currentDiagnostics = diagnostics.map(x => this.transformDiagnostic(x));
+		return this.currentDiagnostics;
 	}
 
 	getLanguage(): string {
@@ -35,6 +37,21 @@ export class EsLint extends AsyncWorker implements Linter {
 
 	providesCodeFixes(): boolean {
 		return true;
+	}
+
+	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeAction[] {
+		return this.currentDiagnostics
+			.filter(d => d.fix)
+			.map(d => (<monaco.languages.CodeAction>{
+				title: `Fix ${d.marker.message}`,
+				diagnostics: [d.marker],
+				edit: {
+					edits: [{
+						edits: [d.fix],
+						resource: model.uri
+					}],
+				}
+			}));
 	}
 
 	private transformDiagnostic(diagnostic: EsLintDiagnostic): LintDiagnostic {

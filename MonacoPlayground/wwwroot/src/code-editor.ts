@@ -17,6 +17,7 @@ export class CodeEditor {
 					mouseWheelZoom: false,
 					automaticLayout: true,
 					showUnused: true,
+					lightbulb: { enabled: true }
 				})));
 			});
 		});
@@ -150,7 +151,8 @@ export class CodeEditor {
 		this.editor.onDidChangeModel(e => this.performLinting(linter));
 		this.editor.onDidChangeModelContent(e => this.performLinting(linter));
 
-		// TODO register CodeActionProvider if linter provides code fixes
+		if (linter.providesCodeFixes())
+			monaco.languages.registerCodeActionProvider(linter.getLanguage(), linter);
 	}
 
 	destroy() {
