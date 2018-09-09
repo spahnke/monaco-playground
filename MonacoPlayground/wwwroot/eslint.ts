@@ -2,20 +2,34 @@ import { AsyncWorker } from "./async-worker.js";
 import { Linter, LintDiagnostic, LintFix } from "./linter.js";
 
 export class EsLint extends AsyncWorker implements Linter {
-	private editor: monaco.editor.ICodeEditor;
 	private config: any;
+	private editor: monaco.editor.ICodeEditor | null = null;
 
-	constructor(editor: monaco.editor.ICodeEditor, config: any) {
+	constructor(config: any) {
 		super("worker/eslint.js");
-		this.editor = editor;
 		this.config = config;
 	}
 
-	async lint(code: string): Promise<LintDiagnostic[]> {
+	setEditor(editor: monaco.editor.ICodeEditor) {
+		this.editor = editor;
+	}
+
+	async lint(code: string): Promise<LintDiagnostic[] | null> {
+		if (!this.editor)
+			throw new Error("No editor set.");
+		
 		const result = await this.process({ code, config: this.config });
 		if (!result.success)
-			return [];
+			return null;
 		return result.data.map((x: EsLintDiagnostic) => this.transformDiagnostic(x));
+	}
+
+	getLanguage(): string {
+		return "javascript";
+	}
+
+	providesCodeFixes(): boolean {
+		return true;
 	}
 
 	private transformDiagnostic(diagnostic: EsLintDiagnostic): LintDiagnostic {
@@ -30,8 +44,8 @@ export class EsLint extends AsyncWorker implements Linter {
 			message: diagnostic.message,
 			startLineNumber: diagnostic.line,
 			startColumn: diagnostic.column,
-			endLineNumber: diagnostic.endLine,
-			endColumn: diagnostic.endColumn,
+			endLineNumber: diagnostic.endLine || diagnostic.line,
+			endColumn: diagnostic.endColumn || diagnostic.column,
 			source: "ESLint",
 			severity: this.transformSeverity(diagnostic),
 		};
@@ -47,8 +61,8 @@ export class EsLint extends AsyncWorker implements Linter {
 	}
 
 	private transformFix(fix: EsLintFix): LintFix {
-		const start = this.editor.getModel().getPositionAt(fix.range[0]);
-		const end = this.editor.getModel().getPositionAt(fix.range[1]);
+		const start = this.editor!.getModel().getPositionAt(fix.range[0]);
+		const end = this.editor!.getModel().getPositionAt(fix.range[1]);
 		return {
 			range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
 			text: fix.text

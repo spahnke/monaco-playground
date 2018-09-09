@@ -1,5 +1,8 @@
 export interface Linter {
-	lint(code: string): Promise<LintDiagnostic[]>;
+	setEditor(editor: monaco.editor.ICodeEditor): void;
+	lint(code: string): Promise<LintDiagnostic[] | null>;
+	getLanguage(): string;
+	providesCodeFixes(): boolean;
 }
 
 export interface LintDiagnostic {

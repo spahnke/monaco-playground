@@ -1,4 +1,6 @@
-﻿export class CodeEditor {
+﻿import { Linter } from "./linter.js";
+
+export class CodeEditor {
 	private editor: monaco.editor.IStandaloneCodeEditor;
 	private resources: monaco.IDisposable[] = [];
 	private zoomFactor: number = 1;
@@ -30,31 +32,6 @@
 		const uri = monaco.Uri.parse(fileName || "app.js");
 		const model = monaco.editor.createModel(content, language || "javascript", uri);
 		this.editor.setModel(model);
-
-		monaco.editor.setModelMarkers(this.editor.getModel(), "linter", [
-			{
-				startLineNumber: 13,
-				startColumn: 7,
-				endLineNumber: 13,
-				endColumn: 10,
-				message: "No no no no!",
-				severity: monaco.MarkerSeverity.Info,
-				source: "ESLint"
-			}
-		]);
-		setTimeout(() => {
-			monaco.editor.setModelMarkers(this.editor.getModel(), "linter", [
-				{
-					startLineNumber: 12,
-					startColumn: 7,
-					endLineNumber: 12,
-					endColumn: 10,
-					message: "No no no no!",
-					severity: monaco.MarkerSeverity.Warning,
-					source: "ESLint"
-				}
-			]);
-		}, 5000);
 	}
 
 	getText(): string {
@@ -156,6 +133,23 @@
 		// TODO should make peek/goto definition work but leads to an error
 		this.resources.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, library.filePath));
 		this.resources.push(monaco.editor.createModel(library.contents, library.language, monaco.Uri.parse(library.filePath)));
+	}
+
+	setLinter(linter: Linter) {
+		linter.setEditor(this.editor);
+		this.editor.onDidChangeModelContent(async e => {
+			const model = this.editor.getModel();
+			if (!model || model.getModeId() !== linter.getLanguage())
+				return;
+			
+			const diagnostics = await linter.lint(this.getText());
+			if (diagnostics === null)
+				return;
+			
+			monaco.editor.setModelMarkers(model, "linter", diagnostics.map(x => x.marker));
+		});
+
+		// TODO register CodeActionProvider if linter provides code fixes
 	}
 
 	destroy() {
