@@ -41,6 +41,8 @@ export class EsLint extends AsyncWorker implements Linter {
 	}
 
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeAction[] {
+		// TODO undo/redo not working after applying a code action -> do we need to use a command? If yes, how?
+
 		// const commandId = this.editor!.addCommand(0, (fix: LintFix) => {
 		// 	console.log(fix);
 		// 	model.applyEdits([{range}]);
