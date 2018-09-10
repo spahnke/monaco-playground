@@ -3,15 +3,15 @@ import { Linter, LintDiagnostic, LintFix } from "./linter.js";
 
 export class EsLint extends AsyncWorker implements Linter {
 	private config: any;
-	private editor: monaco.editor.ICodeEditor | null = null;
-	private currentDiagnostics: LintDiagnostic[] = [];
+	private editor: monaco.editor.IStandaloneCodeEditor | null = null;
+	private currentFixes: Map<string, LintFix> = new Map();
 
 	constructor(config: any) {
 		super("worker/eslint-worker.js");
 		this.config = config;
 	}
 
-	setEditor(editor: monaco.editor.ICodeEditor) {
+	setEditor(editor: monaco.editor.IStandaloneCodeEditor) {
 		this.editor = editor;
 	}
 
@@ -27,8 +27,9 @@ export class EsLint extends AsyncWorker implements Linter {
 		if (diagnostics.length === 1 && diagnostics[0].fatal)
 			return null;
 
-		this.currentDiagnostics = diagnostics.map(x => this.transformDiagnostic(x));
-		return this.currentDiagnostics;
+		const lintDiagnostics = diagnostics.map(x => this.transformDiagnostic(x));
+		this.saveCurrentFixes(lintDiagnostics);
+		return lintDiagnostics;
 	}
 
 	getLanguage(): string {
@@ -40,18 +41,29 @@ export class EsLint extends AsyncWorker implements Linter {
 	}
 
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeAction[] {
-		return this.currentDiagnostics
-			.filter(d => d.fix)
-			.map(d => (<monaco.languages.CodeAction>{
-				title: `Fix ${d.marker.message}`,
-				diagnostics: [d.marker],
+		// const commandId = this.editor!.addCommand(0, (fix: LintFix) => {
+		// 	console.log(fix);
+		// 	model.applyEdits([{range}]);
+		// }, "");
+		const codeActions: monaco.languages.CodeAction[] = [];
+		for (const marker of context.markers) {
+			const key = this.computeKey(marker);
+			if (!this.currentFixes.has(key))
+				continue;
+			const fix = this.currentFixes.get(key)!;
+			codeActions.push({
+				title: `Fix ${marker.message}`,
+				diagnostics: [marker],
+				// command: {id: commandId, arguments: [d.fix], title: "Apply Fix"},
 				edit: {
 					edits: [{
-						edits: [d.fix],
+						edits: [fix],
 						resource: model.uri
 					}],
 				}
-			}));
+			});
+		}
+		return codeActions;
 	}
 
 	private transformDiagnostic(diagnostic: EsLintDiagnostic): LintDiagnostic {
@@ -89,6 +101,17 @@ export class EsLint extends AsyncWorker implements Linter {
 			range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
 			text: fix.text
 		};
+	}
+
+	private saveCurrentFixes(lintDiagnostics: LintDiagnostic[]) {
+		this.currentFixes.clear();
+		for (const diagnostic of lintDiagnostics)
+			if (diagnostic.fix)
+				this.currentFixes.set(this.computeKey(diagnostic.marker), diagnostic.fix);
+	}
+
+	private computeKey(marker: monaco.editor.IMarkerData): string {
+		return `${marker.startLineNumber},${marker.startColumn},${marker.endLineNumber},${marker.endColumn},${marker.message}`;
 	}
 }
 
