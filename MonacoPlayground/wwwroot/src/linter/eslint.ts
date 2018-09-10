@@ -21,7 +21,12 @@ export class EsLint extends AsyncWorker implements Linter {
 		const result = await this.process({ code, config: this.config });
 		if (!result.success)
 			return null;
-		return result.data.map((x: EsLintDiagnostic) => this.transformDiagnostic(x));
+		
+		const diagnostics: EsLintDiagnostic[] = result.data;
+		if (diagnostics.length === 1 && diagnostics[0].fatal)
+			return null;
+
+		return diagnostics.map(x => this.transformDiagnostic(x));
 	}
 
 	getLanguage(): string {
@@ -79,6 +84,7 @@ interface EsLintDiagnostic {
 	nodeType: string;
 	ruleId: string;
 	severity: number;
+	fatal?: boolean;
 	fix?: EsLintFix;
 }
 
