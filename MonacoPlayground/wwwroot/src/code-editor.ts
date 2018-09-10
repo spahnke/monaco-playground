@@ -16,6 +16,7 @@ export class CodeEditor {
 					theme: "vs",
 					mouseWheelZoom: false,
 					automaticLayout: true,
+					showUnused: true,
 				})));
 			});
 		});
