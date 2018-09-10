@@ -18,7 +18,7 @@ const foo = new Foo();
 foo.bar = Facts.next();`);
 	
 	const config = await fetch("eslintrc.json").then(r => r.json());
-	editor.setLinter(new EsLint(config));
+	editor.setLinter(new EsLint(config, editor.editor));
 }
 
 main();

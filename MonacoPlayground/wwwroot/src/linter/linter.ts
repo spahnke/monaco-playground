@@ -1,5 +1,4 @@
 export interface Linter extends monaco.languages.CodeActionProvider {
-	setEditor(editor: monaco.editor.ICodeEditor): void;
 	lint(code: string): Promise<LintDiagnostic[] | null>;
 	getLanguage(): string;
 	providesCodeFixes(): boolean;

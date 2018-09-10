@@ -1,7 +1,7 @@
 ﻿import { Linter } from "./linter/linter.js";
 
 export class CodeEditor {
-	private editor: monaco.editor.IStandaloneCodeEditor;
+	public editor: monaco.editor.IStandaloneCodeEditor;
 	private resources: monaco.IDisposable[] = [];
 	private zoomFactor: number = 1;
 	private whitespaceVisible: boolean = false;
@@ -147,7 +147,6 @@ export class CodeEditor {
 	}
 
 	setLinter(linter: Linter) {
-		linter.setEditor(this.editor);
 		this.editor.onDidChangeModel(e => this.performLinting(linter));
 		this.editor.onDidChangeModelContent(e => this.performLinting(linter));
 

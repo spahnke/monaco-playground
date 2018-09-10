@@ -3,22 +3,16 @@ import { Linter, LintDiagnostic, LintFix } from "./linter.js";
 
 export class EsLint extends AsyncWorker implements Linter {
 	private config: any;
-	private editor: monaco.editor.IStandaloneCodeEditor | null = null;
+	private editor: monaco.editor.IStandaloneCodeEditor;
 	private currentFixes: Map<string, LintFix> = new Map();
 
-	constructor(config: any) {
+	constructor(config: any, editor: monaco.editor.IStandaloneCodeEditor) {
 		super("worker/eslint-worker.js");
 		this.config = config;
-	}
-
-	setEditor(editor: monaco.editor.IStandaloneCodeEditor) {
 		this.editor = editor;
 	}
 
 	async lint(code: string): Promise<LintDiagnostic[] | null> {
-		if (!this.editor)
-			throw new Error("No editor set.");
-		
 		const result = await this.process({ code, config: this.config });
 		if (!result.success)
 			return null;
@@ -42,11 +36,6 @@ export class EsLint extends AsyncWorker implements Linter {
 
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeAction[] {
 		// TODO undo/redo not working after applying a code action -> do we need to use a command? If yes, how?
-
-		// const commandId = this.editor!.addCommand(0, (fix: LintFix) => {
-		// 	console.log(fix);
-		// 	model.applyEdits([{range}]);
-		// }, "");
 		const codeActions: monaco.languages.CodeAction[] = [];
 		for (const marker of context.markers) {
 			const key = this.computeKey(marker);
@@ -56,13 +45,13 @@ export class EsLint extends AsyncWorker implements Linter {
 			codeActions.push({
 				title: `Fix: ${marker.message}`,
 				diagnostics: [marker],
-				// command: {id: commandId, arguments: [d.fix], title: "Apply Fix"},
 				edit: {
 					edits: [{
 						edits: [fix],
-						resource: model.uri
+						resource: model.uri,
 					}],
-				}
+				},
+				kind: "quickfix"
 			});
 		}
 		return codeActions;
@@ -97,8 +86,8 @@ export class EsLint extends AsyncWorker implements Linter {
 	}
 
 	private transformFix(fix: EsLintFix): LintFix {
-		const start = this.editor!.getModel().getPositionAt(fix.range[0]);
-		const end = this.editor!.getModel().getPositionAt(fix.range[1]);
+		const start = this.editor.getModel().getPositionAt(fix.range[0]);
+		const end = this.editor.getModel().getPositionAt(fix.range[1]);
 		return {
 			range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
 			text: fix.text
