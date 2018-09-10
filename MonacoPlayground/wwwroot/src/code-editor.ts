@@ -146,17 +146,8 @@ export class CodeEditor {
 
 	setLinter(linter: Linter) {
 		linter.setEditor(this.editor);
-		this.editor.onDidChangeModelContent(async e => {
-			const model = this.editor.getModel();
-			if (!model || model.getModeId() !== linter.getLanguage())
-				return;
-			
-			const diagnostics = await linter.lint(this.getText());
-			if (diagnostics === null)
-				return;
-			
-			monaco.editor.setModelMarkers(model, "linter", diagnostics.map(x => x.marker));
-		});
+		this.editor.onDidChangeModel(e => this.performLinting(linter));
+		this.editor.onDidChangeModelContent(e => this.performLinting(linter));
 
 		// TODO register CodeActionProvider if linter provides code fixes
 	}
@@ -214,6 +205,18 @@ declare class Facts {
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), "");
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom(), "");
 		this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_W, () => this.toggleWhitespaces(), "");
+	}
+
+	private async performLinting(linter: Linter) {
+		const model = this.editor.getModel();
+		if (!model || model.getModeId() !== linter.getLanguage())
+			return;
+
+		const diagnostics = await linter.lint(this.getText());
+		if (diagnostics === null)
+			return;
+
+		monaco.editor.setModelMarkers(model, "linter", diagnostics.map(x => x.marker));
 	}
 
 	private disposeModel() {
