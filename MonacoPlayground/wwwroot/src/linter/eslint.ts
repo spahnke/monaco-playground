@@ -54,7 +54,7 @@ export class EsLint extends AsyncWorker implements Linter {
 				continue;
 			const fix = this.currentFixes.get(key)!;
 			codeActions.push({
-				title: `Fix ${marker.message}`,
+				title: `Fix: ${marker.message}`,
 				diagnostics: [marker],
 				// command: {id: commandId, arguments: [d.fix], title: "Apply Fix"},
 				edit: {
