@@ -7,7 +7,7 @@ const libPath = process.argv[2] || "/usr/local/lib/node_modules/typescript/lib";
 function main() {
 	let result = "";
 	for (const lib of Object.keys(libs)) {
-		const content = removeReferenceTags(compileLib(lib, false));
+		const content = compileLib(lib, false);
 		const parent = libs[lib].parent ? `${libs[lib].parent} + ` : "";
 		result += `export const ${lib} = ${parent}${JSON.stringify(content)}\n`;
 	}
@@ -15,7 +15,7 @@ function main() {
 }
 
 // function main() {
-// 	console.log(removeReferenceTags(compileLib("esnext", true)));
+// 	console.log(compileLib("esnext", true));
 // }
 
 /**
@@ -91,8 +91,8 @@ function compileLib(lib, complete) {
 	if (complete && libs[lib].parent)
 		result += `${compileLib(libs[lib].parent, complete)}\n`;
 	for (const fileName of libs[lib].files) {
-		const content = fs.readFileSync(path.join(libPath, fileName));
-		result += `${content}\n`;
+		const content = fs.readFileSync(path.join(libPath, fileName)).toString();
+		result += `${removeReferenceTags(content)}\n`;
 	}
 	return result;
 }
