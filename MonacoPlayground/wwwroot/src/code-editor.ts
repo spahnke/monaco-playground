@@ -1,4 +1,5 @@
 ﻿import { Linter } from "./linter/linter.js";
+import { esnext } from "./lib.js";
 
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
@@ -170,7 +171,8 @@ export class CodeEditor {
 
 		// compiler options
 		monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
-			target: monaco.languages.typescript.ScriptTarget.ES2018,
+			target: monaco.languages.typescript.ScriptTarget.ESNext,
+			lib: [],
 			alwaysStrict: true,
 			checkJs: true,
 			allowJs: true,
@@ -192,10 +194,10 @@ declare class Facts {
 				filePath: "test.d.ts"
 			},
 			{
-				contents: "var baz = {}; baz.test = 1",
-				language: "javascript",
-				filePath: "baz.js"
-			}
+				contents: esnext,
+				language: "typescript",
+				filePath: "lib.esnext.d.ts"
+			},
 		];
 
 		for (const library of libraries)
