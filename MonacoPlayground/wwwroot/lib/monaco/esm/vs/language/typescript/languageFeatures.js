@@ -234,7 +234,9 @@ var SuggestAdapter = /** @class */ (function (_super) {
                 label: details.name,
                 kind: SuggestAdapter.convertKind(details.kind),
                 detail: displayPartsToString(details.displayParts),
-                documentation: displayPartsToString(details.documentation)
+                documentation: {
+                    value: displayPartsToString(details.documentation)
+                }
             };
         }));
     };
