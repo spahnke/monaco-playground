@@ -1,5 +1,6 @@
-﻿import { Linter } from "./linter/linter.js";
-import { esnext } from "./lib.js";
+﻿import { esnext } from "./lib.js";
+import { LinqLanguageProvider } from "./languages/linq.js";
+import { Linter } from "./linter/linter.js";
 
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
@@ -11,6 +12,7 @@ export class CodeEditor {
 		return new Promise(resolve => {
 			(<any>window).require.config({ paths: { vs: "lib/monaco/min/vs" } });
 			(<any>window).require(["vs/editor/editor.main"], () => {
+				new LinqLanguageProvider().install();
 				resolve(new CodeEditor(monaco.editor.create(element, {
 					language: language,
 					fontSize: 12,
