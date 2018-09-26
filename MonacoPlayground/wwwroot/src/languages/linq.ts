@@ -1,14 +1,16 @@
 export class LinqLanguageProvider {
 	private static readonly languageId = "linq";
 
-	install() {
-		monaco.languages.register({ id: LinqLanguageProvider.languageId });
-		monaco.languages.setMonarchTokensProvider(LinqLanguageProvider.languageId, monarchTokenProvider);
-		monaco.languages.registerCompletionItemProvider(LinqLanguageProvider.languageId, this.createCompletionProvider());
-		monaco.languages.registerDocumentFormattingEditProvider(LinqLanguageProvider.languageId, this.createFormatProvider());
+	static register() {
+		if (!monaco.languages.getLanguages().some(x => x.id === "linq")) {
+			monaco.languages.register({ id: LinqLanguageProvider.languageId });
+			monaco.languages.setMonarchTokensProvider(LinqLanguageProvider.languageId, monarchTokenProvider);
+			monaco.languages.registerCompletionItemProvider(LinqLanguageProvider.languageId, this.createCompletionProvider());
+			monaco.languages.registerDocumentFormattingEditProvider(LinqLanguageProvider.languageId, this.createFormatProvider());
+		}
 	}
 
-	private createCompletionProvider(): monaco.languages.CompletionItemProvider {
+	private static createCompletionProvider(): monaco.languages.CompletionItemProvider {
 		return {
 			provideCompletionItems: (document: monaco.editor.ITextModel, position: monaco.Position, token: monaco.CancellationToken, context: monaco.languages.CompletionContext) => {
 				if (document.getValue() === "" && position.lineNumber === 1 && position.column === 1) {
@@ -25,7 +27,7 @@ export class LinqLanguageProvider {
 		};
 	}
 
-	private createFormatProvider(): monaco.languages.DocumentFormattingEditProvider {
+	private static createFormatProvider(): monaco.languages.DocumentFormattingEditProvider {
 		return {
 			provideDocumentFormattingEdits: (model: monaco.editor.ITextModel, options: monaco.languages.FormattingOptions, token: monaco.CancellationToken) => {
 				return [
@@ -38,7 +40,7 @@ export class LinqLanguageProvider {
 		};
 	}
 
-	private getSnippets(): monaco.languages.CompletionItem[] {
+	private static getSnippets(): monaco.languages.CompletionItem[] {
 		return [
 			{
 				label: "query",
@@ -57,7 +59,7 @@ select x`.trim()
 		];
 	}
 
-	private shouldCompleteTables(document: monaco.editor.ITextModel, position: monaco.Position, token: monaco.CancellationToken, context: monaco.languages.CompletionContext): boolean {
+	private static shouldCompleteTables(document: monaco.editor.ITextModel, position: monaco.Position, token: monaco.CancellationToken, context: monaco.languages.CompletionContext): boolean {
 		if (context.triggerCharacter === "@") {
 			return true;
 		}
@@ -75,7 +77,7 @@ select x`.trim()
 		return false;
 	}
 
-	private getTables(): monaco.languages.CompletionItem[] {
+	private static getTables(): monaco.languages.CompletionItem[] {
 		return [
 			{
 				label: "User",
@@ -84,24 +86,24 @@ select x`.trim()
 		];
 	}
 
-	private getKeywords(): monaco.languages.CompletionItem[] {
+	private static getKeywords(): monaco.languages.CompletionItem[] {
 		return monarchTokenProvider.keywords.map(x => (<monaco.languages.CompletionItem>{
 			label: x,
 			kind: monaco.languages.CompletionItemKind.Keyword,
 		}));
 	}
 
-	private formatLinqExpression(expression: string): string {
+	private static formatLinqExpression(expression: string): string {
 		expression = this.removeLineBreaksAndExtraWhitespace(expression);
 		expression = this.insertLineBreaks(expression);
 		return expression;
 	}
 
-	private removeLineBreaksAndExtraWhitespace(expression: string): string {
+	private static removeLineBreaksAndExtraWhitespace(expression: string): string {
 		return expression.replace(/\r\n/g, ' ').replace(/\n/g, ' ').replace(/\t/g, ' ').replace(/\s{2,}/g, ' ');
 	}
 
-	private insertLineBreaks(expression: string): string {
+	private static insertLineBreaks(expression: string): string {
 		expression = this.replaceIfNotInString(expression, ` from `, '\nfrom ');
 		expression = this.replaceIfNotInString(expression, ` where `, '\nwhere ');
 		expression = this.replaceIfNotInString(expression, ` select `, '\nselect ');
@@ -117,7 +119,7 @@ select x`.trim()
 		return this.replaceIfNotInString(expression, ` {2,}`, ' ');
 	}
 
-	private replaceIfNotInString(expression: string, pattern: string, replacement: string): string {
+	private static replaceIfNotInString(expression: string, pattern: string, replacement: string): string {
 		// see http://www.rexegg.com/regex-best-trick.html
 		const regex = new RegExp(`"[^"]*?"|'[^']*?'|(${pattern})`, "g");
 		return expression.replace(regex, (match: string, group1: string) => group1 ? replacement : match);

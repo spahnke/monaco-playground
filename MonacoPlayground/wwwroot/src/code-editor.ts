@@ -12,7 +12,7 @@ export class CodeEditor {
 		return new Promise(resolve => {
 			(<any>window).require.config({ paths: { vs: "lib/monaco/min/vs" } });
 			(<any>window).require(["vs/editor/editor.main"], () => {
-				new LinqLanguageProvider().install();
+				LinqLanguageProvider.register();
 				resolve(new CodeEditor(monaco.editor.create(element, {
 					language: language,
 					fontSize: 12,
