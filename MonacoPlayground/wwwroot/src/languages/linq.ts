@@ -5,6 +5,7 @@ export class LinqLanguageProvider {
 		monaco.languages.register({ id: LinqLanguageProvider.languageId });
 		monaco.languages.setMonarchTokensProvider(LinqLanguageProvider.languageId, monarchTokenProvider);
 		monaco.languages.registerCompletionItemProvider(LinqLanguageProvider.languageId, this.createCompletionProvider());
+		monaco.languages.registerDocumentFormattingEditProvider(LinqLanguageProvider.languageId, this.createFormatProvider());
 	}
 
 	private createCompletionProvider(): monaco.languages.CompletionItemProvider {
@@ -21,6 +22,19 @@ export class LinqLanguageProvider {
 				return this.getKeywords();
 			},
 			triggerCharacters: ["@"]
+		};
+	}
+
+	private createFormatProvider(): monaco.languages.DocumentFormattingEditProvider {
+		return {
+			provideDocumentFormattingEdits: (model: monaco.editor.ITextModel, options: monaco.languages.FormattingOptions, token: monaco.CancellationToken) => {
+				return [
+					<monaco.languages.TextEdit>{
+						range: model.getFullModelRange(),
+						text: this.formatLinqExpression(model.getValue())
+					}
+				];
+			}
 		};
 	}
 
@@ -75,6 +89,38 @@ select x`.trim()
 			label: x,
 			kind: monaco.languages.CompletionItemKind.Keyword,
 		}));
+	}
+
+	private formatLinqExpression(expression: string): string {
+		expression = this.removeLineBreaksAndExtraWhitespace(expression);
+		expression = this.insertLineBreaks(expression);
+		return expression;
+	}
+
+	private removeLineBreaksAndExtraWhitespace(expression: string): string {
+		return expression.replace(/\r\n/g, ' ').replace(/\n/g, ' ').replace(/\t/g, ' ').replace(/\s{2,}/g, ' ');
+	}
+
+	private insertLineBreaks(expression: string): string {
+		expression = this.replaceIfNotInString(expression, ` from `, '\nfrom ');
+		expression = this.replaceIfNotInString(expression, ` where `, '\nwhere ');
+		expression = this.replaceIfNotInString(expression, ` select `, '\nselect ');
+		expression = this.replaceIfNotInString(expression, ` group `, '\ngroup ');
+		expression = this.replaceIfNotInString(expression, ` orderby `, '\norderby ');
+		expression = this.replaceIfNotInString(expression, ` join `, '\njoin ');
+		expression = this.replaceIfNotInString(expression, ` let `, '\nlet ');
+		expression = this.replaceIfNotInString(expression, `&&`, '\n\t&& ');
+		expression = this.replaceIfNotInString(expression, `\\|\\|`, '\n\t|| ');
+		expression = this.replaceIfNotInString(expression, ` *{ *`, ' {\n\t');
+		expression = this.replaceIfNotInString(expression, ` *} *`, '\n}');
+		expression = this.replaceIfNotInString(expression, ` *, *`, ",\n\t");
+		return this.replaceIfNotInString(expression, ` {2,}`, ' ');
+	}
+
+	private replaceIfNotInString(expression: string, pattern: string, replacement: string): string {
+		// see http://www.rexegg.com/regex-best-trick.html
+		const regex = new RegExp(`"[^"]*?"|'[^']*?'|(${pattern})`, "g");
+		return expression.replace(regex, (match: string, group1: string) => group1 ? replacement : match);
 	}
 }
 
