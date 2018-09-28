@@ -150,11 +150,16 @@ export class CodeEditor {
 	}
 
 	setLinter(linter: Linter) {
-		this.editor.onDidChangeModel(e => this.performLinting(linter));
-		this.editor.onDidChangeModelContent(e => this.performLinting(linter));
+		if (this.editor.getModel().getModeId() !== linter.getLanguage())
+			return;
+
+		this.resources.push(this.editor.onDidChangeModel(e => this.performLinting(linter)));
+		this.resources.push(this.editor.onDidChangeModelContent(e => this.performLinting(linter)));
 
 		if (linter.providesCodeFixes())
-			monaco.languages.registerCodeActionProvider(linter.getLanguage(), linter);
+			this.resources.push(monaco.languages.registerCodeActionProvider(linter.getLanguage(), linter));
+
+		this.resources.push(linter);
 	}
 
 	destroy() {

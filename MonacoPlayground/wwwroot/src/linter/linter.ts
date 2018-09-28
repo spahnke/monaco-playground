@@ -1,4 +1,4 @@
-export interface Linter extends monaco.languages.CodeActionProvider {
+export interface Linter extends monaco.languages.CodeActionProvider, monaco.IDisposable {
 	lint(code: string): Promise<LintDiagnostic[] | null>;
 	getLanguage(): string;
 	providesCodeFixes(): boolean;
