@@ -12,8 +12,10 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 				const literal = node as Literal;
 				let parent: Node = (literal as any).parent;
 				while (parent) {
-					if (parent.type === "CallExpression" && this.isQuery(parent))
+					if (parent.type === "CallExpression" && this.isQuery(parent)) {
 						this.reportStringLiteral(context, literal);
+						return;
+					}
 					parent = (parent as any).parent;
 				}
 			},
@@ -21,8 +23,10 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 				const identifier = node as Identifier;
 				let parent: Node = (identifier as any).parent;
 				while (parent) {
-					if (parent.type === "CallExpression" && this.isQuery(parent))
+					if (parent.type === "CallExpression" && this.isQuery(parent)) {
 						this.reportVariable(context, identifier);
+						return;
+					}
 					parent = (parent as any).parent;
 				}
 			}

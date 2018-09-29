@@ -22,8 +22,10 @@ var NoIdToStringInQuery = /** @class */ (function () {
                 var literal = node;
                 var parent = literal.parent;
                 while (parent) {
-                    if (parent.type === "CallExpression" && _this.isQuery(parent))
+                    if (parent.type === "CallExpression" && _this.isQuery(parent)) {
                         _this.reportStringLiteral(context, literal);
+                        return;
+                    }
                     parent = parent.parent;
                 }
             },
@@ -31,8 +33,10 @@ var NoIdToStringInQuery = /** @class */ (function () {
                 var identifier = node;
                 var parent = identifier.parent;
                 while (parent) {
-                    if (parent.type === "CallExpression" && _this.isQuery(parent))
+                    if (parent.type === "CallExpression" && _this.isQuery(parent)) {
                         _this.reportVariable(context, identifier);
+                        return;
+                    }
                     parent = parent.parent;
                 }
             }
