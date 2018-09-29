@@ -31,14 +31,14 @@ var NoIdToStringInQuery = /** @class */ (function () {
         };
     };
     NoIdToStringInQuery.prototype.isQuery = function (callExpression) {
-        if (callExpression.callee.type !== "MemberExpression" || callExpression.arguments.length === 0)
+        if (callExpression.callee.type !== "MemberExpression")
             return false;
         var memberExpression = callExpression.callee;
         if (memberExpression.object.type !== "Identifier" || memberExpression.property.type !== "Identifier")
             return false;
         var object = memberExpression.object;
-        var property = memberExpression.property;
-        if (object.name !== "linq" || property.name !== "execute" && property.name !== "executeWritable")
+        var method = memberExpression.property;
+        if (object.name !== "linq" || method.name !== "execute" && method.name !== "executeWritable" || callExpression.arguments.length === 0)
             return false;
         return true;
     };
@@ -55,10 +55,11 @@ var NoIdToStringInQuery = /** @class */ (function () {
     NoIdToStringInQuery.prototype.handleStringConcatenation = function (context, expression) {
         if (expression.left.type === "Literal")
             this.handleStringLiteral(context, expression.left);
-        if (expression.left.type === "BinaryExpression")
-            this.handleStringConcatenation(context, expression.left);
         if (expression.right.type === "Literal")
             this.handleStringLiteral(context, expression.right);
+        // the `+` ooperator is left associative so check for BinaryExpression on the LHS
+        if (expression.left.type === "BinaryExpression")
+            this.handleStringConcatenation(context, expression.left);
     };
     NoIdToStringInQuery.prototype.computeLocationInsideLiteral = function (literal, match) {
         if (!literal.loc)

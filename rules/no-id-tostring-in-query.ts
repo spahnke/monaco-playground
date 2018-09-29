@@ -15,24 +15,24 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 
 				const argument = callExpression.arguments[0];
 				if (argument.type === "Literal")
-					this.handleStringLiteral(context, argument as Literal);
+					this.handleStringLiteral(context, argument);
 				else if (argument.type === "BinaryExpression")
-					this.handleStringConcatenation(context, argument as BinaryExpression);
+					this.handleStringConcatenation(context, argument);
 			}
 		};
 	}
 
 	private isQuery(callExpression: CallExpression): boolean {
-		if (callExpression.callee.type !== "MemberExpression" || callExpression.arguments.length === 0)
+		if (callExpression.callee.type !== "MemberExpression")
 			return false;
 
-		const memberExpression = callExpression.callee as MemberExpression;
+		const memberExpression = callExpression.callee;
 		if (memberExpression.object.type !== "Identifier" || memberExpression.property.type !== "Identifier")
 			return false;
 
-		const object = memberExpression.object as Identifier;
-		const property = memberExpression.property as Identifier;
-		if (object.name !== "linq" || property.name !== "execute" && property.name !== "executeWritable")
+		const object = memberExpression.object;
+		const method = memberExpression.property;
+		if (object.name !== "linq" || method.name !== "execute" && method.name !== "executeWritable" || callExpression.arguments.length === 0)
 			return false;
 
 		return true;
@@ -53,10 +53,11 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 	private handleStringConcatenation(context: Rule.RuleContext, expression: BinaryExpression) {
 		if (expression.left.type === "Literal")
 			this.handleStringLiteral(context, expression.left);
-		if (expression.left.type === "BinaryExpression")
-			this.handleStringConcatenation(context, expression.left);
 		if (expression.right.type === "Literal")
 			this.handleStringLiteral(context, expression.right);
+		// the `+` ooperator is left associative so check for BinaryExpression on the LHS
+		if (expression.left.type === "BinaryExpression")
+			this.handleStringConcatenation(context, expression.left);
 	}
 
 	private computeLocationInsideLiteral(literal: Literal, match: RegExpExecArray): SourceLocation | undefined {
