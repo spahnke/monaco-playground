@@ -25,6 +25,8 @@ var NoIdToStringInQuery = /** @class */ (function () {
                 var argument = callExpression.arguments[0];
                 if (argument.type === "Literal")
                     _this.handleStringLiteral(context, argument);
+                else if (argument.type === "BinaryExpression")
+                    _this.handleStringConcatenation(context, argument);
             }
         };
     };
@@ -49,6 +51,14 @@ var NoIdToStringInQuery = /** @class */ (function () {
             context.report(this.getDiagnostic(literal, this.computeLocationInsideLiteral(literal, match)));
             match = regex.exec(literal.value);
         }
+    };
+    NoIdToStringInQuery.prototype.handleStringConcatenation = function (context, expression) {
+        if (expression.left.type === "Literal")
+            this.handleStringLiteral(context, expression.left);
+        if (expression.left.type === "BinaryExpression")
+            this.handleStringConcatenation(context, expression.left);
+        if (expression.right.type === "Literal")
+            this.handleStringLiteral(context, expression.right);
     };
     NoIdToStringInQuery.prototype.computeLocationInsideLiteral = function (literal, match) {
         if (!literal.loc)

@@ -1,5 +1,5 @@
 import { Linter, Rule } from "./node_modules/@types/eslint/index";
-import { CallExpression, Identifier, Literal, MemberExpression, Node, SourceLocation } from "./node_modules/@types/estree/index";
+import { BinaryExpression, CallExpression, Identifier, Literal, MemberExpression, Node, SourceLocation } from "./node_modules/@types/estree/index";
 
 class NoIdToStringInQuery implements Rule.RuleModule {
 	static register(linter: Linter) {
@@ -16,6 +16,8 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 				const argument = callExpression.arguments[0];
 				if (argument.type === "Literal")
 					this.handleStringLiteral(context, argument as Literal);
+				else if (argument.type === "BinaryExpression")
+					this.handleStringConcatenation(context, argument as BinaryExpression);
 			}
 		};
 	}
@@ -46,6 +48,15 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 			context.report(this.getDiagnostic(literal, this.computeLocationInsideLiteral(literal, match)));
 			match = regex.exec(literal.value);
 		}
+	}
+
+	private handleStringConcatenation(context: Rule.RuleContext, expression: BinaryExpression) {
+		if (expression.left.type === "Literal")
+			this.handleStringLiteral(context, expression.left);
+		if (expression.left.type === "BinaryExpression")
+			this.handleStringConcatenation(context, expression.left);
+		if (expression.right.type === "Literal")
+			this.handleStringLiteral(context, expression.right);
 	}
 
 	private computeLocationInsideLiteral(literal: Literal, match: RegExpExecArray): SourceLocation | undefined {
