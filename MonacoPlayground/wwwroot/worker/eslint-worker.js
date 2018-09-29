@@ -1,6 +1,9 @@
 //@ts-nocheck
 importScripts("/lib/eslint/eslint.js");
+importScripts("/worker/no-id-tostring-in-query.js");
+
 var linter = new eslint();
+NoIdToStringInQuery.register(linter);
 
 addEventListener("message", function (e) {
 	postMessage({

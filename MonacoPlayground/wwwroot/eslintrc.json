@@ -15,6 +15,7 @@
 				"avoidEscape": true,
 				"allowTemplateLiterals": true
 			}
-		]
+		],
+		"no-id-tostring-in-query": "warn"
 	}
 }
