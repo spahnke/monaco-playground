@@ -3,11 +3,15 @@ import { EsLint } from "./linter/eslint.js";
 import { XmlLint } from "./linter/xmllint.js";
 
 async function main() {
-	const editor = await CodeEditor.create(document.querySelector(".editor") as HTMLElement);
+	const editor = await CodeEditor.create(document.querySelector(".editor") as HTMLElement, "javascript");
+
+	const config = await fetch("eslintrc.json").then(r => r.json());
+	editor.setLinter(new EsLint(config, editor.editor));
+
 	editor.setContents(`class Foo {
 	/**
 	 * The class Foo
-	 * 
+	 *
 	 * [Online documentation](http://www.google.de)
 	 */
 	constructor() {
@@ -18,8 +22,6 @@ async function main() {
 const foo = new Foo();
 foo.bar = Facts.next();`);
 
-	const config = await fetch("eslintrc.json").then(r => r.json());
-	editor.setLinter(new EsLint(config, editor.editor));
 
 //	editor.setContents(`<?xml version="1.0" encoding="UTF-8"?>
 
