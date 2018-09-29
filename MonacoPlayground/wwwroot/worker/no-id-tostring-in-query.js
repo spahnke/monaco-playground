@@ -18,17 +18,23 @@ var NoIdToStringInQuery = /** @class */ (function () {
     NoIdToStringInQuery.prototype.create = function (context) {
         var _this = this;
         return {
-            CallExpression: function (node) {
-                var callExpression = node;
-                if (!_this.isQuery(callExpression))
-                    return;
-                var argument = callExpression.arguments[0];
-                if (argument.type === "Literal")
-                    _this.handleStringLiteral(context, argument);
-                else if (argument.type === "Identifier")
-                    _this.handleVariable(context, argument);
-                else if (argument.type === "BinaryExpression")
-                    _this.handleStringConcatenation(context, argument);
+            Literal: function (node) {
+                var literal = node;
+                var parent = literal.parent;
+                while (parent) {
+                    if (parent.type === "CallExpression" && _this.isQuery(parent))
+                        _this.reportStringLiteral(context, literal);
+                    parent = parent.parent;
+                }
+            },
+            Identifier: function (node) {
+                var identifier = node;
+                var parent = identifier.parent;
+                while (parent) {
+                    if (parent.type === "CallExpression" && _this.isQuery(parent))
+                        _this.reportVariable(context, identifier);
+                    parent = parent.parent;
+                }
             }
         };
     };
@@ -44,7 +50,7 @@ var NoIdToStringInQuery = /** @class */ (function () {
             return false;
         return true;
     };
-    NoIdToStringInQuery.prototype.handleStringLiteral = function (context, literal) {
+    NoIdToStringInQuery.prototype.reportStringLiteral = function (context, literal) {
         if (typeof literal.value !== "string")
             return;
         var regex = /id\.toString\(\)/gi;
@@ -54,35 +60,14 @@ var NoIdToStringInQuery = /** @class */ (function () {
             match = regex.exec(literal.value);
         }
     };
-    NoIdToStringInQuery.prototype.handleVariable = function (context, identifier) {
-        var scope = context.getScope();
-        var variable = scope.set.get(identifier.name);
-        if (!variable)
+    NoIdToStringInQuery.prototype.reportVariable = function (context, identifier) {
+        var declarator = this.getVariableDeclarator(context, identifier);
+        if (!declarator || !declarator.init)
             return;
-        var definition = variable.defs[0];
-        if (definition.type !== "Variable")
-            return;
-        var init = definition.node.init;
-        if (!init)
-            return;
-        if (init.type === "Literal")
-            this.handleStringLiteral(context, init);
-        else if (init.type === "Identifier")
-            this.handleVariable(context, init);
-        else if (init.type === "BinaryExpression")
-            this.handleStringConcatenation(context, init);
-    };
-    NoIdToStringInQuery.prototype.handleStringConcatenation = function (context, expression) {
-        if (expression.left.type === "Literal")
-            this.handleStringLiteral(context, expression.left);
-        else if (expression.left.type === "Identifier")
-            this.handleVariable(context, expression.left);
-        else if (expression.left.type === "BinaryExpression")
-            this.handleStringConcatenation(context, expression.left);
-        if (expression.right.type === "Literal")
-            this.handleStringLiteral(context, expression.right);
-        else if (expression.right.type === "Identifier")
-            this.handleVariable(context, expression.right);
+        if (declarator.init.type === "Literal")
+            this.reportStringLiteral(context, declarator.init);
+        else if (declarator.init.type === "Identifier")
+            this.reportVariable(context, declarator.init);
     };
     NoIdToStringInQuery.prototype.computeLocationInsideLiteral = function (literal, match) {
         if (!literal.loc)
@@ -96,6 +81,19 @@ var NoIdToStringInQuery = /** @class */ (function () {
         location.start.column = columnStart;
         location.end.column = columnStart + match[0].length;
         return location;
+    };
+    NoIdToStringInQuery.prototype.getVariableDeclarator = function (context, identifier) {
+        var scope = context.getScope();
+        var variable = scope.set.get(identifier.name);
+        if (!variable)
+            return undefined;
+        var definition = variable.defs[0];
+        if (!definition)
+            return undefined;
+        var declarator = definition.node;
+        if (declarator.type !== "VariableDeclarator")
+            return undefined;
+        return declarator;
     };
     NoIdToStringInQuery.prototype.getDiagnostic = function (node, loc) {
         return {

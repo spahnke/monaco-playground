@@ -1,5 +1,5 @@
 import { Linter, Rule } from "./node_modules/@types/eslint/index";
-import { BinaryExpression, CallExpression, Identifier, Literal, MemberExpression, Node, SourceLocation } from "./node_modules/@types/estree/index";
+import { CallExpression, Identifier, Literal,  Node, SourceLocation, VariableDeclarator } from "./node_modules/@types/estree/index";
 
 class NoIdToStringInQuery implements Rule.RuleModule {
 	static register(linter: Linter) {
@@ -8,18 +8,23 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 
 	create(context: Rule.RuleContext): Rule.RuleListener {
 		return {
-			CallExpression: (node: Node) => {
-				const callExpression = node as CallExpression;
-				if (!this.isQuery(callExpression))
-					return;
-
-				const argument = callExpression.arguments[0];
-				if (argument.type === "Literal")
-					this.handleStringLiteral(context, argument);
-				else if (argument.type === "Identifier")
-					this.handleVariable(context, argument);
-				else if (argument.type === "BinaryExpression")
-					this.handleStringConcatenation(context, argument);
+			Literal: (node: Node) => {
+				const literal = node as Literal;
+				let parent: Node = (literal as any).parent;
+				while (parent) {
+					if (parent.type === "CallExpression" && this.isQuery(parent))
+						this.reportStringLiteral(context, literal);
+					parent = (parent as any).parent;
+				}
+			},
+			Identifier: (node: Node) => {
+				const identifier = node as Identifier;
+				let parent: Node = (identifier as any).parent;
+				while (parent) {
+					if (parent.type === "CallExpression" && this.isQuery(parent))
+						this.reportVariable(context, identifier);
+					parent = (parent as any).parent;
+				}
 			}
 		};
 	}
@@ -40,7 +45,7 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 		return true;
 	}
 
-	private handleStringLiteral(context: Rule.RuleContext, literal: Literal) {
+	private reportStringLiteral(context: Rule.RuleContext, literal: Literal) {
 		if (typeof literal.value !== "string")
 			return;
 
@@ -52,39 +57,15 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 		}
 	}
 
-	private handleVariable(context: Rule.RuleContext, identifier: Identifier) {
-		const scope = context.getScope();
-		const variable = scope.set.get(identifier.name);
-		if (!variable)
+	private reportVariable(context: Rule.RuleContext, identifier: Identifier) {
+		const declarator = this.getVariableDeclarator(context, identifier);
+		if (!declarator || !declarator.init)
 			return;
 
-		const definition = variable.defs[0];
-		if (definition.type !== "Variable")
-			return;
-
-		const init = definition.node.init;
-		if (!init)
-			return;
-
-		if (init.type === "Literal")
-			this.handleStringLiteral(context, init);
-		else if (init.type === "Identifier")
-			this.handleVariable(context, init);
-		else if (init.type === "BinaryExpression")
-			this.handleStringConcatenation(context, init);
-	}
-
-	private handleStringConcatenation(context: Rule.RuleContext, expression: BinaryExpression) {
-		if (expression.left.type === "Literal")
-			this.handleStringLiteral(context, expression.left);
-		else if (expression.left.type === "Identifier")
-			this.handleVariable(context, expression.left);
-		else if (expression.left.type === "BinaryExpression")
-			this.handleStringConcatenation(context, expression.left);
-		if (expression.right.type === "Literal")
-			this.handleStringLiteral(context, expression.right);
-		else if (expression.right.type === "Identifier")
-			this.handleVariable(context, expression.right);
+		if (declarator.init.type === "Literal")
+			this.reportStringLiteral(context, declarator.init);
+		else if (declarator.init.type === "Identifier")
+			this.reportVariable(context, declarator.init);
 	}
 
 	private computeLocationInsideLiteral(literal: Literal, match: RegExpExecArray): SourceLocation | undefined {
@@ -102,6 +83,23 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 		location.end.column = columnStart + match[0].length;
 
 		return location;
+	}
+
+	private getVariableDeclarator(context: Rule.RuleContext, identifier: Identifier): VariableDeclarator | undefined {
+		const scope = context.getScope();
+		const variable = scope.set.get(identifier.name);
+		if (!variable)
+			return undefined;
+
+		const definition = variable.defs[0];
+		if (!definition)
+			return undefined;
+
+		const declarator = definition.node as Node;
+		if (declarator.type !== "VariableDeclarator")
+			return undefined;
+
+		return declarator;
 	}
 
 	private getDiagnostic(node: Node, loc?: SourceLocation): Rule.ReportDescriptor {
