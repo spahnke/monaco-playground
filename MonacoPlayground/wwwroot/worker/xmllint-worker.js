@@ -1,4 +1,5 @@
-﻿importScripts("/lib/xmllint/xmllint.js");
+﻿//@ts-nocheck
+importScripts("/lib/xmllint/xmllint.js");
 
 addEventListener("message", function (e) {
 	postMessage({
