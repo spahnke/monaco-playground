@@ -16,6 +16,8 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 				const argument = callExpression.arguments[0];
 				if (argument.type === "Literal")
 					this.handleStringLiteral(context, argument);
+				else if (argument.type === "Identifier")
+					this.handleVariable(context, argument);
 				else if (argument.type === "BinaryExpression")
 					this.handleStringConcatenation(context, argument);
 			}
@@ -50,14 +52,39 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 		}
 	}
 
+	private handleVariable(context: Rule.RuleContext, identifier: Identifier) {
+		const scope = context.getScope();
+		const variable = scope.set.get(identifier.name);
+		if (!variable)
+			return;
+
+		const definition = variable.defs[0];
+		if (definition.type !== "Variable")
+			return;
+
+		const init = definition.node.init;
+		if (!init)
+			return;
+
+		if (init.type === "Literal")
+			this.handleStringLiteral(context, init);
+		else if (init.type === "Identifier")
+			this.handleVariable(context, init);
+		else if (init.type === "BinaryExpression")
+			this.handleStringConcatenation(context, init);
+	}
+
 	private handleStringConcatenation(context: Rule.RuleContext, expression: BinaryExpression) {
 		if (expression.left.type === "Literal")
 			this.handleStringLiteral(context, expression.left);
+		else if (expression.left.type === "Identifier")
+			this.handleVariable(context, expression.left);
+		else if (expression.left.type === "BinaryExpression")
+			this.handleStringConcatenation(context, expression.left);
 		if (expression.right.type === "Literal")
 			this.handleStringLiteral(context, expression.right);
-		// the `+` ooperator is left associative so check for BinaryExpression on the LHS
-		if (expression.left.type === "BinaryExpression")
-			this.handleStringConcatenation(context, expression.left);
+		else if (expression.right.type === "Identifier")
+			this.handleVariable(context, expression.right);
 	}
 
 	private computeLocationInsideLiteral(literal: Literal, match: RegExpExecArray): SourceLocation | undefined {
