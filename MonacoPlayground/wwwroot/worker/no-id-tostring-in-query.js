@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var NoIdToStringInQuery = /** @class */ (function () {
     function NoIdToStringInQuery() {
     }
@@ -13,7 +24,7 @@ var NoIdToStringInQuery = /** @class */ (function () {
                     return;
                 var argument = callExpression.arguments[0];
                 if (argument.type === "Literal")
-                    _this.handleQueryLiteral(context, argument);
+                    _this.handleStringLiteral(context, argument);
             }
         };
     };
@@ -29,17 +40,34 @@ var NoIdToStringInQuery = /** @class */ (function () {
             return false;
         return true;
     };
-    NoIdToStringInQuery.prototype.handleQueryLiteral = function (context, literal) {
+    NoIdToStringInQuery.prototype.handleStringLiteral = function (context, literal) {
         if (typeof literal.value !== "string")
             return;
-        if (!/id\.toString\(\)/i.test(literal.value))
-            return;
-        context.report(this.getDiagnostic(literal));
+        var regex = /id\.toString\(\)/gi;
+        var match = regex.exec(literal.value);
+        while (match !== null) {
+            context.report(this.getDiagnostic(literal, this.computeLocationInsideLiteral(literal, match)));
+            match = regex.exec(literal.value);
+        }
     };
-    NoIdToStringInQuery.prototype.getDiagnostic = function (node) {
+    NoIdToStringInQuery.prototype.computeLocationInsideLiteral = function (literal, match) {
+        if (!literal.loc)
+            return undefined;
+        var location = {
+            start: __assign({}, literal.loc.start),
+            end: __assign({}, literal.loc.end),
+        };
+        var offset = match.index + 1; // literal starts with `"` so we need to add 1
+        var columnStart = location.start.column + offset;
+        location.start.column = columnStart;
+        location.end.column = columnStart + match[0].length;
+        return location;
+    };
+    NoIdToStringInQuery.prototype.getDiagnostic = function (node, loc) {
         return {
             message: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
-            node: node
+            node: node,
+            loc: loc
         };
     };
     return NoIdToStringInQuery;

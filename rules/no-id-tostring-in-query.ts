@@ -1,5 +1,5 @@
 import { Linter, Rule } from "./node_modules/@types/eslint/index";
-import { CallExpression, Identifier, Literal, MemberExpression, Node } from "./node_modules/@types/estree/index";
+import { CallExpression, Identifier, Literal, MemberExpression, Node, SourceLocation } from "./node_modules/@types/estree/index";
 
 class NoIdToStringInQuery implements Rule.RuleModule {
 	static register(linter: Linter) {
@@ -15,7 +15,7 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 
 				const argument = callExpression.arguments[0];
 				if (argument.type === "Literal")
-					this.handleQueryLiteral(context, argument as Literal);
+					this.handleStringLiteral(context, argument as Literal);
 			}
 		};
 	}
@@ -36,20 +36,40 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 		return true;
 	}
 
-	private handleQueryLiteral(context: Rule.RuleContext, literal: Literal) {
+	private handleStringLiteral(context: Rule.RuleContext, literal: Literal) {
 		if (typeof literal.value !== "string")
 			return;
 
-		if (!/id\.toString\(\)/i.test(literal.value))
-			return;
-
-		context.report(this.getDiagnostic(literal));
+		const regex = /id\.toString\(\)/gi;
+		let match = regex.exec(literal.value);
+		while (match !== null) {
+			context.report(this.getDiagnostic(literal, this.computeLocationInsideLiteral(literal, match)));
+			match = regex.exec(literal.value);
+		}
 	}
 
-	private getDiagnostic(node: Node): Rule.ReportDescriptor {
+	private computeLocationInsideLiteral(literal: Literal, match: RegExpExecArray): SourceLocation | undefined {
+		if (!literal.loc)
+			return undefined;
+
+		const location: SourceLocation = {
+			start: { ...literal.loc.start },
+			end: { ...literal.loc.end },
+		};
+
+		const offset = match.index + 1; // literal starts with `"` so we need to add 1
+		const columnStart = location.start.column + offset;
+		location.start.column = columnStart;
+		location.end.column = columnStart + match[0].length;
+
+		return location;
+	}
+
+	private getDiagnostic(node: Node, loc?: SourceLocation): Rule.ReportDescriptor {
 		return {
 			message: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
-			node
+			node,
+			loc
 		};
 	}
 }
