@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"module": "esnext",
+		"target": "es5",
+		"lib": ["webworker", "es2015"],
+		"sourceMap": false,
+		"strict": true,
+		"noEmitOnError": true,
+		"outDir": "../MonacoPlayground/wwwroot/worker"
+	},
+	"exclude": [
+		"node_modules"
+	],
+	"compileOnSave": true
+}
