@@ -19,15 +19,10 @@ var NoIdToStringInQuery = /** @class */ (function () {
         var _this = this;
         return {
             Literal: function (node) {
-                var literal = node;
-                var parent = literal.parent;
-                while (parent) {
-                    if (parent.type === "CallExpression" && _this.isQuery(parent)) {
-                        _this.reportStringLiteral(context, literal);
-                        return;
-                    }
-                    parent = parent.parent;
-                }
+                _this.checkStringLiteral(context, node);
+            },
+            TemplateElement: function (node) {
+                _this.checkStringLiteral(context, node);
             },
             Identifier: function (node) {
                 var identifier = node;
@@ -42,6 +37,16 @@ var NoIdToStringInQuery = /** @class */ (function () {
             }
         };
     };
+    NoIdToStringInQuery.prototype.checkStringLiteral = function (context, literal) {
+        var parent = literal.parent;
+        while (parent) {
+            if (parent.type === "CallExpression" && this.isQuery(parent)) {
+                this.reportStringLiteral(context, literal);
+                return;
+            }
+            parent = parent.parent;
+        }
+    };
     NoIdToStringInQuery.prototype.isQuery = function (callExpression) {
         if (callExpression.callee.type !== "MemberExpression")
             return false;
@@ -55,13 +60,14 @@ var NoIdToStringInQuery = /** @class */ (function () {
         return true;
     };
     NoIdToStringInQuery.prototype.reportStringLiteral = function (context, literal) {
-        if (typeof literal.value !== "string")
+        var value = typeof literal.value === "object" ? literal.value.cooked : literal.value;
+        if (typeof value !== "string")
             return;
         var regex = /id\.toString\(\)/gi;
-        var match = regex.exec(literal.value);
+        var match = regex.exec(value);
         while (match !== null) {
             context.report(this.getDiagnostic(literal, this.computeLocationInsideLiteral(literal, match)));
-            match = regex.exec(literal.value);
+            match = regex.exec(value);
         }
     };
     NoIdToStringInQuery.prototype.reportVariable = function (context, identifier) {

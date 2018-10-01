@@ -1,5 +1,5 @@
 import { Linter, Rule } from "./node_modules/@types/eslint/index";
-import { CallExpression, Identifier, Literal,  Node, SourceLocation, VariableDeclarator } from "./node_modules/@types/estree/index";
+import { CallExpression, Identifier, Literal, Node, SourceLocation, TemplateElement, VariableDeclarator } from "./node_modules/@types/estree/index";
 
 class NoIdToStringInQuery implements Rule.RuleModule {
 	static register(linter: Linter) {
@@ -9,15 +9,10 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 	create(context: Rule.RuleContext): Rule.RuleListener {
 		return {
 			Literal: (node: Node) => {
-				const literal = node as Literal;
-				let parent: Node = (literal as any).parent;
-				while (parent) {
-					if (parent.type === "CallExpression" && this.isQuery(parent)) {
-						this.reportStringLiteral(context, literal);
-						return;
-					}
-					parent = (parent as any).parent;
-				}
+				this.checkStringLiteral(context, node as Literal);
+			},
+			TemplateElement: (node: Node) => {
+				this.checkStringLiteral(context, node as TemplateElement);
 			},
 			Identifier: (node: Node) => {
 				const identifier = node as Identifier;
@@ -31,6 +26,17 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 				}
 			}
 		};
+	}
+
+	private checkStringLiteral(context: Rule.RuleContext, literal: Literal | TemplateElement) {
+		let parent: Node = (literal as any).parent;
+		while (parent) {
+			if (parent.type === "CallExpression" && this.isQuery(parent)) {
+				this.reportStringLiteral(context, literal);
+				return;
+			}
+			parent = (parent as any).parent;
+		}
 	}
 
 	private isQuery(callExpression: CallExpression): boolean {
@@ -49,15 +55,16 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 		return true;
 	}
 
-	private reportStringLiteral(context: Rule.RuleContext, literal: Literal) {
-		if (typeof literal.value !== "string")
+	private reportStringLiteral(context: Rule.RuleContext, literal: Literal | TemplateElement) {
+		const value = typeof literal.value === "object" ? (literal as TemplateElement).value.cooked : literal.value;
+		if (typeof value !== "string")
 			return;
 
 		const regex = /id\.toString\(\)/gi;
-		let match = regex.exec(literal.value);
+		let match = regex.exec(value);
 		while (match !== null) {
 			context.report(this.getDiagnostic(literal, this.computeLocationInsideLiteral(literal, match)));
-			match = regex.exec(literal.value);
+			match = regex.exec(value);
 		}
 	}
 
@@ -72,7 +79,7 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 			this.reportVariable(context, declarator.init);
 	}
 
-	private computeLocationInsideLiteral(literal: Literal, match: RegExpExecArray): SourceLocation | undefined {
+	private computeLocationInsideLiteral(literal: Literal | TemplateElement, match: RegExpExecArray): SourceLocation | undefined {
 		if (!literal.loc)
 			return undefined;
 
