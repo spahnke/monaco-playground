@@ -4,6 +4,7 @@ export class LinqLanguageProvider {
 	static register() {
 		if (!monaco.languages.getLanguages().some(x => x.id === "linq")) {
 			monaco.languages.register({ id: LinqLanguageProvider.languageId });
+			monaco.languages.setLanguageConfiguration(LinqLanguageProvider.languageId, languageConfig);
 			monaco.languages.setMonarchTokensProvider(LinqLanguageProvider.languageId, monarchTokenProvider);
 			monaco.languages.registerCompletionItemProvider(LinqLanguageProvider.languageId, this.createCompletionProvider());
 			monaco.languages.registerDocumentFormattingEditProvider(LinqLanguageProvider.languageId, this.createFormatProvider());
@@ -126,8 +127,37 @@ select x`.trim()
 	}
 }
 
-const monarchTokenProvider = <TokenProvider>{
+const languageConfig = <monaco.languages.LanguageConfiguration>{
+	comments: {
+		lineComment: "//",
+		blockComment: ["/*", "*/"],
+	},
 
+	brackets: [
+		["{", "}"],
+		["[", "]"],
+		["(", ")"],
+	],
+
+	autoClosingPairs: [
+		{ open: "{", close: "}" },
+		{ open: "[", close: "]" },
+		{ open: "(", close: ")" },
+		{ open: "'", close: "'", notIn: ["string", "comment"] },
+		{ open: "\"", close: "\"", notIn: ["string", "comment"] },
+	],
+
+	surroundingPairs: [
+		{ open: "{", close: "}" },
+		{ open: "[", close: "]" },
+		{ open: "(", close: ")" },
+		{ open: "<", close: ">" },
+		{ open: "'", close: "'" },
+		{ open: "\"", close: "\"" },
+	],
+};
+
+const monarchTokenProvider = <TokenProvider>{
 	keywords: [
 		"as", "ascending",
 		"by",
