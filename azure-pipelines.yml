@@ -29,3 +29,5 @@ steps:
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+
+- script: npx tsc -p MonacoPlayground/wwwroot/tsconfig.json
