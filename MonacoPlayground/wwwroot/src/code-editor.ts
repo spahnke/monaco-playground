@@ -35,7 +35,7 @@ export class CodeEditor {
 
 	setContents(content: string, language?: string, fileName?: string) {
 		this.disposeModel();
-		const uri = monaco.Uri.parse(fileName || "app.js");
+		const uri = monaco.Uri.file(fileName || "app.js");
 		const model = monaco.editor.createModel(content, language || "javascript", uri);
 		this.editor.setModel(model);
 	}
@@ -155,10 +155,11 @@ export class CodeEditor {
 	}
 
 	addLibrary(library: ILibrary) {
+		const uri = monaco.Uri.file(library.filePath);
 		// TODO should make peek/goto definition work but leads to an error
 		if (library.filePath.endsWith("d.ts"))
-			this.resources.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, library.filePath));
-		this.resources.push(monaco.editor.createModel(library.contents, library.language, monaco.Uri.parse(library.filePath)));
+			this.resources.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, uri.toString()));
+		this.resources.push(monaco.editor.createModel(library.contents, library.language, uri));
 	}
 
 	async getJavaScriptWorker(): Promise<any> {
