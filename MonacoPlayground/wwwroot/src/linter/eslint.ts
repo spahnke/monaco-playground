@@ -16,7 +16,7 @@ export class EsLint extends AsyncWorker implements Linter {
 		const result = await this.process({ code, config: this.config });
 		if (!result.success)
 			return null;
-		
+
 		const diagnostics: EsLintDiagnostic[] = result.data;
 		if (diagnostics.length === 1 && diagnostics[0].fatal)
 			return null;
@@ -86,8 +86,11 @@ export class EsLint extends AsyncWorker implements Linter {
 	}
 
 	private transformFix(fix: EsLintFix): LintFix {
-		const start = this.editor.getModel().getPositionAt(fix.range[0]);
-		const end = this.editor.getModel().getPositionAt(fix.range[1]);
+		const model = this.editor.getModel();
+		if (model === null)
+			throw new Error("Model must not be null.");
+		const start = model.getPositionAt(fix.range[0]);
+		const end = model.getPositionAt(fix.range[1]);
 		return {
 			range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
 			text: fix.text
