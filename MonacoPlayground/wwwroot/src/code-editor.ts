@@ -56,17 +56,25 @@ export class CodeEditor {
 		return this.editor.getConfiguration().readOnly;
 	}
 
-	getSelectedText(): string {
-		return this.editor.getModel().getValueInRange(this.editor.getSelection());
+	getSelectedText(): string | null {
+		const model = this.editor.getModel();
+		const selection = this.editor.getSelection();
+		if (model === null || selection === null)
+			return null;
+		return model.getValueInRange(selection);
 	}
 
 	replaceSelectedText(newText: string) {
-		if (newText !== null)
-			this.editor.executeEdits("replace", [{ range: this.editor.getSelection(), text: newText }]);
+		const selection = this.editor.getSelection();
+		if (newText !== null && selection !== null)
+			this.editor.executeEdits("replace", [{ range: selection, text: newText }]);
 	}
 
-	getLine(): number {
-		return this.editor.getPosition().lineNumber;
+	getLine(): number | null {
+		const position = this.editor.getPosition();
+		if (position === null)
+			return null;
+		return position.lineNumber;
 	}
 
 	gotoLine(line: number) {
@@ -74,12 +82,19 @@ export class CodeEditor {
 		this.editor.revealLineInCenterIfOutsideViewport(line);
 	}
 
-	getOffset(): number {
-		return this.editor.getModel().getOffsetAt(this.editor.getPosition());
+	getOffset(): number | null {
+		const model = this.editor.getModel();
+		const position = this.editor.getPosition();
+		if (model === null || position === null)
+			return null;
+		return model.getOffsetAt(position);
 	}
 
 	gotoOffset(offset: number) {
-		const position = this.editor.getModel().getPositionAt(offset);
+		const model = this.editor.getModel();
+		if (model === null)
+			return;
+		const position = model.getPositionAt(offset);
 		this.editor.setPosition(position);
 		this.editor.revealPositionInCenterIfOutsideViewport(position);
 	}
@@ -127,7 +142,11 @@ export class CodeEditor {
 	}
 
 	getCurrentWord(): string | null {
-		const word = this.editor.getModel().getWordAtPosition(this.editor.getPosition());
+		const model = this.editor.getModel();
+		const position = this.editor.getPosition();
+		if (model === null || position === null)
+			return null;
+		const word = model.getWordAtPosition(position);
 		return word === null ? null : word.word;
 	}
 
@@ -143,14 +162,16 @@ export class CodeEditor {
 	}
 
 	async getJavaScriptWorker(): Promise<any> {
-		if (this.editor.getModel().getModeId() !== "javascript")
+		const model = this.editor.getModel();
+		if (model === null || model.getModeId() !== "javascript")
 			throw new Error("Only available for JavaScript documents.")
 		const worker = await monaco.languages.typescript.getJavaScriptWorker();
-		return await worker(this.editor.getModel().uri);
+		return await worker(model.uri);
 	}
 
 	setLinter(linter: Linter) {
-		if (this.editor.getModel().getModeId() !== linter.getLanguage())
+		const model = this.editor.getModel();
+		if (model === null || model.getModeId() !== linter.getLanguage())
 			return;
 
 		this.resources.push(this.editor.onDidChangeModel(e => this.performLinting(linter)));
@@ -192,7 +213,7 @@ export class CodeEditor {
 declare class Facts {
 	/**
 	 * Returns the next fact
-	 * 
+	 *
 	 * [Online documentation](http://www.google.de)
 	 */
 	static next(): string;

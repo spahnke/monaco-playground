@@ -13,16 +13,16 @@ export class LinqLanguageProvider {
 
 	private static createCompletionProvider(): monaco.languages.CompletionItemProvider {
 		return {
-			provideCompletionItems: (document: monaco.editor.ITextModel, position: monaco.Position, token: monaco.CancellationToken, context: monaco.languages.CompletionContext) => {
-				if (document.getValue() === "" && position.lineNumber === 1 && position.column === 1) {
-					return this.getSnippets();
+			provideCompletionItems: (model: monaco.editor.ITextModel, position: monaco.Position, context: monaco.languages.CompletionContext, token: monaco.CancellationToken) => {
+				if (model.getValue() === "" && position.lineNumber === 1 && position.column === 1) {
+					return { suggestions: this.getSnippets() };
 				}
 
-				if (this.shouldCompleteTables(document, position, token, context)) {
-					return this.getTables();
+				if (this.shouldCompleteTables(model, position, token, context)) {
+					return { suggestions: this.getTables() };
 				}
 
-				return this.getKeywords();
+				return { suggestions: this.getKeywords() };
 			},
 			triggerCharacters: ["@"]
 		};
@@ -46,12 +46,10 @@ export class LinqLanguageProvider {
 			{
 				label: "query",
 				kind: monaco.languages.CompletionItemKind.Snippet,
-				insertText: {
-					value: `
+				insertText: `
 from x in @\$1
 \$0
-select x`.trim()
-				},
+select x`.trim(),
 				documentation: {
 					value: "A basic LINQ query"
 				},
@@ -83,6 +81,7 @@ select x`.trim()
 			{
 				label: "User",
 				kind: monaco.languages.CompletionItemKind.Class,
+				insertText: "User"
 			},
 		];
 	}

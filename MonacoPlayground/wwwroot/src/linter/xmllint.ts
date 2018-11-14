@@ -52,8 +52,11 @@ export class XmlLint extends AsyncWorker implements Linter {
 			throw new Error("Not supported diagnostic");
 		const message = match[2];
 		const line = Number(match[1]);
-		const column = this.editor.getModel().getLineMinColumn(line);
-		const endColumn = this.editor.getModel().getLineMaxColumn(line);
+		const model = this.editor.getModel();
+		if (model === null)
+			throw new Error("Model must not be null.");
+		const column = model.getLineMinColumn(line);
+		const endColumn = model.getLineMaxColumn(line);
 
 		return {
 			message: message,
