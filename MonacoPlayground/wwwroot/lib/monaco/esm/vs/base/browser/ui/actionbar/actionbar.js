@@ -139,18 +139,6 @@ var BaseActionItem = /** @class */ (function (_super) {
         }
         this._actionRunner.run(this._action, context);
     };
-    BaseActionItem.prototype.focus = function () {
-        if (this.element) {
-            this.element.focus();
-            DOM.addClass(this.element, 'focused');
-        }
-    };
-    BaseActionItem.prototype.blur = function () {
-        if (this.element) {
-            this.element.blur();
-            DOM.removeClass(this.element, 'focused');
-        }
-    };
     BaseActionItem.prototype.updateEnabled = function () {
         // implement in subclass
     };
@@ -168,7 +156,7 @@ var BaseActionItem = /** @class */ (function (_super) {
     };
     BaseActionItem.prototype.dispose = function () {
         if (this.element) {
-            this.element.remove();
+            DOM.removeNode(this.element);
             this.element = null;
         }
         _super.prototype.dispose.call(this);
@@ -222,10 +210,6 @@ var ActionItem = /** @class */ (function (_super) {
         this.updateTooltip();
         this.updateEnabled();
         this.updateChecked();
-    };
-    ActionItem.prototype.focus = function () {
-        _super.prototype.focus.call(this);
-        this.label.focus();
     };
     ActionItem.prototype.updateLabel = function () {
         if (this.options.label) {
@@ -592,7 +576,7 @@ var ActionBar = /** @class */ (function (_super) {
             dispose(this.items);
         }
         this.items = null;
-        this.getContainer().remove();
+        DOM.removeNode(this.getContainer());
         _super.prototype.dispose.call(this);
     };
     return ActionBar;
