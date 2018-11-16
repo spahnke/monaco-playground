@@ -248,15 +248,6 @@ var MenuActionItem = /** @class */ (function (_super) {
         this.updateEnabled();
         this.updateChecked();
     };
-    MenuActionItem.prototype.blur = function () {
-        _super.prototype.blur.call(this);
-        this.applyStyle();
-    };
-    MenuActionItem.prototype.focus = function () {
-        _super.prototype.focus.call(this);
-        this.item.focus();
-        this.applyStyle();
-    };
     MenuActionItem.prototype.updateLabel = function () {
         if (this.options.label) {
             var label = this.getAction().label;
