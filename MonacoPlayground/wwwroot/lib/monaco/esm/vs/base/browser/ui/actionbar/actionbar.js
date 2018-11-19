@@ -139,6 +139,18 @@ var BaseActionItem = /** @class */ (function (_super) {
         }
         this._actionRunner.run(this._action, context);
     };
+    BaseActionItem.prototype.focus = function () {
+        if (this.element) {
+            this.element.focus();
+            DOM.addClass(this.element, 'focused');
+        }
+    };
+    BaseActionItem.prototype.blur = function () {
+        if (this.element) {
+            this.element.blur();
+            DOM.removeClass(this.element, 'focused');
+        }
+    };
     BaseActionItem.prototype.updateEnabled = function () {
         // implement in subclass
     };
@@ -210,6 +222,10 @@ var ActionItem = /** @class */ (function (_super) {
         this.updateTooltip();
         this.updateEnabled();
         this.updateChecked();
+    };
+    ActionItem.prototype.focus = function () {
+        _super.prototype.focus.call(this);
+        this.label.focus();
     };
     ActionItem.prototype.updateLabel = function () {
         if (this.options.label) {
