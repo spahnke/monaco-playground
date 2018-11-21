@@ -46,6 +46,7 @@ export class LinqLanguageProvider {
 			{
 				label: "query",
 				kind: monaco.languages.CompletionItemKind.Snippet,
+				insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
 				insertText: `
 from x in @\$1
 \$0
