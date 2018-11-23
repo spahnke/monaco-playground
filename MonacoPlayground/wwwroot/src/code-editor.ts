@@ -8,7 +8,7 @@ export class CodeEditor {
 	private zoomFactor: number = 1;
 	private whitespaceVisible: boolean = false;
 
-	static create(element: HTMLElement, language?: string): Promise<CodeEditor> {
+	static create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
 		return new Promise(resolve => {
 			(<any>window).require.config({ paths: { vs: "lib/monaco/min/vs" } });
 			(<any>window).require(["vs/editor/editor.main"], () => {
@@ -21,15 +21,17 @@ export class CodeEditor {
 					automaticLayout: true,
 					showUnused: true,
 					lightbulb: { enabled: true }
-				})));
+				}), allowTopLevelReturn));
 			});
 		});
 	}
 
-	private constructor(editor: monaco.editor.IStandaloneCodeEditor) {
+	private constructor(editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
 		this.editor = editor;
 		this.configureJavascriptSettings();
 		this.addCommands();
+		if (allowTopLevelReturn)
+			this.allowTopLevelReturn();
 		console.log("editor", this);
 	}
 
@@ -238,6 +240,27 @@ declare class Facts {
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), "");
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom(), "");
 		this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_W, () => this.toggleWhitespaces(), "");
+	}
+
+	private allowTopLevelReturn() {
+		const model = this.editor.getModel();
+		if (model === null || model.getModeId() !== "javascript")
+			throw new Error("Only available for JavaScript documents.");
+
+		// there is not option in TypeScript to allow top level return statements
+		// so we listen to changes to decorations and filter the marker list
+		// (see https://github.com/Microsoft/monaco-editor/issues/1069)
+		this.resources.push(this.editor.onDidChangeModelDecorations(() => {
+			const model = this.editor.getModel();
+			if (model === null || model.getModeId() !== "javascript")
+				return;
+
+			const owner = model.getModeId();
+			const markers = monaco.editor
+				.getModelMarkers({ owner })
+				.filter(x => x.message !== "A 'return' statement can only be used within a function body.");
+			monaco.editor.setModelMarkers(model, owner, markers);
+		}));
 	}
 
 	private async performLinting(linter: Linter) {

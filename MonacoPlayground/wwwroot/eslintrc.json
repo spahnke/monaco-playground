@@ -1,7 +1,8 @@
 {
 	"$schema": "https://schemastore.azurewebsites.net/schemas/json/eslintrc.json",
 	"parserOptions": {
-		"ecmaVersion": 2018
+		"ecmaVersion": 2018,
+		"ecmaFeatures": { "globalReturn": true }
 	},
 	"rules": {
 		"no-unused-vars": "error",
