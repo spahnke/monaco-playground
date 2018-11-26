@@ -256,10 +256,10 @@ declare class Facts {
 				return;
 
 			const owner = model.getModeId();
-			const markers = monaco.editor
-				.getModelMarkers({ owner })
-				.filter(x => x.message !== "A 'return' statement can only be used within a function body.");
-			monaco.editor.setModelMarkers(model, owner, markers);
+			const markers = monaco.editor.getModelMarkers({ owner });
+			const filteredMarkers = markers.filter(x => x.message !== "A 'return' statement can only be used within a function body.");
+			if (filteredMarkers.length !== markers.length)
+				monaco.editor.setModelMarkers(model, owner, filteredMarkers);
 		}));
 	}
 
