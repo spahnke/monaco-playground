@@ -5,6 +5,11 @@ import path from "path";
 const libPath = process.argv[2] || "/usr/local/lib/node_modules/typescript/lib";
 
 function main() {
+	const missingLibs = findMissingLibs();
+	if (missingLibs.length > 0) {
+		console.warn("The following new libs are missing:", missingLibs);
+	}
+
 	let result = "";
 	for (const lib of Object.keys(libs)) {
 		const content = compileLib(lib, false);
@@ -76,11 +81,20 @@ const libs = {
 		files: [
 			"lib.esnext.array.d.ts",
 			"lib.esnext.asynciterable.d.ts",
+			"lib.esnext.bigint.d.ts",
 			"lib.esnext.intl.d.ts",
 			"lib.esnext.symbol.d.ts",
 		]
 	},
 };
+
+function findMissingLibs() {
+	const libNames = Object.keys(libs).flatMap(lib => libs[lib].files);
+	const availableLibs = fs.readdirSync(libPath)
+		.filter(lib => /^lib\..+\.d\.ts$/.test(lib))
+		.filter(lib => !/\.full\.|scripthost|webworker|^lib\.es\w+?\.d\.ts$/.test(lib));
+	return availableLibs.filter(x => !libNames.includes(x));
+}
 
 /**
  * @param {string} lib
