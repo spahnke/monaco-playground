@@ -10,7 +10,7 @@ export class CodeEditor {
 
 	static create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
 		return new Promise(resolve => {
-			(<any>window).require.config({ paths: { vs: "lib/monaco/min/vs" } });
+			(<any>window).require.config({ paths: { vs: "lib/monaco/dev/vs" } });
 			(<any>window).require(["vs/editor/editor.main"], () => {
 				LinqLanguageProvider.register();
 				resolve(new CodeEditor(monaco.editor.create(element, {
