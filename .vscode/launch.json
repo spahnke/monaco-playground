@@ -3,15 +3,9 @@
 	// Use hover for the description of the existing attributes
 	// For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
 	"version": "0.2.0",
-	"compounds": [
-		{
-			"name": ".NET+Chrome",
-			"configurations": [".NET Core Launch", "Launch Chrome"]
-		}
-	],
 	"configurations": [
 		{
-			"name": ".NET Core Launch",
+			"name": "Launch",
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "build",
@@ -24,15 +18,10 @@
 			"env": {
 				"ASPNETCORE_ENVIRONMENT": "Development"
 			},
-		},
-		{
-			"type": "chrome",
-			"request": "launch",
-			"name": "Launch Chrome",
-			"url": "https://localhost:5001",
-			"webRoot": "${workspaceFolder}/MonacoPlayground/wwwroot",
-			"cwd": "${workspaceFolder}/MonacoPlayground/wwwroot",
-			"sourceMaps": true,
+			"serverReadyAction": {
+				"action": "debugWithChrome",
+				"webRoot": "${workspaceFolder}/MonacoPlayground/wwwroot",
+			}
 		},
 	]
 }
