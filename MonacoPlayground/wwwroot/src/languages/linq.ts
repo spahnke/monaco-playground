@@ -18,7 +18,7 @@ export class LinqLanguageProvider {
 				const range: monaco.IRange = {
 					startLineNumber: position.lineNumber,
 					endLineNumber: position.lineNumber,
-					startColumn: word.endColumn,
+					startColumn: word.startColumn,
 					endColumn: word.endColumn
 				};
 				if (model.getValue() === "" && position.lineNumber === 1 && position.column === 1) {
