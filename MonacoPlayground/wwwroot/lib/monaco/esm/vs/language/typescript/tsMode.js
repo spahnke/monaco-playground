@@ -14,7 +14,7 @@ export function setupJavaScript(defaults) {
     javaScriptWorker = setupMode(defaults, 'javascript');
 }
 export function getJavaScriptWorker() {
-    return new monaco.Promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject) {
         if (!javaScriptWorker) {
             return reject("JavaScript not registered!");
         }
@@ -22,7 +22,7 @@ export function getJavaScriptWorker() {
     });
 }
 export function getTypeScriptWorker() {
-    return new monaco.Promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject) {
         if (!typeScriptWorker) {
             return reject("TypeScript not registered!");
         }

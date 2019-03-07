@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -45,20 +45,20 @@ var BaseActionItem = /** @class */ (function (_super) {
         return _this;
     }
     BaseActionItem.prototype.handleActionChangeEvent = function (event) {
-        if (event.enabled !== void 0) {
+        if (event.enabled !== undefined) {
             this.updateEnabled();
         }
-        if (event.checked !== void 0) {
+        if (event.checked !== undefined) {
             this.updateChecked();
         }
-        if (event.class !== void 0) {
+        if (event.class !== undefined) {
             this.updateClass();
         }
-        if (event.label !== void 0) {
+        if (event.label !== undefined) {
             this.updateLabel();
             this.updateTooltip();
         }
-        if (event.tooltip !== void 0) {
+        if (event.tooltip !== undefined) {
             this.updateTooltip();
         }
     };
@@ -94,8 +94,7 @@ var BaseActionItem = /** @class */ (function (_super) {
             if (!enableDragging) {
                 DOM.EventHelper.stop(e, true); // do not run when dragging is on because that would disable it
             }
-            var mouseEvent = e;
-            if (_this._action.enabled && mouseEvent.button === 0) {
+            if (_this._action.enabled && e.button === 0 && _this.element) {
                 DOM.addClass(_this.element, 'active');
             }
         }));
@@ -169,7 +168,7 @@ var BaseActionItem = /** @class */ (function (_super) {
     BaseActionItem.prototype.dispose = function () {
         if (this.element) {
             DOM.removeNode(this.element);
-            this.element = null;
+            this.element = undefined;
         }
         _super.prototype.dispose.call(this);
     };
@@ -202,7 +201,9 @@ var ActionItem = /** @class */ (function (_super) {
     }
     ActionItem.prototype.render = function (container) {
         _super.prototype.render.call(this, container);
-        this.label = DOM.append(this.element, DOM.$('a.action-label'));
+        if (this.element) {
+            this.label = DOM.append(this.element, DOM.$('a.action-label'));
+        }
         if (this._action.id === Separator.ID) {
             this.label.setAttribute('role', 'presentation'); // A separator is a presentation item
         }
@@ -214,7 +215,7 @@ var ActionItem = /** @class */ (function (_super) {
                 this.label.setAttribute('role', 'button');
             }
         }
-        if (this.options.label && this.options.keybinding) {
+        if (this.options.label && this.options.keybinding && this.element) {
             DOM.append(this.element, DOM.$('span.keybinding')).textContent = this.options.keybinding;
         }
         this.updateClass();
@@ -266,13 +267,17 @@ var ActionItem = /** @class */ (function (_super) {
     ActionItem.prototype.updateEnabled = function () {
         if (this.getAction().enabled) {
             this.label.removeAttribute('aria-disabled');
-            DOM.removeClass(this.element, 'disabled');
+            if (this.element) {
+                DOM.removeClass(this.element, 'disabled');
+            }
             DOM.removeClass(this.label, 'disabled');
             this.label.tabIndex = 0;
         }
         else {
             this.label.setAttribute('aria-disabled', 'true');
-            DOM.addClass(this.element, 'disabled');
+            if (this.element) {
+                DOM.addClass(this.element, 'disabled');
+            }
             DOM.addClass(this.label, 'disabled');
             DOM.removeTabIndexAndUpdateFocus(this.label);
         }
@@ -307,11 +312,13 @@ var ActionBar = /** @class */ (function (_super) {
         _this._onDidBeforeRun = _this._register(new Emitter());
         _this.options = options;
         _this._context = options.context;
-        _this._actionRunner = _this.options.actionRunner;
         if (!_this.options.triggerKeys) {
             _this.options.triggerKeys = defaultOptions.triggerKeys;
         }
-        if (!_this._actionRunner) {
+        if (_this.options.actionRunner) {
+            _this._actionRunner = _this.options.actionRunner;
+        }
+        else {
             _this._actionRunner = new ActionRunner();
             _this._register(_this._actionRunner);
         }
@@ -377,7 +384,7 @@ var ActionBar = /** @class */ (function (_super) {
             var event = new StandardKeyboardEvent(e);
             // Run action on Enter/Space
             if (_this.isTriggerKeyEvent(event)) {
-                if (!_this.options.triggerKeys.keyDown) {
+                if (_this.options.triggerKeys && !_this.options.triggerKeys.keyDown) {
                     _this.doTrigger(event);
                 }
                 event.preventDefault();
@@ -500,13 +507,27 @@ var ActionBar = /** @class */ (function (_super) {
     ActionBar.prototype.isEmpty = function () {
         return this.items.length === 0;
     };
-    ActionBar.prototype.focus = function (selectFirst) {
+    ActionBar.prototype.focus = function (arg) {
+        var selectFirst = false;
+        var index = undefined;
+        if (arg === undefined) {
+            selectFirst = true;
+        }
+        else if (typeof arg === 'number') {
+            index = arg;
+        }
+        else if (typeof arg === 'boolean') {
+            selectFirst = arg;
+        }
         if (selectFirst && typeof this.focusedItem === 'undefined') {
             // Focus the first enabled item
             this.focusedItem = this.items.length - 1;
             this.focusNext();
         }
         else {
+            if (index !== undefined) {
+                this.focusedItem = index;
+            }
             this.updateFocus();
         }
     };
@@ -574,8 +595,8 @@ var ActionBar = /** @class */ (function (_super) {
         // trigger action
         var actionItem = this.items[this.focusedItem];
         if (actionItem instanceof BaseActionItem) {
-            var context_1 = (actionItem._context === null || actionItem._context === undefined) ? event : actionItem._context;
-            this.run(actionItem._action, context_1);
+            var context = (actionItem._context === null || actionItem._context === undefined) ? event : actionItem._context;
+            this.run(actionItem._action, context);
         }
     };
     ActionBar.prototype.cancel = function () {
@@ -588,10 +609,8 @@ var ActionBar = /** @class */ (function (_super) {
         return this._actionRunner.run(action, context);
     };
     ActionBar.prototype.dispose = function () {
-        if (this.items !== null) {
-            dispose(this.items);
-        }
-        this.items = null;
+        dispose(this.items);
+        this.items = [];
         DOM.removeNode(this.getContainer());
         _super.prototype.dispose.call(this);
     };

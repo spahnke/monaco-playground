@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -48,8 +48,8 @@ var ViewContentWidgets = /** @class */ (function (_super) {
     // --- begin event handlers
     ViewContentWidgets.prototype.onConfigurationChanged = function (e) {
         var keys = Object.keys(this._widgets);
-        for (var i = 0, len = keys.length; i < len; i++) {
-            var widgetId = keys[i];
+        for (var _i = 0, keys_1 = keys; _i < keys_1.length; _i++) {
+            var widgetId = keys_1[_i];
             this._widgets[widgetId].onConfigurationChanged(e);
         }
         return true;
@@ -63,8 +63,8 @@ var ViewContentWidgets = /** @class */ (function (_super) {
     };
     ViewContentWidgets.prototype.onLineMappingChanged = function (e) {
         var keys = Object.keys(this._widgets);
-        for (var i = 0, len = keys.length; i < len; i++) {
-            var widgetId = keys[i];
+        for (var _i = 0, keys_2 = keys; _i < keys_2.length; _i++) {
+            var widgetId = keys_2[_i];
             this._widgets[widgetId].onLineMappingChanged(e);
         }
         return true;
@@ -120,22 +120,22 @@ var ViewContentWidgets = /** @class */ (function (_super) {
     };
     ViewContentWidgets.prototype.onBeforeRender = function (viewportData) {
         var keys = Object.keys(this._widgets);
-        for (var i = 0, len = keys.length; i < len; i++) {
-            var widgetId = keys[i];
+        for (var _i = 0, keys_3 = keys; _i < keys_3.length; _i++) {
+            var widgetId = keys_3[_i];
             this._widgets[widgetId].onBeforeRender(viewportData);
         }
     };
     ViewContentWidgets.prototype.prepareRender = function (ctx) {
         var keys = Object.keys(this._widgets);
-        for (var i = 0, len = keys.length; i < len; i++) {
-            var widgetId = keys[i];
+        for (var _i = 0, keys_4 = keys; _i < keys_4.length; _i++) {
+            var widgetId = keys_4[_i];
             this._widgets[widgetId].prepareRender(ctx);
         }
     };
     ViewContentWidgets.prototype.render = function (ctx) {
         var keys = Object.keys(this._widgets);
-        for (var i = 0, len = keys.length; i < len; i++) {
-            var widgetId = keys[i];
+        for (var _i = 0, keys_5 = keys; _i < keys_5.length; _i++) {
+            var widgetId = keys_5[_i];
             this._widgets[widgetId].render(ctx);
         }
     };
@@ -357,9 +357,9 @@ var Widget = /** @class */ (function () {
         // Do two passes, first for perfect fit, second picks first option
         if (this._preference) {
             for (var pass = 1; pass <= 2; pass++) {
-                for (var i = 0; i < this._preference.length; i++) {
+                for (var _i = 0, _b = this._preference; _i < _b.length; _i++) {
+                    var pref = _b[_i];
                     // placement
-                    var pref = this._preference[i];
                     if (pref === 1 /* ABOVE */) {
                         if (!placement) {
                             // Widget outside of viewport

@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -20,13 +20,31 @@ import * as nls from '../../../../nls.js';
 import * as strings from '../../../common/strings.js';
 import { Action } from '../../../common/actions.js';
 import { ActionBar, Separator, ActionItem, BaseActionItem } from '../actionbar/actionbar.js';
-import { KeyCodeUtils } from '../../../common/keyCodes.js';
-import { addClass, EventType, EventHelper, removeTabIndexAndUpdateFocus, isAncestor, hasClass, addDisposableListener, removeClass, append, $, addClasses, getClientArea, removeClasses } from '../../dom.js';
+import { addClass, EventType, EventHelper, removeTabIndexAndUpdateFocus, isAncestor, hasClass, addDisposableListener, removeClass, append, $, addClasses, removeClasses } from '../../dom.js';
 import { StandardKeyboardEvent } from '../../keyboardEvent.js';
 import { RunOnceScheduler } from '../../../common/async.js';
 import { dispose } from '../../../common/lifecycle.js';
-export var MENU_MNEMONIC_REGEX = /\(&{1,2}(.)\)|&{1,2}(.)/;
-export var MENU_ESCAPED_MNEMONIC_REGEX = /(?:&amp;){1,2}(.)/;
+import { DomScrollableElement } from '../scrollbar/scrollableElement.js';
+import { Emitter } from '../../../common/event.js';
+import { isLinux } from '../../../common/platform.js';
+function createMenuMnemonicRegExp() {
+    try {
+        return new RegExp('\\(&([^\\s&])\\)|(?<!&)&([^\\s&])');
+    }
+    catch (err) {
+        return new RegExp('\uFFFF'); // never match please
+    }
+}
+export var MENU_MNEMONIC_REGEX = createMenuMnemonicRegExp();
+function createMenuEscapedMnemonicRegExp() {
+    try {
+        return new RegExp('(?<!&amp;)(?:&amp;)([^\\s&])');
+    }
+    catch (err) {
+        return new RegExp('\uFFFF'); // never match please
+    }
+}
+export var MENU_ESCAPED_MNEMONIC_REGEX = createMenuEscapedMnemonicRegExp();
 var SubmenuAction = /** @class */ (function (_super) {
     __extends(SubmenuAction, _super);
     function SubmenuAction(label, entries, cssClass) {
@@ -44,11 +62,10 @@ var Menu = /** @class */ (function (_super) {
         var _this = this;
         addClass(container, 'monaco-menu-container');
         container.setAttribute('role', 'presentation');
-        var menuContainer = document.createElement('div');
-        addClass(menuContainer, 'monaco-menu');
-        menuContainer.setAttribute('role', 'presentation');
-        container.appendChild(menuContainer);
-        _this = _super.call(this, menuContainer, {
+        var menuElement = document.createElement('div');
+        addClass(menuElement, 'monaco-menu');
+        menuElement.setAttribute('role', 'presentation');
+        _this = _super.call(this, menuElement, {
             orientation: 2 /* VERTICAL */,
             actionItemProvider: function (action) { return _this.doGetActionItem(action, options, parentData); },
             context: options.context,
@@ -56,12 +73,14 @@ var Menu = /** @class */ (function (_super) {
             ariaLabel: options.ariaLabel,
             triggerKeys: { keys: [3 /* Enter */], keyDown: true }
         }) || this;
+        _this.menuElement = menuElement;
+        _this._onScroll = _this._register(new Emitter());
         _this.actionsList.setAttribute('role', 'menu');
         _this.actionsList.tabIndex = 0;
         _this.menuDisposables = [];
         if (options.enableMnemonics) {
-            _this.menuDisposables.push(addDisposableListener(menuContainer, EventType.KEY_DOWN, function (e) {
-                var key = KeyCodeUtils.fromString(e.key);
+            _this.menuDisposables.push(addDisposableListener(menuElement, EventType.KEY_DOWN, function (e) {
+                var key = e.key.toLocaleLowerCase();
                 if (_this.mnemonics.has(key)) {
                     EventHelper.stop(e, true);
                     var actions_1 = _this.mnemonics.get(key);
@@ -69,14 +88,31 @@ var Menu = /** @class */ (function (_super) {
                         if (actions_1[0] instanceof SubmenuActionItem) {
                             _this.focusItemByElement(actions_1[0].container);
                         }
-                        actions_1[0].onClick(event);
+                        actions_1[0].onClick(e);
                     }
                     if (actions_1.length > 1) {
                         var action = actions_1.shift();
-                        _this.focusItemByElement(action.container);
-                        actions_1.push(action);
+                        if (action) {
+                            _this.focusItemByElement(action.container);
+                            actions_1.push(action);
+                        }
                         _this.mnemonics.set(key, actions_1);
                     }
+                }
+            }));
+        }
+        if (isLinux) {
+            _this._register(addDisposableListener(menuElement, EventType.KEY_DOWN, function (e) {
+                var event = new StandardKeyboardEvent(e);
+                if (event.equals(14 /* Home */) || event.equals(11 /* PageUp */)) {
+                    _this.focusedItem = _this.items.length - 1;
+                    _this.focusNext();
+                    EventHelper.stop(e, true);
+                }
+                else if (event.equals(13 /* End */) || event.equals(12 /* PageDown */)) {
+                    _this.focusedItem = 0;
+                    _this.focusPrevious();
+                    EventHelper.stop(e, true);
                 }
             }));
         }
@@ -84,20 +120,26 @@ var Menu = /** @class */ (function (_super) {
             var relatedTarget = e.relatedTarget;
             if (!isAncestor(relatedTarget, _this.domNode)) {
                 _this.focusedItem = undefined;
+                _this.scrollTopHold = _this.menuElement.scrollTop;
                 _this.updateFocus();
                 e.stopPropagation();
             }
+        }));
+        _this._register(addDisposableListener(_this.domNode, EventType.MOUSE_UP, function (e) {
+            // Absorb clicks in menu dead space https://github.com/Microsoft/vscode/issues/63575
+            EventHelper.stop(e, true);
         }));
         _this._register(addDisposableListener(_this.actionsList, EventType.MOUSE_OVER, function (e) {
             var target = e.target;
             if (!target || !isAncestor(target, _this.actionsList) || target === _this.actionsList) {
                 return;
             }
-            while (target.parentElement !== _this.actionsList) {
+            while (target.parentElement !== _this.actionsList && target.parentElement !== null) {
                 target = target.parentElement;
             }
             if (hasClass(target, 'action-item')) {
                 var lastFocusedItem = _this.focusedItem;
+                _this.scrollTopHold = _this.menuElement.scrollTop;
                 _this.setFocusedItem(target);
                 if (lastFocusedItem !== _this.focusedItem) {
                     _this.updateFocus();
@@ -109,6 +151,33 @@ var Menu = /** @class */ (function (_super) {
         };
         _this.mnemonics = new Map();
         _this.push(actions, { icon: true, label: true, isMenu: true });
+        // Scroll Logic
+        _this.scrollableElement = _this._register(new DomScrollableElement(menuElement, {
+            alwaysConsumeMouseWheel: true,
+            horizontal: 2 /* Hidden */,
+            vertical: 3 /* Visible */,
+            verticalScrollbarSize: 7,
+            handleMouseWheel: true,
+            useShadows: true
+        }));
+        var scrollElement = _this.scrollableElement.getDomNode();
+        scrollElement.style.position = null;
+        menuElement.style.maxHeight = Math.max(10, window.innerHeight - container.getBoundingClientRect().top - 30) + "px";
+        _this.scrollableElement.onScroll(function () {
+            _this._onScroll.fire();
+        }, _this, _this.menuDisposables);
+        _this._register(addDisposableListener(_this.menuElement, EventType.SCROLL, function (e) {
+            if (_this.scrollTopHold !== undefined) {
+                _this.menuElement.scrollTop = _this.scrollTopHold;
+                _this.scrollTopHold = undefined;
+            }
+            _this.scrollableElement.scanDomNode();
+        }));
+        container.appendChild(_this.scrollableElement.getDomNode());
+        _this.scrollableElement.scanDomNode();
+        _this.items.filter(function (item) { return !(item instanceof MenuSeparatorActionItem); }).forEach(function (item, index, array) {
+            item.updatePositionInSet(index + 1, array.length);
+        });
         return _this;
     }
     Menu.prototype.style = function (style) {
@@ -129,6 +198,23 @@ var Menu = /** @class */ (function (_super) {
             });
         }
     };
+    Menu.prototype.getContainer = function () {
+        return this.scrollableElement.getDomNode();
+    };
+    Object.defineProperty(Menu.prototype, "onScroll", {
+        get: function () {
+            return this._onScroll.event;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Menu.prototype, "scrollOffset", {
+        get: function () {
+            return this.menuElement.scrollTop;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Menu.prototype.focusItemByElement = function (element) {
         var lastFocusedItem = this.focusedItem;
         this.setFocusedItem(element);
@@ -169,7 +255,10 @@ var Menu = /** @class */ (function (_super) {
             if (options.getKeyBinding) {
                 var keybinding = options.getKeyBinding(action);
                 if (keybinding) {
-                    menuItemOptions.keybinding = keybinding.getLabel();
+                    var keybindingLabel = keybinding.getLabel();
+                    if (keybindingLabel) {
+                        menuItemOptions.keybinding = keybindingLabel;
+                    }
                 }
             }
             var menuActionItem = new MenuActionItem(options.context, action, menuItemOptions);
@@ -186,10 +275,6 @@ var Menu = /** @class */ (function (_super) {
             }
             return menuActionItem;
         }
-    };
-    Menu.prototype.focus = function (selectFirst) {
-        if (selectFirst === void 0) { selectFirst = true; }
-        _super.prototype.focus.call(this, selectFirst);
     };
     return Menu;
 }(ActionBar));
@@ -211,7 +296,7 @@ var MenuActionItem = /** @class */ (function (_super) {
             if (label) {
                 var matches = MENU_MNEMONIC_REGEX.exec(label);
                 if (matches) {
-                    _this.mnemonic = KeyCodeUtils.fromString((!!matches[1] ? matches[1] : matches[2]).toLocaleLowerCase());
+                    _this.mnemonic = (!!matches[1] ? matches[1] : matches[2]).toLocaleLowerCase();
                 }
             }
         }
@@ -220,6 +305,9 @@ var MenuActionItem = /** @class */ (function (_super) {
     MenuActionItem.prototype.render = function (container) {
         var _this = this;
         _super.prototype.render.call(this, container);
+        if (!this.element) {
+            return;
+        }
         this.container = container;
         this.item = append(this.element, $('a.action-menu-item'));
         if (this._action.id === Separator.ID) {
@@ -257,6 +345,10 @@ var MenuActionItem = /** @class */ (function (_super) {
         this.item.focus();
         this.applyStyle();
     };
+    MenuActionItem.prototype.updatePositionInSet = function (pos, setSize) {
+        this.item.setAttribute('aria-posinset', "" + pos);
+        this.item.setAttribute('aria-setsize', "" + setSize);
+    };
     MenuActionItem.prototype.updateLabel = function () {
         if (this.options.label) {
             var label = this.getAction().label;
@@ -265,11 +357,15 @@ var MenuActionItem = /** @class */ (function (_super) {
                 if (!this.options.enableMnemonics) {
                     label = cleanLabel;
                 }
-                this.label.setAttribute('aria-label', cleanLabel);
+                this.label.setAttribute('aria-label', cleanLabel.replace(/&&/g, '&'));
                 var matches = MENU_MNEMONIC_REGEX.exec(label);
                 if (matches) {
                     label = strings.escape(label).replace(MENU_ESCAPED_MNEMONIC_REGEX, '<u aria-hidden="true">$1</u>');
+                    label = label.replace(/&amp;&amp;/g, '&amp;');
                     this.item.setAttribute('aria-keyshortcuts', (!!matches[1] ? matches[1] : matches[2]).toLocaleLowerCase());
+                }
+                else {
+                    label = label.replace(/&&/g, '&');
                 }
             }
             this.label.innerHTML = label.trim();
@@ -295,7 +391,7 @@ var MenuActionItem = /** @class */ (function (_super) {
             removeClasses(this.item, this.cssClass);
         }
         if (this.options.icon) {
-            this.cssClass = this.getAction().class;
+            this.cssClass = this.getAction().class || '';
             addClass(this.label, 'icon');
             if (this.cssClass) {
                 addClasses(this.label, this.cssClass);
@@ -308,12 +404,16 @@ var MenuActionItem = /** @class */ (function (_super) {
     };
     MenuActionItem.prototype.updateEnabled = function () {
         if (this.getAction().enabled) {
-            removeClass(this.element, 'disabled');
+            if (this.element) {
+                removeClass(this.element, 'disabled');
+            }
             removeClass(this.item, 'disabled');
             this.item.tabIndex = 0;
         }
         else {
-            addClass(this.element, 'disabled');
+            if (this.element) {
+                addClass(this.element, 'disabled');
+            }
             addClass(this.item, 'disabled');
             removeTabIndexAndUpdateFocus(this.item);
         }
@@ -334,7 +434,10 @@ var MenuActionItem = /** @class */ (function (_super) {
         return this.mnemonic;
     };
     MenuActionItem.prototype.applyStyle = function () {
-        var isSelected = hasClass(this.element, 'focused');
+        if (!this.menuStyle) {
+            return;
+        }
+        var isSelected = this.element && hasClass(this.element, 'focused');
         var fgColor = isSelected && this.menuStyle.selectionForegroundColor ? this.menuStyle.selectionForegroundColor : this.menuStyle.foregroundColor;
         var bgColor = isSelected && this.menuStyle.selectionBackgroundColor ? this.menuStyle.selectionBackgroundColor : this.menuStyle.backgroundColor;
         var border = isSelected && this.menuStyle.selectionBorderColor ? "1px solid " + this.menuStyle.selectionBorderColor : null;
@@ -364,7 +467,7 @@ var SubmenuActionItem = /** @class */ (function (_super) {
             }
         }, 250);
         _this.hideScheduler = new RunOnceScheduler(function () {
-            if ((!isAncestor(document.activeElement, _this.element) && _this.parentData.submenu === _this.mysubmenu)) {
+            if (_this.element && (!isAncestor(document.activeElement, _this.element) && _this.parentData.submenu === _this.mysubmenu)) {
                 _this.parentData.parent.focus(false);
                 _this.cleanupExistingSubmenu(true);
             }
@@ -374,6 +477,9 @@ var SubmenuActionItem = /** @class */ (function (_super) {
     SubmenuActionItem.prototype.render = function (container) {
         var _this = this;
         _super.prototype.render.call(this, container);
+        if (!this.element) {
+            return;
+        }
         addClass(this.item, 'monaco-submenu-item');
         this.item.setAttribute('aria-haspopup', 'true');
         this.submenuIndicator = append(this.item, $('span.submenu-indicator'));
@@ -401,9 +507,13 @@ var SubmenuActionItem = /** @class */ (function (_super) {
             _this.mouseOver = false;
         }));
         this._register(addDisposableListener(this.element, EventType.FOCUS_OUT, function (e) {
-            if (!isAncestor(document.activeElement, _this.element)) {
+            if (_this.element && !isAncestor(document.activeElement, _this.element)) {
                 _this.hideScheduler.schedule();
             }
+        }));
+        this._register(this.parentData.parent.onScroll(function () {
+            _this.parentData.parent.focus(false);
+            _this.cleanupExistingSubmenu(false);
         }));
     };
     SubmenuActionItem.prototype.onClick = function (e) {
@@ -415,29 +525,49 @@ var SubmenuActionItem = /** @class */ (function (_super) {
     SubmenuActionItem.prototype.cleanupExistingSubmenu = function (force) {
         if (this.parentData.submenu && (force || (this.parentData.submenu !== this.mysubmenu))) {
             this.parentData.submenu.dispose();
-            this.parentData.submenu = null;
+            this.parentData.submenu = undefined;
             if (this.submenuContainer) {
                 this.submenuDisposables = dispose(this.submenuDisposables);
-                this.submenuContainer = null;
+                this.submenuContainer = undefined;
             }
         }
     };
     SubmenuActionItem.prototype.createSubmenu = function (selectFirstItem) {
         var _this = this;
         if (selectFirstItem === void 0) { selectFirstItem = true; }
+        if (!this.element) {
+            return;
+        }
         if (!this.parentData.submenu) {
             this.submenuContainer = append(this.element, $('div.monaco-submenu'));
             addClasses(this.submenuContainer, 'menubar-menu-items-holder', 'context-view');
-            this.submenuContainer.style.left = getClientArea(this.element).width + "px";
+            this.parentData.submenu = new Menu(this.submenuContainer, this.submenuActions, this.submenuOptions);
+            if (this.menuStyle) {
+                this.parentData.submenu.style(this.menuStyle);
+            }
+            var boundingRect = this.element.getBoundingClientRect();
+            var childBoundingRect = this.submenuContainer.getBoundingClientRect();
+            var computedStyles = getComputedStyle(this.parentData.parent.domNode);
+            var paddingTop = parseFloat(computedStyles.paddingTop || '0') || 0;
+            if (window.innerWidth <= boundingRect.right + childBoundingRect.width) {
+                this.submenuContainer.style.left = '10px';
+                this.submenuContainer.style.top = this.element.offsetTop - this.parentData.parent.scrollOffset + boundingRect.height + "px";
+            }
+            else {
+                this.submenuContainer.style.left = this.element.offsetWidth + "px";
+                this.submenuContainer.style.top = this.element.offsetTop - this.parentData.parent.scrollOffset - paddingTop + "px";
+            }
             this.submenuDisposables.push(addDisposableListener(this.submenuContainer, EventType.KEY_UP, function (e) {
                 var event = new StandardKeyboardEvent(e);
                 if (event.equals(15 /* LeftArrow */)) {
                     EventHelper.stop(e, true);
                     _this.parentData.parent.focus();
-                    _this.parentData.submenu.dispose();
-                    _this.parentData.submenu = null;
+                    if (_this.parentData.submenu) {
+                        _this.parentData.submenu.dispose();
+                        _this.parentData.submenu = undefined;
+                    }
                     _this.submenuDisposables = dispose(_this.submenuDisposables);
-                    _this.submenuContainer = null;
+                    _this.submenuContainer = undefined;
                 }
             }));
             this.submenuDisposables.push(addDisposableListener(this.submenuContainer, EventType.KEY_DOWN, function (e) {
@@ -446,16 +576,14 @@ var SubmenuActionItem = /** @class */ (function (_super) {
                     EventHelper.stop(e, true);
                 }
             }));
-            this.parentData.submenu = new Menu(this.submenuContainer, this.submenuActions, this.submenuOptions);
-            if (this.menuStyle) {
-                this.parentData.submenu.style(this.menuStyle);
-            }
             this.submenuDisposables.push(this.parentData.submenu.onDidCancel(function () {
                 _this.parentData.parent.focus();
-                _this.parentData.submenu.dispose();
-                _this.parentData.submenu = null;
+                if (_this.parentData.submenu) {
+                    _this.parentData.submenu.dispose();
+                    _this.parentData.submenu = undefined;
+                }
                 _this.submenuDisposables = dispose(_this.submenuDisposables);
-                _this.submenuContainer = null;
+                _this.submenuContainer = undefined;
             }));
             this.parentData.submenu.focus(selectFirstItem);
             this.mysubmenu = this.parentData.submenu;
@@ -466,7 +594,10 @@ var SubmenuActionItem = /** @class */ (function (_super) {
     };
     SubmenuActionItem.prototype.applyStyle = function () {
         _super.prototype.applyStyle.call(this);
-        var isSelected = hasClass(this.element, 'focused');
+        if (!this.menuStyle) {
+            return;
+        }
+        var isSelected = this.element && hasClass(this.element, 'focused');
         var fgColor = isSelected && this.menuStyle.selectionForegroundColor ? this.menuStyle.selectionForegroundColor : this.menuStyle.foregroundColor;
         this.submenuIndicator.style.backgroundColor = fgColor ? "" + fgColor : null;
         if (this.parentData.submenu) {
@@ -482,7 +613,7 @@ var SubmenuActionItem = /** @class */ (function (_super) {
         }
         if (this.submenuContainer) {
             this.submenuDisposables = dispose(this.submenuDisposables);
-            this.submenuContainer = null;
+            this.submenuContainer = undefined;
         }
     };
     return SubmenuActionItem;

@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -79,6 +79,7 @@ var InputBox = /** @class */ (function (_super) {
         _this.onblur(_this.input, function () { return dom.removeClass(_this.element, 'synthetic-focus'); });
         if (_this.options.flexibleHeight) {
             _this.mirror = dom.append(wrapper, $('div.mirror'));
+            _this.mirror.innerHTML = '&nbsp;';
         }
         else {
             _this.input.type = _this.options.type || 'text';
@@ -137,6 +138,13 @@ var InputBox = /** @class */ (function (_super) {
             }
         }
     };
+    Object.defineProperty(InputBox.prototype, "mirrorElement", {
+        get: function () {
+            return this.mirror;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(InputBox.prototype, "inputElement", {
         get: function () {
             return this.input;
@@ -194,6 +202,9 @@ var InputBox = /** @class */ (function (_super) {
         },
         set: function (width) {
             this.input.style.width = width + 'px';
+            if (this.mirror) {
+                this.mirror.style.width = width + 'px';
+            }
         },
         enumerable: true,
         configurable: true
@@ -273,6 +284,9 @@ var InputBox = /** @class */ (function (_super) {
             getAnchor: function () { return _this.element; },
             anchorAlignment: 1 /* RIGHT */,
             render: function (container) {
+                if (!_this.message) {
+                    return null;
+                }
                 div = dom.append(container, $('.monaco-inputbox-container'));
                 layout();
                 var renderOptions = {
@@ -304,7 +318,7 @@ var InputBox = /** @class */ (function (_super) {
         this._onDidChange.fire(this.value);
         this.validate();
         this.updateMirror();
-        if (this.state === 'open') {
+        if (this.state === 'open' && this.contextViewProvider) {
             this.contextViewProvider.layout();
         }
     };
@@ -315,7 +329,13 @@ var InputBox = /** @class */ (function (_super) {
         var value = this.value || this.placeholder;
         var lastCharCode = value.charCodeAt(value.length - 1);
         var suffix = lastCharCode === 10 ? ' ' : '';
-        this.mirror.textContent = value + suffix;
+        var mirrorTextContent = value + suffix;
+        if (mirrorTextContent) {
+            this.mirror.textContent = value + suffix;
+        }
+        else {
+            this.mirror.innerHTML = '&nbsp;';
+        }
         this.layout();
     };
     InputBox.prototype.style = function (styles) {
@@ -360,15 +380,13 @@ var InputBox = /** @class */ (function (_super) {
     };
     InputBox.prototype.dispose = function () {
         this._hideMessage();
-        this.element = null;
-        this.input = null;
-        this.contextViewProvider = null;
+        this.element = null; // StrictNullOverride: nulling out ok in dispose
+        this.input = null; // StrictNullOverride: nulling out ok in dispose
+        this.contextViewProvider = undefined;
         this.message = null;
-        this.placeholder = null;
-        this.ariaLabel = null;
-        this.validation = null;
+        this.validation = undefined;
         this.state = null;
-        this.actionbar = null;
+        this.actionbar = undefined;
         _super.prototype.dispose.call(this);
     };
     return InputBox;

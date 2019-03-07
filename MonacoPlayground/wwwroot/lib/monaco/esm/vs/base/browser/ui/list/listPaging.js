@@ -20,27 +20,33 @@ var PagedRenderer = /** @class */ (function () {
         var data = this.renderer.renderTemplate(container);
         return { data: data, disposable: { dispose: function () { } } };
     };
-    PagedRenderer.prototype.renderElement = function (index, _, data) {
+    PagedRenderer.prototype.renderElement = function (index, _, data, dynamicHeightProbing) {
         var _this = this;
-        data.disposable.dispose();
+        if (data.disposable) {
+            data.disposable.dispose();
+        }
+        if (!data.data) {
+            return;
+        }
         var model = this.modelProvider();
         if (model.isResolved(index)) {
-            return this.renderer.renderElement(model.get(index), index, data.data);
+            return this.renderer.renderElement(model.get(index), index, data.data, dynamicHeightProbing);
         }
         var cts = new CancellationTokenSource();
         var promise = model.resolve(index, cts.token);
         data.disposable = { dispose: function () { return cts.cancel(); } };
         this.renderer.renderPlaceholder(index, data.data);
-        promise.then(function (entry) { return _this.renderer.renderElement(entry, index, data.data); });
-    };
-    PagedRenderer.prototype.disposeElement = function () {
-        // noop
+        promise.then(function (entry) { return _this.renderer.renderElement(entry, index, data.data, dynamicHeightProbing); });
     };
     PagedRenderer.prototype.disposeTemplate = function (data) {
-        data.disposable.dispose();
-        data.disposable = null;
-        this.renderer.disposeTemplate(data.data);
-        data.data = null;
+        if (data.disposable) {
+            data.disposable.dispose();
+            data.disposable = undefined;
+        }
+        if (data.data) {
+            this.renderer.disposeTemplate(data.data);
+            data.data = undefined;
+        }
     };
     return PagedRenderer;
 }());

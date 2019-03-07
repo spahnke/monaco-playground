@@ -8,13 +8,24 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -31,13 +42,15 @@ import * as DOM from '../../dom.js';
 import * as platform from '../../../common/platform.js';
 import { Gesture } from '../../touch.js';
 import { StandardKeyboardEvent } from '../../keyboardEvent.js';
-import { Event, Emitter, EventBufferer, chain, mapEvent, anyEvent } from '../../../common/event.js';
+import { Event, Emitter, EventBufferer } from '../../../common/event.js';
 import { domEvent } from '../../event.js';
+import { ListAriaRootRole } from './list.js';
 import { ListView } from './listView.js';
 import { Color } from '../../../common/color.js';
 import { mixin } from '../../../common/objects.js';
 import { CombinedSpliceable } from './splice.js';
 import { clamp } from '../../../common/numbers.js';
+import { matchesPrefix } from '../../../common/filters.js';
 var TraitRenderer = /** @class */ (function () {
     function TraitRenderer(trait) {
         this.trait = trait;
@@ -66,13 +79,10 @@ var TraitRenderer = /** @class */ (function () {
         }
         this.trait.renderIndex(index, templateData);
     };
-    TraitRenderer.prototype.disposeElement = function () {
-        // noop
-    };
     TraitRenderer.prototype.splice = function (start, deleteCount, insertCount) {
         var rendered = [];
-        for (var i = 0; i < this.renderedElements.length; i++) {
-            var renderedElement = this.renderedElements[i];
+        for (var _i = 0, _a = this.renderedElements; _i < _a.length; _i++) {
+            var renderedElement = _a[_i];
             if (renderedElement.index < start) {
                 rendered.push(renderedElement);
             }
@@ -159,7 +169,6 @@ var Trait = /** @class */ (function () {
         return this.indexes.some(function (i) { return i === index; });
     };
     Trait.prototype.dispose = function () {
-        this.indexes = null;
         this._onChange = dispose(this._onChange);
     };
     __decorate([
@@ -169,15 +178,11 @@ var Trait = /** @class */ (function () {
 }());
 var FocusTrait = /** @class */ (function (_super) {
     __extends(FocusTrait, _super);
-    function FocusTrait(getDomId) {
-        var _this = _super.call(this, 'focused') || this;
-        _this.getDomId = getDomId;
-        return _this;
+    function FocusTrait() {
+        return _super.call(this, 'focused') || this;
     }
     FocusTrait.prototype.renderIndex = function (index, container) {
         _super.prototype.renderIndex.call(this, index, container);
-        container.setAttribute('role', 'treeitem');
-        container.setAttribute('id', this.getDomId(index));
         if (this.contains(index)) {
             container.setAttribute('aria-selected', 'true');
         }
@@ -193,18 +198,18 @@ var FocusTrait = /** @class */ (function (_super) {
  * provider.
  */
 var TraitSpliceable = /** @class */ (function () {
-    function TraitSpliceable(trait, view, getId) {
+    function TraitSpliceable(trait, view, identityProvider) {
         this.trait = trait;
         this.view = view;
-        this.getId = getId;
+        this.identityProvider = identityProvider;
     }
     TraitSpliceable.prototype.splice = function (start, deleteCount, elements) {
         var _this = this;
-        if (!this.getId) {
-            return this.trait.splice(start, deleteCount, elements.map(function (e) { return false; }));
+        if (!this.identityProvider) {
+            return this.trait.splice(start, deleteCount, elements.map(function () { return false; }));
         }
-        var pastElementsWithTrait = this.trait.get().map(function (i) { return _this.getId(_this.view.element(i)); });
-        var elementsWithTrait = elements.map(function (e) { return pastElementsWithTrait.indexOf(_this.getId(e)) > -1; });
+        var pastElementsWithTrait = this.trait.get().map(function (i) { return _this.identityProvider.getId(_this.view.element(i)).toString(); });
+        var elementsWithTrait = elements.map(function (e) { return pastElementsWithTrait.indexOf(_this.identityProvider.getId(e).toString()) > -1; });
         this.trait.splice(start, deleteCount, elementsWithTrait);
     };
     return TraitSpliceable;
@@ -219,7 +224,7 @@ var KeyboardController = /** @class */ (function () {
         var multipleSelectionSupport = !(options.multipleSelectionSupport === false);
         this.disposables = [];
         this.openController = options.openController || DefaultOpenController;
-        var onKeyDown = chain(domEvent(view.domNode, 'keydown'))
+        var onKeyDown = Event.chain(domEvent(view.domNode, 'keydown'))
             .filter(function (e) { return !isInputElement(e.target); })
             .map(function (e) { return new StandardKeyboardEvent(e); });
         onKeyDown.filter(function (e) { return e.keyCode === 3 /* Enter */; }).on(this.onEnter, this, this.disposables);
@@ -285,13 +290,105 @@ var KeyboardController = /** @class */ (function () {
     };
     return KeyboardController;
 }());
+var TypeLabelControllerState;
+(function (TypeLabelControllerState) {
+    TypeLabelControllerState[TypeLabelControllerState["Idle"] = 0] = "Idle";
+    TypeLabelControllerState[TypeLabelControllerState["Typing"] = 1] = "Typing";
+})(TypeLabelControllerState || (TypeLabelControllerState = {}));
+export function mightProducePrintableCharacter(event) {
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+        return false;
+    }
+    return (event.keyCode >= 31 /* KEY_A */ && event.keyCode <= 56 /* KEY_Z */)
+        || (event.keyCode >= 21 /* KEY_0 */ && event.keyCode <= 30 /* KEY_9 */)
+        || (event.keyCode >= 80 /* US_SEMICOLON */ && event.keyCode <= 90 /* US_QUOTE */);
+}
+var TypeLabelController = /** @class */ (function () {
+    function TypeLabelController(list, view, keyboardNavigationLabelProvider) {
+        this.list = list;
+        this.view = view;
+        this.keyboardNavigationLabelProvider = keyboardNavigationLabelProvider;
+        this.enabled = false;
+        this.state = TypeLabelControllerState.Idle;
+        this.automaticKeyboardNavigation = true;
+        this.triggered = false;
+        this.enabledDisposables = [];
+        this.disposables = [];
+        this.updateOptions(list.options);
+    }
+    TypeLabelController.prototype.updateOptions = function (options) {
+        var enableKeyboardNavigation = typeof options.enableKeyboardNavigation === 'undefined' ? true : !!options.enableKeyboardNavigation;
+        if (enableKeyboardNavigation) {
+            this.enable();
+        }
+        else {
+            this.disable();
+        }
+        if (typeof options.automaticKeyboardNavigation !== 'undefined') {
+            this.automaticKeyboardNavigation = options.automaticKeyboardNavigation;
+        }
+    };
+    TypeLabelController.prototype.enable = function () {
+        var _this = this;
+        if (this.enabled) {
+            return;
+        }
+        var onChar = Event.chain(domEvent(this.view.domNode, 'keydown'))
+            .filter(function (e) { return !isInputElement(e.target); })
+            .filter(function () { return _this.automaticKeyboardNavigation || _this.triggered; })
+            .map(function (event) { return new StandardKeyboardEvent(event); })
+            .filter(this.keyboardNavigationLabelProvider.mightProducePrintableCharacter ? function (e) { return _this.keyboardNavigationLabelProvider.mightProducePrintableCharacter(e); } : function (e) { return mightProducePrintableCharacter(e); })
+            .forEach(function (e) { e.stopPropagation(); e.preventDefault(); })
+            .map(function (event) { return event.browserEvent.key; })
+            .event;
+        var onClear = Event.debounce(onChar, function () { return null; }, 800);
+        var onInput = Event.reduce(Event.any(onChar, onClear), function (r, i) { return i === null ? null : ((r || '') + i); });
+        onInput(this.onInput, this, this.enabledDisposables);
+        this.enabled = true;
+        this.triggered = false;
+    };
+    TypeLabelController.prototype.disable = function () {
+        if (!this.enabled) {
+            return;
+        }
+        this.enabledDisposables = dispose(this.enabledDisposables);
+        this.enabled = false;
+        this.triggered = false;
+    };
+    TypeLabelController.prototype.onInput = function (word) {
+        if (!word) {
+            this.state = TypeLabelControllerState.Idle;
+            this.triggered = false;
+            return;
+        }
+        var focus = this.list.getFocus();
+        var start = focus.length > 0 ? focus[0] : 0;
+        var delta = this.state === TypeLabelControllerState.Idle ? 1 : 0;
+        this.state = TypeLabelControllerState.Typing;
+        for (var i = 0; i < this.list.length; i++) {
+            var index = (start + i + delta) % this.list.length;
+            var label = this.keyboardNavigationLabelProvider.getKeyboardNavigationLabel(this.view.element(index));
+            var labelStr = label && label.toString();
+            if (typeof labelStr === 'undefined' || matchesPrefix(word, labelStr)) {
+                this.list.setFocus([index]);
+                this.list.reveal(index);
+                return;
+            }
+        }
+    };
+    TypeLabelController.prototype.dispose = function () {
+        this.disable();
+        this.disposables = dispose(this.disposables);
+    };
+    return TypeLabelController;
+}());
 var DOMFocusController = /** @class */ (function () {
     function DOMFocusController(list, view) {
         this.list = list;
         this.view = view;
         this.disposables = [];
         this.disposables = [];
-        var onKeyDown = chain(domEvent(view.domNode, 'keydown'))
+        var onKeyDown = Event.chain(domEvent(view.domNode, 'keydown'))
             .filter(function (e) { return !isInputElement(e.target); })
             .map(function (e) { return new StandardKeyboardEvent(e); });
         onKeyDown.filter(function (e) { return e.keyCode === 2 /* Tab */ && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey; })
@@ -306,6 +403,9 @@ var DOMFocusController = /** @class */ (function () {
             return;
         }
         var focusedDomElement = this.view.domElement(focus[0]);
+        if (!focusedDomElement) {
+            return;
+        }
         var tabIndexElement = focusedDomElement.querySelector('[tabIndex]');
         if (!tabIndexElement || !(tabIndexElement instanceof HTMLElement) || tabIndexElement.tabIndex === -1) {
             return;
@@ -345,69 +445,26 @@ var DefaultOpenController = {
     }
 };
 var MouseController = /** @class */ (function () {
-    function MouseController(list, view, options) {
-        if (options === void 0) { options = {}; }
+    function MouseController(list) {
         this.list = list;
-        this.view = view;
-        this.options = options;
-        this.didJustPressContextMenuKey = false;
         this.disposables = [];
-        this.multipleSelectionSupport = !(options.multipleSelectionSupport === false);
+        this.multipleSelectionSupport = !(list.options.multipleSelectionSupport === false);
         if (this.multipleSelectionSupport) {
-            this.multipleSelectionController = options.multipleSelectionController || DefaultMultipleSelectionContoller;
+            this.multipleSelectionController = list.options.multipleSelectionController || DefaultMultipleSelectionContoller;
         }
-        this.openController = options.openController || DefaultOpenController;
-        view.onMouseDown(this.onMouseDown, this, this.disposables);
-        view.onMouseClick(this.onPointer, this, this.disposables);
-        view.onMouseDblClick(this.onDoubleClick, this, this.disposables);
-        view.onTouchStart(this.onMouseDown, this, this.disposables);
-        view.onTap(this.onPointer, this, this.disposables);
-        Gesture.addTarget(view.domNode);
+        this.openController = list.options.openController || DefaultOpenController;
+        this.mouseSupport = typeof list.options.mouseSupport === 'undefined' || !!list.options.mouseSupport;
+        if (this.mouseSupport) {
+            list.onMouseDown(this.onMouseDown, this, this.disposables);
+            list.onContextMenu(this.onContextMenu, this, this.disposables);
+            list.onMouseDblClick(this.onDoubleClick, this, this.disposables);
+            list.onTouchStart(this.onMouseDown, this, this.disposables);
+            Gesture.addTarget(list.getHTMLElement());
+        }
+        list.onMouseClick(this.onPointer, this, this.disposables);
+        list.onMouseMiddleClick(this.onPointer, this, this.disposables);
+        list.onTap(this.onPointer, this, this.disposables);
     }
-    Object.defineProperty(MouseController.prototype, "onContextMenu", {
-        get: function () {
-            var _this = this;
-            var fromKeydown = chain(domEvent(this.view.domNode, 'keydown'))
-                .map(function (e) { return new StandardKeyboardEvent(e); })
-                .filter(function (e) { return _this.didJustPressContextMenuKey = e.keyCode === 58 /* ContextMenu */ || (e.shiftKey && e.keyCode === 68 /* F10 */); })
-                .filter(function (e) { e.preventDefault(); e.stopPropagation(); return false; })
-                .map(function (event) {
-                var index = _this.list.getFocus()[0];
-                var element = _this.view.element(index);
-                var anchor = _this.view.domElement(index);
-                return { index: index, element: element, anchor: anchor, browserEvent: event.browserEvent };
-            })
-                .event;
-            var fromKeyup = chain(domEvent(this.view.domNode, 'keyup'))
-                .filter(function () {
-                var didJustPressContextMenuKey = _this.didJustPressContextMenuKey;
-                _this.didJustPressContextMenuKey = false;
-                return didJustPressContextMenuKey;
-            })
-                .filter(function () { return _this.list.getFocus().length > 0; })
-                .map(function (browserEvent) {
-                var index = _this.list.getFocus()[0];
-                var element = _this.view.element(index);
-                var anchor = _this.view.domElement(index);
-                return { index: index, element: element, anchor: anchor, browserEvent: browserEvent };
-            })
-                .filter(function (_a) {
-                var anchor = _a.anchor;
-                return !!anchor;
-            })
-                .event;
-            var fromMouse = chain(this.view.onContextMenu)
-                .filter(function () { return !_this.didJustPressContextMenuKey; })
-                .map(function (_a) {
-                var element = _a.element, index = _a.index, browserEvent = _a.browserEvent;
-                return ({ element: element, index: index, anchor: { x: browserEvent.clientX + 1, y: browserEvent.clientY }, browserEvent: browserEvent });
-            })
-                .event;
-            return anyEvent(fromKeydown, fromKeyup, fromMouse);
-        },
-        enumerable: true,
-        configurable: true
-    });
     MouseController.prototype.isSelectionSingleChangeEvent = function (event) {
         if (this.multipleSelectionController) {
             return this.multipleSelectionController.isSelectionSingleChangeEvent(event);
@@ -424,46 +481,48 @@ var MouseController = /** @class */ (function () {
         return this.isSelectionSingleChangeEvent(event) || this.isSelectionRangeChangeEvent(event);
     };
     MouseController.prototype.onMouseDown = function (e) {
-        if (this.options.focusOnMouseDown === false) {
-            e.browserEvent.preventDefault();
-            e.browserEvent.stopPropagation();
+        if (document.activeElement !== e.browserEvent.target) {
+            this.list.domFocus();
         }
-        else if (document.activeElement !== e.browserEvent.target) {
-            this.view.domNode.focus();
+    };
+    MouseController.prototype.onContextMenu = function (e) {
+        var focus = typeof e.index === 'undefined' ? [] : [e.index];
+        this.list.setFocus(focus, e.browserEvent);
+    };
+    MouseController.prototype.onPointer = function (e) {
+        if (!this.mouseSupport) {
+            return;
+        }
+        if (isInputElement(e.browserEvent.target)) {
+            return;
         }
         var reference = this.list.getFocus()[0];
         var selection = this.list.getSelection();
         reference = reference === undefined ? selection[0] : reference;
+        var focus = e.index;
+        if (typeof focus === 'undefined') {
+            this.list.setFocus([], e.browserEvent);
+            this.list.setSelection([], e.browserEvent);
+            return;
+        }
         if (this.multipleSelectionSupport && this.isSelectionRangeChangeEvent(e)) {
             return this.changeSelection(e, reference);
-        }
-        var focus = e.index;
-        if (selection.every(function (s) { return s !== focus; })) {
-            this.list.setFocus([focus], e.browserEvent);
         }
         if (this.multipleSelectionSupport && this.isSelectionChangeEvent(e)) {
             return this.changeSelection(e, reference);
         }
-        if (this.options.selectOnMouseDown && !isMouseRightClick(e.browserEvent)) {
+        this.list.setFocus([focus], e.browserEvent);
+        if (!isMouseRightClick(e.browserEvent)) {
             this.list.setSelection([focus], e.browserEvent);
             if (this.openController.shouldOpen(e.browserEvent)) {
                 this.list.open([focus], e.browserEvent);
             }
         }
     };
-    MouseController.prototype.onPointer = function (e) {
-        if (this.multipleSelectionSupport && this.isSelectionChangeEvent(e)) {
+    MouseController.prototype.onDoubleClick = function (e) {
+        if (isInputElement(e.browserEvent.target)) {
             return;
         }
-        if (!this.options.selectOnMouseDown) {
-            var focus_1 = this.list.getFocus();
-            this.list.setSelection(focus_1, e.browserEvent);
-            if (this.openController.shouldOpen(e.browserEvent)) {
-                this.list.open(focus_1, e.browserEvent);
-            }
-        }
-    };
-    MouseController.prototype.onDoubleClick = function (e) {
         if (this.multipleSelectionSupport && this.isSelectionChangeEvent(e)) {
             return;
         }
@@ -499,11 +558,9 @@ var MouseController = /** @class */ (function () {
     MouseController.prototype.dispose = function () {
         this.disposables = dispose(this.disposables);
     };
-    __decorate([
-        memoize
-    ], MouseController.prototype, "onContextMenu", null);
     return MouseController;
 }());
+export { MouseController };
 var DefaultStyleController = /** @class */ (function () {
     function DefaultStyleController(styleElement, selectorSuffix) {
         this.styleElement = styleElement;
@@ -527,10 +584,10 @@ var DefaultStyleController = /** @class */ (function () {
             content.push(".monaco-list" + suffix + ":focus .monaco-list-row.selected { color: " + styles.listActiveSelectionForeground + "; }");
         }
         if (styles.listFocusAndSelectionBackground) {
-            content.push(".monaco-list" + suffix + ":focus .monaco-list-row.selected.focused { background-color: " + styles.listFocusAndSelectionBackground + "; }");
+            content.push("\n\t\t\t\t.monaco-drag-image,\n\t\t\t\t.monaco-list" + suffix + ":focus .monaco-list-row.selected.focused { background-color: " + styles.listFocusAndSelectionBackground + "; }\n\t\t\t");
         }
         if (styles.listFocusAndSelectionForeground) {
-            content.push(".monaco-list" + suffix + ":focus .monaco-list-row.selected.focused { color: " + styles.listFocusAndSelectionForeground + "; }");
+            content.push("\n\t\t\t\t.monaco-drag-image,\n\t\t\t\t.monaco-list" + suffix + ":focus .monaco-list-row.selected.focused { color: " + styles.listFocusAndSelectionForeground + "; }\n\t\t\t");
         }
         if (styles.listInactiveFocusBackground) {
             content.push(".monaco-list" + suffix + " .monaco-list-row.focused { background-color:  " + styles.listInactiveFocusBackground + "; }");
@@ -544,22 +601,37 @@ var DefaultStyleController = /** @class */ (function () {
             content.push(".monaco-list" + suffix + " .monaco-list-row.selected { color: " + styles.listInactiveSelectionForeground + "; }");
         }
         if (styles.listHoverBackground) {
-            content.push(".monaco-list" + suffix + " .monaco-list-row:hover { background-color:  " + styles.listHoverBackground + "; }");
+            content.push(".monaco-list" + suffix + ":not(.drop-target) .monaco-list-row:hover:not(.selected):not(.focused) { background-color:  " + styles.listHoverBackground + "; }");
         }
         if (styles.listHoverForeground) {
-            content.push(".monaco-list" + suffix + " .monaco-list-row:hover { color:  " + styles.listHoverForeground + "; }");
+            content.push(".monaco-list" + suffix + " .monaco-list-row:hover:not(.selected):not(.focused) { color:  " + styles.listHoverForeground + "; }");
         }
         if (styles.listSelectionOutline) {
             content.push(".monaco-list" + suffix + " .monaco-list-row.selected { outline: 1px dotted " + styles.listSelectionOutline + "; outline-offset: -1px; }");
         }
         if (styles.listFocusOutline) {
-            content.push(".monaco-list" + suffix + ":focus .monaco-list-row.focused { outline: 1px solid " + styles.listFocusOutline + "; outline-offset: -1px; }");
+            content.push("\n\t\t\t\t.monaco-drag-image,\n\t\t\t\t.monaco-list" + suffix + ":focus .monaco-list-row.focused { outline: 1px solid " + styles.listFocusOutline + "; outline-offset: -1px; }\n\t\t\t");
         }
         if (styles.listInactiveFocusOutline) {
             content.push(".monaco-list" + suffix + " .monaco-list-row.focused { outline: 1px dotted " + styles.listInactiveFocusOutline + "; outline-offset: -1px; }");
         }
         if (styles.listHoverOutline) {
             content.push(".monaco-list" + suffix + " .monaco-list-row:hover { outline: 1px dashed " + styles.listHoverOutline + "; outline-offset: -1px; }");
+        }
+        if (styles.listDropBackground) {
+            content.push("\n\t\t\t\t.monaco-list" + suffix + ".drop-target,\n\t\t\t\t.monaco-list" + suffix + " .monaco-list-row.drop-target { background-color: " + styles.listDropBackground + " !important; color: inherit !important; }\n\t\t\t");
+        }
+        if (styles.listFilterWidgetBackground) {
+            content.push(".monaco-list-type-filter { background-color: " + styles.listFilterWidgetBackground + " }");
+        }
+        if (styles.listFilterWidgetOutline) {
+            content.push(".monaco-list-type-filter { border: 1px solid " + styles.listFilterWidgetOutline + "; }");
+        }
+        if (styles.listFilterWidgetNoMatchesOutline) {
+            content.push(".monaco-list-type-filter.no-matches { border: 1px solid " + styles.listFilterWidgetNoMatchesOutline + "; }");
+        }
+        if (styles.listMatchesShadow) {
+            content.push(".monaco-list-type-filter { box-shadow: 1px 1px 1px " + styles.listMatchesShadow + "; }");
         }
         var newStyles = content.join('\n');
         if (newStyles !== this.styleElement.innerHTML) {
@@ -582,7 +654,14 @@ var defaultStyles = {
 var DefaultOptions = {
     keyboardSupport: true,
     mouseSupport: true,
-    multipleSelectionSupport: true
+    multipleSelectionSupport: true,
+    dnd: {
+        getDragURI: function () { return null; },
+        onDragStart: function () { },
+        onDragOver: function () { return false; },
+        drop: function () { }
+    },
+    ariaRootRole: ListAriaRootRole.TREE
 };
 // TODO@Joao: move these utils into a SortedArray class
 function getContiguousRangeContaining(range, value) {
@@ -675,18 +754,21 @@ var PipelineRenderer = /** @class */ (function () {
     PipelineRenderer.prototype.renderTemplate = function (container) {
         return this.renderers.map(function (r) { return r.renderTemplate(container); });
     };
-    PipelineRenderer.prototype.renderElement = function (element, index, templateData) {
+    PipelineRenderer.prototype.renderElement = function (element, index, templateData, dynamicHeightProbing) {
         var i = 0;
         for (var _i = 0, _a = this.renderers; _i < _a.length; _i++) {
             var renderer = _a[_i];
-            renderer.renderElement(element, index, templateData[i++]);
+            renderer.renderElement(element, index, templateData[i++], dynamicHeightProbing);
         }
     };
-    PipelineRenderer.prototype.disposeElement = function (element, index, templateData) {
+    PipelineRenderer.prototype.disposeElement = function (element, index, templateData, dynamicHeightProbing) {
         var i = 0;
         for (var _i = 0, _a = this.renderers; _i < _a.length; _i++) {
             var renderer = _a[_i];
-            renderer.disposeElement(element, index, templateData[i++]);
+            if (renderer.disposeElement) {
+                renderer.disposeElement(element, index, templateData[i], dynamicHeightProbing);
+            }
+            i += 1;
         }
     };
     PipelineRenderer.prototype.disposeTemplate = function (templateData) {
@@ -714,71 +796,107 @@ var AccessibiltyRenderer = /** @class */ (function () {
         else {
             container.removeAttribute('aria-label');
         }
-    };
-    AccessibiltyRenderer.prototype.disposeElement = function (element, index, container) {
-        // noop
+        var ariaLevel = this.accessibilityProvider.getAriaLevel && this.accessibilityProvider.getAriaLevel(element);
+        if (typeof ariaLevel === 'number') {
+            container.setAttribute('aria-level', "" + ariaLevel);
+        }
+        else {
+            container.removeAttribute('aria-level');
+        }
     };
     AccessibiltyRenderer.prototype.disposeTemplate = function (templateData) {
         // noop
     };
     return AccessibiltyRenderer;
 }());
+var ListViewDragAndDrop = /** @class */ (function () {
+    function ListViewDragAndDrop(list, dnd) {
+        this.list = list;
+        this.dnd = dnd;
+    }
+    ListViewDragAndDrop.prototype.getDragElements = function (element) {
+        var selection = this.list.getSelectedElements();
+        var elements = selection.indexOf(element) > -1 ? selection : [element];
+        return elements;
+    };
+    ListViewDragAndDrop.prototype.getDragURI = function (element) {
+        return this.dnd.getDragURI(element);
+    };
+    ListViewDragAndDrop.prototype.getDragLabel = function (elements) {
+        if (this.dnd.getDragLabel) {
+            return this.dnd.getDragLabel(elements);
+        }
+        return undefined;
+    };
+    ListViewDragAndDrop.prototype.onDragStart = function (data, originalEvent) {
+        if (this.dnd.onDragStart) {
+            this.dnd.onDragStart(data, originalEvent);
+        }
+    };
+    ListViewDragAndDrop.prototype.onDragOver = function (data, targetElement, targetIndex, originalEvent) {
+        return this.dnd.onDragOver(data, targetElement, targetIndex, originalEvent);
+    };
+    ListViewDragAndDrop.prototype.drop = function (data, targetElement, targetIndex, originalEvent) {
+        this.dnd.drop(data, targetElement, targetIndex, originalEvent);
+    };
+    return ListViewDragAndDrop;
+}());
 var List = /** @class */ (function () {
-    function List(container, virtualDelegate, renderers, options) {
-        if (options === void 0) { options = DefaultOptions; }
-        var _this = this;
-        this.idPrefix = "list_id_" + ++List.InstanceCount;
+    function List(container, virtualDelegate, renderers, _options) {
+        if (_options === void 0) { _options = DefaultOptions; }
+        this._options = _options;
         this.eventBufferer = new EventBufferer();
-        this.onContextMenu = Event.None;
-        this._onOpen = new Emitter();
+        this._onDidOpen = new Emitter();
         this._onPin = new Emitter();
+        this.didJustPressContextMenuKey = false;
         this._onDidDispose = new Emitter();
-        this.focus = new FocusTrait(function (i) { return _this.getElementDomId(i); });
+        this.focus = new FocusTrait();
         this.selection = new Trait('selected');
-        mixin(options, defaultStyles, false);
+        mixin(_options, defaultStyles, false);
         var baseRenderers = [this.focus.renderer, this.selection.renderer];
-        if (options.accessibilityProvider) {
-            baseRenderers.push(new AccessibiltyRenderer(options.accessibilityProvider));
+        if (_options.accessibilityProvider) {
+            baseRenderers.push(new AccessibiltyRenderer(_options.accessibilityProvider));
         }
         renderers = renderers.map(function (r) { return new PipelineRenderer(r.templateId, baseRenderers.concat([r])); });
-        this.view = new ListView(container, virtualDelegate, renderers, options);
-        this.view.domNode.setAttribute('role', 'tree');
-        DOM.addClass(this.view.domNode, this.idPrefix);
-        this.view.domNode.tabIndex = 0;
-        this.styleElement = DOM.createStyleSheet(this.view.domNode);
-        this.styleController = options.styleController;
-        if (!this.styleController) {
-            this.styleController = new DefaultStyleController(this.styleElement, this.idPrefix);
+        var viewOptions = __assign({}, _options, { dnd: _options.dnd && new ListViewDragAndDrop(this, _options.dnd) });
+        this.view = new ListView(container, virtualDelegate, renderers, viewOptions);
+        if (typeof _options.ariaRole !== 'string') {
+            this.view.domNode.setAttribute('role', ListAriaRootRole.TREE);
         }
+        else {
+            this.view.domNode.setAttribute('role', _options.ariaRole);
+        }
+        this.styleElement = DOM.createStyleSheet(this.view.domNode);
+        this.styleController = _options.styleController || new DefaultStyleController(this.styleElement, this.view.domId);
         this.spliceable = new CombinedSpliceable([
-            new TraitSpliceable(this.focus, this.view, options.identityProvider),
-            new TraitSpliceable(this.selection, this.view, options.identityProvider),
+            new TraitSpliceable(this.focus, this.view, _options.identityProvider),
+            new TraitSpliceable(this.selection, this.view, _options.identityProvider),
             this.view
         ]);
         this.disposables = [this.focus, this.selection, this.view, this._onDidDispose];
-        this.onDidFocus = mapEvent(domEvent(this.view.domNode, 'focus', true), function () { return null; });
-        this.onDidBlur = mapEvent(domEvent(this.view.domNode, 'blur', true), function () { return null; });
+        this.onDidFocus = Event.map(domEvent(this.view.domNode, 'focus', true), function () { return null; });
+        this.onDidBlur = Event.map(domEvent(this.view.domNode, 'blur', true), function () { return null; });
         this.disposables.push(new DOMFocusController(this, this.view));
-        if (typeof options.keyboardSupport !== 'boolean' || options.keyboardSupport) {
-            var controller = new KeyboardController(this, this.view, options);
+        if (typeof _options.keyboardSupport !== 'boolean' || _options.keyboardSupport) {
+            var controller = new KeyboardController(this, this.view, _options);
             this.disposables.push(controller);
         }
-        if (typeof options.mouseSupport !== 'boolean' || options.mouseSupport) {
-            this.mouseController = new MouseController(this, this.view, options);
-            this.disposables.push(this.mouseController);
-            this.onContextMenu = this.mouseController.onContextMenu;
+        if (_options.keyboardNavigationLabelProvider) {
+            this.typeLabelController = new TypeLabelController(this, this.view, _options.keyboardNavigationLabelProvider);
+            this.disposables.push(this.typeLabelController);
         }
+        this.disposables.push(this.createMouseController(_options));
         this.onFocusChange(this._onFocusChange, this, this.disposables);
         this.onSelectionChange(this._onSelectionChange, this, this.disposables);
-        if (options.ariaLabel) {
-            this.view.domNode.setAttribute('aria-label', localize('aria list', "{0}. Use the navigation keys to navigate.", options.ariaLabel));
+        if (_options.ariaLabel) {
+            this.view.domNode.setAttribute('aria-label', localize('aria list', "{0}. Use the navigation keys to navigate.", _options.ariaLabel));
         }
-        this.style(options);
+        this.style(_options);
     }
     Object.defineProperty(List.prototype, "onFocusChange", {
         get: function () {
             var _this = this;
-            return mapEvent(this.eventBufferer.wrapEvent(this.focus.onChange), function (e) { return _this.toListEvent(e); });
+            return Event.map(this.eventBufferer.wrapEvent(this.focus.onChange), function (e) { return _this.toListEvent(e); });
         },
         enumerable: true,
         configurable: true
@@ -786,13 +904,82 @@ var List = /** @class */ (function () {
     Object.defineProperty(List.prototype, "onSelectionChange", {
         get: function () {
             var _this = this;
-            return mapEvent(this.eventBufferer.wrapEvent(this.selection.onChange), function (e) { return _this.toListEvent(e); });
+            return Event.map(this.eventBufferer.wrapEvent(this.selection.onChange), function (e) { return _this.toListEvent(e); });
         },
         enumerable: true,
         configurable: true
     });
     Object.defineProperty(List.prototype, "onMouseClick", {
         get: function () { return this.view.onMouseClick; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(List.prototype, "onMouseDblClick", {
+        get: function () { return this.view.onMouseDblClick; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(List.prototype, "onMouseMiddleClick", {
+        get: function () { return this.view.onMouseMiddleClick; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(List.prototype, "onMouseDown", {
+        get: function () { return this.view.onMouseDown; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(List.prototype, "onTouchStart", {
+        get: function () { return this.view.onTouchStart; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(List.prototype, "onTap", {
+        get: function () { return this.view.onTap; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(List.prototype, "onContextMenu", {
+        get: function () {
+            var _this = this;
+            var fromKeydown = Event.chain(domEvent(this.view.domNode, 'keydown'))
+                .map(function (e) { return new StandardKeyboardEvent(e); })
+                .filter(function (e) { return _this.didJustPressContextMenuKey = e.keyCode === 58 /* ContextMenu */ || (e.shiftKey && e.keyCode === 68 /* F10 */); })
+                .filter(function (e) { e.preventDefault(); e.stopPropagation(); return false; })
+                .map(function (event) {
+                var index = _this.getFocus()[0];
+                var element = _this.view.element(index);
+                var anchor = _this.view.domElement(index) || undefined;
+                return { index: index, element: element, anchor: anchor, browserEvent: event.browserEvent };
+            })
+                .event;
+            var fromKeyup = Event.chain(domEvent(this.view.domNode, 'keyup'))
+                .filter(function () {
+                var didJustPressContextMenuKey = _this.didJustPressContextMenuKey;
+                _this.didJustPressContextMenuKey = false;
+                return didJustPressContextMenuKey;
+            })
+                .filter(function () { return _this.getFocus().length > 0; })
+                .map(function (browserEvent) {
+                var index = _this.getFocus()[0];
+                var element = _this.view.element(index);
+                var anchor = _this.view.domElement(index) || undefined;
+                return { index: index, element: element, anchor: anchor, browserEvent: browserEvent };
+            })
+                .filter(function (_a) {
+                var anchor = _a.anchor;
+                return !!anchor;
+            })
+                .event;
+            var fromMouse = Event.chain(this.view.onContextMenu)
+                .filter(function () { return !_this.didJustPressContextMenuKey; })
+                .map(function (_a) {
+                var element = _a.element, index = _a.index, browserEvent = _a.browserEvent;
+                return ({ element: element, index: index, anchor: { x: browserEvent.clientX + 1, y: browserEvent.clientY }, browserEvent: browserEvent });
+            })
+                .event;
+            return Event.any(fromKeydown, fromKeyup, fromMouse);
+        },
         enumerable: true,
         configurable: true
     });
@@ -803,6 +990,23 @@ var List = /** @class */ (function () {
     });
     Object.defineProperty(List.prototype, "onDidDispose", {
         get: function () { return this._onDidDispose.event; },
+        enumerable: true,
+        configurable: true
+    });
+    List.prototype.createMouseController = function (options) {
+        return new MouseController(this);
+    };
+    List.prototype.updateOptions = function (optionsUpdate) {
+        if (optionsUpdate === void 0) { optionsUpdate = {}; }
+        this._options = __assign({}, this._options, optionsUpdate);
+        if (this.typeLabelController) {
+            this.typeLabelController.updateOptions(this._options);
+        }
+    };
+    Object.defineProperty(List.prototype, "options", {
+        get: function () {
+            return this._options;
+        },
         enumerable: true,
         configurable: true
     });
@@ -820,6 +1024,12 @@ var List = /** @class */ (function () {
         }
         this.eventBufferer.bufferEvents(function () { return _this.spliceable.splice(start, deleteCount, elements); });
     };
+    List.prototype.rerender = function () {
+        this.view.rerender();
+    };
+    List.prototype.element = function (index) {
+        return this.view.element(index);
+    };
     Object.defineProperty(List.prototype, "length", {
         get: function () {
             return this.view.length;
@@ -829,13 +1039,26 @@ var List = /** @class */ (function () {
     });
     Object.defineProperty(List.prototype, "contentHeight", {
         get: function () {
-            return this.view.getContentHeight();
+            return this.view.contentHeight;
         },
         enumerable: true,
         configurable: true
     });
-    List.prototype.layout = function (height) {
-        this.view.layout(height);
+    Object.defineProperty(List.prototype, "scrollTop", {
+        get: function () {
+            return this.view.getScrollTop();
+        },
+        set: function (scrollTop) {
+            this.view.setScrollTop(scrollTop);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    List.prototype.domFocus = function () {
+        this.view.domNode.focus();
+    };
+    List.prototype.layout = function (height, width) {
+        this.view.layout(height, width);
     };
     List.prototype.setSelection = function (indexes, browserEvent) {
         for (var _i = 0, indexes_1 = indexes; _i < indexes_1.length; _i++) {
@@ -850,6 +1073,10 @@ var List = /** @class */ (function () {
     List.prototype.getSelection = function () {
         return this.selection.get();
     };
+    List.prototype.getSelectedElements = function () {
+        var _this = this;
+        return this.getSelection().map(function (i) { return _this.view.element(i); });
+    };
     List.prototype.setFocus = function (indexes, browserEvent) {
         for (var _i = 0, indexes_2 = indexes; _i < indexes_2.length; _i++) {
             var index = indexes_2[_i];
@@ -860,48 +1087,55 @@ var List = /** @class */ (function () {
         indexes = indexes.sort(numericSort);
         this.focus.set(indexes, browserEvent);
     };
-    List.prototype.focusNext = function (n, loop, browserEvent) {
+    List.prototype.focusNext = function (n, loop, browserEvent, filter) {
         if (n === void 0) { n = 1; }
         if (loop === void 0) { loop = false; }
         if (this.length === 0) {
             return;
         }
         var focus = this.focus.get();
-        var index = focus.length > 0 ? focus[0] + n : 0;
-        this.setFocus(loop ? [index % this.length] : [Math.min(index, this.length - 1)], browserEvent);
+        var index = this.findNextIndex(focus.length > 0 ? focus[0] + n : 0, loop, filter);
+        if (index > -1) {
+            this.setFocus([index], browserEvent);
+        }
     };
-    List.prototype.focusPrevious = function (n, loop, browserEvent) {
+    List.prototype.focusPrevious = function (n, loop, browserEvent, filter) {
         if (n === void 0) { n = 1; }
         if (loop === void 0) { loop = false; }
         if (this.length === 0) {
             return;
         }
         var focus = this.focus.get();
-        var index = focus.length > 0 ? focus[0] - n : 0;
-        if (loop && index < 0) {
-            index = (this.length + (index % this.length)) % this.length;
+        var index = this.findPreviousIndex(focus.length > 0 ? focus[0] - n : 0, loop, filter);
+        if (index > -1) {
+            this.setFocus([index], browserEvent);
         }
-        this.setFocus([Math.max(index, 0)], browserEvent);
     };
-    List.prototype.focusNextPage = function (browserEvent) {
+    List.prototype.focusNextPage = function (browserEvent, filter) {
         var _this = this;
         var lastPageIndex = this.view.indexAt(this.view.getScrollTop() + this.view.renderHeight);
         lastPageIndex = lastPageIndex === 0 ? 0 : lastPageIndex - 1;
         var lastPageElement = this.view.element(lastPageIndex);
         var currentlyFocusedElement = this.getFocusedElements()[0];
         if (currentlyFocusedElement !== lastPageElement) {
-            this.setFocus([lastPageIndex], browserEvent);
+            var lastGoodPageIndex = this.findPreviousIndex(lastPageIndex, false, filter);
+            if (lastGoodPageIndex > -1 && currentlyFocusedElement !== this.view.element(lastGoodPageIndex)) {
+                this.setFocus([lastGoodPageIndex], browserEvent);
+            }
+            else {
+                this.setFocus([lastPageIndex], browserEvent);
+            }
         }
         else {
             var previousScrollTop = this.view.getScrollTop();
             this.view.setScrollTop(previousScrollTop + this.view.renderHeight - this.view.elementHeight(lastPageIndex));
             if (this.view.getScrollTop() !== previousScrollTop) {
                 // Let the scroll event listener run
-                setTimeout(function () { return _this.focusNextPage(browserEvent); }, 0);
+                setTimeout(function () { return _this.focusNextPage(browserEvent, filter); }, 0);
             }
         }
     };
-    List.prototype.focusPreviousPage = function (browserEvent) {
+    List.prototype.focusPreviousPage = function (browserEvent, filter) {
         var _this = this;
         var firstPageIndex;
         var scrollTop = this.view.getScrollTop();
@@ -914,28 +1148,68 @@ var List = /** @class */ (function () {
         var firstPageElement = this.view.element(firstPageIndex);
         var currentlyFocusedElement = this.getFocusedElements()[0];
         if (currentlyFocusedElement !== firstPageElement) {
-            this.setFocus([firstPageIndex], browserEvent);
+            var firstGoodPageIndex = this.findNextIndex(firstPageIndex, false, filter);
+            if (firstGoodPageIndex > -1 && currentlyFocusedElement !== this.view.element(firstGoodPageIndex)) {
+                this.setFocus([firstGoodPageIndex], browserEvent);
+            }
+            else {
+                this.setFocus([firstPageIndex], browserEvent);
+            }
         }
         else {
             var previousScrollTop = scrollTop;
             this.view.setScrollTop(scrollTop - this.view.renderHeight);
             if (this.view.getScrollTop() !== previousScrollTop) {
                 // Let the scroll event listener run
-                setTimeout(function () { return _this.focusPreviousPage(browserEvent); }, 0);
+                setTimeout(function () { return _this.focusPreviousPage(browserEvent, filter); }, 0);
             }
         }
     };
-    List.prototype.focusLast = function (browserEvent) {
+    List.prototype.focusLast = function (browserEvent, filter) {
         if (this.length === 0) {
             return;
         }
-        this.setFocus([this.length - 1], browserEvent);
+        var index = this.findPreviousIndex(this.length - 1, false, filter);
+        if (index > -1) {
+            this.setFocus([index], browserEvent);
+        }
     };
-    List.prototype.focusFirst = function (browserEvent) {
+    List.prototype.focusFirst = function (browserEvent, filter) {
         if (this.length === 0) {
             return;
         }
-        this.setFocus([0], browserEvent);
+        var index = this.findNextIndex(0, false, filter);
+        if (index > -1) {
+            this.setFocus([index], browserEvent);
+        }
+    };
+    List.prototype.findNextIndex = function (index, loop, filter) {
+        if (loop === void 0) { loop = false; }
+        for (var i = 0; i < this.length; i++) {
+            if (index >= this.length && !loop) {
+                return -1;
+            }
+            index = index % this.length;
+            if (!filter || filter(this.element(index))) {
+                return index;
+            }
+            index++;
+        }
+        return -1;
+    };
+    List.prototype.findPreviousIndex = function (index, loop, filter) {
+        if (loop === void 0) { loop = false; }
+        for (var i = 0; i < this.length; i++) {
+            if (index < 0 && !loop) {
+                return -1;
+            }
+            index = (this.length + (index % this.length)) % this.length;
+            if (!filter || filter(this.element(index))) {
+                return index;
+            }
+            index--;
+        }
+        return -1;
     };
     List.prototype.getFocus = function () {
         return this.focus.get();
@@ -967,8 +1241,23 @@ var List = /** @class */ (function () {
             }
         }
     };
-    List.prototype.getElementDomId = function (index) {
-        return this.idPrefix + "_" + index;
+    /**
+     * Returns the relative position of an element rendered in the list.
+     * Returns `null` if the element isn't *entirely* in the visible viewport.
+     */
+    List.prototype.getRelativeTop = function (index) {
+        if (index < 0 || index >= this.length) {
+            throw new Error("Invalid index " + index);
+        }
+        var scrollTop = this.view.getScrollTop();
+        var elementTop = this.view.elementTop(index);
+        var elementHeight = this.view.elementHeight(index);
+        if (elementTop < scrollTop || elementTop + elementHeight > scrollTop + this.view.renderHeight) {
+            return null;
+        }
+        // y = mx + b
+        var m = elementHeight - this.view.renderHeight;
+        return Math.abs((scrollTop - elementTop) / m);
     };
     List.prototype.getHTMLElement = function () {
         return this.view.domNode;
@@ -981,7 +1270,7 @@ var List = /** @class */ (function () {
                 throw new Error("Invalid index " + index);
             }
         }
-        this._onOpen.fire({ indexes: indexes, elements: indexes.map(function (i) { return _this.view.element(i); }), browserEvent: browserEvent });
+        this._onDidOpen.fire({ indexes: indexes, elements: indexes.map(function (i) { return _this.view.element(i); }), browserEvent: browserEvent });
     };
     List.prototype.pin = function (indexes) {
         for (var _i = 0, indexes_4 = indexes; _i < indexes_4.length; _i++) {
@@ -1003,7 +1292,7 @@ var List = /** @class */ (function () {
     List.prototype._onFocusChange = function () {
         var focus = this.focus.get();
         if (focus.length > 0) {
-            this.view.domNode.setAttribute('aria-activedescendant', this.getElementDomId(focus[0]));
+            this.view.domNode.setAttribute('aria-activedescendant', this.view.getElementDomId(focus[0]));
         }
         else {
             this.view.domNode.removeAttribute('aria-activedescendant');
@@ -1020,17 +1309,19 @@ var List = /** @class */ (function () {
     List.prototype.dispose = function () {
         this._onDidDispose.fire();
         this.disposables = dispose(this.disposables);
-        this._onOpen.dispose();
+        this._onDidOpen.dispose();
         this._onPin.dispose();
         this._onDidDispose.dispose();
     };
-    List.InstanceCount = 0;
     __decorate([
         memoize
     ], List.prototype, "onFocusChange", null);
     __decorate([
         memoize
     ], List.prototype, "onSelectionChange", null);
+    __decorate([
+        memoize
+    ], List.prototype, "onContextMenu", null);
     return List;
 }());
 export { List };

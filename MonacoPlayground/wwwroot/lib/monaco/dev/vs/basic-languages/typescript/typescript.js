@@ -115,6 +115,7 @@ define(["require", "exports"], function (require, exports) {
                 // delimiters and operators
                 [/[()\[\]]/, '@brackets'],
                 [/[<>](?!@symbols)/, '@brackets'],
+                [/!(?=([^=]|$))/, 'delimiter'],
                 [/@symbols/, {
                         cases: {
                             '@operators': 'delimiter',
@@ -170,7 +171,7 @@ define(["require", "exports"], function (require, exports) {
                 [/\^/, 'regexp.invalid'],
                 [/@regexpesc/, 'regexp.escape'],
                 [/[^\]]/, 'regexp'],
-                [/\]/, '@brackets.regexp.escape.control', '@pop'],
+                [/\]/, { token: 'regexp.escape.control', next: '@pop', bracket: '@close' }]
             ],
             string_double: [
                 [/[^\\"]+/, 'string'],

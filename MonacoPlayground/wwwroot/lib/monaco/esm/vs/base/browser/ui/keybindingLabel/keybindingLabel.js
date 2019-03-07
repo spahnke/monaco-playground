@@ -6,10 +6,12 @@ import './keybindingLabel.css';
 import { equals } from '../../../common/objects.js';
 import { UILabelProvider } from '../../../common/keybindingLabels.js';
 import * as dom from '../../dom.js';
+import { localize } from '../../../../nls.js';
 var $ = dom.$;
 var KeybindingLabel = /** @class */ (function () {
-    function KeybindingLabel(container, os) {
+    function KeybindingLabel(container, os, options) {
         this.os = os;
+        this.options = options;
         this.domNode = dom.append(container, $('.monaco-keybinding'));
         this.didEverRender = false;
         container.appendChild(this.domNode);
@@ -34,6 +36,9 @@ var KeybindingLabel = /** @class */ (function () {
                 this.renderPart(this.domNode, chordPart, this.matches ? this.matches.chordPart : null);
             }
             this.domNode.title = this.keybinding.getAriaLabel() || '';
+        }
+        else if (this.options && this.options.renderUnboundKeybindings) {
+            this.renderUnbound(this.domNode);
         }
         this.didEverRender = true;
     };
@@ -62,7 +67,8 @@ var KeybindingLabel = /** @class */ (function () {
             dom.append(parent, $('span.monaco-keybinding-key-separator', undefined, separator));
         }
     };
-    KeybindingLabel.prototype.dispose = function () {
+    KeybindingLabel.prototype.renderUnbound = function (parent) {
+        dom.append(parent, $('span.monaco-keybinding-key', undefined, localize('unbound', "Unbound")));
     };
     KeybindingLabel.areSame = function (a, b) {
         if (a === b || (!a && !b)) {

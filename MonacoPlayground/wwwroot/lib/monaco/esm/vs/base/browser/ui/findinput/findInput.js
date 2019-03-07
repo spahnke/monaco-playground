@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -42,7 +42,6 @@ var FindInput = /** @class */ (function (_super) {
         _this._onRegexKeyDown = _this._register(new Emitter());
         _this._lastHighlightFindOptions = 0;
         _this.contextViewProvider = contextViewProvider;
-        _this.width = options.width || 100;
         _this.placeholder = options.placeholder || '';
         _this.validation = options.validation;
         _this.label = options.label || NLS_DEFAULT_LABEL;
@@ -59,13 +58,8 @@ var FindInput = /** @class */ (function (_super) {
         _this.inputValidationErrorBorder = options.inputValidationErrorBorder;
         _this.inputValidationErrorBackground = options.inputValidationErrorBackground;
         _this.inputValidationErrorForeground = options.inputValidationErrorForeground;
-        _this.regex = null;
-        _this.wholeWords = null;
-        _this.caseSensitive = null;
-        _this.domNode = null;
-        _this.inputBox = null;
-        _this.buildDomNode(options.appendCaseSensitiveLabel || '', options.appendWholeWordsLabel || '', options.appendRegexLabel || '', options.history);
-        if (Boolean(parent)) {
+        _this.buildDomNode(options.appendCaseSensitiveLabel || '', options.appendWholeWordsLabel || '', options.appendRegexLabel || '', options.history || [], !!options.flexibleHeight);
+        if (parent) {
             parent.appendChild(_this.domNode);
         }
         _this.onkeydown(_this.inputBox.inputElement, function (e) { return _this._onKeyDown.fire(e); });
@@ -159,21 +153,18 @@ var FindInput = /** @class */ (function (_super) {
     };
     FindInput.prototype.setCaseSensitive = function (value) {
         this.caseSensitive.checked = value;
-        this.setInputWidth();
     };
     FindInput.prototype.getWholeWords = function () {
         return this.wholeWords.checked;
     };
     FindInput.prototype.setWholeWords = function (value) {
         this.wholeWords.checked = value;
-        this.setInputWidth();
     };
     FindInput.prototype.getRegex = function () {
         return this.regex.checked;
     };
     FindInput.prototype.setRegex = function (value) {
         this.regex.checked = value;
-        this.setInputWidth();
         this.validate();
     };
     FindInput.prototype.focusOnCaseSensitive = function () {
@@ -184,20 +175,15 @@ var FindInput = /** @class */ (function (_super) {
         this._lastHighlightFindOptions = 1 - this._lastHighlightFindOptions;
         dom.addClass(this.domNode, 'highlight-' + (this._lastHighlightFindOptions));
     };
-    FindInput.prototype.setInputWidth = function () {
-        var w = this.width - this.caseSensitive.width() - this.wholeWords.width() - this.regex.width();
-        this.inputBox.width = w;
-    };
-    FindInput.prototype.buildDomNode = function (appendCaseSensitiveLabel, appendWholeWordsLabel, appendRegexLabel, history) {
+    FindInput.prototype.buildDomNode = function (appendCaseSensitiveLabel, appendWholeWordsLabel, appendRegexLabel, history, flexibleHeight) {
         var _this = this;
         this.domNode = document.createElement('div');
-        this.domNode.style.width = this.width + 'px';
         dom.addClass(this.domNode, 'monaco-findInput');
         this.inputBox = this._register(new HistoryInputBox(this.domNode, this.contextViewProvider, {
             placeholder: this.placeholder || '',
             ariaLabel: this.label || '',
             validationOptions: {
-                validation: this.validation || null
+                validation: this.validation
             },
             inputBackground: this.inputBackground,
             inputForeground: this.inputForeground,
@@ -211,7 +197,8 @@ var FindInput = /** @class */ (function (_super) {
             inputValidationErrorBackground: this.inputValidationErrorBackground,
             inputValidationErrorForeground: this.inputValidationErrorForeground,
             inputValidationErrorBorder: this.inputValidationErrorBorder,
-            history: history
+            history: history,
+            flexibleHeight: flexibleHeight
         }));
         this.regex = this._register(new RegexCheckbox({
             appendTitle: appendRegexLabel,
@@ -223,7 +210,6 @@ var FindInput = /** @class */ (function (_super) {
             if (!viaKeyboard && _this.fixFocusOnOptionClickEnabled) {
                 _this.inputBox.focus();
             }
-            _this.setInputWidth();
             _this.validate();
         }));
         this._register(this.regex.onKeyDown(function (e) {
@@ -239,7 +225,6 @@ var FindInput = /** @class */ (function (_super) {
             if (!viaKeyboard && _this.fixFocusOnOptionClickEnabled) {
                 _this.inputBox.focus();
             }
-            _this.setInputWidth();
             _this.validate();
         }));
         this.caseSensitive = this._register(new CaseSensitiveCheckbox({
@@ -252,19 +237,25 @@ var FindInput = /** @class */ (function (_super) {
             if (!viaKeyboard && _this.fixFocusOnOptionClickEnabled) {
                 _this.inputBox.focus();
             }
-            _this.setInputWidth();
             _this.validate();
         }));
         this._register(this.caseSensitive.onKeyDown(function (e) {
             _this._onCaseSensitiveKeyDown.fire(e);
         }));
+        if (this._showOptionButtons) {
+            var paddingRight = (this.caseSensitive.width() + this.wholeWords.width() + this.regex.width()) + 'px';
+            this.inputBox.inputElement.style.paddingRight = paddingRight;
+            if (this.inputBox.mirrorElement) {
+                this.inputBox.mirrorElement.style.paddingRight = paddingRight;
+            }
+        }
         // Arrow-Key support to navigate between options
         var indexes = [this.caseSensitive.domNode, this.wholeWords.domNode, this.regex.domNode];
         this.onkeydown(this.domNode, function (event) {
             if (event.equals(15 /* LeftArrow */) || event.equals(17 /* RightArrow */) || event.equals(9 /* Escape */)) {
                 var index = indexes.indexOf(document.activeElement);
                 if (index >= 0) {
-                    var newIndex = void 0;
+                    var newIndex = -1;
                     if (event.equals(17 /* RightArrow */)) {
                         newIndex = (index + 1) % indexes.length;
                     }
@@ -286,7 +277,6 @@ var FindInput = /** @class */ (function (_super) {
                 }
             }
         });
-        this.setInputWidth();
         var controls = document.createElement('div');
         controls.className = 'controls';
         controls.style.display = this._showOptionButtons ? 'block' : 'none';
@@ -296,10 +286,14 @@ var FindInput = /** @class */ (function (_super) {
         this.domNode.appendChild(controls);
     };
     FindInput.prototype.validate = function () {
-        this.inputBox.validate();
+        if (this.inputBox) {
+            this.inputBox.validate();
+        }
     };
     FindInput.prototype.clearMessage = function () {
-        this.inputBox.hideMessage();
+        if (this.inputBox) {
+            this.inputBox.hideMessage();
+        }
     };
     FindInput.prototype.dispose = function () {
         _super.prototype.dispose.call(this);

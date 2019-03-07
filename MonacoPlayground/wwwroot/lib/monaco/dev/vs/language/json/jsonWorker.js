@@ -89,6 +89,34 @@
         Location.is = is;
     })(Location = exports.Location || (exports.Location = {}));
     /**
+     * The LocationLink namespace provides helper functions to work with
+     * [LocationLink](#LocationLink) literals.
+     */
+    var LocationLink;
+    (function (LocationLink) {
+        /**
+         * Creates a LocationLink literal.
+         * @param targetUri The definition's uri.
+         * @param targetRange The full range of the definition.
+         * @param targetSelectionRange The span of the symbol definition at the target.
+         * @param originSelectionRange The span of the symbol being defined in the originating source file.
+         */
+        function create(targetUri, targetRange, targetSelectionRange, originSelectionRange) {
+            return { targetUri: targetUri, targetRange: targetRange, targetSelectionRange: targetSelectionRange, originSelectionRange: originSelectionRange };
+        }
+        LocationLink.create = create;
+        /**
+         * Checks whether the given literal conforms to the [LocationLink](#LocationLink) interface.
+         */
+        function is(value) {
+            var candidate = value;
+            return Is.defined(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
+                && (Range.is(candidate.targetSelectionRange) || Is.undefined(candidate.targetSelectionRange))
+                && (Range.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
+        }
+        LocationLink.is = is;
+    })(LocationLink = exports.LocationLink || (exports.LocationLink = {}));
+    /**
      * The Color namespace provides helper functions to work with
      * [Color](#Color) literals.
      */
@@ -406,13 +434,84 @@
         }
         TextDocumentEdit.is = is;
     })(TextDocumentEdit = exports.TextDocumentEdit || (exports.TextDocumentEdit = {}));
+    var CreateFile;
+    (function (CreateFile) {
+        function create(uri, options) {
+            var result = {
+                kind: 'create',
+                uri: uri
+            };
+            if (options !== void 0 && (options.overwrite !== void 0 || options.ignoreIfExists !== void 0)) {
+                result.options = options;
+            }
+            return result;
+        }
+        CreateFile.create = create;
+        function is(value) {
+            var candidate = value;
+            return candidate && candidate.kind === 'create' && Is.string(candidate.uri) &&
+                (candidate.options === void 0 ||
+                    ((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists))));
+        }
+        CreateFile.is = is;
+    })(CreateFile = exports.CreateFile || (exports.CreateFile = {}));
+    var RenameFile;
+    (function (RenameFile) {
+        function create(oldUri, newUri, options) {
+            var result = {
+                kind: 'rename',
+                oldUri: oldUri,
+                newUri: newUri
+            };
+            if (options !== void 0 && (options.overwrite !== void 0 || options.ignoreIfExists !== void 0)) {
+                result.options = options;
+            }
+            return result;
+        }
+        RenameFile.create = create;
+        function is(value) {
+            var candidate = value;
+            return candidate && candidate.kind === 'rename' && Is.string(candidate.oldUri) && Is.string(candidate.newUri) &&
+                (candidate.options === void 0 ||
+                    ((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists))));
+        }
+        RenameFile.is = is;
+    })(RenameFile = exports.RenameFile || (exports.RenameFile = {}));
+    var DeleteFile;
+    (function (DeleteFile) {
+        function create(uri, options) {
+            var result = {
+                kind: 'delete',
+                uri: uri
+            };
+            if (options !== void 0 && (options.recursive !== void 0 || options.ignoreIfNotExists !== void 0)) {
+                result.options = options;
+            }
+            return result;
+        }
+        DeleteFile.create = create;
+        function is(value) {
+            var candidate = value;
+            return candidate && candidate.kind === 'delete' && Is.string(candidate.uri) &&
+                (candidate.options === void 0 ||
+                    ((candidate.options.recursive === void 0 || Is.boolean(candidate.options.recursive)) && (candidate.options.ignoreIfNotExists === void 0 || Is.boolean(candidate.options.ignoreIfNotExists))));
+        }
+        DeleteFile.is = is;
+    })(DeleteFile = exports.DeleteFile || (exports.DeleteFile = {}));
     var WorkspaceEdit;
     (function (WorkspaceEdit) {
         function is(value) {
             var candidate = value;
             return candidate &&
                 (candidate.changes !== void 0 || candidate.documentChanges !== void 0) &&
-                (candidate.documentChanges === void 0 || Is.typedArray(candidate.documentChanges, TextDocumentEdit.is));
+                (candidate.documentChanges === void 0 || candidate.documentChanges.every(function (change) {
+                    if (Is.string(change.kind)) {
+                        return CreateFile.is(change) || RenameFile.is(change) || DeleteFile.is(change);
+                    }
+                    else {
+                        return TextDocumentEdit.is(change);
+                    }
+                }));
         }
         WorkspaceEdit.is = is;
     })(WorkspaceEdit = exports.WorkspaceEdit || (exports.WorkspaceEdit = {}));
@@ -450,9 +549,11 @@
             if (workspaceEdit) {
                 this._workspaceEdit = workspaceEdit;
                 if (workspaceEdit.documentChanges) {
-                    workspaceEdit.documentChanges.forEach(function (textDocumentEdit) {
-                        var textEditChange = new TextEditChangeImpl(textDocumentEdit.edits);
-                        _this._textEditChanges[textDocumentEdit.textDocument.uri] = textEditChange;
+                    workspaceEdit.documentChanges.forEach(function (change) {
+                        if (TextDocumentEdit.is(change)) {
+                            var textEditChange = new TextEditChangeImpl(change.edits);
+                            _this._textEditChanges[change.textDocument.uri] = textEditChange;
+                        }
                     });
                 }
                 else if (workspaceEdit.changes) {
@@ -482,7 +583,7 @@
                     };
                 }
                 if (!this._workspaceEdit.documentChanges) {
-                    throw new Error('Workspace edit is not configured for versioned document changes.');
+                    throw new Error('Workspace edit is not configured for document changes.');
                 }
                 var textDocument = key;
                 var result = this._textEditChanges[textDocument.uri];
@@ -515,6 +616,23 @@
                     this._textEditChanges[key] = result;
                 }
                 return result;
+            }
+        };
+        WorkspaceChange.prototype.createFile = function (uri, options) {
+            this.checkDocumentChanges();
+            this._workspaceEdit.documentChanges.push(CreateFile.create(uri, options));
+        };
+        WorkspaceChange.prototype.renameFile = function (oldUri, newUri, options) {
+            this.checkDocumentChanges();
+            this._workspaceEdit.documentChanges.push(RenameFile.create(oldUri, newUri, options));
+        };
+        WorkspaceChange.prototype.deleteFile = function (uri, options) {
+            this.checkDocumentChanges();
+            this._workspaceEdit.documentChanges.push(DeleteFile.create(uri, options));
+        };
+        WorkspaceChange.prototype.checkDocumentChanges = function () {
+            if (!this._workspaceEdit || !this._workspaceEdit.documentChanges) {
+                throw new Error('Workspace edit is not configured for document changes.');
             }
         };
         return WorkspaceChange;
@@ -563,7 +681,7 @@
          */
         function is(value) {
             var candidate = value;
-            return Is.defined(candidate) && Is.string(candidate.uri) && Is.number(candidate.version);
+            return Is.defined(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.number(candidate.version));
         }
         VersionedTextDocumentIdentifier.is = is;
     })(VersionedTextDocumentIdentifier = exports.VersionedTextDocumentIdentifier || (exports.VersionedTextDocumentIdentifier = {}));
@@ -744,7 +862,7 @@
          */
         function is(value) {
             var candidate = value;
-            return Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) ||
+            return !!candidate && Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) ||
                 MarkedString.is(candidate.contents) ||
                 Is.typedArray(candidate.contents, MarkedString.is)) && (value.range === void 0 || Range.is(value.range));
         }
@@ -1170,7 +1288,7 @@
                     text = text.substring(0, startOffset) + e.newText + text.substring(endOffset, text.length);
                 }
                 else {
-                    throw new Error('Ovelapping edit');
+                    throw new Error('Overlapping edit');
                 }
                 lastModifiedOffset = startOffset;
             }
@@ -1625,10 +1743,11 @@ define('vscode-languageserver-types', ['vscode-languageserver-types/main'], func
                     // Multi-line comment
                     if (text.charCodeAt(pos + 1) === 42 /* asterisk */) {
                         pos += 2;
+                        var safeLength = len - 1; // For lookahead.
                         var commentClosed = false;
-                        while (pos < len) {
+                        while (pos < safeLength) {
                             var ch = text.charCodeAt(pos);
-                            if (ch === 42 /* asterisk */ && (pos + 1 < len) && text.charCodeAt(pos + 1) === 47 /* slash */) {
+                            if (ch === 42 /* asterisk */ && text.charCodeAt(pos + 1) === 47 /* slash */) {
                                 pos += 2;
                                 commentClosed = true;
                                 break;
@@ -1964,6 +2083,12 @@ define('vscode-languageserver-types', ['vscode-languageserver-types/main'], func
     'use strict';
     Object.defineProperty(exports, "__esModule", { value: true });
     var scanner_1 = require("./scanner");
+    var ParseOptions;
+    (function (ParseOptions) {
+        ParseOptions.DEFAULT = {
+            allowTrailingComma: false
+        };
+    })(ParseOptions || (ParseOptions = {}));
     /**
      * For a given offset, evaluate the location in the JSON document. Each segment in the location path is either a property name or an array index.
      */
@@ -2090,6 +2215,7 @@ define('vscode-languageserver-types', ['vscode-languageserver-types/main'], func
      */
     function parse(text, errors, options) {
         if (errors === void 0) { errors = []; }
+        if (options === void 0) { options = ParseOptions.DEFAULT; }
         var currentProperty = null;
         var currentParent = [];
         var previousParents = [];
@@ -2139,6 +2265,7 @@ define('vscode-languageserver-types', ['vscode-languageserver-types/main'], func
      */
     function parseTree(text, errors, options) {
         if (errors === void 0) { errors = []; }
+        if (options === void 0) { options = ParseOptions.DEFAULT; }
         var currentParent = { type: 'array', offset: -1, length: -1, children: [], parent: void 0 }; // artificial root
         function ensurePropertyComplete(endOffset) {
             if (currentParent.type === 'property') {
@@ -2312,6 +2439,7 @@ define('vscode-languageserver-types', ['vscode-languageserver-types/main'], func
      * Parses the given text and invokes the visitor functions for each object, array and literal reached.
      */
     function visit(text, visitor, options) {
+        if (options === void 0) { options = ParseOptions.DEFAULT; }
         var _scanner = scanner_1.createScanner(text, false);
         function toNoArgVisit(visitFunction) {
             return visitFunction ? function () { return visitFunction(_scanner.getTokenOffset(), _scanner.getTokenLength()); } : function () { return true; };
@@ -2595,6 +2723,7 @@ define('vscode-languageserver-types', ['vscode-languageserver-types/main'], func
     }
     exports.removeProperty = removeProperty;
     function setProperty(text, originalPath, value, formattingOptions, getInsertionIndex) {
+        var _a;
         var path = originalPath.slice();
         var errors = [];
         var root = parser_1.parseTree(text, errors);
@@ -2717,7 +2846,6 @@ define('vscode-languageserver-types', ['vscode-languageserver-types/main'], func
         else {
             throw new Error("Can not add " + (typeof lastSegment !== 'number' ? 'index' : 'property') + " to parent of type " + parent.type);
         }
-        var _a;
     }
     exports.setProperty = setProperty;
     function withFormatting(text, edit, formattingOptions) {
@@ -2820,6 +2948,28 @@ define('vscode-languageserver-types', ['vscode-languageserver-types/main'], func
      * of comments with a replaceCharacter
      */
     exports.stripComments = parser.stripComments;
+    function printParseErrorCode(code) {
+        switch (code) {
+            case 1 /* InvalidSymbol */: return 'InvalidSymbol';
+            case 2 /* InvalidNumberFormat */: return 'InvalidNumberFormat';
+            case 3 /* PropertyNameExpected */: return 'PropertyNameExpected';
+            case 4 /* ValueExpected */: return 'ValueExpected';
+            case 5 /* ColonExpected */: return 'ColonExpected';
+            case 6 /* CommaExpected */: return 'CommaExpected';
+            case 7 /* CloseBraceExpected */: return 'CloseBraceExpected';
+            case 8 /* CloseBracketExpected */: return 'CloseBracketExpected';
+            case 9 /* EndOfFileExpected */: return 'EndOfFileExpected';
+            case 10 /* InvalidCommentToken */: return 'InvalidCommentToken';
+            case 11 /* UnexpectedEndOfComment */: return 'UnexpectedEndOfComment';
+            case 12 /* UnexpectedEndOfString */: return 'UnexpectedEndOfString';
+            case 13 /* UnexpectedEndOfNumber */: return 'UnexpectedEndOfNumber';
+            case 14 /* InvalidUnicode */: return 'InvalidUnicode';
+            case 15 /* InvalidEscapeCharacter */: return 'InvalidEscapeCharacter';
+            case 16 /* InvalidCharacter */: return 'InvalidCharacter';
+        }
+        return '<unknown ParseErrorCode>';
+    }
+    exports.printParseErrorCode = printParseErrorCode;
     /**
      * Computes the edits needed to format a JSON document.
      *
@@ -2869,6 +3019,10 @@ define('vscode-languageserver-types', ['vscode-languageserver-types/main'], func
 //# sourceMappingURL=main.js.map;
 define('jsonc-parser', ['jsonc-parser/main'], function (main) { return main; });
 
+/*---------------------------------------------------------------------------------------------
+*  Copyright (c) Microsoft Corporation. All rights reserved.
+*  Licensed under the MIT License. See License.txt in the project root for license information.
+*--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
@@ -2878,11 +3032,7 @@ define('jsonc-parser', ['jsonc-parser/main'], function (main) { return main; });
         define('vscode-json-languageservice/utils/objects',["require", "exports"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-    *  Copyright (c) Microsoft Corporation. All rights reserved.
-    *  Licensed under the MIT License. See License.txt in the project root for license information.
-    *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function equals(one, other) {
         if (one === other) {
@@ -2934,8 +3084,24 @@ define('jsonc-parser', ['jsonc-parser/main'], function (main) { return main; });
         return true;
     }
     exports.equals = equals;
+    function isNumber(val) {
+        return typeof val === 'number';
+    }
+    exports.isNumber = isNumber;
+    function isDefined(val) {
+        return typeof val !== 'undefined';
+    }
+    exports.isDefined = isDefined;
+    function isBoolean(val) {
+        return typeof val === 'boolean';
+    }
+    exports.isBoolean = isBoolean;
+    function isString(val) {
+        return typeof val === 'string';
+    }
+    exports.isString = isString;
 });
-//# sourceMappingURL=objects.js.map;
+
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
@@ -2945,11 +3111,7 @@ define('jsonc-parser', ['jsonc-parser/main'], function (main) { return main; });
         define('vscode-json-languageservice/jsonLanguageTypes',["require", "exports", "vscode-languageserver-types"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var vscode_languageserver_types_1 = require("vscode-languageserver-types");
     exports.Range = vscode_languageserver_types_1.Range;
@@ -2959,6 +3121,28 @@ define('jsonc-parser', ['jsonc-parser/main'], function (main) { return main; });
     exports.ColorPresentation = vscode_languageserver_types_1.ColorPresentation;
     exports.FoldingRange = vscode_languageserver_types_1.FoldingRange;
     exports.FoldingRangeKind = vscode_languageserver_types_1.FoldingRangeKind;
+    // #region Proposed types, remove once added to vscode-languageserver-types
+    /**
+     * Enum of known selection range kinds
+     */
+    var SelectionRangeKind;
+    (function (SelectionRangeKind) {
+        /**
+         * Empty Kind.
+         */
+        SelectionRangeKind["Empty"] = "";
+        /**
+         * The statment kind, its value is `statement`, possible extensions can be
+         * `statement.if` etc
+         */
+        SelectionRangeKind["Statement"] = "statement";
+        /**
+         * The declaration kind, its value is `declaration`, possible extensions can be
+         * `declaration.function`, `declaration.class` etc.
+         */
+        SelectionRangeKind["Declaration"] = "declaration";
+    })(SelectionRangeKind = exports.SelectionRangeKind || (exports.SelectionRangeKind = {}));
+    // #endregion
     /**
      * Error codes used by diagnostics
      */
@@ -2983,8 +3167,20 @@ define('jsonc-parser', ['jsonc-parser/main'], function (main) { return main; });
         ErrorCode[ErrorCode["CommentNotPermitted"] = 521] = "CommentNotPermitted";
         ErrorCode[ErrorCode["SchemaResolveError"] = 768] = "SchemaResolveError";
     })(ErrorCode = exports.ErrorCode || (exports.ErrorCode = {}));
+    var ClientCapabilities;
+    (function (ClientCapabilities) {
+        ClientCapabilities.LATEST = {
+            textDocument: {
+                completion: {
+                    completionItem: {
+                        documentationFormat: [vscode_languageserver_types_1.MarkupKind.Markdown, vscode_languageserver_types_1.MarkupKind.PlainText]
+                    }
+                }
+            }
+        };
+    })(ClientCapabilities = exports.ClientCapabilities || (exports.ClientCapabilities = {}));
 });
-//# sourceMappingURL=jsonLanguageTypes.js.map;
+
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -3110,7 +3306,7 @@ var __extends = (this && this.__extends) || (function () {
     var _regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
     /**
      * Uniform Resource Identifier (URI) http://tools.ietf.org/html/rfc3986.
-     * This class is a simple parser which creates the basic component paths
+     * This class is a simple parser which creates the basic component parts
      * (http://tools.ietf.org/html/rfc3986#section-3) with minimal validation
      * and encoding.
      *
@@ -3121,8 +3317,6 @@ var __extends = (this && this.__extends) || (function () {
      *        |   _____________________|__
      *       / \ /                        \
      *       urn:example:animal:ferret:nose
-     *
-     *
      */
     var URI = (function () {
         /**
@@ -3165,11 +3359,32 @@ var __extends = (this && this.__extends) || (function () {
             // ---- filesystem path -----------------------
             /**
              * Returns a string representing the corresponding file system path of this URI.
-             * Will handle UNC paths and normalize windows drive letters to lower-case. Also
-             * uses the platform specific path separator. Will *not* validate the path for
-             * invalid characters and semantics. Will *not* look at the scheme of this URI.
+             * Will handle UNC paths, normalizes windows drive letters to lower-case, and uses the
+             * platform specific path separator.
+             *
+             * * Will *not* validate the path for invalid characters and semantics.
+             * * Will *not* look at the scheme of this URI.
+             * * The result shall *not* be used for display purposes but for accessing a file on disk.
+             *
+             *
+             * The *difference* to `URI#path` is the use of the platform specific separator and the handling
+             * of UNC paths. See the below sample of a file-uri with an authority (UNC path).
+             *
+             * ```ts
+                const u = URI.parse('file://server/c$/folder/file.txt')
+                u.authority === 'server'
+                u.path === '/shares/c$/file.txt'
+                u.fsPath === '\\server\c$\folder\file.txt'
+            ```
+             *
+             * Using `URI#path` to read a file (using fs-apis) would not be enough because parts of the path,
+             * namely the server name, would be missing. Therefore `URI#fsPath` exists - it's sugar to ease working
+             * with URIs that represent files on disk (`file` scheme).
              */
             get: function () {
+                // if (this.scheme !== 'file') {
+                // 	console.warn(`[UriError] calling fsPath with scheme ${this.scheme}`);
+                // }
                 return _makeFsPath(this);
             },
             enumerable: true,
@@ -3221,6 +3436,12 @@ var __extends = (this && this.__extends) || (function () {
             return new _URI(scheme, authority, path, query, fragment);
         };
         // ---- parse & validate ------------------------
+        /**
+         * Creates a new URI from a string, e.g. `http://www.msft.com/some/path`,
+         * `file:///usr/home`, or `scheme:with/path`.
+         *
+         * @param value A string which represents an URI (see `URI#toString`).
+         */
         URI.parse = function (value) {
             var match = _regexp.exec(value);
             if (!match) {
@@ -3228,6 +3449,28 @@ var __extends = (this && this.__extends) || (function () {
             }
             return new _URI(match[2] || _empty, decodeURIComponent(match[4] || _empty), decodeURIComponent(match[5] || _empty), decodeURIComponent(match[7] || _empty), decodeURIComponent(match[9] || _empty));
         };
+        /**
+         * Creates a new URI from a file system path, e.g. `c:\my\files`,
+         * `/usr/home`, or `\\server\share\some\path`.
+         *
+         * The *difference* between `URI#parse` and `URI#file` is that the latter treats the argument
+         * as path, not as stringified-uri. E.g. `URI.file(path)` is **not the same as**
+         * `URI.parse('file://' + path)` because the path might contain characters that are
+         * interpreted (# and ?). See the following sample:
+         * ```ts
+        const good = URI.file('/coding/c#/project1');
+        good.scheme === 'file';
+        good.path === '/coding/c#/project1';
+        good.fragment === '';
+    
+        const bad = URI.parse('file://' + '/coding/c#/project1');
+        bad.scheme === 'file';
+        bad.path === '/coding/c'; // path is now broken
+        bad.fragment === '/project1';
+        ```
+         *
+         * @param path A file system path (see `URI#fsPath`)
+         */
         URI.file = function (path) {
             var authority = _empty;
             // normalize to fwd-slashes on windows,
@@ -3256,6 +3499,13 @@ var __extends = (this && this.__extends) || (function () {
         };
         // ---- printing/externalize ---------------------------
         /**
+         * Creates a string presentation for this URI. It's guardeed that calling
+         * `URI.parse` with the result of this function creates an URI which is equal
+         * to this URI.
+         *
+         * * The result shall *not* be used for display purposes but for externalization or transport.
+         * * The result will be encoded using the percentage encoding and encoding happens mostly
+         * ignore the scheme-specific encoding rules.
          *
          * @param skipEncoding Do not encode the result, default is `false`
          */
@@ -3531,7 +3781,7 @@ var __extends = (this && this.__extends) || (function () {
         }
         if (fragment) {
             res += '#';
-            res += encoder(fragment, false);
+            res += !skipEncoding ? encodeURIComponentFast(fragment, false) : fragment;
         }
         return res;
     }
@@ -3540,6 +3790,10 @@ var __extends = (this && this.__extends) || (function () {
 
 define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
 
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -3562,14 +3816,10 @@ var __extends = (this && this.__extends) || (function () {
         define('vscode-json-languageservice/parser/jsonParser',["require", "exports", "jsonc-parser", "../utils/objects", "../jsonLanguageTypes", "vscode-nls", "vscode-uri", "vscode-languageserver-types"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Json = require("jsonc-parser");
-    var objects = require("../utils/objects");
+    var objects_1 = require("../utils/objects");
     var jsonLanguageTypes_1 = require("../jsonLanguageTypes");
     var nls = require("vscode-nls");
     var vscode_uri_1 = require("vscode-uri");
@@ -3696,7 +3946,7 @@ var __extends = (this && this.__extends) || (function () {
     }(ASTNodeImpl));
     exports.ObjectASTNodeImpl = ObjectASTNodeImpl;
     function asSchema(schema) {
-        if (typeof schema === 'boolean') {
+        if (objects_1.isBoolean(schema)) {
             return schema ? {} : { "not": {} };
         }
         return schema;
@@ -3758,10 +4008,10 @@ var __extends = (this && this.__extends) || (function () {
             return !!this.problems.length;
         };
         ValidationResult.prototype.mergeAll = function (validationResults) {
-            var _this = this;
-            validationResults.forEach(function (validationResult) {
-                _this.merge(validationResult);
-            });
+            for (var _i = 0, validationResults_1 = validationResults; _i < validationResults_1.length; _i++) {
+                var validationResult = validationResults_1[_i];
+                this.merge(validationResult);
+            }
         };
         ValidationResult.prototype.merge = function (validationResult) {
             this.problems = this.problems.concat(validationResult.problems);
@@ -3922,9 +4172,10 @@ var __extends = (this && this.__extends) || (function () {
                 }
             }
             if (Array.isArray(schema.allOf)) {
-                schema.allOf.forEach(function (subSchemaRef) {
+                for (var _i = 0, _a = schema.allOf; _i < _a.length; _i++) {
+                    var subSchemaRef = _a[_i];
                     validate(node, asSchema(subSchemaRef), validationResult, matchingSchemas);
-                });
+                }
             }
             var notSchema = asSchema(schema.not);
             if (notSchema) {
@@ -3938,16 +4189,18 @@ var __extends = (this && this.__extends) || (function () {
                         message: localize('notSchemaWarning', "Matches a schema that is not allowed.")
                     });
                 }
-                subMatchingSchemas.schemas.forEach(function (ms) {
+                for (var _b = 0, _c = subMatchingSchemas.schemas; _b < _c.length; _b++) {
+                    var ms = _c[_b];
                     ms.inverted = !ms.inverted;
                     matchingSchemas.add(ms);
-                });
+                }
             }
             var testAlternatives = function (alternatives, maxOneMatch) {
                 var matches = [];
                 // remember the best match that is used for error messages
                 var bestMatch = null;
-                alternatives.forEach(function (subSchemaRef) {
+                for (var _i = 0, alternatives_1 = alternatives; _i < alternatives_1.length; _i++) {
+                    var subSchemaRef = alternatives_1[_i];
                     var subSchema = asSchema(subSchemaRef);
                     var subValidationResult = new ValidationResult();
                     var subMatchingSchemas = matchingSchemas.newSub();
@@ -3978,7 +4231,7 @@ var __extends = (this && this.__extends) || (function () {
                             }
                         }
                     }
-                });
+                }
                 if (matches.length > 1 && maxOneMatch) {
                     validationResult.problems.push({
                         location: { offset: node.offset, length: 1 },
@@ -4001,10 +4254,9 @@ var __extends = (this && this.__extends) || (function () {
                 testAlternatives(schema.oneOf, true);
             }
             var testBranch = function (schema) {
-                var subSchema = asSchema(schema);
                 var subValidationResult = new ValidationResult();
                 var subMatchingSchemas = matchingSchemas.newSub();
-                validate(node, subSchema, subValidationResult, subMatchingSchemas);
+                validate(node, asSchema(schema), subValidationResult, subMatchingSchemas);
                 validationResult.merge(subValidationResult);
                 validationResult.propertiesMatches += subValidationResult.propertiesMatches;
                 validationResult.propertiesValueMatches += subValidationResult.propertiesValueMatches;
@@ -4015,6 +4267,7 @@ var __extends = (this && this.__extends) || (function () {
                 var subValidationResult = new ValidationResult();
                 var subMatchingSchemas = matchingSchemas.newSub();
                 validate(node, subSchema, subValidationResult, subMatchingSchemas);
+                matchingSchemas.merge(subMatchingSchemas);
                 if (!subValidationResult.hasProblems()) {
                     if (thenSchema) {
                         testBranch(thenSchema);
@@ -4024,15 +4277,16 @@ var __extends = (this && this.__extends) || (function () {
                     testBranch(elseSchema);
                 }
             };
-            if (schema.if) {
-                testCondition(schema.if, schema.then, schema.else);
+            var ifSchema = asSchema(schema.if);
+            if (ifSchema) {
+                testCondition(ifSchema, asSchema(schema.then), asSchema(schema.else));
             }
             if (Array.isArray(schema.enum)) {
                 var val = getNodeValue(node);
                 var enumValueMatch = false;
-                for (var _i = 0, _a = schema.enum; _i < _a.length; _i++) {
-                    var e = _a[_i];
-                    if (objects.equals(val, e)) {
+                for (var _d = 0, _e = schema.enum; _d < _e.length; _d++) {
+                    var e = _e[_d];
+                    if (objects_1.equals(val, e)) {
                         enumValueMatch = true;
                         break;
                     }
@@ -4048,9 +4302,9 @@ var __extends = (this && this.__extends) || (function () {
                     });
                 }
             }
-            if (schema.const) {
+            if (objects_1.isDefined(schema.const)) {
                 var val = getNodeValue(node);
-                if (!objects.equals(val, schema.const)) {
+                if (!objects_1.equals(val, schema.const)) {
                     validationResult.problems.push({
                         location: { offset: node.offset, length: node.length },
                         severity: vscode_languageserver_types_1.DiagnosticSeverity.Warning,
@@ -4074,7 +4328,7 @@ var __extends = (this && this.__extends) || (function () {
         }
         function _validateNumberNode(node, schema, validationResult, matchingSchemas) {
             var val = node.value;
-            if (typeof schema.multipleOf === 'number') {
+            if (objects_1.isNumber(schema.multipleOf)) {
                 if (val % schema.multipleOf !== 0) {
                     validationResult.problems.push({
                         location: { offset: node.offset, length: node.length },
@@ -4084,22 +4338,22 @@ var __extends = (this && this.__extends) || (function () {
                 }
             }
             function getExclusiveLimit(limit, exclusive) {
-                if (typeof exclusive === 'number') {
+                if (objects_1.isNumber(exclusive)) {
                     return exclusive;
                 }
-                if (typeof exclusive === 'boolean' && exclusive) {
+                if (objects_1.isBoolean(exclusive) && exclusive) {
                     return limit;
                 }
                 return void 0;
             }
             function getLimit(limit, exclusive) {
-                if (typeof exclusive !== 'boolean' || !exclusive) {
+                if (!objects_1.isBoolean(exclusive) || !exclusive) {
                     return limit;
                 }
                 return void 0;
             }
             var exclusiveMinimum = getExclusiveLimit(schema.minimum, schema.exclusiveMinimum);
-            if (typeof exclusiveMinimum === 'number' && val <= exclusiveMinimum) {
+            if (objects_1.isNumber(exclusiveMinimum) && val <= exclusiveMinimum) {
                 validationResult.problems.push({
                     location: { offset: node.offset, length: node.length },
                     severity: vscode_languageserver_types_1.DiagnosticSeverity.Warning,
@@ -4107,7 +4361,7 @@ var __extends = (this && this.__extends) || (function () {
                 });
             }
             var exclusiveMaximum = getExclusiveLimit(schema.maximum, schema.exclusiveMaximum);
-            if (typeof exclusiveMaximum === 'number' && val >= exclusiveMaximum) {
+            if (objects_1.isNumber(exclusiveMaximum) && val >= exclusiveMaximum) {
                 validationResult.problems.push({
                     location: { offset: node.offset, length: node.length },
                     severity: vscode_languageserver_types_1.DiagnosticSeverity.Warning,
@@ -4115,7 +4369,7 @@ var __extends = (this && this.__extends) || (function () {
                 });
             }
             var minimum = getLimit(schema.minimum, schema.exclusiveMinimum);
-            if (typeof minimum === 'number' && val < minimum) {
+            if (objects_1.isNumber(minimum) && val < minimum) {
                 validationResult.problems.push({
                     location: { offset: node.offset, length: node.length },
                     severity: vscode_languageserver_types_1.DiagnosticSeverity.Warning,
@@ -4123,7 +4377,7 @@ var __extends = (this && this.__extends) || (function () {
                 });
             }
             var maximum = getLimit(schema.maximum, schema.exclusiveMaximum);
-            if (typeof maximum === 'number' && val > maximum) {
+            if (objects_1.isNumber(maximum) && val > maximum) {
                 validationResult.problems.push({
                     location: { offset: node.offset, length: node.length },
                     severity: vscode_languageserver_types_1.DiagnosticSeverity.Warning,
@@ -4132,21 +4386,21 @@ var __extends = (this && this.__extends) || (function () {
             }
         }
         function _validateStringNode(node, schema, validationResult, matchingSchemas) {
-            if (schema.minLength && node.value.length < schema.minLength) {
+            if (objects_1.isNumber(schema.minLength) && node.value.length < schema.minLength) {
                 validationResult.problems.push({
                     location: { offset: node.offset, length: node.length },
                     severity: vscode_languageserver_types_1.DiagnosticSeverity.Warning,
                     message: localize('minLengthWarning', 'String is shorter than the minimum length of {0}.', schema.minLength)
                 });
             }
-            if (schema.maxLength && node.value.length > schema.maxLength) {
+            if (objects_1.isNumber(schema.maxLength) && node.value.length > schema.maxLength) {
                 validationResult.problems.push({
                     location: { offset: node.offset, length: node.length },
                     severity: vscode_languageserver_types_1.DiagnosticSeverity.Warning,
                     message: localize('maxLengthWarning', 'String is longer than the maximum length of {0}.', schema.maxLength)
                 });
             }
-            if (schema.pattern) {
+            if (objects_1.isString(schema.pattern)) {
                 var regex = new RegExp(schema.pattern);
                 if (!regex.test(node.value)) {
                     validationResult.problems.push({
@@ -4213,8 +4467,9 @@ var __extends = (this && this.__extends) || (function () {
         }
         function _validateArrayNode(node, schema, validationResult, matchingSchemas) {
             if (Array.isArray(schema.items)) {
-                var subSchemas_1 = schema.items;
-                subSchemas_1.forEach(function (subSchemaRef, index) {
+                var subSchemas = schema.items;
+                for (var index = 0; index < subSchemas.length; index++) {
+                    var subSchemaRef = subSchemas[index];
                     var subSchema = asSchema(subSchemaRef);
                     var itemValidationResult = new ValidationResult();
                     var item = node.items[index];
@@ -4222,13 +4477,13 @@ var __extends = (this && this.__extends) || (function () {
                         validate(item, subSchema, itemValidationResult, matchingSchemas);
                         validationResult.mergePropertyMatch(itemValidationResult);
                     }
-                    else if (node.items.length >= subSchemas_1.length) {
+                    else if (node.items.length >= subSchemas.length) {
                         validationResult.propertiesValueMatches++;
                     }
-                });
-                if (node.items.length > subSchemas_1.length) {
+                }
+                if (node.items.length > subSchemas.length) {
                     if (typeof schema.additionalItems === 'object') {
-                        for (var i = subSchemas_1.length; i < node.items.length; i++) {
+                        for (var i = subSchemas.length; i < node.items.length; i++) {
                             var itemValidationResult = new ValidationResult();
                             validate(node.items[i], schema.additionalItems, itemValidationResult, matchingSchemas);
                             validationResult.mergePropertyMatch(itemValidationResult);
@@ -4238,19 +4493,20 @@ var __extends = (this && this.__extends) || (function () {
                         validationResult.problems.push({
                             location: { offset: node.offset, length: node.length },
                             severity: vscode_languageserver_types_1.DiagnosticSeverity.Warning,
-                            message: localize('additionalItemsWarning', 'Array has too many items according to schema. Expected {0} or fewer.', subSchemas_1.length)
+                            message: localize('additionalItemsWarning', 'Array has too many items according to schema. Expected {0} or fewer.', subSchemas.length)
                         });
                     }
                 }
             }
             else {
-                var itemSchema_1 = asSchema(schema.items);
-                if (itemSchema_1) {
-                    node.items.forEach(function (item) {
+                var itemSchema = asSchema(schema.items);
+                if (itemSchema) {
+                    for (var _i = 0, _a = node.items; _i < _a.length; _i++) {
+                        var item = _a[_i];
                         var itemValidationResult = new ValidationResult();
-                        validate(item, itemSchema_1, itemValidationResult, matchingSchemas);
+                        validate(item, itemSchema, itemValidationResult, matchingSchemas);
                         validationResult.mergePropertyMatch(itemValidationResult);
-                    });
+                    }
                 }
             }
             var containsSchema = asSchema(schema.contains);
@@ -4268,14 +4524,14 @@ var __extends = (this && this.__extends) || (function () {
                     });
                 }
             }
-            if (schema.minItems && node.items.length < schema.minItems) {
+            if (objects_1.isNumber(schema.minItems) && node.items.length < schema.minItems) {
                 validationResult.problems.push({
                     location: { offset: node.offset, length: node.length },
                     severity: vscode_languageserver_types_1.DiagnosticSeverity.Warning,
                     message: localize('minItemsWarning', 'Array has too few items. Expected {0} or more.', schema.minItems)
                 });
             }
-            if (schema.maxItems && node.items.length > schema.maxItems) {
+            if (objects_1.isNumber(schema.maxItems) && node.items.length > schema.maxItems) {
                 validationResult.problems.push({
                     location: { offset: node.offset, length: node.length },
                     severity: vscode_languageserver_types_1.DiagnosticSeverity.Warning,
@@ -4299,13 +4555,15 @@ var __extends = (this && this.__extends) || (function () {
         function _validateObjectNode(node, schema, validationResult, matchingSchemas) {
             var seenKeys = Object.create(null);
             var unprocessedProperties = [];
-            node.properties.forEach(function (node) {
-                var key = node.keyNode.value;
-                seenKeys[key] = node.valueNode;
+            for (var _i = 0, _a = node.properties; _i < _a.length; _i++) {
+                var propertyNode = _a[_i];
+                var key = propertyNode.keyNode.value;
+                seenKeys[key] = propertyNode.valueNode;
                 unprocessedProperties.push(key);
-            });
+            }
             if (Array.isArray(schema.required)) {
-                schema.required.forEach(function (propertyName) {
+                for (var _b = 0, _c = schema.required; _b < _c.length; _b++) {
+                    var propertyName = _c[_b];
                     if (!seenKeys[propertyName]) {
                         var keyNode = node.parent && node.parent.type === 'property' && node.parent.keyNode;
                         var location = keyNode ? { offset: keyNode.offset, length: keyNode.length } : { offset: node.offset, length: 1 };
@@ -4315,7 +4573,7 @@ var __extends = (this && this.__extends) || (function () {
                             message: localize('MissingRequiredPropWarning', 'Missing property "{0}".', propertyName)
                         });
                     }
-                });
+                }
             }
             var propertyProcessed = function (prop) {
                 var index = unprocessedProperties.indexOf(prop);
@@ -4325,12 +4583,13 @@ var __extends = (this && this.__extends) || (function () {
                 }
             };
             if (schema.properties) {
-                Object.keys(schema.properties).forEach(function (propertyName) {
+                for (var _d = 0, _e = Object.keys(schema.properties); _d < _e.length; _d++) {
+                    var propertyName = _e[_d];
                     propertyProcessed(propertyName);
                     var propertySchema = schema.properties[propertyName];
                     var child = seenKeys[propertyName];
                     if (child) {
-                        if (typeof propertySchema === 'boolean') {
+                        if (objects_1.isBoolean(propertySchema)) {
                             if (!propertySchema) {
                                 var propertyNode = child.parent;
                                 validationResult.problems.push({
@@ -4350,18 +4609,20 @@ var __extends = (this && this.__extends) || (function () {
                             validationResult.mergePropertyMatch(propertyValidationResult);
                         }
                     }
-                });
+                }
             }
             if (schema.patternProperties) {
-                Object.keys(schema.patternProperties).forEach(function (propertyPattern) {
+                for (var _f = 0, _g = Object.keys(schema.patternProperties); _f < _g.length; _f++) {
+                    var propertyPattern = _g[_f];
                     var regex = new RegExp(propertyPattern);
-                    unprocessedProperties.slice(0).forEach(function (propertyName) {
+                    for (var _h = 0, _j = unprocessedProperties.slice(0); _h < _j.length; _h++) {
+                        var propertyName = _j[_h];
                         if (regex.test(propertyName)) {
                             propertyProcessed(propertyName);
                             var child = seenKeys[propertyName];
                             if (child) {
                                 var propertySchema = schema.patternProperties[propertyPattern];
-                                if (typeof propertySchema === 'boolean') {
+                                if (objects_1.isBoolean(propertySchema)) {
                                     if (!propertySchema) {
                                         var propertyNode = child.parent;
                                         validationResult.problems.push({
@@ -4382,22 +4643,24 @@ var __extends = (this && this.__extends) || (function () {
                                 }
                             }
                         }
-                    });
-                });
+                    }
+                }
             }
             if (typeof schema.additionalProperties === 'object') {
-                unprocessedProperties.forEach(function (propertyName) {
+                for (var _k = 0, unprocessedProperties_1 = unprocessedProperties; _k < unprocessedProperties_1.length; _k++) {
+                    var propertyName = unprocessedProperties_1[_k];
                     var child = seenKeys[propertyName];
                     if (child) {
                         var propertyValidationResult = new ValidationResult();
                         validate(child, schema.additionalProperties, propertyValidationResult, matchingSchemas);
                         validationResult.mergePropertyMatch(propertyValidationResult);
                     }
-                });
+                }
             }
             else if (schema.additionalProperties === false) {
                 if (unprocessedProperties.length > 0) {
-                    unprocessedProperties.forEach(function (propertyName) {
+                    for (var _l = 0, unprocessedProperties_2 = unprocessedProperties; _l < unprocessedProperties_2.length; _l++) {
+                        var propertyName = unprocessedProperties_2[_l];
                         var child = seenKeys[propertyName];
                         if (child) {
                             var propertyNode = child.parent;
@@ -4407,10 +4670,10 @@ var __extends = (this && this.__extends) || (function () {
                                 message: schema.errorMessage || localize('DisallowedExtraPropWarning', 'Property {0} is not allowed.', propertyName)
                             });
                         }
-                    });
+                    }
                 }
             }
-            if (schema.maxProperties) {
+            if (objects_1.isNumber(schema.maxProperties)) {
                 if (node.properties.length > schema.maxProperties) {
                     validationResult.problems.push({
                         location: { offset: node.offset, length: node.length },
@@ -4419,7 +4682,7 @@ var __extends = (this && this.__extends) || (function () {
                     });
                 }
             }
-            if (schema.minProperties) {
+            if (objects_1.isNumber(schema.minProperties)) {
                 if (node.properties.length < schema.minProperties) {
                     validationResult.problems.push({
                         location: { offset: node.offset, length: node.length },
@@ -4429,12 +4692,14 @@ var __extends = (this && this.__extends) || (function () {
                 }
             }
             if (schema.dependencies) {
-                Object.keys(schema.dependencies).forEach(function (key) {
+                for (var _m = 0, _o = Object.keys(schema.dependencies); _m < _o.length; _m++) {
+                    var key = _o[_m];
                     var prop = seenKeys[key];
                     if (prop) {
                         var propertyDep = schema.dependencies[key];
                         if (Array.isArray(propertyDep)) {
-                            propertyDep.forEach(function (requiredProp) {
+                            for (var _p = 0, propertyDep_1 = propertyDep; _p < propertyDep_1.length; _p++) {
+                                var requiredProp = propertyDep_1[_p];
                                 if (!seenKeys[requiredProp]) {
                                     validationResult.problems.push({
                                         location: { offset: node.offset, length: node.length },
@@ -4445,7 +4710,7 @@ var __extends = (this && this.__extends) || (function () {
                                 else {
                                     validationResult.propertiesValueMatches++;
                                 }
-                            });
+                            }
                         }
                         else {
                             var propertySchema = asSchema(propertyDep);
@@ -4456,16 +4721,17 @@ var __extends = (this && this.__extends) || (function () {
                             }
                         }
                     }
-                });
+                }
             }
             var propertyNames = asSchema(schema.propertyNames);
             if (propertyNames) {
-                node.properties.forEach(function (f) {
+                for (var _q = 0, _r = node.properties; _q < _r.length; _q++) {
+                    var f = _r[_q];
                     var key = f.keyNode;
                     if (key) {
                         validate(key, propertyNames, validationResult, NoOpSchemaCollector.instance);
                     }
-                });
+                }
             }
         }
     }
@@ -4713,7 +4979,7 @@ var __extends = (this && this.__extends) || (function () {
                 var tokenValue = scanner.getTokenValue();
                 try {
                     var numberValue = JSON.parse(tokenValue);
-                    if (typeof numberValue !== 'number') {
+                    if (!objects_1.isNumber(numberValue)) {
                         return _error(localize('InvalidNumberFormat', 'Invalid number format.'), jsonLanguageTypes_1.ErrorCode.Undefined, node);
                     }
                     node.value = numberValue;
@@ -4756,7 +5022,11 @@ var __extends = (this && this.__extends) || (function () {
     }
     exports.parse = parse;
 });
-//# sourceMappingURL=jsonParser.js.map;
+
+/*---------------------------------------------------------------------------------------------
+*  Copyright (c) Microsoft Corporation. All rights reserved.
+*  Licensed under the MIT License. See License.txt in the project root for license information.
+*--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
@@ -4766,11 +5036,7 @@ var __extends = (this && this.__extends) || (function () {
         define('vscode-json-languageservice/utils/json',["require", "exports"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-    *  Copyright (c) Microsoft Corporation. All rights reserved.
-    *  Licensed under the MIT License. See License.txt in the project root for license information.
-    *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function stringifyObject(obj, indent, stringifyLiteral) {
         if (obj !== null && typeof obj === 'object') {
@@ -4812,7 +5078,11 @@ var __extends = (this && this.__extends) || (function () {
     }
     exports.stringifyObject = stringifyObject;
 });
-//# sourceMappingURL=json.js.map;
+
+/*---------------------------------------------------------------------------------------------
+*  Copyright (c) Microsoft Corporation. All rights reserved.
+*  Licensed under the MIT License. See License.txt in the project root for license information.
+*--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
@@ -4822,11 +5092,7 @@ var __extends = (this && this.__extends) || (function () {
         define('vscode-json-languageservice/utils/strings',["require", "exports"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-    *  Copyright (c) Microsoft Corporation. All rights reserved.
-    *  Licensed under the MIT License. See License.txt in the project root for license information.
-    *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function startsWith(haystack, needle) {
         if (haystack.length < needle.length) {
@@ -4873,36 +5139,40 @@ var __extends = (this && this.__extends) || (function () {
     }
     exports.repeat = repeat;
 });
-//# sourceMappingURL=strings.js.map;
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define('vscode-json-languageservice/services/jsonCompletion',["require", "exports", "../parser/jsonParser", "jsonc-parser", "../utils/json", "../utils/strings", "vscode-languageserver-types", "vscode-nls"], factory);
+        define('vscode-json-languageservice/services/jsonCompletion',["require", "exports", "../parser/jsonParser", "jsonc-parser", "../utils/json", "../utils/strings", "../utils/objects", "vscode-languageserver-types", "vscode-nls"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Parser = require("../parser/jsonParser");
     var Json = require("jsonc-parser");
     var json_1 = require("../utils/json");
     var strings_1 = require("../utils/strings");
+    var objects_1 = require("../utils/objects");
     var vscode_languageserver_types_1 = require("vscode-languageserver-types");
     var nls = require("vscode-nls");
     var localize = nls.loadMessageBundle();
     var JSONCompletion = /** @class */ (function () {
-        function JSONCompletion(schemaService, contributions, promiseConstructor) {
+        function JSONCompletion(schemaService, contributions, promiseConstructor, clientCapabilities) {
             if (contributions === void 0) { contributions = []; }
-            this.templateVarIdCounter = 0;
+            if (promiseConstructor === void 0) { promiseConstructor = Promise; }
+            if (clientCapabilities === void 0) { clientCapabilities = {}; }
             this.schemaService = schemaService;
             this.contributions = contributions;
-            this.promise = promiseConstructor || Promise;
+            this.promiseConstructor = promiseConstructor;
+            this.clientCapabilities = clientCapabilities;
+            this.templateVarIdCounter = 0;
         }
         JSONCompletion.prototype.doResolve = function (item) {
             for (var i = this.contributions.length - 1; i >= 0; i--) {
@@ -4913,7 +5183,7 @@ var __extends = (this && this.__extends) || (function () {
                     }
                 }
             }
-            return this.promise.resolve(item);
+            return this.promiseConstructor.resolve(item);
         };
         JSONCompletion.prototype.doComplete = function (document, position, doc) {
             var _this = this;
@@ -5021,8 +5291,9 @@ var __extends = (this && this.__extends) || (function () {
                             kind: vscode_languageserver_types_1.CompletionItemKind.Property,
                             label: _this.getLabelForValue(currentWord),
                             insertText: _this.getInsertTextForProperty(currentWord, null, false, separatorAfter_1),
-                            insertTextFormat: vscode_languageserver_types_1.InsertTextFormat.Snippet, documentation: ''
+                            insertTextFormat: vscode_languageserver_types_1.InsertTextFormat.Snippet, documentation: '',
                         });
+                        collector.setAsIncomplete();
                     }
                 }
                 // proposals for values
@@ -5038,7 +5309,7 @@ var __extends = (this && this.__extends) || (function () {
                 if (_this.contributions.length > 0) {
                     _this.getContributedValueCompletions(doc, node, offset, document, collector, collectionPromises);
                 }
-                return _this.promise.all(collectionPromises).then(function () {
+                return _this.promiseConstructor.all(collectionPromises).then(function () {
                     if (collector.getNumberOfProposals() === 0) {
                         var offsetForSeparator = offset;
                         if (node && (node.type === 'string' || node.type === 'number' || node.type === 'boolean' || node.type === 'null')) {
@@ -5063,11 +5334,11 @@ var __extends = (this && this.__extends) || (function () {
                             if (typeof propertySchema === 'object' && !propertySchema.deprecationMessage && !propertySchema.doNotSuggest) {
                                 var proposal = {
                                     kind: vscode_languageserver_types_1.CompletionItemKind.Property,
-                                    label: key,
+                                    label: _this.sanitizeLabel(key),
                                     insertText: _this.getInsertTextForProperty(key, propertySchema, addValue, separatorAfter),
                                     insertTextFormat: vscode_languageserver_types_1.InsertTextFormat.Snippet,
                                     filterText: _this.getFilterTextForValue(key),
-                                    documentation: propertySchema.description || '',
+                                    documentation: _this.fromMarkup(propertySchema.markdownDescription) || propertySchema.description || '',
                                 };
                                 if (strings_1.endsWith(proposal.insertText, "$1" + separatorAfter)) {
                                     proposal.command = {
@@ -5089,7 +5360,7 @@ var __extends = (this && this.__extends) || (function () {
                     var key = p.keyNode.value;
                     collector.add({
                         kind: vscode_languageserver_types_1.CompletionItemKind.Property,
-                        label: key,
+                        label: _this.sanitizeLabel(key),
                         insertText: _this.getInsertTextForValue(key, ''),
                         insertTextFormat: vscode_languageserver_types_1.InsertTextFormat.Snippet,
                         filterText: _this.getFilterTextForValue(key),
@@ -5308,7 +5579,7 @@ var __extends = (this && this.__extends) || (function () {
             var _this = this;
             if (arrayDepth === void 0) { arrayDepth = 0; }
             var hasProposals = false;
-            if (isDefined(schema.default)) {
+            if (objects_1.isDefined(schema.default)) {
                 var type = schema.type;
                 var value = schema.default;
                 for (var i = arrayDepth; i > 0; i--) {
@@ -5320,9 +5591,26 @@ var __extends = (this && this.__extends) || (function () {
                     label: this.getLabelForValue(value),
                     insertText: this.getInsertTextForValue(value, separatorAfter),
                     insertTextFormat: vscode_languageserver_types_1.InsertTextFormat.Snippet,
-                    detail: localize('json.suggest.default', 'Default value'),
+                    detail: localize('json.suggest.default', 'Default value')
                 });
                 hasProposals = true;
+            }
+            if (Array.isArray(schema.examples)) {
+                schema.examples.forEach(function (example) {
+                    var type = schema.type;
+                    var value = example;
+                    for (var i = arrayDepth; i > 0; i--) {
+                        value = [value];
+                        type = 'array';
+                    }
+                    collector.add({
+                        kind: _this.getSuggestionKind(type),
+                        label: _this.getLabelForValue(value),
+                        insertText: _this.getInsertTextForValue(value, separatorAfter),
+                        insertTextFormat: vscode_languageserver_types_1.InsertTextFormat.Snippet
+                    });
+                    hasProposals = true;
+                });
             }
             if (Array.isArray(schema.defaultSnippets)) {
                 schema.defaultSnippets.forEach(function (s) {
@@ -5331,7 +5619,7 @@ var __extends = (this && this.__extends) || (function () {
                     var label = s.label;
                     var insertText;
                     var filterText;
-                    if (isDefined(value)) {
+                    if (objects_1.isDefined(value)) {
                         var type_1 = schema.type;
                         for (var i = arrayDepth; i > 0; i--) {
                             value = [value];
@@ -5350,13 +5638,13 @@ var __extends = (this && this.__extends) || (function () {
                             type = 'array';
                         }
                         insertText = prefix + indent + s.bodyText.split('\n').join('\n' + indent) + suffix + separatorAfter;
-                        label = label || insertText;
-                        filterText = insertText.replace(/[\n]/g, ''); // remove new lines
+                        label = label || _this.sanitizeLabel(insertText),
+                            filterText = insertText.replace(/[\n]/g, ''); // remove new lines
                     }
                     collector.add({
                         kind: _this.getSuggestionKind(type),
                         label: label,
-                        documentation: s.description,
+                        documentation: _this.fromMarkup(s.markdownDescription) || s.description,
                         insertText: insertText,
                         insertTextFormat: vscode_languageserver_types_1.InsertTextFormat.Snippet,
                         filterText: filterText
@@ -5369,20 +5657,23 @@ var __extends = (this && this.__extends) || (function () {
             }
         };
         JSONCompletion.prototype.addEnumValueCompletions = function (schema, separatorAfter, collector) {
-            if (isDefined(schema.const)) {
+            if (objects_1.isDefined(schema.const)) {
                 collector.add({
                     kind: this.getSuggestionKind(schema.type),
                     label: this.getLabelForValue(schema.const),
                     insertText: this.getInsertTextForValue(schema.const, separatorAfter),
                     insertTextFormat: vscode_languageserver_types_1.InsertTextFormat.Snippet,
-                    documentation: schema.description
+                    documentation: this.fromMarkup(schema.markdownDescription) || schema.description
                 });
             }
             if (Array.isArray(schema.enum)) {
                 for (var i = 0, length = schema.enum.length; i < length; i++) {
                     var enm = schema.enum[i];
-                    var documentation = schema.description;
-                    if (schema.enumDescriptions && i < schema.enumDescriptions.length) {
+                    var documentation = this.fromMarkup(schema.markdownDescription) || schema.description;
+                    if (schema.markdownEnumDescriptions && i < schema.markdownEnumDescriptions.length && this.doesSupportMarkdown()) {
+                        documentation = this.fromMarkup(schema.markdownEnumDescriptions[i]);
+                    }
+                    else if (schema.enumDescriptions && i < schema.enumDescriptions.length) {
                         documentation = schema.enumDescriptions[i];
                     }
                     collector.add({
@@ -5396,7 +5687,7 @@ var __extends = (this && this.__extends) || (function () {
             }
         };
         JSONCompletion.prototype.collectTypes = function (schema, types) {
-            if (Array.isArray(schema.enum) || isDefined(schema.const)) {
+            if (Array.isArray(schema.enum) || objects_1.isDefined(schema.const)) {
                 return;
             }
             var type = schema.type;
@@ -5458,12 +5749,15 @@ var __extends = (this && this.__extends) || (function () {
                 insertTextFormat: vscode_languageserver_types_1.InsertTextFormat.Snippet, documentation: ''
             }); });
         };
-        JSONCompletion.prototype.getLabelForValue = function (value) {
-            var label = JSON.stringify(value);
+        JSONCompletion.prototype.sanitizeLabel = function (label) {
+            label = label.replace(/[\n]/g, '↵');
             if (label.length > 57) {
-                return label.substr(0, 57).trim() + '...';
+                label = label.substr(0, 57).trim() + '...';
             }
             return label;
+        };
+        JSONCompletion.prototype.getLabelForValue = function (value) {
+            return this.sanitizeLabel(JSON.stringify(value));
         };
         JSONCompletion.prototype.getFilterTextForValue = function (value) {
             return JSON.stringify(value);
@@ -5474,10 +5768,7 @@ var __extends = (this && this.__extends) || (function () {
         JSONCompletion.prototype.getLabelForSnippetValue = function (value) {
             var label = JSON.stringify(value);
             label = label.replace(/\$\{\d+:([^}]+)\}|\$\d+/g, '$1');
-            if (label.length > 57) {
-                return label.substr(0, 57).trim() + '...';
-            }
-            return label;
+            return this.sanitizeLabel(label);
         };
         JSONCompletion.prototype.getInsertTextForPlainText = function (text) {
             return text.replace(/[\\\$\}]/g, '\\$&'); // escape $, \ and } 
@@ -5485,10 +5776,10 @@ var __extends = (this && this.__extends) || (function () {
         JSONCompletion.prototype.getInsertTextForValue = function (value, separatorAfter) {
             var text = JSON.stringify(value, null, '\t');
             if (text === '{}') {
-                return '{\n\t$1\n}' + separatorAfter;
+                return '{$1}' + separatorAfter;
             }
             else if (text === '[]') {
-                return '[\n\t$1\n]' + separatorAfter;
+                return '[$1]' + separatorAfter;
             }
             return this.getInsertTextForPlainText(text + separatorAfter);
         };
@@ -5570,7 +5861,7 @@ var __extends = (this && this.__extends) || (function () {
                 if (Array.isArray(propertySchema.defaultSnippets)) {
                     if (propertySchema.defaultSnippets.length === 1) {
                         var body = propertySchema.defaultSnippets[0].body;
-                        if (isDefined(body)) {
+                        if (objects_1.isDefined(body)) {
                             value = this.getInsertTextForSnippetValue(body, '');
                         }
                     }
@@ -5582,7 +5873,7 @@ var __extends = (this && this.__extends) || (function () {
                     }
                     nValueProposals += propertySchema.enum.length;
                 }
-                if (isDefined(propertySchema.default)) {
+                if (objects_1.isDefined(propertySchema.default)) {
                     if (!value) {
                         value = this.getInsertTextForGuessedValue(propertySchema.default, '');
                     }
@@ -5606,10 +5897,10 @@ var __extends = (this && this.__extends) || (function () {
                             value = '"$1"';
                             break;
                         case 'object':
-                            value = '{\n\t$1\n}';
+                            value = '{$1}';
                             break;
                         case 'array':
-                            value = '[\n\t$1\n]';
+                            value = '[$1]';
                             break;
                         case 'number':
                         case 'integer':
@@ -5678,14 +5969,31 @@ var __extends = (this && this.__extends) || (function () {
             }
             return (token === 12 /* LineCommentTrivia */ || token === 13 /* BlockCommentTrivia */) && scanner.getTokenOffset() <= offset;
         };
+        JSONCompletion.prototype.fromMarkup = function (markupString) {
+            if (markupString && this.doesSupportMarkdown()) {
+                return {
+                    kind: vscode_languageserver_types_1.MarkupKind.Markdown,
+                    value: markupString
+                };
+            }
+            return undefined;
+        };
+        JSONCompletion.prototype.doesSupportMarkdown = function () {
+            if (!objects_1.isDefined(this.supportsMarkdown)) {
+                var completion = this.clientCapabilities.textDocument && this.clientCapabilities.textDocument.completion;
+                this.supportsMarkdown = completion && completion.completionItem && Array.isArray(completion.completionItem.documentationFormat) && completion.completionItem.documentationFormat.indexOf(vscode_languageserver_types_1.MarkupKind.Markdown) !== -1;
+            }
+            return this.supportsMarkdown;
+        };
         return JSONCompletion;
     }());
     exports.JSONCompletion = JSONCompletion;
-    function isDefined(val) {
-        return typeof val !== 'undefined';
-    }
 });
-//# sourceMappingURL=jsonCompletion.js.map;
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
@@ -5695,11 +6003,7 @@ var __extends = (this && this.__extends) || (function () {
         define('vscode-json-languageservice/services/jsonHover',["require", "exports", "../parser/jsonParser", "vscode-languageserver-types"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Parser = require("../parser/jsonParser");
     var vscode_languageserver_types_1 = require("vscode-languageserver-types");
@@ -5720,7 +6024,7 @@ var __extends = (this && this.__extends) || (function () {
             // use the property description when hovering over an object key
             if (node.type === 'string') {
                 var parent = node.parent;
-                if (parent.type === 'property' && parent.keyNode === node) {
+                if (parent && parent.type === 'property' && parent.keyNode === node) {
                     node = parent.valueNode;
                     if (!node) {
                         return this.promise.resolve(null);
@@ -5803,22 +6107,507 @@ var __extends = (this && this.__extends) || (function () {
         return void 0;
     }
 });
-//# sourceMappingURL=jsonHover.js.map;
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define('vscode-json-languageservice/services/jsonValidation',["require", "exports", "vscode-languageserver-types", "../jsonLanguageTypes", "vscode-nls"], factory);
+        define('vscode-json-languageservice/services/jsonSchemaService',["require", "exports", "jsonc-parser", "vscode-uri", "../utils/strings", "../parser/jsonParser", "vscode-nls"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
+    var Json = require("jsonc-parser");
+    var vscode_uri_1 = require("vscode-uri");
+    var Strings = require("../utils/strings");
+    var Parser = require("../parser/jsonParser");
+    var nls = require("vscode-nls");
+    var localize = nls.loadMessageBundle();
+    var FilePatternAssociation = /** @class */ (function () {
+        function FilePatternAssociation(pattern) {
+            try {
+                this.patternRegExp = new RegExp(Strings.convertSimple2RegExpPattern(pattern) + '$');
+            }
+            catch (e) {
+                // invalid pattern
+                this.patternRegExp = null;
+            }
+            this.schemas = [];
+        }
+        FilePatternAssociation.prototype.addSchema = function (id) {
+            this.schemas.push(id);
+        };
+        FilePatternAssociation.prototype.matchesPattern = function (fileName) {
+            return this.patternRegExp && this.patternRegExp.test(fileName);
+        };
+        FilePatternAssociation.prototype.getSchemas = function () {
+            return this.schemas;
+        };
+        return FilePatternAssociation;
+    }());
+    var SchemaHandle = /** @class */ (function () {
+        function SchemaHandle(service, url, unresolvedSchemaContent) {
+            this.service = service;
+            this.url = url;
+            this.dependencies = {};
+            if (unresolvedSchemaContent) {
+                this.unresolvedSchema = this.service.promise.resolve(new UnresolvedSchema(unresolvedSchemaContent));
+            }
+        }
+        SchemaHandle.prototype.getUnresolvedSchema = function () {
+            if (!this.unresolvedSchema) {
+                this.unresolvedSchema = this.service.loadSchema(this.url);
+            }
+            return this.unresolvedSchema;
+        };
+        SchemaHandle.prototype.getResolvedSchema = function () {
+            var _this = this;
+            if (!this.resolvedSchema) {
+                this.resolvedSchema = this.getUnresolvedSchema().then(function (unresolved) {
+                    return _this.service.resolveSchemaContent(unresolved, _this.url, _this.dependencies);
+                });
+            }
+            return this.resolvedSchema;
+        };
+        SchemaHandle.prototype.clearSchema = function () {
+            this.resolvedSchema = null;
+            this.unresolvedSchema = null;
+            this.dependencies = {};
+        };
+        return SchemaHandle;
+    }());
+    var UnresolvedSchema = /** @class */ (function () {
+        function UnresolvedSchema(schema, errors) {
+            if (errors === void 0) { errors = []; }
+            this.schema = schema;
+            this.errors = errors;
+        }
+        return UnresolvedSchema;
+    }());
+    exports.UnresolvedSchema = UnresolvedSchema;
+    var ResolvedSchema = /** @class */ (function () {
+        function ResolvedSchema(schema, errors) {
+            if (errors === void 0) { errors = []; }
+            this.schema = schema;
+            this.errors = errors;
+        }
+        ResolvedSchema.prototype.getSection = function (path) {
+            return Parser.asSchema(this.getSectionRecursive(path, this.schema));
+        };
+        ResolvedSchema.prototype.getSectionRecursive = function (path, schema) {
+            if (!schema || typeof schema === 'boolean' || path.length === 0) {
+                return schema;
+            }
+            var next = path.shift();
+            if (schema.properties && typeof schema.properties[next]) {
+                return this.getSectionRecursive(path, schema.properties[next]);
+            }
+            else if (schema.patternProperties) {
+                for (var _i = 0, _a = Object.keys(schema.patternProperties); _i < _a.length; _i++) {
+                    var pattern = _a[_i];
+                    var regex = new RegExp(pattern);
+                    if (regex.test(next)) {
+                        return this.getSectionRecursive(path, schema.patternProperties[pattern]);
+                    }
+                }
+            }
+            else if (typeof schema.additionalProperties === 'object') {
+                return this.getSectionRecursive(path, schema.additionalProperties);
+            }
+            else if (next.match('[0-9]+')) {
+                if (Array.isArray(schema.items)) {
+                    var index = parseInt(next, 10);
+                    if (!isNaN(index) && schema.items[index]) {
+                        return this.getSectionRecursive(path, schema.items[index]);
+                    }
+                }
+                else if (schema.items) {
+                    return this.getSectionRecursive(path, schema.items);
+                }
+            }
+            return null;
+        };
+        return ResolvedSchema;
+    }());
+    exports.ResolvedSchema = ResolvedSchema;
+    var JSONSchemaService = /** @class */ (function () {
+        function JSONSchemaService(requestService, contextService, promiseConstructor) {
+            this.contextService = contextService;
+            this.requestService = requestService;
+            this.promiseConstructor = promiseConstructor || Promise;
+            this.callOnDispose = [];
+            this.contributionSchemas = {};
+            this.contributionAssociations = {};
+            this.schemasById = {};
+            this.filePatternAssociations = [];
+            this.filePatternAssociationById = {};
+            this.registeredSchemasIds = {};
+        }
+        JSONSchemaService.prototype.getRegisteredSchemaIds = function (filter) {
+            return Object.keys(this.registeredSchemasIds).filter(function (id) {
+                var scheme = vscode_uri_1.default.parse(id).scheme;
+                return scheme !== 'schemaservice' && (!filter || filter(scheme));
+            });
+        };
+        Object.defineProperty(JSONSchemaService.prototype, "promise", {
+            get: function () {
+                return this.promiseConstructor;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        JSONSchemaService.prototype.dispose = function () {
+            while (this.callOnDispose.length > 0) {
+                this.callOnDispose.pop()();
+            }
+        };
+        JSONSchemaService.prototype.onResourceChange = function (uri) {
+            var _this = this;
+            var hasChanges = false;
+            uri = this.normalizeId(uri);
+            var toWalk = [uri];
+            var all = Object.keys(this.schemasById).map(function (key) { return _this.schemasById[key]; });
+            while (toWalk.length) {
+                var curr = toWalk.pop();
+                for (var i = 0; i < all.length; i++) {
+                    var handle = all[i];
+                    if (handle && (handle.url === curr || handle.dependencies[curr])) {
+                        if (handle.url !== curr) {
+                            toWalk.push(handle.url);
+                        }
+                        handle.clearSchema();
+                        all[i] = undefined;
+                        hasChanges = true;
+                    }
+                }
+            }
+            return hasChanges;
+        };
+        JSONSchemaService.prototype.normalizeId = function (id) {
+            // remove trailing '#', normalize drive capitalization
+            return vscode_uri_1.default.parse(id).toString();
+        };
+        JSONSchemaService.prototype.setSchemaContributions = function (schemaContributions) {
+            if (schemaContributions.schemas) {
+                var schemas = schemaContributions.schemas;
+                for (var id in schemas) {
+                    var normalizedId = this.normalizeId(id);
+                    this.contributionSchemas[normalizedId] = this.addSchemaHandle(normalizedId, schemas[id]);
+                }
+            }
+            if (schemaContributions.schemaAssociations) {
+                var schemaAssociations = schemaContributions.schemaAssociations;
+                for (var pattern in schemaAssociations) {
+                    var associations = schemaAssociations[pattern];
+                    this.contributionAssociations[pattern] = associations;
+                    var fpa = this.getOrAddFilePatternAssociation(pattern);
+                    for (var _i = 0, associations_1 = associations; _i < associations_1.length; _i++) {
+                        var schemaId = associations_1[_i];
+                        var id = this.normalizeId(schemaId);
+                        fpa.addSchema(id);
+                    }
+                }
+            }
+        };
+        JSONSchemaService.prototype.addSchemaHandle = function (id, unresolvedSchemaContent) {
+            var schemaHandle = new SchemaHandle(this, id, unresolvedSchemaContent);
+            this.schemasById[id] = schemaHandle;
+            return schemaHandle;
+        };
+        JSONSchemaService.prototype.getOrAddSchemaHandle = function (id, unresolvedSchemaContent) {
+            return this.schemasById[id] || this.addSchemaHandle(id, unresolvedSchemaContent);
+        };
+        JSONSchemaService.prototype.getOrAddFilePatternAssociation = function (pattern) {
+            var fpa = this.filePatternAssociationById[pattern];
+            if (!fpa) {
+                fpa = new FilePatternAssociation(pattern);
+                this.filePatternAssociationById[pattern] = fpa;
+                this.filePatternAssociations.push(fpa);
+            }
+            return fpa;
+        };
+        JSONSchemaService.prototype.registerExternalSchema = function (uri, filePatterns, unresolvedSchemaContent) {
+            if (filePatterns === void 0) { filePatterns = null; }
+            var id = this.normalizeId(uri);
+            this.registeredSchemasIds[id] = true;
+            if (filePatterns) {
+                for (var _i = 0, filePatterns_1 = filePatterns; _i < filePatterns_1.length; _i++) {
+                    var pattern = filePatterns_1[_i];
+                    this.getOrAddFilePatternAssociation(pattern).addSchema(id);
+                }
+            }
+            return unresolvedSchemaContent ? this.addSchemaHandle(id, unresolvedSchemaContent) : this.getOrAddSchemaHandle(id);
+        };
+        JSONSchemaService.prototype.clearExternalSchemas = function () {
+            this.schemasById = {};
+            this.filePatternAssociations = [];
+            this.filePatternAssociationById = {};
+            this.registeredSchemasIds = {};
+            for (var id in this.contributionSchemas) {
+                this.schemasById[id] = this.contributionSchemas[id];
+                this.registeredSchemasIds[id] = true;
+            }
+            for (var pattern in this.contributionAssociations) {
+                var fpa = this.getOrAddFilePatternAssociation(pattern);
+                for (var _i = 0, _a = this.contributionAssociations[pattern]; _i < _a.length; _i++) {
+                    var schemaId = _a[_i];
+                    var id = this.normalizeId(schemaId);
+                    fpa.addSchema(id);
+                }
+            }
+        };
+        JSONSchemaService.prototype.getResolvedSchema = function (schemaId) {
+            var id = this.normalizeId(schemaId);
+            var schemaHandle = this.schemasById[id];
+            if (schemaHandle) {
+                return schemaHandle.getResolvedSchema();
+            }
+            return this.promise.resolve(null);
+        };
+        JSONSchemaService.prototype.loadSchema = function (url) {
+            if (!this.requestService) {
+                var errorMessage = localize('json.schema.norequestservice', 'Unable to load schema from \'{0}\'. No schema request service available', toDisplayString(url));
+                return this.promise.resolve(new UnresolvedSchema({}, [errorMessage]));
+            }
+            return this.requestService(url).then(function (content) {
+                if (!content) {
+                    var errorMessage = localize('json.schema.nocontent', 'Unable to load schema from \'{0}\': No content.', toDisplayString(url));
+                    return new UnresolvedSchema({}, [errorMessage]);
+                }
+                var schemaContent = {};
+                var jsonErrors = [];
+                schemaContent = Json.parse(content, jsonErrors);
+                var errors = jsonErrors.length ? [localize('json.schema.invalidFormat', 'Unable to parse content from \'{0}\': Parse error at offset {1}.', toDisplayString(url), jsonErrors[0].offset)] : [];
+                return new UnresolvedSchema(schemaContent, errors);
+            }, function (error) {
+                var errorMessage = error.toString();
+                var errorSplit = error.toString().split('Error: ');
+                if (errorSplit.length > 1) {
+                    // more concise error message, URL and context are attached by caller anyways
+                    errorMessage = errorSplit[1];
+                }
+                return new UnresolvedSchema({}, [errorMessage]);
+            });
+        };
+        JSONSchemaService.prototype.resolveSchemaContent = function (schemaToResolve, schemaURL, dependencies) {
+            var _this = this;
+            var resolveErrors = schemaToResolve.errors.slice(0);
+            var schema = schemaToResolve.schema;
+            var contextService = this.contextService;
+            var findSection = function (schema, path) {
+                if (!path) {
+                    return schema;
+                }
+                var current = schema;
+                if (path[0] === '/') {
+                    path = path.substr(1);
+                }
+                path.split('/').some(function (part) {
+                    current = current[part];
+                    return !current;
+                });
+                return current;
+            };
+            var merge = function (target, sourceRoot, sourceURI, path) {
+                var section = findSection(sourceRoot, path);
+                if (section) {
+                    for (var key in section) {
+                        if (section.hasOwnProperty(key) && !target.hasOwnProperty(key)) {
+                            target[key] = section[key];
+                        }
+                    }
+                }
+                else {
+                    resolveErrors.push(localize('json.schema.invalidref', '$ref \'{0}\' in \'{1}\' can not be resolved.', path, sourceURI));
+                }
+            };
+            var resolveExternalLink = function (node, uri, linkPath, parentSchemaURL, parentSchemaDependencies) {
+                if (contextService && !/^\w+:\/\/.*/.test(uri)) {
+                    uri = contextService.resolveRelativePath(uri, parentSchemaURL);
+                }
+                uri = _this.normalizeId(uri);
+                var referencedHandle = _this.getOrAddSchemaHandle(uri);
+                return referencedHandle.getUnresolvedSchema().then(function (unresolvedSchema) {
+                    parentSchemaDependencies[uri] = true;
+                    if (unresolvedSchema.errors.length) {
+                        var loc = linkPath ? uri + '#' + linkPath : uri;
+                        resolveErrors.push(localize('json.schema.problemloadingref', 'Problems loading reference \'{0}\': {1}', loc, unresolvedSchema.errors[0]));
+                    }
+                    merge(node, unresolvedSchema.schema, uri, linkPath);
+                    return resolveRefs(node, unresolvedSchema.schema, uri, referencedHandle.dependencies);
+                });
+            };
+            var resolveRefs = function (node, parentSchema, parentSchemaURL, parentSchemaDependencies) {
+                if (!node || typeof node !== 'object') {
+                    return Promise.resolve(null);
+                }
+                var toWalk = [node];
+                var seen = [];
+                var openPromises = [];
+                var collectEntries = function () {
+                    var entries = [];
+                    for (var _i = 0; _i < arguments.length; _i++) {
+                        entries[_i] = arguments[_i];
+                    }
+                    for (var _a = 0, entries_1 = entries; _a < entries_1.length; _a++) {
+                        var entry = entries_1[_a];
+                        if (typeof entry === 'object') {
+                            toWalk.push(entry);
+                        }
+                    }
+                };
+                var collectMapEntries = function () {
+                    var maps = [];
+                    for (var _i = 0; _i < arguments.length; _i++) {
+                        maps[_i] = arguments[_i];
+                    }
+                    for (var _a = 0, maps_1 = maps; _a < maps_1.length; _a++) {
+                        var map = maps_1[_a];
+                        if (typeof map === 'object') {
+                            for (var key in map) {
+                                var entry = map[key];
+                                if (typeof entry === 'object') {
+                                    toWalk.push(entry);
+                                }
+                            }
+                        }
+                    }
+                };
+                var collectArrayEntries = function () {
+                    var arrays = [];
+                    for (var _i = 0; _i < arguments.length; _i++) {
+                        arrays[_i] = arguments[_i];
+                    }
+                    for (var _a = 0, arrays_1 = arrays; _a < arrays_1.length; _a++) {
+                        var array = arrays_1[_a];
+                        if (Array.isArray(array)) {
+                            for (var _b = 0, array_1 = array; _b < array_1.length; _b++) {
+                                var entry = array_1[_b];
+                                if (typeof entry === 'object') {
+                                    toWalk.push(entry);
+                                }
+                            }
+                        }
+                    }
+                };
+                var handleRef = function (next) {
+                    var seenRefs = [];
+                    while (next.$ref) {
+                        var ref = next.$ref;
+                        var segments = ref.split('#', 2);
+                        delete next.$ref;
+                        if (segments[0].length > 0) {
+                            openPromises.push(resolveExternalLink(next, segments[0], segments[1], parentSchemaURL, parentSchemaDependencies));
+                            return;
+                        }
+                        else {
+                            if (seenRefs.indexOf(ref) === -1) {
+                                merge(next, parentSchema, parentSchemaURL, segments[1]); // can set next.$ref again, use seenRefs to avoid circle
+                                seenRefs.push(ref);
+                            }
+                        }
+                    }
+                    collectEntries(next.items, next.additionalProperties, next.not, next.contains, next.propertyNames, next.if, next.then, next.else);
+                    collectMapEntries(next.definitions, next.properties, next.patternProperties, next.dependencies);
+                    collectArrayEntries(next.anyOf, next.allOf, next.oneOf, next.items);
+                };
+                while (toWalk.length) {
+                    var next = toWalk.pop();
+                    if (seen.indexOf(next) >= 0) {
+                        continue;
+                    }
+                    seen.push(next);
+                    handleRef(next);
+                }
+                return _this.promise.all(openPromises);
+            };
+            return resolveRefs(schema, schema, schemaURL, dependencies).then(function (_) { return new ResolvedSchema(schema, resolveErrors); });
+        };
+        JSONSchemaService.prototype.getSchemaForResource = function (resource, document) {
+            // first use $schema if present
+            if (document && document.root && document.root.type === 'object') {
+                var schemaProperties = document.root.properties.filter(function (p) { return (p.keyNode.value === '$schema') && p.valueNode && p.valueNode.type === 'string'; });
+                if (schemaProperties.length > 0) {
+                    var schemeId = Parser.getNodeValue(schemaProperties[0].valueNode);
+                    if (schemeId && Strings.startsWith(schemeId, '.') && this.contextService) {
+                        schemeId = this.contextService.resolveRelativePath(schemeId, resource);
+                    }
+                    if (schemeId) {
+                        var id = this.normalizeId(schemeId);
+                        return this.getOrAddSchemaHandle(id).getResolvedSchema();
+                    }
+                }
+            }
+            var seen = Object.create(null);
+            var schemas = [];
+            for (var _i = 0, _a = this.filePatternAssociations; _i < _a.length; _i++) {
+                var entry = _a[_i];
+                if (entry.matchesPattern(resource)) {
+                    for (var _b = 0, _c = entry.getSchemas(); _b < _c.length; _b++) {
+                        var schemaId = _c[_b];
+                        if (!seen[schemaId]) {
+                            schemas.push(schemaId);
+                            seen[schemaId] = true;
+                        }
+                    }
+                }
+            }
+            if (schemas.length > 0) {
+                return this.createCombinedSchema(resource, schemas).getResolvedSchema();
+            }
+            return this.promise.resolve(null);
+        };
+        JSONSchemaService.prototype.createCombinedSchema = function (resource, schemaIds) {
+            if (schemaIds.length === 1) {
+                return this.getOrAddSchemaHandle(schemaIds[0]);
+            }
+            else {
+                var combinedSchemaId = 'schemaservice://combinedSchema/' + encodeURIComponent(resource);
+                var combinedSchema = {
+                    allOf: schemaIds.map(function (schemaId) { return ({ $ref: schemaId }); })
+                };
+                return this.addSchemaHandle(combinedSchemaId, combinedSchema);
+            }
+        };
+        return JSONSchemaService;
+    }());
+    exports.JSONSchemaService = JSONSchemaService;
+    function toDisplayString(url) {
+        try {
+            var uri = vscode_uri_1.default.parse(url);
+            if (uri.scheme === 'file') {
+                return uri.fsPath;
+            }
+        }
+        catch (e) {
+            // ignore
+        }
+        return url;
+    }
+});
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+(function (factory) {
+    if (typeof module === "object" && typeof module.exports === "object") {
+        var v = factory(require, exports);
+        if (v !== undefined) module.exports = v;
+    }
+    else if (typeof define === "function" && define.amd) {
+        define('vscode-json-languageservice/services/jsonValidation',["require", "exports", "./jsonSchemaService", "vscode-languageserver-types", "../jsonLanguageTypes", "vscode-nls"], factory);
+    }
+})(function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var jsonSchemaService_1 = require("./jsonSchemaService");
     var vscode_languageserver_types_1 = require("vscode-languageserver-types");
     var jsonLanguageTypes_1 = require("../jsonLanguageTypes");
     var nls = require("vscode-nls");
@@ -5877,15 +6666,16 @@ var __extends = (this && this.__extends) || (function () {
                         trailingCommaSeverity = commentSeverity = void 0;
                     }
                 }
-                jsonDocument.syntaxErrors.forEach(function (p) {
+                for (var _i = 0, _a = jsonDocument.syntaxErrors; _i < _a.length; _i++) {
+                    var p = _a[_i];
                     if (p.code === jsonLanguageTypes_1.ErrorCode.TrailingComma) {
-                        if (typeof commentSeverity !== 'number') {
-                            return;
+                        if (typeof trailingCommaSeverity !== 'number') {
+                            continue;
                         }
                         p.severity = trailingCommaSeverity;
                     }
                     addProblem(p);
-                });
+                }
                 if (typeof commentSeverity === 'number') {
                     var message_1 = localize('InvalidCommentToken', 'Comments are not permitted in JSON.');
                     jsonDocument.comments.forEach(function (c) {
@@ -5895,7 +6685,10 @@ var __extends = (this && this.__extends) || (function () {
                 return diagnostics;
             };
             if (schema) {
-                return this.promise.resolve(getDiagnostics(schema));
+                var id = schema.id || ('schemaservice://untitled/' + idCounter++);
+                return this.jsonSchemaService.resolveSchemaContent(new jsonSchemaService_1.UnresolvedSchema(schema), id, {}).then(function (resolvedSchema) {
+                    return getDiagnostics(resolvedSchema);
+                });
             }
             return this.jsonSchemaService.getSchemaForResource(textDocument.uri, jsonDocument).then(function (schema) {
                 return getDiagnostics(schema);
@@ -5904,6 +6697,7 @@ var __extends = (this && this.__extends) || (function () {
         return JSONValidation;
     }());
     exports.JSONValidation = JSONValidation;
+    var idCounter = 0;
     function schemaAllowsComments(schemaRef) {
         if (schemaRef && typeof schemaRef === 'object') {
             if (schemaRef.allowComments) {
@@ -5924,7 +6718,11 @@ var __extends = (this && this.__extends) || (function () {
         return void 0;
     }
 });
-//# sourceMappingURL=jsonValidation.js.map;
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
@@ -5934,11 +6732,7 @@ var __extends = (this && this.__extends) || (function () {
         define('vscode-json-languageservice/utils/colors',["require", "exports"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Digit0 = 48;
     var Digit9 = 57;
@@ -6009,28 +6803,26 @@ var __extends = (this && this.__extends) || (function () {
     }
     exports.colorFrom256RGB = colorFrom256RGB;
 });
-//# sourceMappingURL=colors.js.map;
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define('vscode-json-languageservice/services/jsonDocumentSymbols',["require", "exports", "../parser/jsonParser", "../utils/strings", "../utils/colors", "vscode-nls", "vscode-languageserver-types"], factory);
+        define('vscode-json-languageservice/services/jsonDocumentSymbols',["require", "exports", "../parser/jsonParser", "../utils/strings", "../utils/colors", "vscode-languageserver-types"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Parser = require("../parser/jsonParser");
     var Strings = require("../utils/strings");
     var colors_1 = require("../utils/colors");
-    var nls = require("vscode-nls");
     var vscode_languageserver_types_1 = require("vscode-languageserver-types");
-    var localize = nls.loadMessageBundle();
     var JSONDocumentSymbols = /** @class */ (function () {
         function JSONDocumentSymbols(schemaService) {
             this.schemaService = schemaService;
@@ -6075,7 +6867,7 @@ var __extends = (this && this.__extends) || (function () {
                         var valueNode = property.valueNode;
                         if (valueNode) {
                             var childContainerName = containerName ? containerName + '.' + property.keyNode.value : property.keyNode.value;
-                            result.push({ name: property.keyNode.value, kind: _this.getSymbolKind(valueNode.type), location: location, containerName: containerName });
+                            result.push({ name: _this.getKeyLabel(property), kind: _this.getSymbolKind(valueNode.type), location: location, containerName: containerName });
                             collectOutlineEntries(result, valueNode, childContainerName);
                         }
                     });
@@ -6132,9 +6924,8 @@ var __extends = (this && this.__extends) || (function () {
                         if (valueNode) {
                             var range = getRange(document, property);
                             var selectionRange = getRange(document, property.keyNode);
-                            var name = property.keyNode.value;
                             var children = collectOutlineEntries([], valueNode);
-                            result.push({ name: name, kind: _this.getSymbolKind(valueNode.type), range: range, selectionRange: selectionRange, children: children });
+                            result.push({ name: _this.getKeyLabel(property), kind: _this.getSymbolKind(valueNode.type), range: range, selectionRange: selectionRange, children: children });
                         }
                     });
                 }
@@ -6159,21 +6950,15 @@ var __extends = (this && this.__extends) || (function () {
                     return vscode_languageserver_types_1.SymbolKind.Variable;
             }
         };
-        JSONDocumentSymbols.prototype.getSymbolDetail = function (nodeType) {
-            switch (nodeType) {
-                case 'object':
-                    return localize('kind.object', 'object');
-                case 'string':
-                    return localize('kind.string', 'string');
-                case 'number':
-                    return localize('kind.number', 'number');
-                case 'array':
-                    return localize('kind.array', 'array');
-                case 'boolean':
-                    return localize('kind.boolean', 'boolean');
-                default: // 'null'
-                    return localize('kind.null', 'null');
+        JSONDocumentSymbols.prototype.getKeyLabel = function (property) {
+            var name = property.keyNode.value;
+            if (name) {
+                name = name.replace(/[\n]/g, '↵');
             }
+            if (name && name.trim()) {
+                return name;
+            }
+            return "\"" + name + "\"";
         };
         JSONDocumentSymbols.prototype.findDocumentColors = function (document, doc) {
             return this.schemaService.getSchemaForResource(document.uri, doc).then(function (schema) {
@@ -6223,7 +7008,11 @@ var __extends = (this && this.__extends) || (function () {
         return vscode_languageserver_types_1.Range.create(document.positionAt(node.offset), document.positionAt(node.offset + node.length));
     }
 });
-//# sourceMappingURL=jsonDocumentSymbols.js.map;
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
@@ -6233,11 +7022,7 @@ var __extends = (this && this.__extends) || (function () {
         define('vscode-json-languageservice/services/configuration',["require", "exports", "vscode-nls"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var nls = require("vscode-nls");
     var localize = nls.loadMessageBundle();
@@ -6252,22 +7037,41 @@ var __extends = (this && this.__extends) || (function () {
                     'schemaArray': {
                         'type': 'array',
                         'minItems': 1,
-                        'items': { '$ref': '#' }
+                        'items': {
+                            '$ref': '#'
+                        }
                     },
                     'positiveInteger': {
                         'type': 'integer',
                         'minimum': 0
                     },
                     'positiveIntegerDefault0': {
-                        'allOf': [{ '$ref': '#/definitions/positiveInteger' }, { 'default': 0 }]
+                        'allOf': [
+                            {
+                                '$ref': '#/definitions/positiveInteger'
+                            },
+                            {
+                                'default': 0
+                            }
+                        ]
                     },
                     'simpleTypes': {
                         'type': 'string',
-                        'enum': ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string']
+                        'enum': [
+                            'array',
+                            'boolean',
+                            'integer',
+                            'null',
+                            'number',
+                            'object',
+                            'string'
+                        ]
                     },
                     'stringArray': {
                         'type': 'array',
-                        'items': { 'type': 'string' },
+                        'items': {
+                            'type': 'string'
+                        },
                         'minItems': 1,
                         'uniqueItems': true
                     }
@@ -6276,142 +7080,364 @@ var __extends = (this && this.__extends) || (function () {
                 'properties': {
                     'id': {
                         'type': 'string',
-                        'format': 'uri',
-                        'description': localize('schema.json.id', 'A unique identifier for the schema.')
+                        'format': 'uri'
                     },
                     '$schema': {
                         'type': 'string',
-                        'format': 'uri',
-                        'description': localize('schema.json.$schema', 'The schema to verify this document against ')
+                        'format': 'uri'
                     },
                     'title': {
-                        'type': 'string',
-                        'description': localize('schema.json.title', 'A descriptive title of the element')
+                        'type': 'string'
                     },
                     'description': {
-                        'type': 'string',
-                        'description': localize('schema.json.description', 'A long description of the element. Used in hover menus and suggestions.')
+                        'type': 'string'
                     },
-                    'default': {
-                        'description': localize('schema.json.default', 'A default value. Used by suggestions.')
-                    },
+                    'default': {},
                     'multipleOf': {
                         'type': 'number',
                         'minimum': 0,
-                        'exclusiveMinimum': true,
-                        'description': localize('schema.json.multipleOf', 'A number that should cleanly divide the current value (i.e. have no remainder)')
+                        'exclusiveMinimum': true
                     },
                     'maximum': {
-                        'type': 'number',
-                        'description': localize('schema.json.maximum', 'The maximum numerical value, inclusive by default.')
+                        'type': 'number'
                     },
                     'exclusiveMaximum': {
                         'type': 'boolean',
-                        'default': false,
-                        'description': localize('schema.json.exclusiveMaximum', 'Makes the maximum property exclusive.')
+                        'default': false
                     },
                     'minimum': {
-                        'type': 'number',
-                        'description': localize('schema.json.minimum', 'The minimum numerical value, inclusive by default.')
+                        'type': 'number'
                     },
                     'exclusiveMinimum': {
                         'type': 'boolean',
-                        'default': false,
-                        'description': localize('schema.json.exclusiveMininum', 'Makes the minimum property exclusive.')
+                        'default': false
                     },
                     'maxLength': {
                         'allOf': [
-                            { '$ref': '#/definitions/positiveInteger' }
-                        ],
-                        'description': localize('schema.json.maxLength', 'The maximum length of a string.')
+                            {
+                                '$ref': '#/definitions/positiveInteger'
+                            }
+                        ]
                     },
                     'minLength': {
                         'allOf': [
-                            { '$ref': '#/definitions/positiveIntegerDefault0' }
-                        ],
-                        'description': localize('schema.json.minLength', 'The minimum length of a string.')
+                            {
+                                '$ref': '#/definitions/positiveIntegerDefault0'
+                            }
+                        ]
                     },
                     'pattern': {
                         'type': 'string',
-                        'format': 'regex',
-                        'description': localize('schema.json.pattern', 'A regular expression to match the string against. It is not implicitly anchored.')
+                        'format': 'regex'
                     },
                     'additionalItems': {
                         'anyOf': [
-                            { 'type': 'boolean' },
-                            { '$ref': '#' }
+                            {
+                                'type': 'boolean'
+                            },
+                            {
+                                '$ref': '#'
+                            }
                         ],
-                        'default': {},
-                        'description': localize('schema.json.additionalItems', 'For arrays, only when items is set as an array. If it is a schema, then this schema validates items after the ones specified by the items array. If it is false, then additional items will cause validation to fail.')
+                        'default': {}
                     },
+                    'items': {
+                        'anyOf': [
+                            {
+                                '$ref': '#'
+                            },
+                            {
+                                '$ref': '#/definitions/schemaArray'
+                            }
+                        ],
+                        'default': {}
+                    },
+                    'maxItems': {
+                        'allOf': [
+                            {
+                                '$ref': '#/definitions/positiveInteger'
+                            }
+                        ]
+                    },
+                    'minItems': {
+                        'allOf': [
+                            {
+                                '$ref': '#/definitions/positiveIntegerDefault0'
+                            }
+                        ]
+                    },
+                    'uniqueItems': {
+                        'type': 'boolean',
+                        'default': false
+                    },
+                    'maxProperties': {
+                        'allOf': [
+                            {
+                                '$ref': '#/definitions/positiveInteger'
+                            }
+                        ]
+                    },
+                    'minProperties': {
+                        'allOf': [
+                            {
+                                '$ref': '#/definitions/positiveIntegerDefault0'
+                            }
+                        ]
+                    },
+                    'required': {
+                        'allOf': [
+                            {
+                                '$ref': '#/definitions/stringArray'
+                            }
+                        ]
+                    },
+                    'additionalProperties': {
+                        'anyOf': [
+                            {
+                                'type': 'boolean'
+                            },
+                            {
+                                '$ref': '#'
+                            }
+                        ],
+                        'default': {}
+                    },
+                    'definitions': {
+                        'type': 'object',
+                        'additionalProperties': {
+                            '$ref': '#'
+                        },
+                        'default': {}
+                    },
+                    'properties': {
+                        'type': 'object',
+                        'additionalProperties': {
+                            '$ref': '#'
+                        },
+                        'default': {}
+                    },
+                    'patternProperties': {
+                        'type': 'object',
+                        'additionalProperties': {
+                            '$ref': '#'
+                        },
+                        'default': {}
+                    },
+                    'dependencies': {
+                        'type': 'object',
+                        'additionalProperties': {
+                            'anyOf': [
+                                {
+                                    '$ref': '#'
+                                },
+                                {
+                                    '$ref': '#/definitions/stringArray'
+                                }
+                            ]
+                        }
+                    },
+                    'enum': {
+                        'type': 'array',
+                        'minItems': 1,
+                        'uniqueItems': true
+                    },
+                    'type': {
+                        'anyOf': [
+                            {
+                                '$ref': '#/definitions/simpleTypes'
+                            },
+                            {
+                                'type': 'array',
+                                'items': {
+                                    '$ref': '#/definitions/simpleTypes'
+                                },
+                                'minItems': 1,
+                                'uniqueItems': true
+                            }
+                        ]
+                    },
+                    'format': {
+                        'anyOf': [
+                            {
+                                'type': 'string',
+                                'enum': [
+                                    'date-time',
+                                    'uri',
+                                    'email',
+                                    'hostname',
+                                    'ipv4',
+                                    'ipv6',
+                                    'regex'
+                                ]
+                            },
+                            {
+                                'type': 'string'
+                            }
+                        ]
+                    },
+                    'allOf': {
+                        'allOf': [
+                            {
+                                '$ref': '#/definitions/schemaArray'
+                            }
+                        ]
+                    },
+                    'anyOf': {
+                        'allOf': [
+                            {
+                                '$ref': '#/definitions/schemaArray'
+                            }
+                        ]
+                    },
+                    'oneOf': {
+                        'allOf': [
+                            {
+                                '$ref': '#/definitions/schemaArray'
+                            }
+                        ]
+                    },
+                    'not': {
+                        'allOf': [
+                            {
+                                '$ref': '#'
+                            }
+                        ]
+                    }
+                },
+                'dependencies': {
+                    'exclusiveMaximum': [
+                        'maximum'
+                    ],
+                    'exclusiveMinimum': [
+                        'minimum'
+                    ]
+                },
+                'default': {}
+            },
+            'http://json-schema.org/draft-07/schema#': {
+                'title': localize('schema.json', 'Describes a JSON file using a schema. See json-schema.org for more info.'),
+                'definitions': {
+                    'schemaArray': {
+                        'type': 'array',
+                        'minItems': 1,
+                        'items': { '$ref': '#' }
+                    },
+                    'nonNegativeInteger': {
+                        'type': 'integer',
+                        'minimum': 0
+                    },
+                    'nonNegativeIntegerDefault0': {
+                        'allOf': [
+                            { '$ref': '#/definitions/nonNegativeInteger' },
+                            { 'default': 0 }
+                        ]
+                    },
+                    'simpleTypes': {
+                        'enum': [
+                            'array',
+                            'boolean',
+                            'integer',
+                            'null',
+                            'number',
+                            'object',
+                            'string'
+                        ]
+                    },
+                    'stringArray': {
+                        'type': 'array',
+                        'items': { 'type': 'string' },
+                        'uniqueItems': true,
+                        'default': []
+                    }
+                },
+                'type': ['object', 'boolean'],
+                'properties': {
+                    '$id': {
+                        'type': 'string',
+                        'format': 'uri-reference'
+                    },
+                    '$schema': {
+                        'type': 'string',
+                        'format': 'uri'
+                    },
+                    '$ref': {
+                        'type': 'string',
+                        'format': 'uri-reference'
+                    },
+                    '$comment': {
+                        'type': 'string'
+                    },
+                    'title': {
+                        'type': 'string'
+                    },
+                    'description': {
+                        'type': 'string'
+                    },
+                    'default': true,
+                    'readOnly': {
+                        'type': 'boolean',
+                        'default': false
+                    },
+                    'examples': {
+                        'type': 'array',
+                        'items': true
+                    },
+                    'multipleOf': {
+                        'type': 'number',
+                        'exclusiveMinimum': 0
+                    },
+                    'maximum': {
+                        'type': 'number'
+                    },
+                    'exclusiveMaximum': {
+                        'type': 'number'
+                    },
+                    'minimum': {
+                        'type': 'number'
+                    },
+                    'exclusiveMinimum': {
+                        'type': 'number'
+                    },
+                    'maxLength': { '$ref': '#/definitions/nonNegativeInteger' },
+                    'minLength': { '$ref': '#/definitions/nonNegativeIntegerDefault0' },
+                    'pattern': {
+                        'type': 'string',
+                        'format': 'regex'
+                    },
+                    'additionalItems': { '$ref': '#' },
                     'items': {
                         'anyOf': [
                             { '$ref': '#' },
                             { '$ref': '#/definitions/schemaArray' }
                         ],
-                        'default': {},
-                        'description': localize('schema.json.items', 'For arrays. Can either be a schema to validate every element against or an array of schemas to validate each item against in order (the first schema will validate the first element, the second schema will validate the second element, and so on.')
+                        'default': true
                     },
-                    'maxItems': {
-                        'allOf': [
-                            { '$ref': '#/definitions/positiveInteger' }
-                        ],
-                        'description': localize('schema.json.maxItems', 'The maximum number of items that can be inside an array. Inclusive.')
-                    },
-                    'minItems': {
-                        'allOf': [
-                            { '$ref': '#/definitions/positiveIntegerDefault0' }
-                        ],
-                        'description': localize('schema.json.minItems', 'The minimum number of items that can be inside an array. Inclusive.')
-                    },
+                    'maxItems': { '$ref': '#/definitions/nonNegativeInteger' },
+                    'minItems': { '$ref': '#/definitions/nonNegativeIntegerDefault0' },
                     'uniqueItems': {
                         'type': 'boolean',
-                        'default': false,
-                        'description': localize('schema.json.uniqueItems', 'If all of the items in the array must be unique. Defaults to false.')
+                        'default': false
                     },
-                    'maxProperties': {
-                        'allOf': [
-                            { '$ref': '#/definitions/positiveInteger' }
-                        ],
-                        'description': localize('schema.json.maxProperties', 'The maximum number of properties an object can have. Inclusive.')
-                    },
-                    'minProperties': {
-                        'allOf': [
-                            { '$ref': '#/definitions/positiveIntegerDefault0' },
-                        ],
-                        'description': localize('schema.json.minProperties', 'The minimum number of properties an object can have. Inclusive.')
-                    },
-                    'required': {
-                        'allOf': [
-                            { '$ref': '#/definitions/stringArray' }
-                        ],
-                        'description': localize('schema.json.required', 'An array of strings that lists the names of all properties required on this object.')
-                    },
-                    'additionalProperties': {
-                        'anyOf': [
-                            { 'type': 'boolean' },
-                            { '$ref': '#' }
-                        ],
-                        'default': {},
-                        'description': localize('schema.json.additionalProperties', 'Either a schema or a boolean. If a schema, then used to validate all properties not matched by \'properties\' or \'patternProperties\'. If false, then any properties not matched by either will cause this schema to fail.')
-                    },
+                    'contains': { '$ref': '#' },
+                    'maxProperties': { '$ref': '#/definitions/nonNegativeInteger' },
+                    'minProperties': { '$ref': '#/definitions/nonNegativeIntegerDefault0' },
+                    'required': { '$ref': '#/definitions/stringArray' },
+                    'additionalProperties': { '$ref': '#' },
                     'definitions': {
                         'type': 'object',
                         'additionalProperties': { '$ref': '#' },
-                        'default': {},
-                        'description': localize('schema.json.definitions', 'Not used for validation. Place subschemas here that you wish to reference inline with $ref')
+                        'default': {}
                     },
                     'properties': {
                         'type': 'object',
                         'additionalProperties': { '$ref': '#' },
-                        'default': {},
-                        'description': localize('schema.json.properties', 'A map of property names to schemas for each property.')
+                        'default': {}
                     },
                     'patternProperties': {
                         'type': 'object',
                         'additionalProperties': { '$ref': '#' },
-                        'default': {},
-                        'description': localize('schema.json.patternProperties', 'A map of regular expressions on property names to schemas for matching properties.')
+                        'propertyNames': { 'format': 'regex' },
+                        'default': {}
                     },
                     'dependencies': {
                         'type': 'object',
@@ -6420,14 +7446,15 @@ var __extends = (this && this.__extends) || (function () {
                                 { '$ref': '#' },
                                 { '$ref': '#/definitions/stringArray' }
                             ]
-                        },
-                        'description': localize('schema.json.dependencies', 'A map of property names to either an array of property names or a schema. An array of property names means the property named in the key depends on the properties in the array being present in the object in order to be valid. If the value is a schema, then the schema is only applied to the object if the property in the key exists on the object.')
+                        }
                     },
+                    'propertyNames': { '$ref': '#' },
+                    'const': true,
                     'enum': {
                         'type': 'array',
+                        'items': true,
                         'minItems': 1,
-                        'uniqueItems': true,
-                        'description': localize('schema.json.enum', 'The set of literal values that are valid')
+                        'uniqueItems': true
                     },
                     'type': {
                         'anyOf': [
@@ -6438,512 +7465,93 @@ var __extends = (this && this.__extends) || (function () {
                                 'minItems': 1,
                                 'uniqueItems': true
                             }
-                        ],
-                        'description': localize('schema.json.type', 'Either a string of one of the basic schema types (number, integer, null, array, object, boolean, string) or an array of strings specifying a subset of those types.')
-                    },
-                    'format': {
-                        'anyOf': [
-                            {
-                                'type': 'string',
-                                'description': localize('schema.json.format', 'Describes the format expected for the value.'),
-                                'enum': ['date-time', 'uri', 'email', 'hostname', 'ipv4', 'ipv6', 'regex']
-                            }, {
-                                'type': 'string'
-                            }
                         ]
                     },
-                    'allOf': {
-                        'allOf': [
-                            { '$ref': '#/definitions/schemaArray' }
-                        ],
-                        'description': localize('schema.json.allOf', 'An array of schemas, all of which must match.')
-                    },
-                    'anyOf': {
-                        'allOf': [
-                            { '$ref': '#/definitions/schemaArray' }
-                        ],
-                        'description': localize('schema.json.anyOf', 'An array of schemas, where at least one must match.')
-                    },
-                    'oneOf': {
-                        'allOf': [
-                            { '$ref': '#/definitions/schemaArray' }
-                        ],
-                        'description': localize('schema.json.oneOf', 'An array of schemas, exactly one of which must match.')
-                    },
-                    'not': {
-                        'allOf': [
-                            { '$ref': '#' }
-                        ],
-                        'description': localize('schema.json.not', 'A schema which must not match.')
-                    }
+                    'format': { 'type': 'string' },
+                    'contentMediaType': { 'type': 'string' },
+                    'contentEncoding': { 'type': 'string' },
+                    'if': { '$ref': '#' },
+                    'then': { '$ref': '#' },
+                    'else': { '$ref': '#' },
+                    'allOf': { '$ref': '#/definitions/schemaArray' },
+                    'anyOf': { '$ref': '#/definitions/schemaArray' },
+                    'oneOf': { '$ref': '#/definitions/schemaArray' },
+                    'not': { '$ref': '#' }
                 },
-                'dependencies': {
-                    'exclusiveMaximum': ['maximum'],
-                    'exclusiveMinimum': ['minimum']
-                },
-                'default': {}
+                'default': true
             }
         }
     };
-});
-//# sourceMappingURL=configuration.js.map;
-(function (factory) {
-    if (typeof module === "object" && typeof module.exports === "object") {
-        var v = factory(require, exports);
-        if (v !== undefined) module.exports = v;
-    }
-    else if (typeof define === "function" && define.amd) {
-        define('vscode-json-languageservice/services/jsonSchemaService',["require", "exports", "jsonc-parser", "vscode-uri", "../utils/strings", "../parser/jsonParser", "vscode-nls"], factory);
-    }
-})(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
-    Object.defineProperty(exports, "__esModule", { value: true });
-    var Json = require("jsonc-parser");
-    var vscode_uri_1 = require("vscode-uri");
-    var Strings = require("../utils/strings");
-    var Parser = require("../parser/jsonParser");
-    var nls = require("vscode-nls");
-    var localize = nls.loadMessageBundle();
-    var FilePatternAssociation = /** @class */ (function () {
-        function FilePatternAssociation(pattern) {
-            try {
-                this.patternRegExp = new RegExp(Strings.convertSimple2RegExpPattern(pattern) + '$');
+    var descriptions = {
+        id: localize('schema.json.id', "A unique identifier for the schema."),
+        $schema: localize('schema.json.$schema', "The schema to verify this document against."),
+        title: localize('schema.json.title', "A descriptive title of the element."),
+        description: localize('schema.json.description', "A long description of the element. Used in hover menus and suggestions."),
+        default: localize('schema.json.default', "A default value. Used by suggestions."),
+        multipleOf: localize('schema.json.multipleOf', "A number that should cleanly divide the current value (i.e. have no remainder)."),
+        maximum: localize('schema.json.maximum', "The maximum numerical value, inclusive by default."),
+        exclusiveMaximum: localize('schema.json.exclusiveMaximum', "Makes the maximum property exclusive."),
+        minimum: localize('schema.json.minimum', "The minimum numerical value, inclusive by default."),
+        exclusiveMinimum: localize('schema.json.exclusiveMininum', "Makes the minimum property exclusive."),
+        maxLength: localize('schema.json.maxLength', "The maximum length of a string."),
+        minLength: localize('schema.json.minLength', "The minimum length of a string."),
+        pattern: localize('schema.json.pattern', "A regular expression to match the string against. It is not implicitly anchored."),
+        additionalItems: localize('schema.json.additionalItems', "For arrays, only when items is set as an array. If it is a schema, then this schema validates items after the ones specified by the items array. If it is false, then additional items will cause validation to fail."),
+        items: localize('schema.json.items', "For arrays. Can either be a schema to validate every element against or an array of schemas to validate each item against in order (the first schema will validate the first element, the second schema will validate the second element, and so on."),
+        maxItems: localize('schema.json.maxItems', "The maximum number of items that can be inside an array. Inclusive."),
+        minItems: localize('schema.json.minItems', "The minimum number of items that can be inside an array. Inclusive."),
+        uniqueItems: localize('schema.json.uniqueItems', "If all of the items in the array must be unique. Defaults to false."),
+        maxProperties: localize('schema.json.maxProperties', "The maximum number of properties an object can have. Inclusive."),
+        minProperties: localize('schema.json.minProperties', "The minimum number of properties an object can have. Inclusive."),
+        required: localize('schema.json.required', "An array of strings that lists the names of all properties required on this object."),
+        additionalProperties: localize('schema.json.additionalProperties', "Either a schema or a boolean. If a schema, then used to validate all properties not matched by 'properties' or 'patternProperties'. If false, then any properties not matched by either will cause this schema to fail."),
+        definitions: localize('schema.json.definitions', "Not used for validation. Place subschemas here that you wish to reference inline with $ref."),
+        properties: localize('schema.json.properties', "A map of property names to schemas for each property."),
+        patternProperties: localize('schema.json.patternProperties', "A map of regular expressions on property names to schemas for matching properties."),
+        dependencies: localize('schema.json.dependencies', "A map of property names to either an array of property names or a schema. An array of property names means the property named in the key depends on the properties in the array being present in the object in order to be valid. If the value is a schema, then the schema is only applied to the object if the property in the key exists on the object."),
+        enum: localize('schema.json.enum', "The set of literal values that are valid."),
+        type: localize('schema.json.type', "Either a string of one of the basic schema types (number, integer, null, array, object, boolean, string) or an array of strings specifying a subset of those types."),
+        format: localize('schema.json.format', "Describes the format expected for the value."),
+        allOf: localize('schema.json.allOf', "An array of schemas, all of which must match."),
+        anyOf: localize('schema.json.anyOf', "An array of schemas, where at least one must match."),
+        oneOf: localize('schema.json.oneOf', "An array of schemas, exactly one of which must match."),
+        not: localize('schema.json.not', "A schema which must not match."),
+        $id: localize('schema.json.$id', "A unique identifier for the schema."),
+        $ref: localize('schema.json.$ref', "Reference a definition hosted on any location."),
+        $comment: localize('schema.json.$comment', "Comments from schema authors to readers or maintainers of the schema."),
+        readOnly: localize('schema.json.readOnly', "Indicates that the value of the instance is managed exclusively by the owning authority."),
+        examples: localize('schema.json.examples', "Sample JSON values associated with a particular schema, for the purpose of illustrating usage."),
+        contains: localize('schema.json.contains', "An array instance is valid against \"contains\" if at least one of its elements is valid against the given schema."),
+        propertyNames: localize('schema.json.propertyNames', "If the instance is an object, this keyword validates if every property name in the instance validates against the provided schema."),
+        const: localize('schema.json.const', "An instance validates successfully against this keyword if its value is equal to the value of the keyword."),
+        contentMediaType: localize('schema.json.contentMediaType', "Describes the media type of a string property."),
+        contentEncoding: localize('schema.json.contentEncoding', "Describes the content encoding of a string property."),
+        if: localize('schema.json.if', "The validation outcome of the \"if\" subschema controls which of the \"then\" or \"else\" keywords are evaluated."),
+        then: localize('schema.json.then', "The \"if\" subschema is used for validation when the \"if\" subschema succeeds."),
+        else: localize('schema.json.else', "The \"else\" subschema is used for validation when the \"if\" subschema fails.")
+    };
+    for (var schemaName in exports.schemaContributions.schemas) {
+        var schema = exports.schemaContributions.schemas[schemaName];
+        for (var property in schema.properties) {
+            var propertyObject = schema.properties[property];
+            if (propertyObject === true) {
+                propertyObject = schema.properties[property] = {};
             }
-            catch (e) {
-                // invalid pattern
-                this.patternRegExp = null;
-            }
-            this.schemas = [];
-        }
-        FilePatternAssociation.prototype.addSchema = function (id) {
-            this.schemas.push(id);
-        };
-        FilePatternAssociation.prototype.matchesPattern = function (fileName) {
-            return this.patternRegExp && this.patternRegExp.test(fileName);
-        };
-        FilePatternAssociation.prototype.getSchemas = function () {
-            return this.schemas;
-        };
-        return FilePatternAssociation;
-    }());
-    var SchemaHandle = /** @class */ (function () {
-        function SchemaHandle(service, url, unresolvedSchemaContent) {
-            this.service = service;
-            this.url = url;
-            if (unresolvedSchemaContent) {
-                this.unresolvedSchema = this.service.promise.resolve(new UnresolvedSchema(unresolvedSchemaContent));
-            }
-        }
-        SchemaHandle.prototype.getUnresolvedSchema = function () {
-            if (!this.unresolvedSchema) {
-                this.unresolvedSchema = this.service.loadSchema(this.url);
-            }
-            return this.unresolvedSchema;
-        };
-        SchemaHandle.prototype.getResolvedSchema = function () {
-            var _this = this;
-            if (!this.resolvedSchema) {
-                this.resolvedSchema = this.getUnresolvedSchema().then(function (unresolved) {
-                    return _this.service.resolveSchemaContent(unresolved, _this.url);
-                });
-            }
-            return this.resolvedSchema;
-        };
-        SchemaHandle.prototype.clearSchema = function () {
-            this.resolvedSchema = null;
-            this.unresolvedSchema = null;
-        };
-        return SchemaHandle;
-    }());
-    var UnresolvedSchema = /** @class */ (function () {
-        function UnresolvedSchema(schema, errors) {
-            if (errors === void 0) { errors = []; }
-            this.schema = schema;
-            this.errors = errors;
-        }
-        return UnresolvedSchema;
-    }());
-    exports.UnresolvedSchema = UnresolvedSchema;
-    var ResolvedSchema = /** @class */ (function () {
-        function ResolvedSchema(schema, errors) {
-            if (errors === void 0) { errors = []; }
-            this.schema = schema;
-            this.errors = errors;
-        }
-        ResolvedSchema.prototype.getSection = function (path) {
-            return Parser.asSchema(this.getSectionRecursive(path, this.schema));
-        };
-        ResolvedSchema.prototype.getSectionRecursive = function (path, schema) {
-            var _this = this;
-            if (!schema || typeof schema === 'boolean' || path.length === 0) {
-                return schema;
-            }
-            var next = path.shift();
-            if (schema.properties && typeof schema.properties[next]) {
-                return this.getSectionRecursive(path, schema.properties[next]);
-            }
-            else if (schema.patternProperties) {
-                Object.keys(schema.patternProperties).forEach(function (pattern) {
-                    var regex = new RegExp(pattern);
-                    if (regex.test(next)) {
-                        return _this.getSectionRecursive(path, schema.patternProperties[pattern]);
-                    }
-                });
-            }
-            else if (typeof schema.additionalProperties === 'object') {
-                return this.getSectionRecursive(path, schema.additionalProperties);
-            }
-            else if (next.match('[0-9]+')) {
-                if (Array.isArray(schema.items)) {
-                    var index = parseInt(next, 10);
-                    if (!isNaN(index) && schema.items[index]) {
-                        return this.getSectionRecursive(path, schema.items[index]);
-                    }
-                }
-                else if (schema.items) {
-                    return this.getSectionRecursive(path, schema.items);
-                }
-            }
-            return null;
-        };
-        return ResolvedSchema;
-    }());
-    exports.ResolvedSchema = ResolvedSchema;
-    var JSONSchemaService = /** @class */ (function () {
-        function JSONSchemaService(requestService, contextService, promiseConstructor) {
-            this.contextService = contextService;
-            this.requestService = requestService;
-            this.promiseConstructor = promiseConstructor || Promise;
-            this.callOnDispose = [];
-            this.contributionSchemas = {};
-            this.contributionAssociations = {};
-            this.schemasById = {};
-            this.filePatternAssociations = [];
-            this.filePatternAssociationById = {};
-            this.registeredSchemasIds = {};
-        }
-        JSONSchemaService.prototype.getRegisteredSchemaIds = function (filter) {
-            return Object.keys(this.registeredSchemasIds).filter(function (id) {
-                var scheme = vscode_uri_1.default.parse(id).scheme;
-                return scheme !== 'schemaservice' && (!filter || filter(scheme));
-            });
-        };
-        Object.defineProperty(JSONSchemaService.prototype, "promise", {
-            get: function () {
-                return this.promiseConstructor;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        JSONSchemaService.prototype.dispose = function () {
-            while (this.callOnDispose.length > 0) {
-                this.callOnDispose.pop()();
-            }
-        };
-        JSONSchemaService.prototype.onResourceChange = function (uri) {
-            uri = this.normalizeId(uri);
-            var schemaFile = this.schemasById[uri];
-            if (schemaFile) {
-                schemaFile.clearSchema();
-                return true;
-            }
-            return false;
-        };
-        JSONSchemaService.prototype.normalizeId = function (id) {
-            // remove trailing '#', normalize drive capitalization
-            return vscode_uri_1.default.parse(id).toString();
-        };
-        JSONSchemaService.prototype.setSchemaContributions = function (schemaContributions) {
-            var _this = this;
-            if (schemaContributions.schemas) {
-                var schemas = schemaContributions.schemas;
-                for (var id in schemas) {
-                    var normalizedId = this.normalizeId(id);
-                    this.contributionSchemas[normalizedId] = this.addSchemaHandle(normalizedId, schemas[id]);
-                }
-            }
-            if (schemaContributions.schemaAssociations) {
-                var schemaAssociations = schemaContributions.schemaAssociations;
-                for (var pattern in schemaAssociations) {
-                    var associations = schemaAssociations[pattern];
-                    this.contributionAssociations[pattern] = associations;
-                    var fpa = this.getOrAddFilePatternAssociation(pattern);
-                    associations.forEach(function (schemaId) {
-                        var id = _this.normalizeId(schemaId);
-                        fpa.addSchema(id);
-                    });
-                }
-            }
-        };
-        JSONSchemaService.prototype.addSchemaHandle = function (id, unresolvedSchemaContent) {
-            var schemaHandle = new SchemaHandle(this, id, unresolvedSchemaContent);
-            this.schemasById[id] = schemaHandle;
-            return schemaHandle;
-        };
-        JSONSchemaService.prototype.getOrAddSchemaHandle = function (id, unresolvedSchemaContent) {
-            return this.schemasById[id] || this.addSchemaHandle(id, unresolvedSchemaContent);
-        };
-        JSONSchemaService.prototype.getOrAddFilePatternAssociation = function (pattern) {
-            var fpa = this.filePatternAssociationById[pattern];
-            if (!fpa) {
-                fpa = new FilePatternAssociation(pattern);
-                this.filePatternAssociationById[pattern] = fpa;
-                this.filePatternAssociations.push(fpa);
-            }
-            return fpa;
-        };
-        JSONSchemaService.prototype.registerExternalSchema = function (uri, filePatterns, unresolvedSchemaContent) {
-            var _this = this;
-            if (filePatterns === void 0) { filePatterns = null; }
-            var id = this.normalizeId(uri);
-            this.registeredSchemasIds[id] = true;
-            if (filePatterns) {
-                filePatterns.forEach(function (pattern) {
-                    _this.getOrAddFilePatternAssociation(pattern).addSchema(id);
-                });
-            }
-            return unresolvedSchemaContent ? this.addSchemaHandle(id, unresolvedSchemaContent) : this.getOrAddSchemaHandle(id);
-        };
-        JSONSchemaService.prototype.clearExternalSchemas = function () {
-            var _this = this;
-            this.schemasById = {};
-            this.filePatternAssociations = [];
-            this.filePatternAssociationById = {};
-            this.registeredSchemasIds = {};
-            for (var id in this.contributionSchemas) {
-                this.schemasById[id] = this.contributionSchemas[id];
-                this.registeredSchemasIds[id] = true;
-            }
-            for (var pattern in this.contributionAssociations) {
-                var fpa = this.getOrAddFilePatternAssociation(pattern);
-                this.contributionAssociations[pattern].forEach(function (schemaId) {
-                    var id = _this.normalizeId(schemaId);
-                    fpa.addSchema(id);
-                });
-            }
-        };
-        JSONSchemaService.prototype.getResolvedSchema = function (schemaId) {
-            var id = this.normalizeId(schemaId);
-            var schemaHandle = this.schemasById[id];
-            if (schemaHandle) {
-                return schemaHandle.getResolvedSchema();
-            }
-            return this.promise.resolve(null);
-        };
-        JSONSchemaService.prototype.loadSchema = function (url) {
-            if (!this.requestService) {
-                var errorMessage = localize('json.schema.norequestservice', 'Unable to load schema from \'{0}\'. No schema request service available', toDisplayString(url));
-                return this.promise.resolve(new UnresolvedSchema({}, [errorMessage]));
-            }
-            return this.requestService(url).then(function (content) {
-                if (!content) {
-                    var errorMessage = localize('json.schema.nocontent', 'Unable to load schema from \'{0}\': No content.', toDisplayString(url));
-                    return new UnresolvedSchema({}, [errorMessage]);
-                }
-                var schemaContent = {};
-                var jsonErrors = [];
-                schemaContent = Json.parse(content, jsonErrors);
-                var errors = jsonErrors.length ? [localize('json.schema.invalidFormat', 'Unable to parse content from \'{0}\': Parse error at offset {1}.', toDisplayString(url), jsonErrors[0].offset)] : [];
-                return new UnresolvedSchema(schemaContent, errors);
-            }, function (error) {
-                var errorMessage = localize('json.schema.unabletoload', 'Unable to load schema from \'{0}\': {1}', toDisplayString(url), error.toString());
-                return new UnresolvedSchema({}, [errorMessage]);
-            });
-        };
-        JSONSchemaService.prototype.resolveSchemaContent = function (schemaToResolve, schemaURL) {
-            var _this = this;
-            var resolveErrors = schemaToResolve.errors.slice(0);
-            var schema = schemaToResolve.schema;
-            var contextService = this.contextService;
-            var findSection = function (schema, path) {
-                if (!path) {
-                    return schema;
-                }
-                var current = schema;
-                if (path[0] === '/') {
-                    path = path.substr(1);
-                }
-                path.split('/').some(function (part) {
-                    current = current[part];
-                    return !current;
-                });
-                return current;
-            };
-            var merge = function (target, sourceRoot, sourceURI, path) {
-                var section = findSection(sourceRoot, path);
-                if (section) {
-                    for (var key in section) {
-                        if (section.hasOwnProperty(key) && !target.hasOwnProperty(key)) {
-                            target[key] = section[key];
-                        }
-                    }
-                }
-                else {
-                    resolveErrors.push(localize('json.schema.invalidref', '$ref \'{0}\' in \'{1}\' can not be resolved.', path, sourceURI));
-                }
-            };
-            var resolveExternalLink = function (node, uri, linkPath, parentSchemaURL) {
-                if (contextService && !/^\w+:\/\/.*/.test(uri)) {
-                    uri = contextService.resolveRelativePath(uri, parentSchemaURL);
-                }
-                uri = _this.normalizeId(uri);
-                return _this.getOrAddSchemaHandle(uri).getUnresolvedSchema().then(function (unresolvedSchema) {
-                    if (unresolvedSchema.errors.length) {
-                        var loc = linkPath ? uri + '#' + linkPath : uri;
-                        resolveErrors.push(localize('json.schema.problemloadingref', 'Problems loading reference \'{0}\': {1}', loc, unresolvedSchema.errors[0]));
-                    }
-                    merge(node, unresolvedSchema.schema, uri, linkPath);
-                    return resolveRefs(node, unresolvedSchema.schema, uri);
-                });
-            };
-            var resolveRefs = function (node, parentSchema, parentSchemaURL) {
-                if (!node || typeof node !== 'object') {
-                    return Promise.resolve(null);
-                }
-                var toWalk = [node];
-                var seen = [];
-                var openPromises = [];
-                var collectEntries = function () {
-                    var entries = [];
-                    for (var _i = 0; _i < arguments.length; _i++) {
-                        entries[_i] = arguments[_i];
-                    }
-                    for (var _a = 0, entries_1 = entries; _a < entries_1.length; _a++) {
-                        var entry = entries_1[_a];
-                        if (typeof entry === 'object') {
-                            toWalk.push(entry);
-                        }
-                    }
-                };
-                var collectMapEntries = function () {
-                    var maps = [];
-                    for (var _i = 0; _i < arguments.length; _i++) {
-                        maps[_i] = arguments[_i];
-                    }
-                    for (var _a = 0, maps_1 = maps; _a < maps_1.length; _a++) {
-                        var map = maps_1[_a];
-                        if (typeof map === 'object') {
-                            for (var key in map) {
-                                var entry = map[key];
-                                if (typeof entry === 'object') {
-                                    toWalk.push(entry);
-                                }
-                            }
-                        }
-                    }
-                };
-                var collectArrayEntries = function () {
-                    var arrays = [];
-                    for (var _i = 0; _i < arguments.length; _i++) {
-                        arrays[_i] = arguments[_i];
-                    }
-                    for (var _a = 0, arrays_1 = arrays; _a < arrays_1.length; _a++) {
-                        var array = arrays_1[_a];
-                        if (Array.isArray(array)) {
-                            for (var _b = 0, array_1 = array; _b < array_1.length; _b++) {
-                                var entry = array_1[_b];
-                                if (typeof entry === 'object') {
-                                    toWalk.push(entry);
-                                }
-                            }
-                        }
-                    }
-                };
-                var handleRef = function (next) {
-                    while (next.$ref) {
-                        var segments = next.$ref.split('#', 2);
-                        delete next.$ref;
-                        if (segments[0].length > 0) {
-                            openPromises.push(resolveExternalLink(next, segments[0], segments[1], parentSchemaURL));
-                            return;
-                        }
-                        else {
-                            merge(next, parentSchema, parentSchemaURL, segments[1]); // can set next.$ref again
-                        }
-                    }
-                    collectEntries(next.items, next.additionalProperties, next.not, next.contains, next.propertyNames, next.if, next.then, next.else);
-                    collectMapEntries(next.definitions, next.properties, next.patternProperties, next.dependencies);
-                    collectArrayEntries(next.anyOf, next.allOf, next.oneOf, next.items);
-                };
-                while (toWalk.length) {
-                    var next = toWalk.pop();
-                    if (seen.indexOf(next) >= 0) {
-                        continue;
-                    }
-                    seen.push(next);
-                    handleRef(next);
-                }
-                return _this.promise.all(openPromises);
-            };
-            return resolveRefs(schema, schema, schemaURL).then(function (_) { return new ResolvedSchema(schema, resolveErrors); });
-        };
-        JSONSchemaService.prototype.getSchemaForResource = function (resource, document) {
-            // first use $schema if present
-            if (document && document.root && document.root.type === 'object') {
-                var schemaProperties = document.root.properties.filter(function (p) { return (p.keyNode.value === '$schema') && p.valueNode && p.valueNode.type === 'string'; });
-                if (schemaProperties.length > 0) {
-                    var schemeId = Parser.getNodeValue(schemaProperties[0].valueNode);
-                    if (schemeId && Strings.startsWith(schemeId, '.') && this.contextService) {
-                        schemeId = this.contextService.resolveRelativePath(schemeId, resource);
-                    }
-                    if (schemeId) {
-                        var id = this.normalizeId(schemeId);
-                        return this.getOrAddSchemaHandle(id).getResolvedSchema();
-                    }
-                }
-            }
-            var seen = Object.create(null);
-            var schemas = [];
-            for (var _i = 0, _a = this.filePatternAssociations; _i < _a.length; _i++) {
-                var entry = _a[_i];
-                if (entry.matchesPattern(resource)) {
-                    for (var _b = 0, _c = entry.getSchemas(); _b < _c.length; _b++) {
-                        var schemaId = _c[_b];
-                        if (!seen[schemaId]) {
-                            schemas.push(schemaId);
-                            seen[schemaId] = true;
-                        }
-                    }
-                }
-            }
-            if (schemas.length > 0) {
-                return this.createCombinedSchema(resource, schemas).getResolvedSchema();
-            }
-            return this.promise.resolve(null);
-        };
-        JSONSchemaService.prototype.createCombinedSchema = function (resource, schemaIds) {
-            if (schemaIds.length === 1) {
-                return this.getOrAddSchemaHandle(schemaIds[0]);
+            var description = descriptions[property];
+            if (description) {
+                propertyObject['description'] = description;
             }
             else {
-                var combinedSchemaId = 'schemaservice://combinedSchema/' + encodeURIComponent(resource);
-                var combinedSchema = {
-                    allOf: schemaIds.map(function (schemaId) { return ({ $ref: schemaId }); })
-                };
-                return this.addSchemaHandle(combinedSchemaId, combinedSchema);
-            }
-        };
-        return JSONSchemaService;
-    }());
-    exports.JSONSchemaService = JSONSchemaService;
-    function toDisplayString(url) {
-        try {
-            var uri = vscode_uri_1.default.parse(url);
-            if (uri.scheme === 'file') {
-                return uri.fsPath;
+                console.log(property + ": localize('schema.json." + property + "', \"\")");
             }
         }
-        catch (e) {
-            // ignore
-        }
-        return url;
     }
 });
-//# sourceMappingURL=jsonSchemaService.js.map;
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
@@ -6953,11 +7561,7 @@ var __extends = (this && this.__extends) || (function () {
         define('vscode-json-languageservice/services/jsonFolding',["require", "exports", "vscode-languageserver-types", "jsonc-parser", "../jsonLanguageTypes"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var vscode_languageserver_types_1 = require("vscode-languageserver-types");
     var jsonc_parser_1 = require("jsonc-parser");
@@ -7076,25 +7680,100 @@ var __extends = (this && this.__extends) || (function () {
     }
     exports.getFoldingRanges = getFoldingRanges;
 });
-//# sourceMappingURL=jsonFolding.js.map;
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define('vscode-json-languageservice/jsonLanguageService',["require", "exports", "vscode-languageserver-types", "./services/jsonCompletion", "./services/jsonHover", "./services/jsonValidation", "./services/jsonDocumentSymbols", "./parser/jsonParser", "./services/configuration", "./services/jsonSchemaService", "./services/jsonFolding", "jsonc-parser", "./jsonLanguageTypes"], factory);
+        define('vscode-json-languageservice/services/jsonSelectionRanges',["require", "exports", "vscode-languageserver-types", "jsonc-parser", "../jsonLanguageTypes"], factory);
     }
 })(function (require, exports) {
-    /*---------------------------------------------------------------------------------------------
-     *  Copyright (c) Microsoft Corporation. All rights reserved.
-     *  Licensed under the MIT License. See License.txt in the project root for license information.
-     *--------------------------------------------------------------------------------------------*/
-    'use strict';
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    var vscode_languageserver_types_1 = require("vscode-languageserver-types");
+    var jsonc_parser_1 = require("jsonc-parser");
+    var jsonLanguageTypes_1 = require("../jsonLanguageTypes");
+    function getSelectionRanges(document, positions, doc) {
+        function getSelectionRange(position) {
+            var offset = document.offsetAt(position);
+            var node = doc.getNodeFromOffset(offset, true);
+            if (!node) {
+                return [];
+            }
+            var result = [];
+            while (node) {
+                switch (node.type) {
+                    case 'string':
+                    case 'object':
+                    case 'array':
+                        // range without ", [ or {
+                        var cStart = node.offset + 1, cEnd = node.offset + node.length - 1;
+                        if (cStart < cEnd && offset >= cStart && offset <= cEnd) {
+                            result.push(newRange(cStart, cEnd));
+                        }
+                        result.push(newRange(node.offset, node.offset + node.length));
+                        break;
+                    case 'number':
+                    case 'boolean':
+                    case 'null':
+                    case 'property':
+                        result.push(newRange(node.offset, node.offset + node.length));
+                        break;
+                }
+                if (node.type === 'property' || node.parent && node.parent.type === 'array') {
+                    var afterCommaOffset = getOffsetAfterNextToken(node.offset + node.length, 5 /* CommaToken */);
+                    if (afterCommaOffset !== -1) {
+                        result.push(newRange(node.offset, afterCommaOffset));
+                    }
+                }
+                node = node.parent;
+            }
+            return result;
+        }
+        function newRange(start, end) {
+            return {
+                range: vscode_languageserver_types_1.Range.create(document.positionAt(start), document.positionAt(end)),
+                kind: jsonLanguageTypes_1.SelectionRangeKind.Declaration
+            };
+        }
+        var scanner = jsonc_parser_1.createScanner(document.getText(), true);
+        function getOffsetAfterNextToken(offset, expectedToken) {
+            scanner.setPosition(offset);
+            var token = scanner.scan();
+            if (token === expectedToken) {
+                return scanner.getTokenOffset() + scanner.getTokenLength();
+            }
+            return -1;
+        }
+        return positions.map(getSelectionRange);
+    }
+    exports.getSelectionRanges = getSelectionRanges;
+});
+
+(function (factory) {
+    if (typeof module === "object" && typeof module.exports === "object") {
+        var v = factory(require, exports);
+        if (v !== undefined) module.exports = v;
+    }
+    else if (typeof define === "function" && define.amd) {
+        define('vscode-json-languageservice/jsonLanguageService',["require", "exports", "vscode-languageserver-types", "./services/jsonCompletion", "./services/jsonHover", "./services/jsonValidation", "./services/jsonDocumentSymbols", "./parser/jsonParser", "./services/configuration", "./services/jsonSchemaService", "./services/jsonFolding", "./services/jsonSelectionRanges", "jsonc-parser", "./jsonLanguageTypes"], factory);
+    }
+})(function (require, exports) {
+    "use strict";
     function __export(m) {
         for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
     }
     Object.defineProperty(exports, "__esModule", { value: true });
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Licensed under the MIT License. See License.txt in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
     var vscode_languageserver_types_1 = require("vscode-languageserver-types");
     exports.TextDocument = vscode_languageserver_types_1.TextDocument;
     exports.Position = vscode_languageserver_types_1.Position;
@@ -7115,13 +7794,14 @@ var __extends = (this && this.__extends) || (function () {
     var configuration_1 = require("./services/configuration");
     var jsonSchemaService_1 = require("./services/jsonSchemaService");
     var jsonFolding_1 = require("./services/jsonFolding");
+    var jsonSelectionRanges_1 = require("./services/jsonSelectionRanges");
     var jsonc_parser_1 = require("jsonc-parser");
     __export(require("./jsonLanguageTypes"));
     function getLanguageService(params) {
         var promise = params.promiseConstructor || Promise;
         var jsonSchemaService = new jsonSchemaService_1.JSONSchemaService(params.schemaRequestService, params.workspaceContext, promise);
         jsonSchemaService.setSchemaContributions(configuration_1.schemaContributions);
-        var jsonCompletion = new jsonCompletion_1.JSONCompletion(jsonSchemaService, params.contributions, promise);
+        var jsonCompletion = new jsonCompletion_1.JSONCompletion(jsonSchemaService, params.contributions, promise, params.clientCapabilities);
         var jsonHover = new jsonHover_1.JSONHover(jsonSchemaService, params.contributions, promise);
         var jsonDocumentSymbols = new jsonDocumentSymbols_1.JSONDocumentSymbols(jsonSchemaService);
         var jsonValidation = new jsonValidation_1.JSONValidation(jsonSchemaService, promise);
@@ -7148,6 +7828,7 @@ var __extends = (this && this.__extends) || (function () {
             getColorPresentations: jsonDocumentSymbols.getColorPresentations.bind(jsonDocumentSymbols),
             doHover: jsonHover.doHover.bind(jsonHover),
             getFoldingRanges: jsonFolding_1.getFoldingRanges,
+            getSelectionRanges: jsonSelectionRanges_1.getSelectionRanges,
             format: function (d, r, o) {
                 var range = void 0;
                 if (r) {
@@ -7164,7 +7845,7 @@ var __extends = (this && this.__extends) || (function () {
     }
     exports.getLanguageService = getLanguageService;
 });
-//# sourceMappingURL=jsonLanguageService.js.map;
+
 define('vscode-json-languageservice', ['vscode-json-languageservice/jsonLanguageService'], function (main) { return main; });
 
 define('vs/language/json/jsonWorker',["require", "exports", "vscode-json-languageservice", "vscode-languageserver-types"], function (require, exports, jsonService, ls) {
@@ -7174,14 +7855,13 @@ define('vs/language/json/jsonWorker',["require", "exports", "vscode-json-languag
      *--------------------------------------------------------------------------------------------*/
     'use strict';
     Object.defineProperty(exports, "__esModule", { value: true });
-    var Promise = monaco.Promise;
     var defaultSchemaRequestService;
     if (typeof fetch !== 'undefined') {
         defaultSchemaRequestService = function (url) { return fetch(url).then(function (response) { return response.text(); }); };
     }
     var PromiseAdapter = /** @class */ (function () {
         function PromiseAdapter(executor) {
-            this.wrapped = new monaco.Promise(executor);
+            this.wrapped = new Promise(executor);
         }
         PromiseAdapter.prototype.then = function (onfulfilled, onrejected) {
             var thenable = this.wrapped;
@@ -7191,13 +7871,13 @@ define('vs/language/json/jsonWorker',["require", "exports", "vscode-json-languag
             return this.wrapped;
         };
         PromiseAdapter.resolve = function (v) {
-            return monaco.Promise.as(v);
+            return Promise.resolve(v);
         };
         PromiseAdapter.reject = function (v) {
-            return monaco.Promise.wrapError(v);
+            return Promise.reject(v);
         };
         PromiseAdapter.all = function (values) {
-            return monaco.Promise.join(values);
+            return Promise.all(values);
         };
         return PromiseAdapter;
     }());
@@ -7218,7 +7898,7 @@ define('vs/language/json/jsonWorker',["require", "exports", "vscode-json-languag
                 var jsonDocument = this._languageService.parseJSONDocument(document);
                 return this._languageService.doValidation(document, jsonDocument);
             }
-            return Promise.as([]);
+            return Promise.resolve([]);
         };
         JSONWorker.prototype.doComplete = function (uri, position) {
             var document = this._getTextDocument(uri);
@@ -7236,33 +7916,33 @@ define('vs/language/json/jsonWorker',["require", "exports", "vscode-json-languag
         JSONWorker.prototype.format = function (uri, range, options) {
             var document = this._getTextDocument(uri);
             var textEdits = this._languageService.format(document, range, options);
-            return Promise.as(textEdits);
+            return Promise.resolve(textEdits);
         };
         JSONWorker.prototype.resetSchema = function (uri) {
-            return Promise.as(this._languageService.resetSchema(uri));
+            return Promise.resolve(this._languageService.resetSchema(uri));
         };
         JSONWorker.prototype.findDocumentSymbols = function (uri) {
             var document = this._getTextDocument(uri);
             var jsonDocument = this._languageService.parseJSONDocument(document);
             var symbols = this._languageService.findDocumentSymbols(document, jsonDocument);
-            return Promise.as(symbols);
+            return Promise.resolve(symbols);
         };
         JSONWorker.prototype.findDocumentColors = function (uri) {
             var document = this._getTextDocument(uri);
             var stylesheet = this._languageService.parseJSONDocument(document);
             var colorSymbols = this._languageService.findDocumentColors(document, stylesheet);
-            return Promise.as(colorSymbols);
+            return Promise.resolve(colorSymbols);
         };
         JSONWorker.prototype.getColorPresentations = function (uri, color, range) {
             var document = this._getTextDocument(uri);
             var stylesheet = this._languageService.parseJSONDocument(document);
             var colorPresentations = this._languageService.getColorPresentations(document, stylesheet, color, range);
-            return Promise.as(colorPresentations);
+            return Promise.resolve(colorPresentations);
         };
         JSONWorker.prototype.provideFoldingRanges = function (uri, context) {
             var document = this._getTextDocument(uri);
             var ranges = this._languageService.getFoldingRanges(document, context);
-            return Promise.as(ranges);
+            return Promise.resolve(ranges);
         };
         JSONWorker.prototype._getTextDocument = function (uri) {
             var models = this._ctx.getMirrorModels();

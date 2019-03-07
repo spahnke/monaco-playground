@@ -5,6 +5,7 @@
 import * as dom from '../../dom.js';
 import * as objects from '../../../common/objects.js';
 import { renderOcticons } from '../octiconLabel/octiconLabel.js';
+import { escape } from '../../../common/strings.js';
 var HighlightedLabel = /** @class */ (function () {
     function HighlightedLabel(container, supportOcticons) {
         this.supportOcticons = supportOcticons;
@@ -43,38 +44,35 @@ var HighlightedLabel = /** @class */ (function () {
     };
     HighlightedLabel.prototype.render = function () {
         dom.clearNode(this.domNode);
-        var htmlContent = [], highlight, pos = 0;
-        for (var i = 0; i < this.highlights.length; i++) {
-            highlight = this.highlights[i];
+        var htmlContent = [];
+        var pos = 0;
+        for (var _i = 0, _a = this.highlights; _i < _a.length; _i++) {
+            var highlight = _a[_i];
             if (highlight.end === highlight.start) {
                 continue;
             }
             if (pos < highlight.start) {
                 htmlContent.push('<span>');
                 var substring_1 = this.text.substring(pos, highlight.start);
-                htmlContent.push(this.supportOcticons ? renderOcticons(substring_1) : substring_1);
+                htmlContent.push(this.supportOcticons ? renderOcticons(substring_1) : escape(substring_1));
                 htmlContent.push('</span>');
                 pos = highlight.end;
             }
             htmlContent.push('<span class="highlight">');
             var substring = this.text.substring(highlight.start, highlight.end);
-            htmlContent.push(this.supportOcticons ? renderOcticons(substring) : substring);
+            htmlContent.push(this.supportOcticons ? renderOcticons(substring) : escape(substring));
             htmlContent.push('</span>');
             pos = highlight.end;
         }
         if (pos < this.text.length) {
             htmlContent.push('<span>');
             var substring = this.text.substring(pos);
-            htmlContent.push(this.supportOcticons ? renderOcticons(substring) : substring);
+            htmlContent.push(this.supportOcticons ? renderOcticons(substring) : escape(substring));
             htmlContent.push('</span>');
         }
         this.domNode.innerHTML = htmlContent.join('');
         this.domNode.title = this.title;
         this.didEverRender = true;
-    };
-    HighlightedLabel.prototype.dispose = function () {
-        this.text = null; // StrictNullOverride: nulling out ok in dispose
-        this.highlights = null; // StrictNullOverride: nulling out ok in dispose
     };
     HighlightedLabel.escapeNewLines = function (text, highlights) {
         var total = 0;

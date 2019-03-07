@@ -9,7 +9,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -17,7 +17,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 var Uri = monaco.Uri;
-var Promise = monaco.Promise;
+var Range = monaco.Range;
 //#region utils copied from typescript to prevent loading the entire typescriptServices ---
 var IndentStyle;
 (function (IndentStyle) {
@@ -124,14 +124,16 @@ var DiagnostcsAdapter = /** @class */ (function (_super) {
                 }
             }
         });
-        _this._disposables.push(_this._defaults.onDidChange(function () {
+        var recomputeDiagostics = function () {
             // redo diagnostics when options change
             for (var _i = 0, _a = monaco.editor.getModels(); _i < _a.length; _i++) {
                 var model = _a[_i];
                 onModelRemoved(model);
                 onModelAdd(model);
             }
-        }));
+        };
+        _this._disposables.push(_this._defaults.onDidChange(recomputeDiagostics));
+        _this._disposables.push(_this._defaults.onDidExtraLibsChange(recomputeDiagostics));
         monaco.editor.getModels().forEach(onModelAdd);
         return _this;
     }
@@ -154,7 +156,7 @@ var DiagnostcsAdapter = /** @class */ (function (_super) {
             if (!noSemanticValidation) {
                 promises.push(worker.getSemanticDiagnostics(resource.toString()));
             }
-            return Promise.join(promises);
+            return Promise.all(promises);
         }).then(function (diagnostics) {
             if (!diagnostics || !monaco.editor.getModel(resource)) {
                 // model was disposed in the meantime
@@ -197,6 +199,7 @@ var SuggestAdapter = /** @class */ (function (_super) {
     });
     SuggestAdapter.prototype.provideCompletionItems = function (model, position, _context, token) {
         var wordInfo = model.getWordUntilPosition(position);
+        var wordRange = new Range(position.lineNumber, wordInfo.startColumn, position.lineNumber, wordInfo.endColumn);
         var resource = model.uri;
         var offset = this._positionToOffset(resource, position);
         return this._worker(resource).then(function (worker) {
@@ -206,9 +209,16 @@ var SuggestAdapter = /** @class */ (function (_super) {
                 return;
             }
             var suggestions = info.entries.map(function (entry) {
+                var range = wordRange;
+                if (entry.replacementSpan) {
+                    var p1 = model.getPositionAt(entry.replacementSpan.start);
+                    var p2 = model.getPositionAt(entry.replacementSpan.start + entry.replacementSpan.length);
+                    range = new Range(p1.lineNumber, p1.column, p2.lineNumber, p2.column);
+                }
                 return {
                     uri: resource,
                     position: position,
+                    range: range,
                     label: entry.name,
                     insertText: entry.name,
                     sortText: entry.sortText,

@@ -26,7 +26,7 @@ var RowCache = /** @class */ (function () {
         var result = this.getTemplateCache(templateId).pop();
         if (!result) {
             var domNode = $('.monaco-list-row');
-            var renderer = this.renderers.get(templateId);
+            var renderer = this.getRenderer(templateId);
             var templateData = renderer.renderTemplate(domNode);
             result = { domNode: domNode, templateId: templateId, templateData: templateData };
         }
@@ -66,7 +66,7 @@ var RowCache = /** @class */ (function () {
         this.cache.forEach(function (cachedRows, templateId) {
             for (var _i = 0, cachedRows_1 = cachedRows; _i < cachedRows_1.length; _i++) {
                 var cachedRow = cachedRows_1[_i];
-                var renderer = _this.renderers.get(templateId);
+                var renderer = _this.getRenderer(templateId);
                 renderer.disposeTemplate(cachedRow.templateData);
                 cachedRow.domNode = null;
                 cachedRow.templateData = null;
@@ -78,6 +78,13 @@ var RowCache = /** @class */ (function () {
         this.garbageCollect();
         this.cache.clear();
         this.renderers = null; // StrictNullOverride: nulling out ok in dispose
+    };
+    RowCache.prototype.getRenderer = function (templateId) {
+        var renderer = this.renderers.get(templateId);
+        if (!renderer) {
+            throw new Error("No renderer found for " + templateId);
+        }
+        return renderer;
     };
     return RowCache;
 }());

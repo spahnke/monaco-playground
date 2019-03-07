@@ -16,7 +16,7 @@ define(["require", "exports", "./workerManager", "./languageFeatures"], function
     }
     exports.setupJavaScript = setupJavaScript;
     function getJavaScriptWorker() {
-        return new monaco.Promise(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             if (!javaScriptWorker) {
                 return reject("JavaScript not registered!");
             }
@@ -25,7 +25,7 @@ define(["require", "exports", "./workerManager", "./languageFeatures"], function
     }
     exports.getJavaScriptWorker = getJavaScriptWorker;
     function getTypeScriptWorker() {
-        return new monaco.Promise(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             if (!typeScriptWorker) {
                 return reject("TypeScript not registered!");
             }

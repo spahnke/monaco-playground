@@ -162,6 +162,34 @@ define('vs/language/css/workerManager',["require", "exports"], function (require
         Location.is = is;
     })(Location = exports.Location || (exports.Location = {}));
     /**
+     * The LocationLink namespace provides helper functions to work with
+     * [LocationLink](#LocationLink) literals.
+     */
+    var LocationLink;
+    (function (LocationLink) {
+        /**
+         * Creates a LocationLink literal.
+         * @param targetUri The definition's uri.
+         * @param targetRange The full range of the definition.
+         * @param targetSelectionRange The span of the symbol definition at the target.
+         * @param originSelectionRange The span of the symbol being defined in the originating source file.
+         */
+        function create(targetUri, targetRange, targetSelectionRange, originSelectionRange) {
+            return { targetUri: targetUri, targetRange: targetRange, targetSelectionRange: targetSelectionRange, originSelectionRange: originSelectionRange };
+        }
+        LocationLink.create = create;
+        /**
+         * Checks whether the given literal conforms to the [LocationLink](#LocationLink) interface.
+         */
+        function is(value) {
+            var candidate = value;
+            return Is.defined(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
+                && (Range.is(candidate.targetSelectionRange) || Is.undefined(candidate.targetSelectionRange))
+                && (Range.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
+        }
+        LocationLink.is = is;
+    })(LocationLink = exports.LocationLink || (exports.LocationLink = {}));
+    /**
      * The Color namespace provides helper functions to work with
      * [Color](#Color) literals.
      */
@@ -479,13 +507,84 @@ define('vs/language/css/workerManager',["require", "exports"], function (require
         }
         TextDocumentEdit.is = is;
     })(TextDocumentEdit = exports.TextDocumentEdit || (exports.TextDocumentEdit = {}));
+    var CreateFile;
+    (function (CreateFile) {
+        function create(uri, options) {
+            var result = {
+                kind: 'create',
+                uri: uri
+            };
+            if (options !== void 0 && (options.overwrite !== void 0 || options.ignoreIfExists !== void 0)) {
+                result.options = options;
+            }
+            return result;
+        }
+        CreateFile.create = create;
+        function is(value) {
+            var candidate = value;
+            return candidate && candidate.kind === 'create' && Is.string(candidate.uri) &&
+                (candidate.options === void 0 ||
+                    ((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists))));
+        }
+        CreateFile.is = is;
+    })(CreateFile = exports.CreateFile || (exports.CreateFile = {}));
+    var RenameFile;
+    (function (RenameFile) {
+        function create(oldUri, newUri, options) {
+            var result = {
+                kind: 'rename',
+                oldUri: oldUri,
+                newUri: newUri
+            };
+            if (options !== void 0 && (options.overwrite !== void 0 || options.ignoreIfExists !== void 0)) {
+                result.options = options;
+            }
+            return result;
+        }
+        RenameFile.create = create;
+        function is(value) {
+            var candidate = value;
+            return candidate && candidate.kind === 'rename' && Is.string(candidate.oldUri) && Is.string(candidate.newUri) &&
+                (candidate.options === void 0 ||
+                    ((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists))));
+        }
+        RenameFile.is = is;
+    })(RenameFile = exports.RenameFile || (exports.RenameFile = {}));
+    var DeleteFile;
+    (function (DeleteFile) {
+        function create(uri, options) {
+            var result = {
+                kind: 'delete',
+                uri: uri
+            };
+            if (options !== void 0 && (options.recursive !== void 0 || options.ignoreIfNotExists !== void 0)) {
+                result.options = options;
+            }
+            return result;
+        }
+        DeleteFile.create = create;
+        function is(value) {
+            var candidate = value;
+            return candidate && candidate.kind === 'delete' && Is.string(candidate.uri) &&
+                (candidate.options === void 0 ||
+                    ((candidate.options.recursive === void 0 || Is.boolean(candidate.options.recursive)) && (candidate.options.ignoreIfNotExists === void 0 || Is.boolean(candidate.options.ignoreIfNotExists))));
+        }
+        DeleteFile.is = is;
+    })(DeleteFile = exports.DeleteFile || (exports.DeleteFile = {}));
     var WorkspaceEdit;
     (function (WorkspaceEdit) {
         function is(value) {
             var candidate = value;
             return candidate &&
                 (candidate.changes !== void 0 || candidate.documentChanges !== void 0) &&
-                (candidate.documentChanges === void 0 || Is.typedArray(candidate.documentChanges, TextDocumentEdit.is));
+                (candidate.documentChanges === void 0 || candidate.documentChanges.every(function (change) {
+                    if (Is.string(change.kind)) {
+                        return CreateFile.is(change) || RenameFile.is(change) || DeleteFile.is(change);
+                    }
+                    else {
+                        return TextDocumentEdit.is(change);
+                    }
+                }));
         }
         WorkspaceEdit.is = is;
     })(WorkspaceEdit = exports.WorkspaceEdit || (exports.WorkspaceEdit = {}));
@@ -523,9 +622,11 @@ define('vs/language/css/workerManager',["require", "exports"], function (require
             if (workspaceEdit) {
                 this._workspaceEdit = workspaceEdit;
                 if (workspaceEdit.documentChanges) {
-                    workspaceEdit.documentChanges.forEach(function (textDocumentEdit) {
-                        var textEditChange = new TextEditChangeImpl(textDocumentEdit.edits);
-                        _this._textEditChanges[textDocumentEdit.textDocument.uri] = textEditChange;
+                    workspaceEdit.documentChanges.forEach(function (change) {
+                        if (TextDocumentEdit.is(change)) {
+                            var textEditChange = new TextEditChangeImpl(change.edits);
+                            _this._textEditChanges[change.textDocument.uri] = textEditChange;
+                        }
                     });
                 }
                 else if (workspaceEdit.changes) {
@@ -555,7 +656,7 @@ define('vs/language/css/workerManager',["require", "exports"], function (require
                     };
                 }
                 if (!this._workspaceEdit.documentChanges) {
-                    throw new Error('Workspace edit is not configured for versioned document changes.');
+                    throw new Error('Workspace edit is not configured for document changes.');
                 }
                 var textDocument = key;
                 var result = this._textEditChanges[textDocument.uri];
@@ -588,6 +689,23 @@ define('vs/language/css/workerManager',["require", "exports"], function (require
                     this._textEditChanges[key] = result;
                 }
                 return result;
+            }
+        };
+        WorkspaceChange.prototype.createFile = function (uri, options) {
+            this.checkDocumentChanges();
+            this._workspaceEdit.documentChanges.push(CreateFile.create(uri, options));
+        };
+        WorkspaceChange.prototype.renameFile = function (oldUri, newUri, options) {
+            this.checkDocumentChanges();
+            this._workspaceEdit.documentChanges.push(RenameFile.create(oldUri, newUri, options));
+        };
+        WorkspaceChange.prototype.deleteFile = function (uri, options) {
+            this.checkDocumentChanges();
+            this._workspaceEdit.documentChanges.push(DeleteFile.create(uri, options));
+        };
+        WorkspaceChange.prototype.checkDocumentChanges = function () {
+            if (!this._workspaceEdit || !this._workspaceEdit.documentChanges) {
+                throw new Error('Workspace edit is not configured for document changes.');
             }
         };
         return WorkspaceChange;
@@ -636,7 +754,7 @@ define('vs/language/css/workerManager',["require", "exports"], function (require
          */
         function is(value) {
             var candidate = value;
-            return Is.defined(candidate) && Is.string(candidate.uri) && Is.number(candidate.version);
+            return Is.defined(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.number(candidate.version));
         }
         VersionedTextDocumentIdentifier.is = is;
     })(VersionedTextDocumentIdentifier = exports.VersionedTextDocumentIdentifier || (exports.VersionedTextDocumentIdentifier = {}));
@@ -817,7 +935,7 @@ define('vs/language/css/workerManager',["require", "exports"], function (require
          */
         function is(value) {
             var candidate = value;
-            return Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) ||
+            return !!candidate && Is.objectLiteral(candidate) && (MarkupContent.is(candidate.contents) ||
                 MarkedString.is(candidate.contents) ||
                 Is.typedArray(candidate.contents, MarkedString.is)) && (value.range === void 0 || Range.is(value.range));
         }
@@ -1002,8 +1120,9 @@ define('vs/language/css/workerManager',["require", "exports"], function (require
         function is(value) {
             var candidate = value;
             return candidate &&
-                Is.string(candidate.name) && Is.string(candidate.detail) && Is.number(candidate.kind) &&
+                Is.string(candidate.name) && Is.number(candidate.kind) &&
                 Range.is(candidate.range) && Range.is(candidate.selectionRange) &&
+                (candidate.detail === void 0 || Is.string(candidate.detail)) &&
                 (candidate.deprecated === void 0 || Is.boolean(candidate.deprecated)) &&
                 (candidate.children === void 0 || Array.isArray(candidate.children));
         }
@@ -1242,7 +1361,7 @@ define('vs/language/css/workerManager',["require", "exports"], function (require
                     text = text.substring(0, startOffset) + e.newText + text.substring(endOffset, text.length);
                 }
                 else {
-                    throw new Error('Ovelapping edit');
+                    throw new Error('Overlapping edit');
                 }
                 lastModifiedOffset = startOffset;
             }
@@ -1459,6 +1578,7 @@ define('vs/language/css/languageFeatures',["require", "exports", "vscode-languag
     'use strict';
     Object.defineProperty(exports, "__esModule", { value: true });
     var Uri = monaco.Uri;
+    var Range = monaco.Range;
     // --- diagnostics --- ---
     var DiagnosticsAdapter = /** @class */ (function () {
         function DiagnosticsAdapter(_languageId, _worker, defaults) {
@@ -1618,7 +1738,6 @@ define('vs/language/css/languageFeatures',["require", "exports", "vscode-languag
             configurable: true
         });
         CompletionAdapter.prototype.provideCompletionItems = function (model, position, context, token) {
-            var wordInfo = model.getWordUntilPosition(position);
             var resource = model.uri;
             return this._worker(resource).then(function (worker) {
                 return worker.doComplete(resource.toString(), fromPosition(position));
@@ -1626,6 +1745,8 @@ define('vs/language/css/languageFeatures',["require", "exports", "vscode-languag
                 if (!info) {
                     return;
                 }
+                var wordInfo = model.getWordUntilPosition(position);
+                var wordRange = new Range(position.lineNumber, wordInfo.startColumn, position.lineNumber, wordInfo.endColumn);
                 var items = info.items.map(function (entry) {
                     var item = {
                         label: entry.label,
@@ -1634,6 +1755,7 @@ define('vs/language/css/languageFeatures',["require", "exports", "vscode-languag
                         filterText: entry.filterText,
                         documentation: entry.documentation,
                         detail: entry.detail,
+                        range: wordRange,
                         kind: toCompletionItemKind(entry.kind),
                     };
                     if (entry.textEdit) {

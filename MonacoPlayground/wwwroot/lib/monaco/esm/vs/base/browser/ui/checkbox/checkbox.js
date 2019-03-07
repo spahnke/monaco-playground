@@ -8,7 +8,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -35,7 +35,7 @@ var Checkbox = /** @class */ (function (_super) {
         _this._checked = _this._opts.isChecked;
         _this.domNode = document.createElement('div');
         _this.domNode.title = _this._opts.title;
-        _this.domNode.className = 'monaco-custom-checkbox ' + _this._opts.actionClassName + ' ' + (_this._checked ? 'checked' : 'unchecked');
+        _this.domNode.className = 'monaco-custom-checkbox ' + (_this._opts.actionClassName || '') + ' ' + (_this._checked ? 'checked' : 'unchecked');
         _this.domNode.tabIndex = 0;
         _this.domNode.setAttribute('role', 'checkbox');
         _this.domNode.setAttribute('aria-checked', String(_this._checked));
