@@ -14,15 +14,22 @@ export class LinqLanguageProvider {
 	private static createCompletionProvider(): monaco.languages.CompletionItemProvider {
 		return {
 			provideCompletionItems: (model: monaco.editor.ITextModel, position: monaco.Position, context: monaco.languages.CompletionContext, token: monaco.CancellationToken) => {
+				const word = model.getWordUntilPosition(position);
+				const range: monaco.IRange = {
+					startLineNumber: position.lineNumber,
+					endLineNumber: position.lineNumber,
+					startColumn: word.endColumn,
+					endColumn: word.endColumn
+				};
 				if (model.getValue() === "" && position.lineNumber === 1 && position.column === 1) {
-					return { suggestions: this.getSnippets() };
+					return { suggestions: this.getSnippets(range) };
 				}
 
 				if (this.shouldCompleteTables(model, position, token, context)) {
-					return { suggestions: this.getTables() };
+					return { suggestions: this.getTables(range) };
 				}
 
-				return { suggestions: this.getKeywords() };
+				return { suggestions: this.getKeywords(range) };
 			},
 			triggerCharacters: ["@"]
 		};
@@ -41,7 +48,7 @@ export class LinqLanguageProvider {
 		};
 	}
 
-	private static getSnippets(): monaco.languages.CompletionItem[] {
+	private static getSnippets(range: monaco.IRange): monaco.languages.CompletionItem[] {
 		return [
 			{
 				label: "query",
@@ -55,6 +62,7 @@ select x`.trim(),
 					value: "A basic LINQ query"
 				},
 				sortText: "_query",
+				range,
 			},
 		];
 	}
@@ -77,21 +85,27 @@ select x`.trim(),
 		return false;
 	}
 
-	private static getTables(): monaco.languages.CompletionItem[] {
+	private static getTables(range: monaco.IRange): monaco.languages.CompletionItem[] {
 		return [
 			{
 				label: "User",
 				kind: monaco.languages.CompletionItemKind.Class,
-				insertText: "User"
+				insertText: "User",
+				range,
 			},
 		];
 	}
 
-	private static getKeywords(): monaco.languages.CompletionItem[] {
-		return monarchTokenProvider.keywords.map(x => (<monaco.languages.CompletionItem>{
-			label: x,
-			kind: monaco.languages.CompletionItemKind.Keyword,
-		}));
+	private static getKeywords(range: monaco.IRange): monaco.languages.CompletionItem[] {
+		return monarchTokenProvider.keywords.map(x => {
+			const result: monaco.languages.CompletionItem = {
+				label: x,
+				kind: monaco.languages.CompletionItemKind.Keyword,
+				insertText: x,
+				range,
+			};
+			return result;
+		});
 	}
 
 	private static formatLinqExpression(expression: string): string {
