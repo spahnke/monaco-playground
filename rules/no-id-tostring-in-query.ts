@@ -133,8 +133,8 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 
 		const text = node.raw.substring(loc.start.column - node.loc!.start.column);
 		console.log(text);
-		const regex = /(id)(\.toString\(\))(\s*===?\s*)(".*?")/i;
-		const newText = text.replace(regex, "$1$3new Guid($4)");
+		const regex = /(id)\.toString\(\)(\s*===?\s*)(".*?")/i;
+		const newText = text.replace(regex, "$1$2new Guid($3)");
 		console.log(newText);
 
 		if (text === newText)

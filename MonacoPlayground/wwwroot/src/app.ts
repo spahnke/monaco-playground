@@ -20,8 +20,6 @@ foo.bar = Facts.next();
 linq.execute('a x.id.toString() === "asdf" asdf ');
 linq.execute('a x.id.toString() === "' + foo + '" asdf ');
 `, "javascript");
-
-
 }
 
 main();
