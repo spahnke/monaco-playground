@@ -1,23 +1,27 @@
 {
     "version": "2.0.0",
     "tasks": [
-        {
-            "label": "build",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/MonacoPlayground/MonacoPlayground.csproj"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "type": "typescript",
-            "tsconfig": "MonacoPlayground/wwwroot/tsconfig.json",
-            "option": "watch",
-            "problemMatcher": [
-                "$tsc-watch"
-            ]
-        }
-    ]
+		{
+			"label": "build",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"build",
+				"${workspaceFolder}/MonacoPlayground/MonacoPlayground.csproj"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"type": "typescript",
+			"tsconfig": "MonacoPlayground/wwwroot/tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}
+	]
 }
