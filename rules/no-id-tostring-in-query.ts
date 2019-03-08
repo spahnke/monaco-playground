@@ -113,11 +113,33 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 		return declarator;
 	}
 
-	private getDiagnostic(node: Node, loc?: SourceLocation): Rule.ReportDescriptor {
+	private getDiagnostic(node: Literal | TemplateElement, loc?: SourceLocation): Rule.ReportDescriptor {
 		return {
 			message: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
 			node,
-			loc
+			loc,
+			fix: fixer => this.applyFix(fixer, node, loc)
 		};
+	}
+
+	private applyFix(fixer: Rule.RuleFixer, node: Literal | TemplateElement, loc?: SourceLocation): Rule.Fix | null {
+		if (!loc)
+			return null;
+
+		if (typeof node.value !== "string" || !("raw" in node) || !node.raw)
+			return null; // TODO only string literal for now, need to handle other cases
+
+		console.log(node, loc);
+
+		const text = node.raw.substring(loc.start.column - node.loc!.start.column);
+		console.log(text);
+		const regex = /(id)(\.toString\(\))(\s*===?\s*)(".*?")/i;
+		const newText = text.replace(regex, "$1$3new Guid($4)");
+		console.log(newText);
+
+		if (text === newText)
+			return null;
+
+		return fixer.replaceText(node, node.raw.replace(text, newText));
 	}
 }

@@ -106,11 +106,28 @@ var NoIdToStringInQuery = /** @class */ (function () {
         return declarator;
     };
     NoIdToStringInQuery.prototype.getDiagnostic = function (node, loc) {
+        var _this = this;
         return {
             message: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
             node: node,
-            loc: loc
+            loc: loc,
+            fix: function (fixer) { return _this.applyFix(fixer, node, loc); }
         };
+    };
+    NoIdToStringInQuery.prototype.applyFix = function (fixer, node, loc) {
+        if (!loc)
+            return null;
+        if (typeof node.value !== "string" || !("raw" in node) || !node.raw)
+            return null; // TODO only string literal for now, need to handle other cases
+        console.log(node, loc);
+        var text = node.raw.substring(loc.start.column - node.loc.start.column);
+        console.log(text);
+        var regex = /(id)(\.toString\(\))(\s*===?\s*)(".*?")/i;
+        var newText = text.replace(regex, "$1$3new Guid($4)");
+        console.log(newText);
+        if (text === newText)
+            return null;
+        return fixer.replaceText(node, node.raw.replace(text, newText));
     };
     return NoIdToStringInQuery;
 }());
