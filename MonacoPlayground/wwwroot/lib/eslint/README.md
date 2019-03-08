@@ -7,11 +7,18 @@ npm run webpack
 ```
 The built file will be in `./build/eslint`.
 
-For an ES5 version:
+To build a minified version instead, run
 ```sh
-git clone https://github.com/eslint/eslint.git
-cd eslint
-git checkout v5.14.1
-npm install
-npm run browserify
+npm run webpack -- -- production
+```
+
+For an ES5 version change the `rules` object in the `webpack.config.js` as follows
+```js
+{
+	test: /\.m?js$/u,
+	loader: "babel-loader",
+	options: {
+		presets: ["@babel/preset-env"]
+	}
+}
 ```
