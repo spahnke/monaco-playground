@@ -1,4 +1,4 @@
-{
+﻿{
 	"compilerOptions": {
 		"module": "esnext",
 		"target": "es2018",
@@ -6,6 +6,6 @@
 		"sourceMap": true,
 		"noEmitOnError": true
 	},
-	"exclude": [ "lib" ],
+	"include": ["src/**/*.ts", "lib/monaco/monaco.d.ts"],
 	"compileOnSave":  true
 }
