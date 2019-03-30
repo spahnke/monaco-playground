@@ -27,6 +27,9 @@ function main() {
 	}
 }
 
+/**
+ * @param {{[x: string]: { type: "boolean" | "string", defaultValue: boolean | string }}} definitions
+ */
 function parseCommandLine(definitions) {
 	const options = {};
 	for (let def in definitions) {
