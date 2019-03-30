@@ -2,7 +2,11 @@
 import fs from "fs";
 import path from "path";
 
-const libPath = process.argv[2] || "/usr/local/lib/node_modules/typescript/lib";
+const options = parseCommandLine({
+	libPath: { type: "string", defaultValue: "/usr/local/lib/node_modules/typescript/lib" },
+	target: { type: "string", defaultValue: "esnext" },
+	complete: { type: "boolean", defaultValue: false },
+});
 
 function main() {
 	const missingLibs = findMissingLibs();
@@ -10,18 +14,33 @@ function main() {
 		console.warn("The following new libs are missing:", missingLibs);
 	}
 
-	let result = "";
-	for (const lib of Object.keys(libs)) {
-		const content = compileLib(lib, false);
-		const parent = libs[lib].parent ? `${libs[lib].parent} + ` : "";
-		result += `export const ${lib} = ${parent}${JSON.stringify(content)}\n`;
+	if (options.complete) {
+		console.log(compileLib(options.target, true));
+	} else {
+		let result = "";
+		for (const lib of Object.keys(libs)) {
+			const content = compileLib(lib, false);
+			const parent = libs[lib].parent ? `${libs[lib].parent} + ` : "";
+			result += `export const ${lib} = ${parent}${JSON.stringify(content)}\n`;
+		}
+		console.log(result);
 	}
-	console.log(result);
 }
 
-// function main() {
-// 	console.log(compileLib("esnext", true));
-// }
+function parseCommandLine(definitions) {
+	const options = {};
+	for (let def in definitions) {
+		const { type, defaultValue } = definitions[def];
+		const regex = new RegExp(`--${def}`, "i");
+		const index = process.argv.findIndex(x => regex.test(x));
+
+		if (type === "boolean")
+			options[def] = index !== -1 ? true : defaultValue;
+		else if (type === "string")
+			options[def] = index !== -1 ? process.argv[index + 1] : defaultValue;
+	}
+	return options;
+}
 
 /**
  * @type {{[x: string]: {files: string[], parent?: string}}}
@@ -99,7 +118,7 @@ const libs = {
 
 function findMissingLibs() {
 	const libNames = Object.keys(libs).flatMap(lib => libs[lib].files);
-	const availableLibs = fs.readdirSync(libPath)
+	const availableLibs = fs.readdirSync(options.libPath)
 		.filter(lib => /^lib\..+\.d\.ts$/.test(lib))
 		.filter(lib => !/\.full\.|scripthost|webworker|^lib\.es\w+?\.d\.ts$/.test(lib));
 	return availableLibs.filter(x => !libNames.includes(x));
@@ -114,7 +133,7 @@ function compileLib(lib, complete) {
 	if (complete && libs[lib].parent)
 		result += `${compileLib(libs[lib].parent, complete)}\n`;
 	for (const fileName of libs[lib].files) {
-		const content = fs.readFileSync(path.join(libPath, fileName)).toString();
+		const content = fs.readFileSync(path.join(options.libPath, fileName)).toString();
 		result += `${removeReferenceTags(content)}\n`;
 	}
 	return result;
