@@ -3,9 +3,9 @@ import fs from "fs";
 import path from "path";
 
 const options = parseCommandLine({
-	libPath: { type: "string", defaultValue: "/usr/local/lib/node_modules/typescript/lib" },
-	target: { type: "string", defaultValue: "esnext" },
-	complete: { type: "boolean", defaultValue: false },
+	libPath: { type: String, defaultValue: "/usr/local/lib/node_modules/typescript/lib" },
+	target: { type: String, defaultValue: "esnext" },
+	complete: { type: Boolean, defaultValue: false },
 });
 
 function main() {
@@ -28,7 +28,8 @@ function main() {
 }
 
 /**
- * @param {{[x: string]: { type: "boolean" | "string", defaultValue: boolean | string }}} definitions
+ * @typedef {{ type: BooleanConstructor | StringConstructor, defaultValue: boolean | string }} Option
+ * @param {{[x: string]: Option}} definitions
  */
 function parseCommandLine(definitions) {
 	const options = {};
@@ -37,9 +38,9 @@ function parseCommandLine(definitions) {
 		const regex = new RegExp(`--${def}`, "i");
 		const index = process.argv.findIndex(x => regex.test(x));
 
-		if (type === "boolean")
+		if (type === Boolean)
 			options[def] = index !== -1 ? true : defaultValue;
-		else if (type === "string")
+		else if (type === String)
 			options[def] = index !== -1 ? process.argv[index + 1] : defaultValue;
 	}
 	return options;
