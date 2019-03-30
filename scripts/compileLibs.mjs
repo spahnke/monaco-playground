@@ -71,13 +71,22 @@ const libs = {
 	es2018: {
 		parent: "es2017",
 		files: [
+			"lib.es2018.asynciterable.d.ts",
 			"lib.es2018.intl.d.ts",
 			"lib.es2018.promise.d.ts",
 			"lib.es2018.regexp.d.ts",
 		]
 	},
-	esnext: {
+	es2019: {
 		parent: "es2018",
+		files: [
+			"lib.es2019.array.d.ts",
+			"lib.es2019.string.d.ts",
+			"lib.es2019.symbol.d.ts",
+		]
+	},
+	esnext: {
+		parent: "es2019",
 		files: [
 			"lib.esnext.array.d.ts",
 			"lib.esnext.asynciterable.d.ts",
