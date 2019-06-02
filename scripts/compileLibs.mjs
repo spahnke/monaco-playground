@@ -2,6 +2,13 @@
 import fs from "fs";
 import path from "path";
 
+/**
+ * @typedef {{files: string[], parent?: string}} Lib
+ * @typedef {{[x: string]: Lib}} LibMap
+ * @typedef {{ type: BooleanConstructor | StringConstructor, defaultValue: boolean | string }} Option
+ * @typedef {{[x: string]: Option}} OptionDefinition
+ */
+
 const options = parseCommandLine({
 	libPath: { type: String, defaultValue: "/usr/local/lib/node_modules/typescript/lib" },
 	target: { type: String, defaultValue: "esnext" },
@@ -10,10 +17,10 @@ const options = parseCommandLine({
 });
 
 function main() {
-	const libs = findLibs();
+	const libs = getLibs();
 
 	if (options.complete) {
-		output(compileLib(libs, options.target, /*complete*/ true));
+		writeOutput(compileLib(libs, options.target, /*complete*/ true));
 	} else {
 		let result = "";
 		for (const lib of Object.keys(libs)) {
@@ -21,13 +28,12 @@ function main() {
 			const parent = libs[lib].parent ? `${libs[lib].parent} + ` : "";
 			result += `export const ${lib} = ${parent}${JSON.stringify(content)}\n`;
 		}
-		output(result);
+		writeOutput(result);
 	}
 }
 
 /**
- * @typedef {{ type: BooleanConstructor | StringConstructor, defaultValue: boolean | string }} Option
- * @param {{[x: string]: Option}} definitions
+ * @param {OptionDefinition} definitions
  */
 function parseCommandLine(definitions) {
 	const options = {};
@@ -44,38 +50,36 @@ function parseCommandLine(definitions) {
 	return options;
 }
 
-function findLibs() {
-	const availableFiles = fs.readdirSync(options.libPath)
-		.filter(lib => /^lib\..+\.d\.ts$/.test(lib))
-		.filter(lib => !/\.full\.|scripthost|webworker|^lib\.es\w+?\.d\.ts$/.test(lib))
-		.sort();
-	log("Found the following files:", availableFiles);
-
+function getLibs() {
 	/**
-	 * @type {{[x: string]: {files: string[], parent?: string}}}
+	 * @type LibMap
 	 */
 	const libs = {
-		es5: {
-			files: [
-				"lib.es5.d.ts"
-			]
-		}
+		es5: { files: ["lib.es5.d.ts"] }
 	};
 	let lastLib = "";
-	for (const fileName of availableFiles) {
+	for (const fileName of getFiles()) {
 		const libName = /^lib\.(?<libName>\w+)\./.exec(fileName).groups["libName"];
 		if (libName in libs) {
 			libs[libName].files.push(fileName);
 		} else {
 			libs[libName] = { files: [fileName] };
 			const parent = getParentLib(libName, lastLib);
-			if (parent)
-				libs[libName].parent = parent;
+			libs[libName].parent = parent;
 			lastLib = libName;
 		}
 	}
-	log("Compiled libs:", libs);
+	writeLog("Lib map:", libs);
 	return libs;
+}
+
+function getFiles() {
+	const files = fs.readdirSync(options.libPath)
+		.filter(lib => /^lib\..+\.d\.ts$/.test(lib))
+		.filter(lib => !/\.full\.|scripthost|webworker|^lib\.es\w+?\.d\.ts$/.test(lib))
+		.sort();
+	writeLog("Found the following files:", files);
+	return files;
 }
 
 /**
@@ -83,20 +87,15 @@ function findLibs() {
  * @param {string} lastLib
  */
 function getParentLib(libName, lastLib) {
-	const standardMatch = /^es(?<standard>.+)$/.exec(libName);
-	if (!standardMatch) {
+	if (!libName.startsWith("es"))
 		return undefined;
-	}
-	const standard = standardMatch.groups["standard"];
-	if (standard === "next") {
-		return lastLib;
-	}
-	const standardsYear = Number.parseInt(standard);
-	return standardsYear === 2015 ? "es5" : `es${standardsYear - 1}`;
+	if (libName === "es2015")
+		return "es5";
+	return lastLib;
 }
 
 /**
- * @param {{[x: string]: {files: string[], parent?: string}}} libs
+ * @param {LibMap} libs
  * @param {string} lib
  * @param {boolean} complete
  */
@@ -118,7 +117,11 @@ function removeReferenceTags(content) {
 	return content.replace(/\/\/\/\s*<reference.*?\/>\s*\r?\n/g, "");
 }
 
-function log(message, ...optionalParams) {
+/**
+ * @param {any} message
+ * @param {any[]} optionalParams
+ */
+function writeLog(message, ...optionalParams) {
 	if (options.verbose)
 		console.warn(message, ...optionalParams);
 }
@@ -126,7 +129,7 @@ function log(message, ...optionalParams) {
 /**
  * @param {string} text
  */
-function output(text) {
+function writeOutput(text) {
 	console.log(text);
 }
 
