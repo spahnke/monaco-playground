@@ -104,12 +104,20 @@ const libs = {
 		parent: "es2018",
 		files: [
 			"lib.es2019.array.d.ts",
+			"lib.es2019.object.d.ts",
 			"lib.es2019.string.d.ts",
 			"lib.es2019.symbol.d.ts",
 		]
 	},
-	esnext: {
+	es2020: {
 		parent: "es2019",
+		files: [
+			"lib.es2020.string.d.ts",
+			"lib.es2020.symbol.wellknown.d.ts",
+		]
+	},
+	esnext: {
+		parent: "es2020",
 		files: [
 			"lib.esnext.array.d.ts",
 			"lib.esnext.asynciterable.d.ts",
