@@ -58,14 +58,13 @@ function getLibs() {
 		es5: { files: ["lib.es5.d.ts"] }
 	};
 	let lastLib = "";
-	for (const fileName of getFiles()) {
+	for (const fileName of getFilesSortedByFilename()) {
 		const libName = /^lib\.(?<libName>\w+)\./.exec(fileName).groups["libName"];
 		if (libName in libs) {
 			libs[libName].files.push(fileName);
 		} else {
 			libs[libName] = { files: [fileName] };
-			const parent = getParentLib(libName, lastLib);
-			libs[libName].parent = parent;
+			libs[libName].parent = getParentLib(libName, lastLib);;
 			lastLib = libName;
 		}
 	}
@@ -73,7 +72,7 @@ function getLibs() {
 	return libs;
 }
 
-function getFiles() {
+function getFilesSortedByFilename() {
 	const files = fs.readdirSync(options.libPath)
 		.filter(lib => /^lib\..+\.d\.ts$/.test(lib))
 		.filter(lib => !/\.full\.|scripthost|webworker|^lib\.es\w+?\.d\.ts$/.test(lib))
