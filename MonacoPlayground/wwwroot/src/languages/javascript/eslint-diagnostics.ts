@@ -16,7 +16,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	protected async doValidate(resource: monaco.Uri): Promise<void> {
 		try {
 			const model = monaco.editor.getModel(resource);
-			if (!model) {
+			if (!this.worker || !model) {
 				return;
 			}
 			monaco.editor.setModelMarkers(model, this.languageId, await this.getDiagnostics(model));
