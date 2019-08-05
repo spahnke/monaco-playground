@@ -71,7 +71,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			source: "ESLint",
 			severity: this.transformSeverity(diagnostic),
 		};
-		this.registerFix(model, diagnostic, marker);
+		if (diagnostic.fix)
+			this.registerFix(model, diagnostic.fix, marker);
 		return marker;
 	}
 
@@ -84,18 +85,14 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return monaco.MarkerSeverity.Info;
 	}
 
-	private registerFix(model: monaco.editor.ITextModel, diagnostic: EsLintDiagnostic, marker: monaco.editor.IMarkerData): void {
-		if (!diagnostic.fix) {
-			return;
-		}
-
-		const start = model.getPositionAt(diagnostic.fix.range[0]);
-		const end = model.getPositionAt(diagnostic.fix.range[1]);
-		const fix: monaco.languages.TextEdit = {
+	private registerFix(model: monaco.editor.ITextModel, fix: EsLintFix, marker: monaco.editor.IMarkerData): void {
+		const start = model.getPositionAt(fix.range[0]);
+		const end = model.getPositionAt(fix.range[1]);
+		const textEdit: monaco.languages.TextEdit = {
 			range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
-			text: diagnostic.fix.text
+			text: fix.text
 		};
-		this.currentFixes.set(this.computeCode(marker), fix);
+		this.currentFixes.set(this.computeCode(marker), textEdit);
 	}
 
 	private computeCode(marker: monaco.editor.IMarkerData): string {
