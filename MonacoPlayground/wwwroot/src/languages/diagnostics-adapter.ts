@@ -6,8 +6,8 @@ export abstract class DiagnosticsAdapter {
 
 	protected languageId: string;
 	protected owner: string;
+	protected disposables: monaco.IDisposable[] = [];
 	private listeners = new Map<string, monaco.IDisposable>();
-	private disposables: monaco.IDisposable[] = [];
 
 	constructor(languageId: string, owner: string = languageId) {
 		this.languageId = languageId;

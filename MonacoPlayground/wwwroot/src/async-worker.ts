@@ -1,4 +1,4 @@
-﻿export abstract class AsyncWorker implements monaco.IDisposable {
+﻿export class AsyncWorker implements monaco.IDisposable {
 	private worker: Worker;
 	private id: number;
 	private currentOperation: Promise<ProcessResult> | null;

@@ -1,16 +1,17 @@
-﻿import { EslintAsyncWorker } from "./eslint-async-worker.js";
+﻿import { AsyncWorker } from "../../async-worker.js";
 import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
 	private config: any;
-	private worker: EslintAsyncWorker;
+	private worker: AsyncWorker;
 	private currentFixes: Map<string, monaco.languages.TextEdit> = new Map();
 
 	constructor(config: any) {
 		super("javascript", "ESLint");
 		this.config = config;
-		this.worker = new EslintAsyncWorker();
+		this.worker = new AsyncWorker("worker/eslint-worker.js");
+		this.disposables.push(this.worker);
 	}
 
 	protected async doValidate(resource: monaco.Uri): Promise<void> {
