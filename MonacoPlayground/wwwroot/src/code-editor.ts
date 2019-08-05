@@ -1,5 +1,5 @@
 ﻿import { esnext } from "./lib.js";
-import { LinqLanguageProvider } from "./languages/linq.js";
+import { registerLanguages } from "./languages/language-registry.js";
 import { Linter } from "./linter/linter.js";
 
 export class CodeEditor {
@@ -12,7 +12,7 @@ export class CodeEditor {
 		return new Promise(resolve => {
 			(<any>window).require.config({ paths: { vs: "lib/monaco/dev/vs" } });
 			(<any>window).require(["vs/editor/editor.main"], () => {
-				LinqLanguageProvider.register();
+				registerLanguages();
 				resolve(new CodeEditor(monaco.editor.create(element, {
 					language: language,
 					fontSize: 12,

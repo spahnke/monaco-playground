@@ -1,9 +1,9 @@
-import { CodeEditor } from "./code-editor.js";
+﻿import { CodeEditor } from "./code-editor.js";
 import { EsLint } from "./linter/eslint.js";
 import { XmlLint } from "./linter/xmllint.js";
 
 async function main() {
-	const editor = await CodeEditor.create(document.querySelector(".editor") as HTMLElement, "javascript");
+	const editor = await CodeEditor.create(document.querySelector(".editor") as HTMLElement);
 
 	const config = await fetch("eslintrc.json").then(r => r.json());
 	editor.setLinter(new EsLint(config, editor.editor));
@@ -20,7 +20,7 @@ async function main() {
 }
 
 const foo = new Foo();
-foo.bar = Facts.next();`);
+foo.bar = Facts.next();`, "javascript");
 
 
 //	editor.setContents(`<?xml version="1.0" encoding="UTF-8"?>
