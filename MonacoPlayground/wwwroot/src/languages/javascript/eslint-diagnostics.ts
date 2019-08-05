@@ -29,9 +29,10 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		// TODO undo/redo not working after applying a code action -> do we need to use a command? If yes, how?
 		const codeActions: monaco.languages.CodeAction[] = [];
 		for (const marker of context.markers) {
-			if (!marker.code || !this.currentFixes.has(marker.code))
+			const code = this.computeCode(marker);
+			if (!this.currentFixes.has(code))
 				continue;
-			const fix = this.currentFixes.get(marker.code)!;
+			const fix = this.currentFixes.get(code)!;
 			codeActions.push({
 				title: `Fix: ${marker.message}`,
 				diagnostics: [marker],
@@ -94,8 +95,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
 			text: diagnostic.fix.text
 		};
-		marker.code = this.computeCode(marker);
-		this.currentFixes.set(marker.code, fix);
+		this.currentFixes.set(this.computeCode(marker), fix);
 	}
 
 	private computeCode(marker: monaco.editor.IMarkerData): string {
