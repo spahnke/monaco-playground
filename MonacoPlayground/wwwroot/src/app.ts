@@ -1,12 +1,8 @@
 ﻿import { CodeEditor } from "./code-editor.js";
-import { EsLint } from "./linter/eslint.js";
 import { XmlLint } from "./linter/xmllint.js";
 
 async function main() {
 	const editor = await CodeEditor.create(document.querySelector(".editor") as HTMLElement);
-
-	const config = await fetch("eslintrc.json").then(r => r.json());
-	editor.setLinter(new EsLint(config, editor.editor));
 
 	editor.setContents(`class Foo {
 	/**

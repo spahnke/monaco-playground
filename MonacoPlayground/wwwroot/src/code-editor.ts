@@ -1,6 +1,5 @@
 ﻿import { esnext } from "./lib.js";
 import { registerLanguages } from "./languages/language-registry.js";
-import { Linter } from "./linter/linter.js";
 
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
@@ -172,20 +171,6 @@ export class CodeEditor {
 		return await worker(model.uri);
 	}
 
-	setLinter(linter: Linter) {
-		const model = this.editor.getModel();
-		if (model === null || model.getModeId() !== linter.getLanguage())
-			return;
-
-		this.resources.push(this.editor.onDidChangeModel(e => this.performLinting(linter)));
-		this.resources.push(this.editor.onDidChangeModelContent(e => this.performLinting(linter)));
-
-		if (linter.providesCodeFixes())
-			this.resources.push(monaco.languages.registerCodeActionProvider(linter.getLanguage(), linter));
-
-		this.resources.push(linter);
-	}
-
 	destroy() {
 		for (const resource of this.resources)
 			resource.dispose();
@@ -261,18 +246,6 @@ declare class Facts {
 			if (filteredMarkers.length !== markers.length)
 				monaco.editor.setModelMarkers(model, owner, filteredMarkers);
 		}));
-	}
-
-	private async performLinting(linter: Linter) {
-		const model = this.editor.getModel();
-		if (!model || model.getModeId() !== linter.getLanguage())
-			return;
-
-		const diagnostics = await linter.lint(this.getText());
-		if (diagnostics === null)
-			return;
-
-		monaco.editor.setModelMarkers(model, "linter", diagnostics.map(x => x.marker));
 	}
 
 	private disposeModel() {
