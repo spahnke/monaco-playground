@@ -2,7 +2,7 @@
 
 export class EslintAsyncWorker extends AsyncWorker {
 
-	constructor(config: any) {
+	constructor() {
 		super("worker/eslint-worker.js");
 	}
 }

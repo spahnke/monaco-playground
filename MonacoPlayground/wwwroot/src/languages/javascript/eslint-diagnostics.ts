@@ -10,7 +10,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	constructor(config: any) {
 		super("javascript");
 		this.config = config;
-		this.worker = new EslintAsyncWorker(config);
+		this.worker = new EslintAsyncWorker();
 	}
 
 	protected async doValidate(resource: monaco.Uri): Promise<void> {
