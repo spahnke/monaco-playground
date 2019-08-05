@@ -8,7 +8,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private currentFixes: Map<string, monaco.languages.TextEdit> = new Map();
 
 	constructor(config: any) {
-		super("javascript");
+		super("javascript", "ESLint");
 		this.config = config;
 		this.worker = new EslintAsyncWorker();
 	}
@@ -19,7 +19,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			if (!this.worker || !model) {
 				return;
 			}
-			monaco.editor.setModelMarkers(model, this.languageId, await this.getDiagnostics(model));
+			monaco.editor.setModelMarkers(model, this.owner, await this.getDiagnostics(model));
 		} catch (e) {
 			console.error(e);
 		}

@@ -5,11 +5,13 @@
 export abstract class DiagnosticsAdapter {
 
 	protected languageId: string;
+	protected owner: string;
 	private listeners = new Map<string, monaco.IDisposable>();
 	private disposables: monaco.IDisposable[] = [];
 
-	constructor(languageId: string) {
+	constructor(languageId: string, owner: string = languageId) {
 		this.languageId = languageId;
+		this.owner = owner;
 
 		const onModelAdd = (model: monaco.editor.IModel): void => {
 			if (model.getModeId() !== languageId) {
@@ -33,7 +35,7 @@ export abstract class DiagnosticsAdapter {
 		};
 
 		const onModelRemoved = (model: monaco.editor.IModel): void => {
-			monaco.editor.setModelMarkers(model, this.languageId, []);
+			monaco.editor.setModelMarkers(model, this.owner, []);
 			const key = model.uri.toString();
 			if (this.listeners.has(key)) {
 				this.listeners.get(key)!.dispose();
