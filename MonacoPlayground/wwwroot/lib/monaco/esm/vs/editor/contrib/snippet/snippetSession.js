@@ -11,9 +11,10 @@ import { Range } from '../../common/core/range.js';
 import { Selection } from '../../common/core/selection.js';
 import { ModelDecorationOptions } from '../../common/model/textModel.js';
 import { IClipboardService } from '../../../platform/clipboard/common/clipboardService.js';
+import { IWorkspaceContextService } from '../../../platform/workspace/common/workspace.js';
 import { optional } from '../../../platform/instantiation/common/instantiation.js';
 import { Choice, Placeholder, SnippetParser, Text } from './snippetParser.js';
-import { ClipboardBasedVariableResolver, CompositeSnippetVariableResolver, ModelBasedVariableResolver, SelectionBasedVariableResolver, TimeBasedVariableResolver, CommentBasedVariableResolver } from './snippetVariables.js';
+import { ClipboardBasedVariableResolver, CompositeSnippetVariableResolver, ModelBasedVariableResolver, SelectionBasedVariableResolver, TimeBasedVariableResolver, CommentBasedVariableResolver, WorkspaceBasedVariableResolver } from './snippetVariables.js';
 import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
 import * as colors from '../../../platform/theme/common/colorRegistry.js';
 registerThemingParticipant(function (theme, collector) {
@@ -307,6 +308,7 @@ var SnippetSession = /** @class */ (function () {
         var model = editor.getModel();
         var modelBasedVariableResolver = new ModelBasedVariableResolver(model);
         var clipboardService = editor.invokeWithinContext(function (accessor) { return accessor.get(IClipboardService, optional); });
+        var workspaceService = editor.invokeWithinContext(function (accessor) { return accessor.get(IWorkspaceContextService, optional); });
         var delta = 0;
         // know what text the overwrite[Before|After] extensions
         // of the primary curser have selected because only when
@@ -353,7 +355,8 @@ var SnippetSession = /** @class */ (function () {
                 new ClipboardBasedVariableResolver(clipboardService, idx, indexedSelections.length),
                 new SelectionBasedVariableResolver(model, selection),
                 new CommentBasedVariableResolver(model),
-                new TimeBasedVariableResolver
+                new TimeBasedVariableResolver,
+                new WorkspaceBasedVariableResolver(workspaceService),
             ]));
             var offset = model.getOffsetAt(start) + delta;
             delta += snippet.toString().length - model.getValueLengthInRange(snippetSelection);

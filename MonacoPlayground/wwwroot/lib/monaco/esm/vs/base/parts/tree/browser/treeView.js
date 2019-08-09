@@ -1131,6 +1131,7 @@ var TreeView = /** @class */ (function (_super) {
     };
     TreeView.prototype.onDragOver = function (e) {
         var _this = this;
+        e.preventDefault(); // needed so that the drop event fires (https://stackoverflow.com/questions/21339924/drop-event-not-firing-in-chrome)
         var event = new Mouse.DragMouseEvent(e);
         var viewItem = this.getItemAround(event.target);
         if (!viewItem || (event.posx === 0 && event.posy === 0 && event.browserEvent.type === DOM.EventType.DRAG_LEAVE)) {

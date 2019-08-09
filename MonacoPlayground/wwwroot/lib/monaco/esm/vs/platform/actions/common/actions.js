@@ -117,11 +117,11 @@ var ExecuteCommandAction = /** @class */ (function (_super) {
         return _this;
     }
     ExecuteCommandAction.prototype.run = function () {
+        var _a;
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        var _a;
         return (_a = this._commandService).executeCommand.apply(_a, [this.id].concat(args));
     };
     ExecuteCommandAction = __decorate([

@@ -124,35 +124,6 @@ export function validateConstraint(arg, constraint) {
         throw new Error("argument does not match one of these constraints: arg instanceof constraint, arg.constructor === constraint, nor constraint(arg) === true");
     }
 }
-/**
- * Creates a new object of the provided class and will call the constructor with
- * any additional argument supplied.
- */
-export function create(ctor) {
-    var args = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        args[_i - 1] = arguments[_i];
-    }
-    var _a;
-    if (isNativeClass(ctor)) {
-        return new ((_a = ctor).bind.apply(_a, [void 0].concat(args)))();
-    }
-    else {
-        var obj = Object.create(ctor.prototype);
-        ctor.apply(obj, args);
-        return obj;
-    }
-}
-// https://stackoverflow.com/a/32235645/1499159
-function isNativeClass(thing) {
-    return typeof thing === 'function'
-        && thing.hasOwnProperty('prototype')
-        && !thing.hasOwnProperty('arguments');
-}
-/**
- *
- *
- */
 export function getAllPropertyNames(obj) {
     var res = [];
     var proto = Object.getPrototypeOf(obj);
@@ -161,4 +132,16 @@ export function getAllPropertyNames(obj) {
         proto = Object.getPrototypeOf(proto);
     }
     return res;
+}
+/**
+ * Converts null to undefined, passes all other values through.
+ */
+export function withNullAsUndefined(x) {
+    return x === null ? undefined : x;
+}
+/**
+ * Converts undefined to null, passes all other values through.
+ */
+export function withUndefinedAsNull(x) {
+    return typeof x === 'undefined' ? null : x;
 }

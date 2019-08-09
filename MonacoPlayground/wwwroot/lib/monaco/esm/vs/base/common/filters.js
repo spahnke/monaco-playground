@@ -89,6 +89,10 @@ function isWhitespace(code) {
         || code === 10 /* LineFeed */
         || code === 13 /* CarriageReturn */);
 }
+var wordSeparators = new Set();
+'`~!@#$%^&*()-=+[{]}\\|;:\'",.<>/?'
+    .split('')
+    .forEach(function (s) { return wordSeparators.add(s.charCodeAt(0)); });
 function isAlphanumeric(code) {
     return isLower(code) || isUpper(code) || isNumber(code);
 }

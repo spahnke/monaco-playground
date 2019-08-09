@@ -36,7 +36,7 @@ import './list.css';
 import { localize } from '../../../../nls.js';
 import { dispose } from '../../../common/lifecycle.js';
 import { isNumber } from '../../../common/types.js';
-import { range, firstIndex } from '../../../common/arrays.js';
+import { range, firstIndex, binarySearch } from '../../../common/arrays.js';
 import { memoize } from '../../../common/decorators.js';
 import * as DOM from '../../dom.js';
 import * as platform from '../../../common/platform.js';
@@ -115,8 +115,9 @@ var TraitRenderer = /** @class */ (function () {
 var Trait = /** @class */ (function () {
     function Trait(_trait) {
         this._trait = _trait;
-        this._onChange = new Emitter();
         this.indexes = [];
+        this.sortedIndexes = [];
+        this._onChange = new Emitter();
     }
     Object.defineProperty(Trait.prototype, "onChange", {
         get: function () { return this._onChange.event; },
@@ -138,9 +139,9 @@ var Trait = /** @class */ (function () {
     Trait.prototype.splice = function (start, deleteCount, elements) {
         var diff = elements.length - deleteCount;
         var end = start + deleteCount;
-        var indexes = this.indexes.filter(function (i) { return i < start; }).concat(elements.map(function (hasTrait, i) { return hasTrait ? i + start : -1; }).filter(function (i) { return i !== -1; }), this.indexes.filter(function (i) { return i >= end; }).map(function (i) { return i + diff; }));
+        var indexes = this.sortedIndexes.filter(function (i) { return i < start; }).concat(elements.map(function (hasTrait, i) { return hasTrait ? i + start : -1; }).filter(function (i) { return i !== -1; }), this.sortedIndexes.filter(function (i) { return i >= end; }).map(function (i) { return i + diff; }));
         this.renderer.splice(start, deleteCount, elements.length);
-        this.set(indexes);
+        this._set(indexes, indexes);
     };
     Trait.prototype.renderIndex = function (index, container) {
         DOM.toggleClass(container, this._trait, this.contains(index));
@@ -155,9 +156,14 @@ var Trait = /** @class */ (function () {
      * @return The old indexes which had this trait.
      */
     Trait.prototype.set = function (indexes, browserEvent) {
+        return this._set(indexes, indexes.slice().sort(numericSort), browserEvent);
+    };
+    Trait.prototype._set = function (indexes, sortedIndexes, browserEvent) {
         var result = this.indexes;
+        var sortedResult = this.sortedIndexes;
         this.indexes = indexes;
-        var toRender = disjunction(result, indexes);
+        this.sortedIndexes = sortedIndexes;
+        var toRender = disjunction(sortedResult, indexes);
         this.renderer.renderIndexes(toRender);
         this._onChange.fire({ indexes: indexes, browserEvent: browserEvent });
         return result;
@@ -166,7 +172,7 @@ var Trait = /** @class */ (function () {
         return this.indexes;
     };
     Trait.prototype.contains = function (index) {
-        return this.indexes.some(function (i) { return i === index; });
+        return binarySearch(this.sortedIndexes, index, numericSort) >= 0;
     };
     Trait.prototype.dispose = function () {
         this._onChange = dispose(this._onChange);
@@ -432,7 +438,7 @@ export function isSelectionRangeChangeEvent(event) {
 function isMouseRightClick(event) {
     return event instanceof MouseEvent && event.button === 2;
 }
-var DefaultMultipleSelectionContoller = {
+var DefaultMultipleSelectionController = {
     isSelectionSingleChangeEvent: isSelectionSingleChangeEvent,
     isSelectionRangeChangeEvent: isSelectionRangeChangeEvent
 };
@@ -450,7 +456,7 @@ var MouseController = /** @class */ (function () {
         this.disposables = [];
         this.multipleSelectionSupport = !(list.options.multipleSelectionSupport === false);
         if (this.multipleSelectionSupport) {
-            this.multipleSelectionController = list.options.multipleSelectionController || DefaultMultipleSelectionContoller;
+            this.multipleSelectionController = list.options.multipleSelectionController || DefaultMultipleSelectionController;
         }
         this.openController = list.options.openController || DefaultOpenController;
         this.mouseSupport = typeof list.options.mouseSupport === 'undefined' || !!list.options.mouseSupport;
@@ -683,7 +689,7 @@ function getContiguousRangeContaining(range, value) {
 }
 /**
  * Given two sorted collections of numbers, returns the intersection
- * betweem them (OR).
+ * between them (OR).
  */
 function disjunction(one, other) {
     var result = [];
@@ -847,6 +853,7 @@ var List = /** @class */ (function () {
         this._options = _options;
         this.eventBufferer = new EventBufferer();
         this._onDidOpen = new Emitter();
+        this.onDidOpen = this._onDidOpen.event;
         this._onPin = new Emitter();
         this.didJustPressContextMenuKey = false;
         this._onDidDispose = new Emitter();
@@ -946,12 +953,6 @@ var List = /** @class */ (function () {
                 .map(function (e) { return new StandardKeyboardEvent(e); })
                 .filter(function (e) { return _this.didJustPressContextMenuKey = e.keyCode === 58 /* ContextMenu */ || (e.shiftKey && e.keyCode === 68 /* F10 */); })
                 .filter(function (e) { e.preventDefault(); e.stopPropagation(); return false; })
-                .map(function (event) {
-                var index = _this.getFocus()[0];
-                var element = _this.view.element(index);
-                var anchor = _this.view.domElement(index) || undefined;
-                return { index: index, element: element, anchor: anchor, browserEvent: event.browserEvent };
-            })
                 .event;
             var fromKeyup = Event.chain(domEvent(this.view.domNode, 'keyup'))
                 .filter(function () {
@@ -959,16 +960,12 @@ var List = /** @class */ (function () {
                 _this.didJustPressContextMenuKey = false;
                 return didJustPressContextMenuKey;
             })
-                .filter(function () { return _this.getFocus().length > 0; })
+                .filter(function () { return _this.getFocus().length > 0 && !!_this.view.domElement(_this.getFocus()[0]); })
                 .map(function (browserEvent) {
                 var index = _this.getFocus()[0];
                 var element = _this.view.element(index);
-                var anchor = _this.view.domElement(index) || undefined;
+                var anchor = _this.view.domElement(index);
                 return { index: index, element: element, anchor: anchor, browserEvent: browserEvent };
-            })
-                .filter(function (_a) {
-                var anchor = _a.anchor;
-                return !!anchor;
             })
                 .event;
             var fromMouse = Event.chain(this.view.onContextMenu)
@@ -1067,7 +1064,6 @@ var List = /** @class */ (function () {
                 throw new Error("Invalid index " + index);
             }
         }
-        indexes = indexes.sort(numericSort);
         this.selection.set(indexes, browserEvent);
     };
     List.prototype.getSelection = function () {
@@ -1084,7 +1080,6 @@ var List = /** @class */ (function () {
                 throw new Error("Invalid index " + index);
             }
         }
-        indexes = indexes.sort(numericSort);
         this.focus.set(indexes, browserEvent);
     };
     List.prototype.focusNext = function (n, loop, browserEvent, filter) {

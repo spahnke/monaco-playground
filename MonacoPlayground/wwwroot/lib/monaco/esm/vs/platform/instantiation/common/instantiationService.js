@@ -16,13 +16,14 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 import { illegalState } from '../../../base/common/errors.js';
-import { create } from '../../../base/common/types.js';
 import { Graph } from './graph.js';
 import { SyncDescriptor } from './descriptors.js';
 import { IInstantiationService, _util, optional } from './instantiation.js';
 import { ServiceCollection } from './serviceCollection.js';
+import { IdleValue } from '../../../base/common/async.js';
 // TRACING
 var _enableTracing = false;
+var _canUseProxy = typeof Proxy === 'function';
 var InstantiationService = /** @class */ (function () {
     function InstantiationService(services, strict, parent) {
         if (services === void 0) { services = new ServiceCollection(); }
@@ -107,7 +108,7 @@ var InstantiationService = /** @class */ (function () {
             }
         }
         // now create the instance
-        return create.apply(null, [ctor].concat(args, serviceArgs));
+        return new (ctor.bind.apply(ctor, [void 0].concat(args.concat(serviceArgs))))();
     };
     InstantiationService.prototype._setServiceInstance = function (id, instance) {
         if (this._services.get(id) instanceof SyncDescriptor) {
@@ -204,8 +205,27 @@ var InstantiationService = /** @class */ (function () {
         }
     };
     InstantiationService.prototype._createServiceInstance = function (ctor, args, _supportsDelayedInstantiation, _trace) {
+        var _this = this;
         if (args === void 0) { args = []; }
-        return this._createInstance(ctor, args, _trace);
+        if (!_supportsDelayedInstantiation || !_canUseProxy) {
+            // eager instantiation or no support JS proxies (e.g. IE11)
+            return this._createInstance(ctor, args, _trace);
+        }
+        else {
+            // Return a proxy object that's backed by an idle value. That
+            // strategy is to instantiate services in our idle time or when actually
+            // needed but not when injected into a consumer
+            var idle_1 = new IdleValue(function () { return _this._createInstance(ctor, args, _trace); });
+            return new Proxy(Object.create(null), {
+                get: function (_target, prop) {
+                    return idle_1.getValue()[prop];
+                },
+                set: function (_target, p, value) {
+                    idle_1.getValue()[p] = value;
+                    return true;
+                }
+            });
+        }
     };
     return InstantiationService;
 }());

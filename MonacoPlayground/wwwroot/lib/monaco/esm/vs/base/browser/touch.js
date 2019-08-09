@@ -150,10 +150,10 @@ var Gesture = /** @class */ (function (_super) {
             this.dispatched = false;
         }
     };
-    Gesture.prototype.newGestureEvent = function (type, intialTarget) {
+    Gesture.prototype.newGestureEvent = function (type, initialTarget) {
         var event = document.createEvent('CustomEvent');
         event.initEvent(type, false, true);
-        event.initialTarget = intialTarget;
+        event.initialTarget = initialTarget;
         return event;
     };
     Gesture.prototype.dispatchEvent = function (event) {

@@ -52,7 +52,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 import { alert } from '../../../base/browser/ui/aria/aria.js';
 import { createCancelablePromise } from '../../../base/common/async.js';
-import { CancellationToken } from '../../../base/common/cancellation.js';
 import { KeyChord } from '../../../base/common/keyCodes.js';
 import * as platform from '../../../base/common/platform.js';
 import { EditorAction, registerEditorAction } from '../../browser/editorExtensions.js';
@@ -71,6 +70,7 @@ import { INotificationService } from '../../../platform/notification/common/noti
 import { IProgressService } from '../../../platform/progress/common/progress.js';
 import { getDefinitionsAtPosition, getImplementationsAtPosition, getTypeDefinitionsAtPosition, getDeclarationsAtPosition } from './goToDefinition.js';
 import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
+import { EditorStateCancellationTokenSource } from '../../browser/core/editorState.js';
 var DefinitionActionConfig = /** @class */ (function () {
     function DefinitionActionConfig(openToSide, openInPeek, filterCurrent, showMessage) {
         if (openToSide === void 0) { openToSide = false; }
@@ -103,10 +103,11 @@ var DefinitionAction = /** @class */ (function (_super) {
         var progressService = accessor.get(IProgressService);
         var model = editor.getModel();
         var pos = editor.getPosition();
-        var definitionPromise = this._getTargetLocationForPosition(model, pos, CancellationToken.None).then(function (references) { return __awaiter(_this, void 0, void 0, function () {
+        var cts = new EditorStateCancellationTokenSource(editor, 1 /* Value */ | 4 /* Position */);
+        var definitionPromise = this._getTargetLocationForPosition(model, pos, cts.token).then(function (references) { return __awaiter(_this, void 0, void 0, function () {
             var idxOfCurrent, result, _i, references_1, reference, newLen, info, current;
             return __generator(this, function (_a) {
-                if (model.isDisposed() || editor.getModel() !== model) {
+                if (cts.token.isCancellationRequested || model.isDisposed() || editor.getModel() !== model) {
                     // new model, no more model
                     return [2 /*return*/];
                 }
@@ -145,6 +146,8 @@ var DefinitionAction = /** @class */ (function (_super) {
         }); }, function (err) {
             // report an error
             notificationService.error(err);
+        }).finally(function () {
+            cts.dispose();
         });
         progressService.showWhile(definitionPromise, 250);
         return definitionPromise;
@@ -162,23 +165,31 @@ var DefinitionAction = /** @class */ (function (_super) {
     };
     DefinitionAction.prototype._onResult = function (editorService, editor, model) {
         return __awaiter(this, void 0, void 0, function () {
-            var msg, next;
+            var msg, gotoLocation, next, targetEditor;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         msg = model.getAriaMessage();
                         alert(msg);
-                        if (!(this._configuration.openInPeek || model.references.length > 1)) return [3 /*break*/, 1];
+                        gotoLocation = editor.getConfiguration().contribInfo.gotoLocation;
+                        if (!(this._configuration.openInPeek || (gotoLocation.multiple === 'peek' && model.references.length > 1))) return [3 /*break*/, 1];
                         this._openInPeek(editorService, editor, model);
                         return [3 /*break*/, 3];
                     case 1:
                         if (!editor.hasModel()) return [3 /*break*/, 3];
-                        next = model.nearestReference(editor.getModel().uri, editor.getPosition());
-                        if (!next) return [3 /*break*/, 3];
+                        next = model.firstReference();
+                        if (!next) {
+                            return [2 /*return*/];
+                        }
                         return [4 /*yield*/, this._openReference(editor, editorService, next, this._configuration.openToSide)];
                     case 2:
-                        _a.sent();
-                        model.dispose();
+                        targetEditor = _a.sent();
+                        if (targetEditor && model.references.length > 1 && gotoLocation.multiple === 'gotoAndPeek') {
+                            this._openInPeek(editorService, targetEditor, model);
+                        }
+                        else {
+                            model.dispose();
+                        }
                         _a.label = 3;
                     case 3: return [2 /*return*/];
                 }

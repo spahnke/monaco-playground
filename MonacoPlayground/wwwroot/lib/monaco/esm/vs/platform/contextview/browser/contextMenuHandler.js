@@ -3,32 +3,24 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import './contextMenuHandler.css';
-import { combinedDisposable, dispose } from '../../../base/common/lifecycle.js';
-import { StandardMouseEvent } from '../../../base/browser/mouseEvent.js';
+import { combinedDisposable } from '../../../base/common/lifecycle.js';
 import { ActionRunner } from '../../../base/common/actions.js';
 import { Menu } from '../../../base/browser/ui/menu/menu.js';
-import { addDisposableListener, EventType, $ } from '../../../base/browser/dom.js';
+import { EventType, $, removeNode } from '../../../base/browser/dom.js';
 import { attachMenuStyler } from '../../theme/common/styler.js';
 import { domEvent } from '../../../base/browser/event.js';
+import { StandardMouseEvent } from '../../../base/browser/mouseEvent.js';
 var ContextMenuHandler = /** @class */ (function () {
-    function ContextMenuHandler(element, contextViewService, telemetryService, notificationService, keybindingService, themeService) {
+    function ContextMenuHandler(contextViewService, telemetryService, notificationService, keybindingService, themeService) {
         this.contextViewService = contextViewService;
         this.telemetryService = telemetryService;
         this.notificationService = notificationService;
         this.keybindingService = keybindingService;
         this.themeService = themeService;
-        this.setContainer(element);
+        this.options = { blockMouse: true };
     }
-    ContextMenuHandler.prototype.setContainer = function (container) {
-        var _this = this;
-        if (this.element) {
-            this.elementDisposable = dispose(this.elementDisposable);
-            this.element = null;
-        }
-        if (container) {
-            this.element = container;
-            this.elementDisposable = addDisposableListener(this.element, EventType.MOUSE_DOWN, function (e) { return _this.onMouseDown(e); });
-        }
+    ContextMenuHandler.prototype.configure = function (options) {
+        this.options = options;
     };
     ContextMenuHandler.prototype.showContextMenu = function (delegate) {
         var _this = this;
@@ -43,13 +35,14 @@ var ContextMenuHandler = /** @class */ (function () {
             canRelayout: false,
             anchorAlignment: delegate.anchorAlignment,
             render: function (container) {
-                _this.menuContainerElement = container;
                 var className = delegate.getMenuClassName ? delegate.getMenuClassName() : '';
                 if (className) {
                     container.className += ' ' + className;
                 }
                 // Render invisible div to block mouse interaction in the rest of the UI
-                _this.block = container.appendChild($('.context-view-block'));
+                if (_this.options.blockMouse) {
+                    _this.block = container.appendChild($('.context-view-block'));
+                }
                 var menuDisposables = [];
                 var actionRunner = delegate.actionRunner || new ActionRunner();
                 actionRunner.onDidBeforeRun(_this.onActionRun, _this, menuDisposables);
@@ -64,6 +57,21 @@ var ContextMenuHandler = /** @class */ (function () {
                 menu.onDidCancel(function () { return _this.contextViewService.hideContextView(true); }, null, menuDisposables);
                 menu.onDidBlur(function () { return _this.contextViewService.hideContextView(true); }, null, menuDisposables);
                 domEvent(window, EventType.BLUR)(function () { _this.contextViewService.hideContextView(true); }, null, menuDisposables);
+                domEvent(window, EventType.MOUSE_DOWN)(function (e) {
+                    var event = new StandardMouseEvent(e);
+                    var element = event.target;
+                    // Don't do anything as we are likely creating a context menu
+                    if (event.rightButton) {
+                        return;
+                    }
+                    while (element) {
+                        if (element === container) {
+                            return;
+                        }
+                        element = element.parentElement;
+                    }
+                    _this.contextViewService.hideContextView(true);
+                }, null, menuDisposables);
                 return combinedDisposable(menuDisposables.concat([menu]));
             },
             focus: function () {
@@ -76,13 +84,12 @@ var ContextMenuHandler = /** @class */ (function () {
                     delegate.onHide(!!didCancel);
                 }
                 if (_this.block) {
-                    _this.block.remove();
+                    removeNode(_this.block);
                     _this.block = null;
                 }
                 if (_this.focusToReturn) {
                     _this.focusToReturn.focus();
                 }
-                _this.menuContainerElement = null;
             }
         });
     };
@@ -106,23 +113,6 @@ var ContextMenuHandler = /** @class */ (function () {
         if (e.error && this.notificationService) {
             this.notificationService.error(e.error);
         }
-    };
-    ContextMenuHandler.prototype.onMouseDown = function (e) {
-        if (!this.menuContainerElement) {
-            return;
-        }
-        var event = new StandardMouseEvent(e);
-        var element = event.target;
-        while (element) {
-            if (element === this.menuContainerElement) {
-                return;
-            }
-            element = element.parentElement;
-        }
-        this.contextViewService.hideContextView();
-    };
-    ContextMenuHandler.prototype.dispose = function () {
-        this.setContainer(null);
     };
     return ContextMenuHandler;
 }());

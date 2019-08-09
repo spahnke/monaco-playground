@@ -58,7 +58,7 @@ var ContextView = /** @class */ (function (_super) {
     ContextView.prototype.setContainer = function (container) {
         var _this = this;
         if (this.container) {
-            this.toDisposeOnSetContainer = dispose(this.toDisposeOnSetContainer);
+            dispose(this.toDisposeOnSetContainer);
             this.container.removeChild(this.view);
             this.container = null;
         }

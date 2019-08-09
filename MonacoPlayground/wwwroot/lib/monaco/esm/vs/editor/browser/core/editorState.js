@@ -2,7 +2,22 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 import * as strings from '../../../base/common/strings.js';
+import { CancellationTokenSource } from '../../../base/common/cancellation.js';
+import { dispose } from '../../../base/common/lifecycle.js';
 var EditorState = /** @class */ (function () {
     function EditorState(editor, flags) {
         this.flags = flags;
@@ -46,6 +61,55 @@ var EditorState = /** @class */ (function () {
     return EditorState;
 }());
 export { EditorState };
+/**
+ * A cancellation token source that cancels when the editor changes as expressed
+ * by the provided flags
+ */
+var EditorStateCancellationTokenSource = /** @class */ (function (_super) {
+    __extends(EditorStateCancellationTokenSource, _super);
+    function EditorStateCancellationTokenSource(editor, flags, parent) {
+        var _this = _super.call(this, parent) || this;
+        _this.editor = editor;
+        _this._listener = [];
+        if (flags & 4 /* Position */) {
+            _this._listener.push(editor.onDidChangeCursorPosition(function (_) { return _this.cancel(); }));
+        }
+        if (flags & 2 /* Selection */) {
+            _this._listener.push(editor.onDidChangeCursorSelection(function (_) { return _this.cancel(); }));
+        }
+        if (flags & 8 /* Scroll */) {
+            _this._listener.push(editor.onDidScrollChange(function (_) { return _this.cancel(); }));
+        }
+        if (flags & 1 /* Value */) {
+            _this._listener.push(editor.onDidChangeModel(function (_) { return _this.cancel(); }));
+            _this._listener.push(editor.onDidChangeModelContent(function (_) { return _this.cancel(); }));
+        }
+        return _this;
+    }
+    EditorStateCancellationTokenSource.prototype.dispose = function () {
+        dispose(this._listener);
+        _super.prototype.dispose.call(this);
+    };
+    return EditorStateCancellationTokenSource;
+}(CancellationTokenSource));
+export { EditorStateCancellationTokenSource };
+/**
+ * A cancellation token source that cancels when the provided model changes
+ */
+var TextModelCancellationTokenSource = /** @class */ (function (_super) {
+    __extends(TextModelCancellationTokenSource, _super);
+    function TextModelCancellationTokenSource(model, parent) {
+        var _this = _super.call(this, parent) || this;
+        _this._listener = model.onDidChangeContent(function () { return _this.cancel(); });
+        return _this;
+    }
+    TextModelCancellationTokenSource.prototype.dispose = function () {
+        this._listener.dispose();
+        _super.prototype.dispose.call(this);
+    };
+    return TextModelCancellationTokenSource;
+}(CancellationTokenSource));
+export { TextModelCancellationTokenSource };
 var StableEditorScrollState = /** @class */ (function () {
     function StableEditorScrollState(_visiblePosition, _visiblePositionScrollDelta) {
         this._visiblePosition = _visiblePosition;

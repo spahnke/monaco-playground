@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { first } from '../../../base/common/async.js';
-import { isNonEmptyArray } from '../../../base/common/arrays.js';
 import { assign } from '../../../base/common/objects.js';
 import { onUnexpectedExternalError, canceled, isPromiseCanceledError } from '../../../base/common/errors.js';
 import { registerDefaultLanguageCommand } from '../../browser/editorExtensions.js';
@@ -66,40 +65,52 @@ var CompletionItem = /** @class */ (function () {
     return CompletionItem;
 }());
 export { CompletionItem };
+var CompletionOptions = /** @class */ (function () {
+    function CompletionOptions(snippetSortOrder, kindFilter, providerFilter) {
+        if (snippetSortOrder === void 0) { snippetSortOrder = 2 /* Bottom */; }
+        if (kindFilter === void 0) { kindFilter = new Set(); }
+        if (providerFilter === void 0) { providerFilter = new Set(); }
+        this.snippetSortOrder = snippetSortOrder;
+        this.kindFilter = kindFilter;
+        this.providerFilter = providerFilter;
+    }
+    CompletionOptions.default = new CompletionOptions();
+    return CompletionOptions;
+}());
+export { CompletionOptions };
 var _snippetSuggestSupport;
 export function getSnippetSuggestSupport() {
     return _snippetSuggestSupport;
 }
-export function provideSuggestionItems(model, position, snippetConfig, onlyFrom, context, token) {
-    if (snippetConfig === void 0) { snippetConfig = 'bottom'; }
+export function provideSuggestionItems(model, position, options, context, token) {
+    if (options === void 0) { options = CompletionOptions.default; }
+    if (context === void 0) { context = { triggerKind: 0 /* Invoke */ }; }
     if (token === void 0) { token = CancellationToken.None; }
     var allSuggestions = [];
-    var acceptSuggestion = createSuggesionFilter(snippetConfig);
     var wordUntil = model.getWordUntilPosition(position);
     var defaultRange = new Range(position.lineNumber, wordUntil.startColumn, position.lineNumber, wordUntil.endColumn);
     position = position.clone();
     // get provider groups, always add snippet suggestion provider
     var supports = modes.CompletionProviderRegistry.orderedGroups(model);
     // add snippets provider unless turned off
-    if (snippetConfig !== 'none' && _snippetSuggestSupport) {
+    if (!options.kindFilter.has(25 /* Snippet */) && _snippetSuggestSupport) {
         supports.unshift([_snippetSuggestSupport]);
     }
-    var suggestConext = context || { triggerKind: 0 /* Invoke */ };
     // add suggestions from contributed providers - providers are ordered in groups of
     // equal score and once a group produces a result the process stops
     var hasResult = false;
     var factory = supports.map(function (supports) { return function () {
         // for each support in the group ask for suggestions
         return Promise.all(supports.map(function (provider) {
-            if (isNonEmptyArray(onlyFrom) && onlyFrom.indexOf(provider) < 0) {
+            if (options.providerFilter.size > 0 && !options.providerFilter.has(provider)) {
                 return undefined;
             }
-            return Promise.resolve(provider.provideCompletionItems(model, position, suggestConext, token)).then(function (container) {
+            return Promise.resolve(provider.provideCompletionItems(model, position, context, token)).then(function (container) {
                 var len = allSuggestions.length;
                 if (container) {
                     for (var _i = 0, _a = container.suggestions || []; _i < _a.length; _i++) {
                         var suggestion = _a[_i];
-                        if (acceptSuggestion(suggestion)) {
+                        if (!options.kindFilter.has(suggestion.kind)) {
                             // fill in default range when missing
                             if (!suggestion.range) {
                                 suggestion.range = defaultRange;
@@ -121,7 +132,7 @@ export function provideSuggestionItems(model, position, snippetConfig, onlyFrom,
         if (token.isCancellationRequested) {
             return Promise.reject(canceled());
         }
-        return allSuggestions.sort(getSuggestionComparator(snippetConfig));
+        return allSuggestions.sort(getSuggestionComparator(options.snippetSortOrder));
     });
     // result.then(items => {
     // 	console.log(model.getWordUntilPosition(position), items.map(item => `${item.suggestion.label}, type=${item.suggestion.type}, incomplete?${item.container.incomplete}, overwriteBefore=${item.suggestion.overwriteBefore}`));
@@ -130,14 +141,6 @@ export function provideSuggestionItems(model, position, snippetConfig, onlyFrom,
     // 	console.warn(model.getWordUntilPosition(position), err);
     // });
     return result;
-}
-function createSuggesionFilter(snippetConfig) {
-    if (snippetConfig === 'none') {
-        return function (suggestion) { return suggestion.kind !== 25 /* Snippet */; };
-    }
-    else {
-        return function () { return true; };
-    }
 }
 function defaultComparator(a, b) {
     // check with 'sortText'
@@ -181,16 +184,12 @@ function snippetDownComparator(a, b) {
     }
     return defaultComparator(a, b);
 }
+var _snippetComparators = new Map();
+_snippetComparators.set(0 /* Top */, snippetUpComparator);
+_snippetComparators.set(2 /* Bottom */, snippetDownComparator);
+_snippetComparators.set(1 /* Inline */, defaultComparator);
 export function getSuggestionComparator(snippetConfig) {
-    if (snippetConfig === 'top') {
-        return snippetUpComparator;
-    }
-    else if (snippetConfig === 'bottom') {
-        return snippetDownComparator;
-    }
-    else {
-        return defaultComparator;
-    }
+    return _snippetComparators.get(snippetConfig);
 }
 registerDefaultLanguageCommand('_executeCompletionItemProvider', function (model, position, args) {
     var result = {
@@ -231,6 +230,6 @@ export function showSimpleSuggestions(editor, suggestions) {
     setTimeout(function () {
         var _a;
         (_a = _provider.onlyOnceSuggestions).push.apply(_a, suggestions);
-        editor.getContribution('editor.contrib.suggestController').triggerSuggest([_provider]);
+        editor.getContribution('editor.contrib.suggestController').triggerSuggest(new Set().add(_provider));
     }, 0);
 }

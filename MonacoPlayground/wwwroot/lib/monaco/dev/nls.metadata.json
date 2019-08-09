@@ -1,67 +1,5 @@
 {
 	"keys": {
-		"vs/editor/standalone/browser/quickOpen/gotoLine": [
-			"gotoLineLabelValidLineAndColumn",
-			"gotoLineLabelValidLine",
-			"gotoLineLabelEmptyWithLineLimit",
-			"gotoLineLabelEmptyWithLineAndColumnLimit",
-			"gotoLineAriaLabel",
-			"gotoLineActionInput",
-			"GotoLineAction.label"
-		],
-		"vs/editor/standalone/browser/quickOpen/quickCommand": [
-			"ariaLabelEntryWithKey",
-			"ariaLabelEntry",
-			"quickCommandActionInput",
-			"QuickCommandAction.label"
-		],
-		"vs/editor/standalone/browser/toggleHighContrast/toggleHighContrast": [
-			"toggleHighContrast"
-		],
-		"vs/editor/standalone/browser/inspectTokens/inspectTokens": [
-			"inspectTokens"
-		],
-		"vs/editor/standalone/browser/quickOpen/quickOutline": [
-			"entryAriaLabel",
-			"quickOutlineActionInput",
-			"QuickOutlineAction.label",
-			"symbols",
-			"modules",
-			"class",
-			"interface",
-			"method",
-			"function",
-			"property",
-			"variable",
-			"variable2",
-			"_constructor",
-			"call"
-		],
-		"vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp": [
-			"noSelection",
-			"singleSelectionRange",
-			"singleSelection",
-			"multiSelectionRange",
-			"multiSelection",
-			"emergencyConfOn",
-			"openingDocs",
-			"readonlyDiffEditor",
-			"editableDiffEditor",
-			"readonlyEditor",
-			"editableEditor",
-			"changeConfigToOnMac",
-			"changeConfigToOnWinLinux",
-			"auto_on",
-			"auto_off",
-			"tabFocusModeOnMsg",
-			"tabFocusModeOnMsgNoKb",
-			"tabFocusModeOffMsg",
-			"tabFocusModeOffMsgNoKb",
-			"openDocMac",
-			"openDocWinLinux",
-			"outroMsg",
-			"ShowAccessibilityHelpAction"
-		],
 		"vs/editor/contrib/caretOperations/caretOperations": [
 			"caret.moveLeft",
 			"caret.moveRight"
@@ -111,6 +49,73 @@
 			"toggle.tabMovesFocus.on",
 			"toggle.tabMovesFocus.off"
 		],
+		"vs/editor/common/standaloneStrings": [
+			"noSelection",
+			"singleSelectionRange",
+			"singleSelection",
+			"multiSelectionRange",
+			"multiSelection",
+			"emergencyConfOn",
+			"openingDocs",
+			"readonlyDiffEditor",
+			"editableDiffEditor",
+			"readonlyEditor",
+			"editableEditor",
+			"changeConfigToOnMac",
+			"changeConfigToOnWinLinux",
+			"auto_on",
+			"auto_off",
+			"tabFocusModeOnMsg",
+			"tabFocusModeOnMsgNoKb",
+			"tabFocusModeOffMsg",
+			"tabFocusModeOffMsgNoKb",
+			"openDocMac",
+			"openDocWinLinux",
+			"outroMsg",
+			"showAccessibilityHelpAction",
+			"inspectTokens",
+			"gotoLineLabelValidLineAndColumn",
+			"gotoLineLabelValidLine",
+			"gotoLineLabelEmptyWithLineLimit",
+			"gotoLineLabelEmptyWithLineAndColumnLimit",
+			"gotoLineAriaLabel",
+			"gotoLineActionInput",
+			"gotoLineActionLabel",
+			"ariaLabelEntryWithKey",
+			"ariaLabelEntry",
+			"quickCommandActionInput",
+			"quickCommandActionLabel",
+			"entryAriaLabel",
+			"quickOutlineActionInput",
+			"quickOutlineActionLabel",
+			"symbols",
+			"modules",
+			"class",
+			"interface",
+			"method",
+			"function",
+			"property",
+			"variable",
+			"variable2",
+			"_constructor",
+			"call",
+			"editorViewAccessibleLabel",
+			"accessibilityHelpMessageIE",
+			"accessibilityHelpMessage",
+			"toggleHighContrast",
+			"bulkEditServiceSummary"
+		],
+		"vs/editor/contrib/bracketMatching/bracketMatching": [
+			"overviewRulerBracketMatchForeground",
+			"smartSelect.jumpBracket",
+			"smartSelect.selectToBracket",
+			{
+				"key": "miGoToBracket",
+				"comment": [
+					"&& denotes a mnemonic"
+				]
+			}
+		],
 		"vs/editor/contrib/clipboard/clipboard": [
 			"actions.clipboard.cutLabel",
 			{
@@ -135,17 +140,6 @@
 			},
 			"actions.clipboard.copyWithSyntaxHighlightingLabel"
 		],
-		"vs/editor/contrib/bracketMatching/bracketMatching": [
-			"overviewRulerBracketMatchForeground",
-			"smartSelect.jumpBracket",
-			"smartSelect.selectToBracket",
-			{
-				"key": "miGoToBracket",
-				"comment": [
-					"&& denotes a mnemonic"
-				]
-			}
-		],
 		"vs/editor/contrib/contextmenu/contextmenu": [
 			"action.showContextMenu.label"
 		],
@@ -156,21 +150,6 @@
 			"InPlaceReplaceAction.previous.label",
 			"InPlaceReplaceAction.next.label"
 		],
-		"vs/editor/contrib/referenceSearch/referenceSearch": [
-			"meta.titleReference",
-			"references.action.label"
-		],
-		"vs/editor/contrib/referenceSearch/referencesController": [
-			"labelLoading"
-		],
-		"vs/editor/contrib/format/formatActions": [
-			"hint11",
-			"hintn1",
-			"hint1n",
-			"hintnn",
-			"formatDocument.label",
-			"formatSelection.label"
-		],
 		"vs/editor/contrib/hover/hover": [
 			{
 				"key": "showHover",
@@ -179,6 +158,17 @@
 					"This allows for users to show the hover without using the mouse."
 				]
 			}
+		],
+		"vs/editor/contrib/referenceSearch/referenceSearch": [
+			"meta.titleReference",
+			"references.action.label"
+		],
+		"vs/editor/contrib/referenceSearch/referencesController": [
+			"labelLoading"
+		],
+		"vs/editor/contrib/format/formatActions": [
+			"formatDocument.label",
+			"formatSelection.label"
 		],
 		"vs/editor/contrib/links/links": [
 			"links.navigate.mac",
@@ -216,13 +206,90 @@
 				]
 			}
 		],
+		"vs/base/parts/quickopen/browser/quickOpenModel": [
+			"quickOpenAriaLabelEntry",
+			"quickOpenAriaLabel"
+		],
 		"vs/base/browser/ui/aria/aria": [
 			"repeated",
 			"repeatedNtimes"
 		],
-		"vs/base/parts/quickopen/browser/quickOpenModel": [
-			"quickOpenAriaLabelEntry",
-			"quickOpenAriaLabel"
+		"vs/editor/contrib/gotoError/gotoError": [
+			"markerAction.next.label",
+			"markerAction.previous.label",
+			"markerAction.nextInFiles.label",
+			"markerAction.previousInFiles.label",
+			{
+				"key": "miGotoNextProblem",
+				"comment": [
+					"&& denotes a mnemonic"
+				]
+			},
+			{
+				"key": "miGotoPreviousProblem",
+				"comment": [
+					"&& denotes a mnemonic"
+				]
+			}
+		],
+		"vs/editor/contrib/goToDefinition/goToDefinitionCommands": [
+			"noResultWord",
+			"generic.noResults",
+			"meta.title",
+			"actions.goToDecl.label",
+			"actions.goToDeclToSide.label",
+			"actions.previewDecl.label",
+			"decl.noResultWord",
+			"decl.generic.noResults",
+			"decl.meta.title",
+			"actions.goToDeclaration.label",
+			"decl.noResultWord",
+			"decl.generic.noResults",
+			"decl.meta.title",
+			"actions.peekDecl.label",
+			"goToImplementation.noResultWord",
+			"goToImplementation.generic.noResults",
+			"meta.implementations.title",
+			"actions.goToImplementation.label",
+			"actions.peekImplementation.label",
+			"goToTypeDefinition.noResultWord",
+			"goToTypeDefinition.generic.noResults",
+			"meta.typeDefinitions.title",
+			"actions.goToTypeDefinition.label",
+			"actions.peekTypeDefinition.label",
+			{
+				"key": "miGotoDefinition",
+				"comment": [
+					"&& denotes a mnemonic"
+				]
+			},
+			{
+				"key": "miGotoTypeDefinition",
+				"comment": [
+					"&& denotes a mnemonic"
+				]
+			},
+			{
+				"key": "miGotoImplementation",
+				"comment": [
+					"&& denotes a mnemonic"
+				]
+			}
+		],
+		"vs/editor/contrib/suggest/suggestController": [
+			"arai.alert.snippet",
+			"suggest.trigger.label"
+		],
+		"vs/editor/contrib/wordHighlighter/wordHighlighter": [
+			"wordHighlight",
+			"wordHighlightStrong",
+			"wordHighlightBorder",
+			"wordHighlightStrongBorder",
+			"overviewRulerWordHighlightForeground",
+			"overviewRulerWordHighlightStrongForeground",
+			"wordHighlight.next.label",
+			"wordHighlight.previous.label",
+			"wordHighlight.trigger.label"
 		],
 		"vs/platform/theme/common/colorRegistry": [
 			"foreground",
@@ -311,83 +378,6 @@
 			"overviewRulerFindMatchForeground",
 			"overviewRulerSelectionHighlightForeground"
 		],
-		"vs/editor/contrib/goToDefinition/goToDefinitionCommands": [
-			"noResultWord",
-			"generic.noResults",
-			"meta.title",
-			"actions.goToDecl.label",
-			"actions.goToDeclToSide.label",
-			"actions.previewDecl.label",
-			"decl.noResultWord",
-			"decl.generic.noResults",
-			"decl.meta.title",
-			"actions.goToDeclaration.label",
-			"decl.noResultWord",
-			"decl.generic.noResults",
-			"decl.meta.title",
-			"actions.peekDecl.label",
-			"goToImplementation.noResultWord",
-			"goToImplementation.generic.noResults",
-			"meta.implementations.title",
-			"actions.goToImplementation.label",
-			"actions.peekImplementation.label",
-			"goToTypeDefinition.noResultWord",
-			"goToTypeDefinition.generic.noResults",
-			"meta.typeDefinitions.title",
-			"actions.goToTypeDefinition.label",
-			"actions.peekTypeDefinition.label",
-			{
-				"key": "miGotoDefinition",
-				"comment": [
-					"&& denotes a mnemonic"
-				]
-			},
-			{
-				"key": "miGotoTypeDefinition",
-				"comment": [
-					"&& denotes a mnemonic"
-				]
-			},
-			{
-				"key": "miGotoImplementation",
-				"comment": [
-					"&& denotes a mnemonic"
-				]
-			}
-		],
-		"vs/editor/contrib/gotoError/gotoError": [
-			"markerAction.next.label",
-			"markerAction.previous.label",
-			"markerAction.nextInFiles.label",
-			"markerAction.previousInFiles.label",
-			{
-				"key": "miGotoNextProblem",
-				"comment": [
-					"&& denotes a mnemonic"
-				]
-			},
-			{
-				"key": "miGotoPreviousProblem",
-				"comment": [
-					"&& denotes a mnemonic"
-				]
-			}
-		],
-		"vs/editor/contrib/suggest/suggestController": [
-			"arai.alert.snippet",
-			"suggest.trigger.label"
-		],
-		"vs/editor/contrib/wordHighlighter/wordHighlighter": [
-			"wordHighlight",
-			"wordHighlightStrong",
-			"wordHighlightBorder",
-			"wordHighlightStrongBorder",
-			"overviewRulerWordHighlightForeground",
-			"overviewRulerWordHighlightStrongForeground",
-			"wordHighlight.next.label",
-			"wordHighlight.previous.label",
-			"wordHighlight.trigger.label"
-		],
 		"vs/editor/contrib/find/findController": [
 			"startFindAction",
 			{
@@ -468,7 +458,8 @@
 			"lines.joinLines",
 			"editor.transpose",
 			"editor.transformToUppercase",
-			"editor.transformToLowercase"
+			"editor.transformToLowercase",
+			"editor.transformToTitlecase"
 		],
 		"vs/editor/contrib/multicursor/multicursor": [
 			"mutlicursor.insertAbove",
@@ -528,11 +519,6 @@
 			"config.property.languageDefault",
 			"config.property.duplicate"
 		],
-		"vs/editor/standalone/browser/standaloneCodeEditor": [
-			"editorViewAccessibleLabel",
-			"accessibilityHelpMessageIE",
-			"accessibilityHelpMessage"
-		],
 		"vs/editor/common/modes/modesRegistry": [
 			"plainText.alias"
 		],
@@ -570,6 +556,9 @@
 			"overviewRuleWarning",
 			"overviewRuleInfo"
 		],
+		"vs/editor/contrib/referenceSearch/peekViewWidget": [
+			"label.close"
+		],
 		"vs/editor/contrib/referenceSearch/referencesModel": [
 			"aria.oneReference",
 			"aria.fileReferences.1",
@@ -579,14 +568,8 @@
 			"aria.result.n1",
 			"aria.result.nm"
 		],
-		"vs/editor/contrib/referenceSearch/peekViewWidget": [
-			"label.close"
-		],
 		"vs/base/browser/ui/keybindingLabel/keybindingLabel": [
 			"unbound"
-		],
-		"vs/editor/standalone/browser/simpleServices": [
-			"summary"
 		],
 		"vs/editor/contrib/codeAction/codeActionCommands": [
 			"quickFixWithKb",
@@ -600,6 +583,8 @@
 			"editor.action.source.noneMessage",
 			"organizeImports.label",
 			"editor.action.organize.noneMessage",
+			"fixAll.label",
+			"fixAll.noneMessage",
 			"autoFix.label",
 			"editor.action.autoFix.noneMessage"
 		],
@@ -607,6 +592,27 @@
 			"sev.error",
 			"sev.warning",
 			"sev.info"
+		],
+		"vs/editor/contrib/rename/renameInputField": [
+			"renameAriaLabel"
+		],
+		"vs/editor/contrib/message/messageController": [
+			"editor.readonly"
+		],
+		"vs/editor/contrib/format/format": [
+			"hint11",
+			"hintn1",
+			"hint1n",
+			"hintnn"
+		],
+		"vs/base/browser/ui/actionbar/actionbar": [
+			{
+				"key": "titleLabel",
+				"comment": [
+					"action title",
+					"action keybinding"
+				]
+			}
 		],
 		"vs/platform/list/browser/listService": [
 			"workbenchConfigurationTitle",
@@ -634,21 +640,6 @@
 			"keyboardNavigationSettingKey.filter",
 			"keyboardNavigationSettingKey",
 			"automatic keyboard navigation setting"
-		],
-		"vs/editor/contrib/rename/renameInputField": [
-			"renameAriaLabel"
-		],
-		"vs/editor/contrib/message/messageController": [
-			"editor.readonly"
-		],
-		"vs/base/browser/ui/actionbar/actionbar": [
-			{
-				"key": "titleLabel",
-				"comment": [
-					"action title",
-					"action keybinding"
-				]
-			}
 		],
 		"vs/editor/common/config/editorOptions": [
 			"accessibilityOffAriaLabel",
@@ -684,6 +675,12 @@
 			"editorMarkerNavigationWarning",
 			"editorMarkerNavigationInfo",
 			"editorMarkerNavigationBackground"
+		],
+		"vs/editor/contrib/hover/modesContentHover": [
+			"modesContentHover.loading",
+			"quick fixes",
+			"peek problem",
+			"editor.action.quickFix.noneMessage"
 		],
 		"vs/editor/contrib/referenceSearch/referencesWidget": [
 			"missingPreviewMessage",
@@ -831,6 +828,39 @@
 			"suggest.localityBonus",
 			"suggest.shareSuggestSelections",
 			"suggest.snippetsPreventQuickSuggestions",
+			"suggest.showIcons",
+			"suggest.maxVisibleSuggestions",
+			"suggest.filtered",
+			"suggest.filtered.method",
+			"suggest.filtered.function",
+			"suggest.filtered.constructor",
+			"suggest.filtered.field",
+			"suggest.filtered.variable",
+			"suggest.filtered.class",
+			"suggest.filtered.struct",
+			"suggest.filtered.interface",
+			"suggest.filtered.module",
+			"suggest.filtered.property",
+			"suggest.filtered.event",
+			"suggest.filtered.operator",
+			"suggest.filtered.unit",
+			"suggest.filtered.value",
+			"suggest.filtered.constant",
+			"suggest.filtered.enum",
+			"suggest.filtered.enumMember",
+			"suggest.filtered.keyword",
+			"suggest.filtered.text",
+			"suggest.filtered.color",
+			"suggest.filtered.file",
+			"suggest.filtered.reference",
+			"suggest.filtered.customcolor",
+			"suggest.filtered.folder",
+			"suggest.filtered.typeParameter",
+			"suggest.filtered.snippet",
+			"editor.gotoLocation.multiple",
+			"editor.gotoLocation.multiple.peek",
+			"editor.gotoLocation.multiple.gotoAndPeek",
+			"editor.gotoLocation.multiple.goto",
 			"selectionHighlight",
 			"occurrencesHighlight",
 			"overviewRulerLanes",
@@ -877,12 +907,6 @@
 			"ignoreTrimWhitespace",
 			"largeFileOptimizations",
 			"renderIndicators"
-		],
-		"vs/editor/contrib/hover/modesContentHover": [
-			"modesContentHover.loading",
-			"quick fixes",
-			"peek problem",
-			"editor.action.quickFix.noneMessage"
 		],
 		"vs/base/common/keybindingLabels": [
 			{
@@ -1078,13 +1102,7 @@
 			"readLess",
 			"suggestWidget.loading",
 			"suggestWidget.noSuggestions",
-			"suggestionAriaAccepted",
-			"ariaCurrentSnippetSuggestion",
-			"ariaCurrentSuggestion",
-			"ariaCurrentSnippeSuggestionReadDetails",
-			"ariaCurrenttSuggestionReadDetails",
-			"ariaCurrentSnippetSuggestionWithDetails",
-			"ariaCurrentSuggestionWithDetails"
+			"ariaCurrenttSuggestionReadDetails"
 		],
 		"vs/editor/contrib/find/findWidget": [
 			"label.find",
@@ -1106,12 +1124,6 @@
 			"referencesFailre",
 			"referencesCount",
 			"referenceCount"
-		],
-		"vs/editor/common/controller/cursor": [
-			"corrupt.commands"
-		],
-		"vs/base/browser/ui/list/listWidget": [
-			"aria list"
 		],
 		"vs/base/browser/ui/inputbox/inputBox": [
 			"alertErrorMessage",
@@ -1141,6 +1153,9 @@
 			"editor.action.diffReview.next",
 			"editor.action.diffReview.prev"
 		],
+		"vs/base/browser/ui/list/listWidget": [
+			"aria list"
+		],
 		"vs/base/browser/ui/menu/menu": [
 			{
 				"key": "titleLabel",
@@ -1150,80 +1165,18 @@
 				]
 			}
 		],
-		"vs/base/browser/ui/findinput/findInput": [
-			"defaultLabel"
-		],
 		"vs/base/browser/ui/tree/abstractTree": [
 			"clear",
 			"disable filter on type",
 			"enable filter on type",
 			"empty",
 			"found"
+		],
+		"vs/base/browser/ui/findinput/findInput": [
+			"defaultLabel"
 		]
 	},
 	"messages": {
-		"vs/editor/standalone/browser/quickOpen/gotoLine": [
-			"Go to line {0} and character {1}",
-			"Go to line {0}",
-			"Type a line number between 1 and {0} to navigate to",
-			"Type a character between 1 and {0} to navigate to",
-			"Current Line: {0}. Go to line {0}.",
-			"Type a line number, followed by an optional colon and a character number to navigate to",
-			"Go to Line..."
-		],
-		"vs/editor/standalone/browser/quickOpen/quickCommand": [
-			"{0}, {1}, commands",
-			"{0}, commands",
-			"Type the name of an action you want to execute",
-			"Command Palette"
-		],
-		"vs/editor/standalone/browser/toggleHighContrast/toggleHighContrast": [
-			"Toggle High Contrast Theme"
-		],
-		"vs/editor/standalone/browser/inspectTokens/inspectTokens": [
-			"Developer: Inspect Tokens"
-		],
-		"vs/editor/standalone/browser/quickOpen/quickOutline": [
-			"{0}, symbols",
-			"Type the name of an identifier you wish to navigate to",
-			"Go to Symbol...",
-			"symbols ({0})",
-			"modules ({0})",
-			"classes ({0})",
-			"interfaces ({0})",
-			"methods ({0})",
-			"functions ({0})",
-			"properties ({0})",
-			"variables ({0})",
-			"variables ({0})",
-			"constructors ({0})",
-			"calls ({0})"
-		],
-		"vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp": [
-			"No selection",
-			"Line {0}, Column {1} ({2} selected)",
-			"Line {0}, Column {1}",
-			"{0} selections ({1} characters selected)",
-			"{0} selections",
-			"Now changing the setting `accessibilitySupport` to 'on'.",
-			"Now opening the Editor Accessibility documentation page.",
-			" in a read-only pane of a diff editor.",
-			" in a pane of a diff editor.",
-			" in a read-only code editor",
-			" in a code editor",
-			"To configure the editor to be optimized for usage with a Screen Reader press Command+E now.",
-			"To configure the editor to be optimized for usage with a Screen Reader press Control+E now.",
-			"The editor is configured to be optimized for usage with a Screen Reader.",
-			"The editor is configured to never be optimized for usage with a Screen Reader, which is not the case at this time.",
-			"Pressing Tab in the current editor will move focus to the next focusable element. Toggle this behavior by pressing {0}.",
-			"Pressing Tab in the current editor will move focus to the next focusable element. The command {0} is currently not triggerable by a keybinding.",
-			"Pressing Tab in the current editor will insert the tab character. Toggle this behavior by pressing {0}.",
-			"Pressing Tab in the current editor will insert the tab character. The command {0} is currently not triggerable by a keybinding.",
-			"Press Command+H now to open a browser window with more information related to editor accessibility.",
-			"Press Control+H now to open a browser window with more information related to editor accessibility.",
-			"You can dismiss this tooltip and return to the editor by pressing Escape or Shift+Escape.",
-			"Show Accessibility Help"
-		],
 		"vs/editor/contrib/caretOperations/caretOperations": [
 			"Move Caret Left",
 			"Move Caret Right"
@@ -1258,6 +1211,68 @@
 			"Pressing Tab will now move focus to the next focusable element",
 			"Pressing Tab will now insert the tab character"
 		],
+		"vs/editor/common/standaloneStrings": [
+			"No selection",
+			"Line {0}, Column {1} ({2} selected)",
+			"Line {0}, Column {1}",
+			"{0} selections ({1} characters selected)",
+			"{0} selections",
+			"Now changing the setting `accessibilitySupport` to 'on'.",
+			"Now opening the Editor Accessibility documentation page.",
+			" in a read-only pane of a diff editor.",
+			" in a pane of a diff editor.",
+			" in a read-only code editor",
+			" in a code editor",
+			"To configure the editor to be optimized for usage with a Screen Reader press Command+E now.",
+			"To configure the editor to be optimized for usage with a Screen Reader press Control+E now.",
+			"The editor is configured to be optimized for usage with a Screen Reader.",
+			"The editor is configured to never be optimized for usage with a Screen Reader, which is not the case at this time.",
+			"Pressing Tab in the current editor will move focus to the next focusable element. Toggle this behavior by pressing {0}.",
+			"Pressing Tab in the current editor will move focus to the next focusable element. The command {0} is currently not triggerable by a keybinding.",
+			"Pressing Tab in the current editor will insert the tab character. Toggle this behavior by pressing {0}.",
+			"Pressing Tab in the current editor will insert the tab character. The command {0} is currently not triggerable by a keybinding.",
+			"Press Command+H now to open a browser window with more information related to editor accessibility.",
+			"Press Control+H now to open a browser window with more information related to editor accessibility.",
+			"You can dismiss this tooltip and return to the editor by pressing Escape or Shift+Escape.",
+			"Show Accessibility Help",
+			"Developer: Inspect Tokens",
+			"Go to line {0} and character {1}",
+			"Go to line {0}",
+			"Type a line number between 1 and {0} to navigate to",
+			"Type a character between 1 and {0} to navigate to",
+			"Current Line: {0}. Go to line {1}.",
+			"Type a line number, followed by an optional colon and a character number to navigate to",
+			"Go to Line...",
+			"{0}, {1}, commands",
+			"{0}, commands",
+			"Type the name of an action you want to execute",
+			"Command Palette",
+			"{0}, symbols",
+			"Type the name of an identifier you wish to navigate to",
+			"Go to Symbol...",
+			"symbols ({0})",
+			"modules ({0})",
+			"classes ({0})",
+			"interfaces ({0})",
+			"methods ({0})",
+			"functions ({0})",
+			"properties ({0})",
+			"variables ({0})",
+			"variables ({0})",
+			"constructors ({0})",
+			"calls ({0})",
+			"Editor content",
+			"Press Ctrl+F1 for Accessibility Options.",
+			"Press Alt+F1 for Accessibility Options.",
+			"Toggle High Contrast Theme",
+			"Made {0} edits in {1} files"
+		],
+		"vs/editor/contrib/bracketMatching/bracketMatching": [
+			"Overview ruler marker color for matching brackets.",
+			"Go to Bracket",
+			"Select to Bracket",
+			"Go to &&Bracket"
+		],
 		"vs/editor/contrib/clipboard/clipboard": [
 			"Cut",
 			"Cu&&t",
@@ -1266,12 +1281,6 @@
 			"Paste",
 			"&&Paste",
 			"Copy With Syntax Highlighting"
-		],
-		"vs/editor/contrib/bracketMatching/bracketMatching": [
-			"Overview ruler marker color for matching brackets.",
-			"Go to Bracket",
-			"Select to Bracket",
-			"Go to &&Bracket"
 		],
 		"vs/editor/contrib/contextmenu/contextmenu": [
 			"Show Editor Context Menu"
@@ -1283,6 +1292,9 @@
 			"Replace with Previous Value",
 			"Replace with Next Value"
 		],
+		"vs/editor/contrib/hover/hover": [
+			"Show Hover"
+		],
 		"vs/editor/contrib/referenceSearch/referenceSearch": [
 			" – {0} references",
 			"Peek References"
@@ -1291,15 +1303,8 @@
 			"Loading..."
 		],
 		"vs/editor/contrib/format/formatActions": [
-			"Made 1 formatting edit on line {0}",
-			"Made {0} formatting edits on line {1}",
-			"Made 1 formatting edit between lines {0} and {1}",
-			"Made {0} formatting edits between lines {1} and {2}",
 			"Format Document",
 			"Format Selection"
-		],
-		"vs/editor/contrib/hover/hover": [
-			"Show Hover"
 		],
 		"vs/editor/contrib/links/links": [
 			"Cmd + click to follow link",
@@ -1327,13 +1332,65 @@
 			"Shrink Selection",
 			"&&Shrink Selection"
 		],
+		"vs/base/parts/quickopen/browser/quickOpenModel": [
+			"{0}, picker",
+			"picker"
+		],
 		"vs/base/browser/ui/aria/aria": [
 			"{0} (occurred again)",
 			"{0} (occurred {1} times)"
 		],
-		"vs/base/parts/quickopen/browser/quickOpenModel": [
-			"{0}, picker",
-			"picker"
+		"vs/editor/contrib/gotoError/gotoError": [
+			"Go to Next Problem (Error, Warning, Info)",
+			"Go to Previous Problem (Error, Warning, Info)",
+			"Go to Next Problem in Files (Error, Warning, Info)",
+			"Go to Previous Problem in Files (Error, Warning, Info)",
+			"Next &&Problem",
+			"Previous &&Problem"
+		],
+		"vs/editor/contrib/goToDefinition/goToDefinitionCommands": [
+			"No definition found for '{0}'",
+			"No definition found",
+			" – {0} definitions",
+			"Go to Definition",
+			"Open Definition to the Side",
+			"Peek Definition",
+			"No declaration found for '{0}'",
+			"No declaration found",
+			" – {0} declarations",
+			"Go to Declaration",
+			"No declaration found for '{0}'",
+			"No declaration found",
+			" – {0} declarations",
+			"Peek Declaration",
+			"No implementation found for '{0}'",
+			"No implementation found",
+			" – {0} implementations",
+			"Go to Implementation",
+			"Peek Implementation",
+			"No type definition found for '{0}'",
+			"No type definition found",
+			" – {0} type definitions",
+			"Go to Type Definition",
+			"Peek Type Definition",
+			"Go to &&Definition",
+			"Go to &&Type Definition",
+			"Go to &&Implementation"
+		],
+		"vs/editor/contrib/suggest/suggestController": [
+			"Accepting '{0}' made {1} additional edits",
+			"Trigger Suggest"
+		],
+		"vs/editor/contrib/wordHighlighter/wordHighlighter": [
+			"Background color of a symbol during read-access, like reading a variable. The color must not be opaque so as not to hide underlying decorations.",
+			"Background color of a symbol during write-access, like writing to a variable. The color must not be opaque so as not to hide underlying decorations.",
+			"Border color of a symbol during read-access, like reading a variable.",
+			"Border color of a symbol during write-access, like writing to a variable.",
+			"Overview ruler marker color for symbol highlights. The color must not be opaque so as not to hide underlying decorations.",
+			"Overview ruler marker color for write-access symbol highlights. The color must not be opaque so as not to hide underlying decorations.",
+			"Go to Next Symbol Highlight",
+			"Go to Previous Symbol Highlight",
+			"Trigger Symbol Highlight"
 		],
 		"vs/platform/theme/common/colorRegistry": [
 			"Overall foreground color. This color is only used if not overridden by a component.",
@@ -1422,58 +1479,6 @@
 			"Overview ruler marker color for find matches. The color must not be opaque so as not to hide underlying decorations.",
 			"Overview ruler marker color for selection highlights. The color must not be opaque so as not to hide underlying decorations."
 		],
-		"vs/editor/contrib/goToDefinition/goToDefinitionCommands": [
-			"No definition found for '{0}'",
-			"No definition found",
-			" – {0} definitions",
-			"Go to Definition",
-			"Open Definition to the Side",
-			"Peek Definition",
-			"No declaration found for '{0}'",
-			"No declaration found",
-			" – {0} declarations",
-			"Go to Declaration",
-			"No declaration found for '{0}'",
-			"No declaration found",
-			" – {0} declarations",
-			"Peek Declaration",
-			"No implementation found for '{0}'",
-			"No implementation found",
-			" – {0} implementations",
-			"Go to Implementation",
-			"Peek Implementation",
-			"No type definition found for '{0}'",
-			"No type definition found",
-			" – {0} type definitions",
-			"Go to Type Definition",
-			"Peek Type Definition",
-			"Go to &&Definition",
-			"Go to &&Type Definition",
-			"Go to &&Implementation"
-		],
-		"vs/editor/contrib/gotoError/gotoError": [
-			"Go to Next Problem (Error, Warning, Info)",
-			"Go to Previous Problem (Error, Warning, Info)",
-			"Go to Next Problem in Files (Error, Warning, Info)",
-			"Go to Previous Problem in Files (Error, Warning, Info)",
-			"Next &&Problem",
-			"Previous &&Problem"
-		],
-		"vs/editor/contrib/suggest/suggestController": [
-			"Accepting '{0}' did insert the following text: {1}",
-			"Trigger Suggest"
-		],
-		"vs/editor/contrib/wordHighlighter/wordHighlighter": [
-			"Background color of a symbol during read-access, like reading a variable. The color must not be opaque so as not to hide underlying decorations.",
-			"Background color of a symbol during write-access, like writing to a variable. The color must not be opaque so as not to hide underlying decorations.",
-			"Border color of a symbol during read-access, like reading a variable.",
-			"Border color of a symbol during write-access, like writing to a variable.",
-			"Overview ruler marker color for symbol highlights. The color must not be opaque so as not to hide underlying decorations.",
-			"Overview ruler marker color for write-access symbol highlights. The color must not be opaque so as not to hide underlying decorations.",
-			"Go to Next Symbol Highlight",
-			"Go to Previous Symbol Highlight",
-			"Trigger Symbol Highlight"
-		],
 		"vs/editor/contrib/find/findController": [
 			"Find",
 			"&&Find",
@@ -1524,7 +1529,8 @@
 			"Join Lines",
 			"Transpose characters around the cursor",
 			"Transform to Uppercase",
-			"Transform to Lowercase"
+			"Transform to Lowercase",
+			"Transform to Title Case"
 		],
 		"vs/editor/contrib/multicursor/multicursor": [
 			"Add Cursor Above",
@@ -1553,11 +1559,6 @@
 			"Configure editor settings to be overridden for a language.",
 			"Cannot register '{0}'. This matches property pattern '\\\\[.*\\\\]$' for describing language specific editor settings. Use 'configurationDefaults' contribution.",
 			"Cannot register '{0}'. This property is already registered."
-		],
-		"vs/editor/standalone/browser/standaloneCodeEditor": [
-			"Editor content",
-			"Press Ctrl+F1 for Accessibility Options.",
-			"Press Alt+F1 for Accessibility Options."
 		],
 		"vs/editor/common/modes/modesRegistry": [
 			"Plain Text"
@@ -1596,6 +1597,9 @@
 			"Overview ruler marker color for warnings.",
 			"Overview ruler marker color for infos."
 		],
+		"vs/editor/contrib/referenceSearch/peekViewWidget": [
+			"Close"
+		],
 		"vs/editor/contrib/referenceSearch/referencesModel": [
 			"symbol in {0} on line {1} at column {2}",
 			"1 symbol in {0}, full path {1}",
@@ -1605,14 +1609,8 @@
 			"Found {0} symbols in {1}",
 			"Found {0} symbols in {1} files"
 		],
-		"vs/editor/contrib/referenceSearch/peekViewWidget": [
-			"Close"
-		],
 		"vs/base/browser/ui/keybindingLabel/keybindingLabel": [
 			"Unbound"
-		],
-		"vs/editor/standalone/browser/simpleServices": [
-			"Made {0} edits in {1} files"
 		],
 		"vs/editor/contrib/codeAction/codeActionCommands": [
 			"Show Fixes ({0})",
@@ -1626,6 +1624,8 @@
 			"No source actions available",
 			"Organize Imports",
 			"No organize imports action available",
+			"Fix All",
+			"No fix all action available",
 			"Auto Fix...",
 			"No auto fixes available"
 		],
@@ -1633,6 +1633,21 @@
 			"Error",
 			"Warning",
 			"Info"
+		],
+		"vs/editor/contrib/rename/renameInputField": [
+			"Rename input. Type new name and press Enter to commit."
+		],
+		"vs/editor/contrib/message/messageController": [
+			"Cannot edit in read-only editor"
+		],
+		"vs/editor/contrib/format/format": [
+			"Made 1 formatting edit on line {0}",
+			"Made {0} formatting edits on line {1}",
+			"Made 1 formatting edit between lines {0} and {1}",
+			"Made {0} formatting edits between lines {1} and {2}"
+		],
+		"vs/base/browser/ui/actionbar/actionbar": [
+			"{0} ({1})"
 		],
 		"vs/platform/list/browser/listService": [
 			"Workbench",
@@ -1649,15 +1664,6 @@
 			"Filter keyboard navigation will filter out and hide all the elements which do not match the keyboard input.",
 			"Controls the keyboard navigation style for lists and trees in the workbench. Can be simple, highlight and filter.",
 			"Controls whether keyboard navigation in lists and trees is automatically triggered simply by typing. If set to `false`, keyboard navigation is only triggered when executing the `list.toggleKeyboardNavigation` command, for which you can assign a keyboard shortcut."
-		],
-		"vs/editor/contrib/rename/renameInputField": [
-			"Rename input. Type new name and press Enter to commit."
-		],
-		"vs/editor/contrib/message/messageController": [
-			"Cannot edit in read-only editor"
-		],
-		"vs/base/browser/ui/actionbar/actionbar": [
-			"{0} ({1})"
 		],
 		"vs/editor/common/config/editorOptions": [
 			"The editor is not accessible at this time. Press Alt+F1 for options.",
@@ -1678,6 +1684,12 @@
 			"Editor marker navigation widget warning color.",
 			"Editor marker navigation widget info color.",
 			"Editor marker navigation widget background."
+		],
+		"vs/editor/contrib/hover/modesContentHover": [
+			"Loading...",
+			"Quick Fix...",
+			"Peek Problem",
+			"No code actions available"
 		],
 		"vs/editor/contrib/referenceSearch/referencesWidget": [
 			"no preview available",
@@ -1796,6 +1808,39 @@
 			"Controls whether sorting favours words that appear close to the cursor.",
 			"Controls whether remembered suggestion selections are shared between multiple workspaces and windows (needs `#editor.suggestSelection#`).",
 			"Control whether an active snippet prevents quick suggestions.",
+			"Controls whether to show or hide icons in suggestions.",
+			"Controls how many suggestions IntelliSense will show before showing a scrollbar (maximum 15).",
+			"Controls whether some suggestion types should be filtered from IntelliSense. A list of suggestion types can be found here: https://code.visualstudio.com/docs/editor/intellisense#_types-of-completions.",
+			"When set to `false` IntelliSense never shows `method` suggestions.",
+			"When set to `false` IntelliSense never shows `function` suggestions.",
+			"When set to `false` IntelliSense never shows `constructor` suggestions.",
+			"When set to `false` IntelliSense never shows `field` suggestions.",
+			"When set to `false` IntelliSense never shows `variable` suggestions.",
+			"When set to `false` IntelliSense never shows `class` suggestions.",
+			"When set to `false` IntelliSense never shows `struct` suggestions.",
+			"When set to `false` IntelliSense never shows `interface` suggestions.",
+			"When set to `false` IntelliSense never shows `module` suggestions.",
+			"When set to `false` IntelliSense never shows `property` suggestions.",
+			"When set to `false` IntelliSense never shows `event` suggestions.",
+			"When set to `false` IntelliSense never shows `operator` suggestions.",
+			"When set to `false` IntelliSense never shows `unit` suggestions.",
+			"When set to `false` IntelliSense never shows `value` suggestions.",
+			"When set to `false` IntelliSense never shows `constant` suggestions.",
+			"When set to `false` IntelliSense never shows `enum` suggestions.",
+			"When set to `false` IntelliSense never shows `enumMember` suggestions.",
+			"When set to `false` IntelliSense never shows `keyword` suggestions.",
+			"When set to `false` IntelliSense never shows `text` suggestions.",
+			"When set to `false` IntelliSense never shows `color` suggestions.",
+			"When set to `false` IntelliSense never shows `file` suggestions.",
+			"When set to `false` IntelliSense never shows `reference` suggestions.",
+			"When set to `false` IntelliSense never shows `customcolor` suggestions.",
+			"When set to `false` IntelliSense never shows `folder` suggestions.",
+			"When set to `false` IntelliSense never shows `typeParameter` suggestions.",
+			"When set to `false` IntelliSense never shows `snippet` suggestions.",
+			"Controls the behavior of 'Go To' commands, like Go To Definition, when multiple target locations exist.",
+			"Show peek view of the results (default)",
+			"Go to the primary result and show a peek view",
+			"Go to the primary result and ignore others",
 			"Controls whether the editor should highlight matches similar to the selection.",
 			"Controls whether the editor should highlight semantic symbol occurrences.",
 			"Controls the number of decorations that can show up at the same position in the overview ruler.",
@@ -1842,12 +1887,6 @@
 			"Controls whether the diff editor shows changes in leading or trailing whitespace as diffs.",
 			"Special handling for large files to disable certain memory intensive features.",
 			"Controls whether the diff editor shows +/- indicators for added/removed changes."
-		],
-		"vs/editor/contrib/hover/modesContentHover": [
-			"Loading...",
-			"Quick Fix...",
-			"Peek Problem",
-			"No code actions available"
 		],
 		"vs/base/common/keybindingLabels": [
 			"Ctrl",
@@ -1938,13 +1977,7 @@
 			"Read less...{0}",
 			"Loading...",
 			"No suggestions.",
-			"{0}, accepted",
-			"{0}, snippet suggestion",
-			"{0}, suggestion",
-			"{0}, snippet suggestion. Reading details. {1}",
-			"{0}, suggestion. Reading details. {1}",
-			"{0}, snippet suggestion, has details",
-			"{0}, suggestion, has details"
+			"Item {0}, docs: {1}"
 		],
 		"vs/editor/contrib/find/findWidget": [
 			"Find",
@@ -1967,12 +2000,6 @@
 			"{0} references",
 			"{0} reference"
 		],
-		"vs/editor/common/controller/cursor": [
-			"Unexpected exception while executing command."
-		],
-		"vs/base/browser/ui/list/listWidget": [
-			"{0}. Use the navigation keys to navigate."
-		],
 		"vs/base/browser/ui/inputbox/inputBox": [
 			"Error: {0}",
 			"Warning: {0}",
@@ -1991,11 +2018,11 @@
 			"Go to Next Difference",
 			"Go to Previous Difference"
 		],
+		"vs/base/browser/ui/list/listWidget": [
+			"{0}. Use the navigation keys to navigate."
+		],
 		"vs/base/browser/ui/menu/menu": [
 			"{0} ({1})"
-		],
-		"vs/base/browser/ui/findinput/findInput": [
-			"input"
 		],
 		"vs/base/browser/ui/tree/abstractTree": [
 			"Clear",
@@ -2003,6 +2030,9 @@
 			"Enable Filter on Type",
 			"No elements found",
 			"Matched {0} out of {1} elements"
+		],
+		"vs/base/browser/ui/findinput/findInput": [
+			"input"
 		]
 	},
 	"bundles": {
@@ -2026,8 +2056,8 @@
 			"vs/editor/browser/widget/diffReview",
 			"vs/editor/common/config/commonEditorConfig",
 			"vs/editor/common/config/editorOptions",
-			"vs/editor/common/controller/cursor",
 			"vs/editor/common/modes/modesRegistry",
+			"vs/editor/common/standaloneStrings",
 			"vs/editor/common/view/editorColorRegistry",
 			"vs/editor/contrib/bracketMatching/bracketMatching",
 			"vs/editor/contrib/caretOperations/caretOperations",
@@ -2041,6 +2071,7 @@
 			"vs/editor/contrib/find/findWidget",
 			"vs/editor/contrib/folding/folding",
 			"vs/editor/contrib/fontZoom/fontZoom",
+			"vs/editor/contrib/format/format",
 			"vs/editor/contrib/format/formatActions",
 			"vs/editor/contrib/goToDefinition/goToDefinitionCommands",
 			"vs/editor/contrib/goToDefinition/goToDefinitionMouse",
@@ -2070,14 +2101,6 @@
 			"vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode",
 			"vs/editor/contrib/tokenization/tokenization",
 			"vs/editor/contrib/wordHighlighter/wordHighlighter",
-			"vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp",
-			"vs/editor/standalone/browser/inspectTokens/inspectTokens",
-			"vs/editor/standalone/browser/quickOpen/gotoLine",
-			"vs/editor/standalone/browser/quickOpen/quickCommand",
-			"vs/editor/standalone/browser/quickOpen/quickOutline",
-			"vs/editor/standalone/browser/simpleServices",
-			"vs/editor/standalone/browser/standaloneCodeEditor",
-			"vs/editor/standalone/browser/toggleHighContrast/toggleHighContrast",
 			"vs/platform/configuration/common/configurationRegistry",
 			"vs/platform/keybinding/common/abstractKeybindingService",
 			"vs/platform/list/browser/listService",

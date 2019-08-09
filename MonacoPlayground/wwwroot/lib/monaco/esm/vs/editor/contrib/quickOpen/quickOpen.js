@@ -9,6 +9,7 @@ import { registerLanguageCommand } from '../../browser/editorExtensions.js';
 import { DocumentSymbolProviderRegistry } from '../../common/modes.js';
 import { IModelService } from '../../common/services/modelService.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
+import { ITextModelService } from '../../common/services/resolverService.js';
 export function getDocumentSymbols(model, flat, token) {
     var roots = [];
     var promises = DocumentSymbolProviderRegistry.all(model).map(function (support) {
@@ -61,8 +62,20 @@ registerLanguageCommand('_executeDocumentSymbolProvider', function (accessor, ar
         throw illegalArgument('resource');
     }
     var model = accessor.get(IModelService).getModel(resource);
-    if (!model) {
-        throw illegalArgument('resource');
+    if (model) {
+        return getDocumentSymbols(model, false, CancellationToken.None);
     }
-    return getDocumentSymbols(model, false, CancellationToken.None);
+    return accessor.get(ITextModelService).createModelReference(resource).then(function (reference) {
+        return new Promise(function (resolve, reject) {
+            try {
+                var result = getDocumentSymbols(reference.object.textEditorModel, false, CancellationToken.None);
+                resolve(result);
+            }
+            catch (err) {
+                reject(err);
+            }
+        }).finally(function () {
+            reference.dispose();
+        });
+    });
 });

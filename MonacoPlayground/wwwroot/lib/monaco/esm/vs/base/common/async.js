@@ -333,6 +333,7 @@ export var runWhenIdle;
 var IdleValue = /** @class */ (function () {
     function IdleValue(executor) {
         var _this = this;
+        this._didRun = false;
         this._executor = function () {
             try {
                 _this._value = executor();
@@ -362,4 +363,3 @@ var IdleValue = /** @class */ (function () {
     return IdleValue;
 }());
 export { IdleValue };
-//#endregion

@@ -28,6 +28,31 @@ import { EmbeddedCodeEditorWidget } from '../../browser/widget/embeddedCodeEdito
 import { ZoneWidget } from '../zoneWidget/zoneWidget.js';
 import * as nls from '../../../nls.js';
 import { RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
+import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
+import { registerSingleton } from '../../../platform/instantiation/common/extensions.js';
+export var IPeekViewService = createDecorator('IPeekViewService');
+registerSingleton(IPeekViewService, /** @class */ (function () {
+    function class_1() {
+        this._widgets = new Map();
+    }
+    class_1.prototype.addExclusiveWidget = function (editor, widget) {
+        var _this = this;
+        var existing = this._widgets.get(editor);
+        if (existing) {
+            existing.listener.dispose();
+            existing.widget.dispose();
+        }
+        var remove = function () {
+            var data = _this._widgets.get(editor);
+            if (data && data.widget === widget) {
+                data.listener.dispose();
+                _this._widgets.delete(editor);
+            }
+        };
+        this._widgets.set(editor, { widget: widget, listener: widget.onDidClose(remove) });
+    };
+    return class_1;
+}()));
 export var PeekContext;
 (function (PeekContext) {
     PeekContext.inPeekEditor = new RawContextKey('inReferenceSearchEditor', true);

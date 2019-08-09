@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.16.0(bc18b87d7c7e1da49acc024666aaa85e3633e722)
+ * Version: 0.17.0(63d87164d0bc8c6206d9339c195289c93665028e)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -202,6 +202,39 @@ define("vs/editor/editor.main.nls", {
 		"Controls whether sorting favours words that appear close to the cursor.",
 		"Controls whether remembered suggestion selections are shared between multiple workspaces and windows (needs `#editor.suggestSelection#`).",
 		"Control whether an active snippet prevents quick suggestions.",
+		"Controls whether to show or hide icons in suggestions.",
+		"Controls how many suggestions IntelliSense will show before showing a scrollbar (maximum 15).",
+		"Controls whether some suggestion types should be filtered from IntelliSense. A list of suggestion types can be found here: https://code.visualstudio.com/docs/editor/intellisense#_types-of-completions.",
+		"When set to `false` IntelliSense never shows `method` suggestions.",
+		"When set to `false` IntelliSense never shows `function` suggestions.",
+		"When set to `false` IntelliSense never shows `constructor` suggestions.",
+		"When set to `false` IntelliSense never shows `field` suggestions.",
+		"When set to `false` IntelliSense never shows `variable` suggestions.",
+		"When set to `false` IntelliSense never shows `class` suggestions.",
+		"When set to `false` IntelliSense never shows `struct` suggestions.",
+		"When set to `false` IntelliSense never shows `interface` suggestions.",
+		"When set to `false` IntelliSense never shows `module` suggestions.",
+		"When set to `false` IntelliSense never shows `property` suggestions.",
+		"When set to `false` IntelliSense never shows `event` suggestions.",
+		"When set to `false` IntelliSense never shows `operator` suggestions.",
+		"When set to `false` IntelliSense never shows `unit` suggestions.",
+		"When set to `false` IntelliSense never shows `value` suggestions.",
+		"When set to `false` IntelliSense never shows `constant` suggestions.",
+		"When set to `false` IntelliSense never shows `enum` suggestions.",
+		"When set to `false` IntelliSense never shows `enumMember` suggestions.",
+		"When set to `false` IntelliSense never shows `keyword` suggestions.",
+		"When set to `false` IntelliSense never shows `text` suggestions.",
+		"When set to `false` IntelliSense never shows `color` suggestions.",
+		"When set to `false` IntelliSense never shows `file` suggestions.",
+		"When set to `false` IntelliSense never shows `reference` suggestions.",
+		"When set to `false` IntelliSense never shows `customcolor` suggestions.",
+		"When set to `false` IntelliSense never shows `folder` suggestions.",
+		"When set to `false` IntelliSense never shows `typeParameter` suggestions.",
+		"When set to `false` IntelliSense never shows `snippet` suggestions.",
+		"Controls the behavior of 'Go To' commands, like Go To Definition, when multiple target locations exist.",
+		"Show peek view of the results (default)",
+		"Go to the primary result and show a peek view",
+		"Go to the primary result and ignore others",
 		"Controls whether the editor should highlight matches similar to the selection.",
 		"Controls whether the editor should highlight semantic symbol occurrences.",
 		"Controls the number of decorations that can show up at the same position in the overview ruler.",
@@ -253,11 +286,64 @@ define("vs/editor/editor.main.nls", {
 		"The editor is not accessible at this time. Press Alt+F1 for options.",
 		"Editor content"
 	],
-	"vs/editor/common/controller/cursor": [
-		"Unexpected exception while executing command."
-	],
 	"vs/editor/common/modes/modesRegistry": [
 		"Plain Text"
+	],
+	"vs/editor/common/standaloneStrings": [
+		"No selection",
+		"Line {0}, Column {1} ({2} selected)",
+		"Line {0}, Column {1}",
+		"{0} selections ({1} characters selected)",
+		"{0} selections",
+		"Now changing the setting `accessibilitySupport` to 'on'.",
+		"Now opening the Editor Accessibility documentation page.",
+		" in a read-only pane of a diff editor.",
+		" in a pane of a diff editor.",
+		" in a read-only code editor",
+		" in a code editor",
+		"To configure the editor to be optimized for usage with a Screen Reader press Command+E now.",
+		"To configure the editor to be optimized for usage with a Screen Reader press Control+E now.",
+		"The editor is configured to be optimized for usage with a Screen Reader.",
+		"The editor is configured to never be optimized for usage with a Screen Reader, which is not the case at this time.",
+		"Pressing Tab in the current editor will move focus to the next focusable element. Toggle this behavior by pressing {0}.",
+		"Pressing Tab in the current editor will move focus to the next focusable element. The command {0} is currently not triggerable by a keybinding.",
+		"Pressing Tab in the current editor will insert the tab character. Toggle this behavior by pressing {0}.",
+		"Pressing Tab in the current editor will insert the tab character. The command {0} is currently not triggerable by a keybinding.",
+		"Press Command+H now to open a browser window with more information related to editor accessibility.",
+		"Press Control+H now to open a browser window with more information related to editor accessibility.",
+		"You can dismiss this tooltip and return to the editor by pressing Escape or Shift+Escape.",
+		"Show Accessibility Help",
+		"Developer: Inspect Tokens",
+		"Go to line {0} and character {1}",
+		"Go to line {0}",
+		"Type a line number between 1 and {0} to navigate to",
+		"Type a character between 1 and {0} to navigate to",
+		"Current Line: {0}. Go to line {1}.",
+		"Type a line number, followed by an optional colon and a character number to navigate to",
+		"Go to Line...",
+		"{0}, {1}, commands",
+		"{0}, commands",
+		"Type the name of an action you want to execute",
+		"Command Palette",
+		"{0}, symbols",
+		"Type the name of an identifier you wish to navigate to",
+		"Go to Symbol...",
+		"symbols ({0})",
+		"modules ({0})",
+		"classes ({0})",
+		"interfaces ({0})",
+		"methods ({0})",
+		"functions ({0})",
+		"properties ({0})",
+		"variables ({0})",
+		"variables ({0})",
+		"constructors ({0})",
+		"calls ({0})",
+		"Editor content",
+		"Press Ctrl+F1 for Accessibility Options.",
+		"Press Alt+F1 for Accessibility Options.",
+		"Toggle High Contrast Theme",
+		"Made {0} edits in {1} files"
 	],
 	"vs/editor/common/view/editorColorRegistry": [
 		"Background color for the highlight of line at the cursor position.",
@@ -327,6 +413,8 @@ define("vs/editor/editor.main.nls", {
 		"No source actions available",
 		"Organize Imports",
 		"No organize imports action available",
+		"Fix All",
+		"No fix all action available",
 		"Auto Fix...",
 		"No auto fixes available"
 	],
@@ -388,11 +476,13 @@ define("vs/editor/editor.main.nls", {
 		"Editor Font Zoom Out",
 		"Editor Font Zoom Reset"
 	],
-	"vs/editor/contrib/format/formatActions": [
+	"vs/editor/contrib/format/format": [
 		"Made 1 formatting edit on line {0}",
 		"Made {0} formatting edits on line {1}",
 		"Made 1 formatting edit between lines {0} and {1}",
-		"Made {0} formatting edits between lines {1} and {2}",
+		"Made {0} formatting edits between lines {1} and {2}"
+	],
+	"vs/editor/contrib/format/formatActions": [
 		"Format Document",
 		"Format Selection"
 	],
@@ -479,7 +569,8 @@ define("vs/editor/editor.main.nls", {
 		"Join Lines",
 		"Transpose characters around the cursor",
 		"Transform to Uppercase",
-		"Transform to Lowercase"
+		"Transform to Lowercase",
+		"Transform to Title Case"
 	],
 	"vs/editor/contrib/links/links": [
 		"Cmd + click to follow link",
@@ -623,7 +714,7 @@ define("vs/editor/editor.main.nls", {
 		"Dec"
 	],
 	"vs/editor/contrib/suggest/suggestController": [
-		"Accepting '{0}' did insert the following text: {1}",
+		"Accepting '{0}' made {1} additional edits",
 		"Trigger Suggest"
 	],
 	"vs/editor/contrib/suggest/suggestWidget": [
@@ -636,13 +727,7 @@ define("vs/editor/editor.main.nls", {
 		"Read less...{0}",
 		"Loading...",
 		"No suggestions.",
-		"{0}, accepted",
-		"{0}, snippet suggestion",
-		"{0}, suggestion",
-		"{0}, snippet suggestion. Reading details. {1}",
-		"{0}, suggestion. Reading details. {1}",
-		"{0}, snippet suggestion, has details",
-		"{0}, suggestion, has details"
+		"Item {0}, docs: {1}"
 	],
 	"vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode": [
 		"Toggle Tab Key Moves Focus",
@@ -662,76 +747,6 @@ define("vs/editor/editor.main.nls", {
 		"Go to Next Symbol Highlight",
 		"Go to Previous Symbol Highlight",
 		"Trigger Symbol Highlight"
-	],
-	"vs/editor/standalone/browser/accessibilityHelp/accessibilityHelp": [
-		"No selection",
-		"Line {0}, Column {1} ({2} selected)",
-		"Line {0}, Column {1}",
-		"{0} selections ({1} characters selected)",
-		"{0} selections",
-		"Now changing the setting `accessibilitySupport` to 'on'.",
-		"Now opening the Editor Accessibility documentation page.",
-		" in a read-only pane of a diff editor.",
-		" in a pane of a diff editor.",
-		" in a read-only code editor",
-		" in a code editor",
-		"To configure the editor to be optimized for usage with a Screen Reader press Command+E now.",
-		"To configure the editor to be optimized for usage with a Screen Reader press Control+E now.",
-		"The editor is configured to be optimized for usage with a Screen Reader.",
-		"The editor is configured to never be optimized for usage with a Screen Reader, which is not the case at this time.",
-		"Pressing Tab in the current editor will move focus to the next focusable element. Toggle this behavior by pressing {0}.",
-		"Pressing Tab in the current editor will move focus to the next focusable element. The command {0} is currently not triggerable by a keybinding.",
-		"Pressing Tab in the current editor will insert the tab character. Toggle this behavior by pressing {0}.",
-		"Pressing Tab in the current editor will insert the tab character. The command {0} is currently not triggerable by a keybinding.",
-		"Press Command+H now to open a browser window with more information related to editor accessibility.",
-		"Press Control+H now to open a browser window with more information related to editor accessibility.",
-		"You can dismiss this tooltip and return to the editor by pressing Escape or Shift+Escape.",
-		"Show Accessibility Help"
-	],
-	"vs/editor/standalone/browser/inspectTokens/inspectTokens": [
-		"Developer: Inspect Tokens"
-	],
-	"vs/editor/standalone/browser/quickOpen/gotoLine": [
-		"Go to line {0} and character {1}",
-		"Go to line {0}",
-		"Type a line number between 1 and {0} to navigate to",
-		"Type a character between 1 and {0} to navigate to",
-		"Current Line: {0}. Go to line {0}.",
-		"Type a line number, followed by an optional colon and a character number to navigate to",
-		"Go to Line..."
-	],
-	"vs/editor/standalone/browser/quickOpen/quickCommand": [
-		"{0}, {1}, commands",
-		"{0}, commands",
-		"Type the name of an action you want to execute",
-		"Command Palette"
-	],
-	"vs/editor/standalone/browser/quickOpen/quickOutline": [
-		"{0}, symbols",
-		"Type the name of an identifier you wish to navigate to",
-		"Go to Symbol...",
-		"symbols ({0})",
-		"modules ({0})",
-		"classes ({0})",
-		"interfaces ({0})",
-		"methods ({0})",
-		"functions ({0})",
-		"properties ({0})",
-		"variables ({0})",
-		"variables ({0})",
-		"constructors ({0})",
-		"calls ({0})"
-	],
-	"vs/editor/standalone/browser/simpleServices": [
-		"Made {0} edits in {1} files"
-	],
-	"vs/editor/standalone/browser/standaloneCodeEditor": [
-		"Editor content",
-		"Press Ctrl+F1 for Accessibility Options.",
-		"Press Alt+F1 for Accessibility Options."
-	],
-	"vs/editor/standalone/browser/toggleHighContrast/toggleHighContrast": [
-		"Toggle High Contrast Theme"
 	],
 	"vs/platform/configuration/common/configurationRegistry": [
 		"Default Configuration Overrides",

@@ -6,7 +6,6 @@
  * This module only exports 'compile' which compiles a JSON language definition
  * into a typed and checked ILexer definition.
  */
-import * as objects from '../../../../base/common/objects.js';
 import * as monarchCommon from './monarchCommon.js';
 /*
  * Type helpers
@@ -43,6 +42,31 @@ function string(prop, defValue) {
         return prop;
     }
     return defValue;
+}
+function arrayToHash(array) {
+    var result = {};
+    for (var _i = 0, array_1 = array; _i < array_1.length; _i++) {
+        var e = array_1[_i];
+        result[e] = true;
+    }
+    return result;
+}
+function createKeywordMatcher(arr, caseInsensitive) {
+    if (caseInsensitive === void 0) { caseInsensitive = false; }
+    if (caseInsensitive) {
+        arr = arr.map(function (x) { return x.toLowerCase(); });
+    }
+    var hash = arrayToHash(arr);
+    if (caseInsensitive) {
+        return function (word) {
+            return hash[word.toLowerCase()] !== undefined && hash.hasOwnProperty(word.toLowerCase());
+        };
+    }
+    else {
+        return function (word) {
+            return hash[word] !== undefined && hash.hasOwnProperty(word);
+        };
+    }
 }
 // Lexer helpers
 /**
@@ -131,7 +155,7 @@ function createGuard(lexer, ruleName, tkey, val) {
     var tester;
     // special case a regexp that matches just words
     if ((op === '~' || op === '!~') && /^(\w|\|)*$/.test(pat)) {
-        var inWords_1 = objects.createKeywordMatcher(pat.split('|'), lexer.ignoreCase);
+        var inWords_1 = createKeywordMatcher(pat.split('|'), lexer.ignoreCase);
         tester = function (s) { return (op === '~' ? inWords_1(s) : !inWords_1(s)); };
     }
     else if (op === '@' || op === '!@') {
@@ -142,7 +166,7 @@ function createGuard(lexer, ruleName, tkey, val) {
         if (!(isArrayOf(function (elem) { return (typeof (elem) === 'string'); }, words))) {
             throw monarchCommon.createError(lexer, 'the @ match target \'' + pat + '\' must be an array of strings, in rule: ' + ruleName);
         }
-        var inWords_2 = objects.createKeywordMatcher(words, lexer.ignoreCase);
+        var inWords_2 = createKeywordMatcher(words, lexer.ignoreCase);
         tester = function (s) { return (op === '@' ? inWords_2(s) : !inWords_2(s)); };
     }
     else if (op === '~' || op === '!~') {

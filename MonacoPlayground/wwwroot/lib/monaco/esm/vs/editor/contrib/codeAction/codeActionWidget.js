@@ -63,7 +63,8 @@ var CodeActionContextMenu = /** @class */ (function () {
                             // cancel when editor went off-dom
                             return [2 /*return*/, Promise.reject(canceled())];
                         }
-                        actions = codeActions.map(function (action) { return _this.codeActionToAction(action); });
+                        this._visible = true;
+                        actions = codeActions.actions.map(function (action) { return _this.codeActionToAction(action); });
                         this._contextMenuService.showContextMenu({
                             getAnchor: function () {
                                 if (Position.isIPosition(at)) {

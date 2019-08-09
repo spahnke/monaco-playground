@@ -59,7 +59,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-import { dispose } from '../../../base/common/lifecycle.js';
+import { Disposable } from '../../../base/common/lifecycle.js';
 import { escapeRegExpCharacters } from '../../../base/common/strings.js';
 import { EditorAction, EditorCommand } from '../../browser/editorExtensions.js';
 import { IBulkEditService } from '../../browser/services/bulkEditService.js';
@@ -80,26 +80,30 @@ import { onUnexpectedError } from '../../../base/common/errors.js';
 function contextKeyForSupportedActions(kind) {
     return ContextKeyExpr.regex(SUPPORTED_CODE_ACTIONS.keys()[0], new RegExp('(\\s|^)' + escapeRegExpCharacters(kind.value) + '\\b'));
 }
-var QuickFixController = /** @class */ (function () {
+var QuickFixController = /** @class */ (function (_super) {
+    __extends(QuickFixController, _super);
     function QuickFixController(editor, markerService, contextKeyService, progressService, contextMenuService, _commandService, _keybindingService, _bulkEditService) {
-        var _this = this;
-        this._commandService = _commandService;
-        this._keybindingService = _keybindingService;
-        this._bulkEditService = _bulkEditService;
-        this._disposables = [];
-        this._editor = editor;
-        this._model = new CodeActionModel(this._editor, markerService, contextKeyService, progressService);
-        this._codeActionContextMenu = new CodeActionContextMenu(editor, contextMenuService, function (action) { return _this._onApplyCodeAction(action); });
-        this._lightBulbWidget = new LightBulbWidget(editor);
-        this._updateLightBulbTitle();
-        this._disposables.push(this._codeActionContextMenu.onDidExecuteCodeAction(function (_) { return _this._model.trigger({ type: 'auto', filter: {} }); }), this._lightBulbWidget.onClick(this._handleLightBulbSelect, this), this._model.onDidChangeState(function (e) { return _this._onDidChangeCodeActionsState(e); }), this._keybindingService.onDidUpdateKeybindings(this._updateLightBulbTitle, this));
+        var _this = _super.call(this) || this;
+        _this._commandService = _commandService;
+        _this._keybindingService = _keybindingService;
+        _this._bulkEditService = _bulkEditService;
+        _this._editor = editor;
+        _this._model = new CodeActionModel(_this._editor, markerService, contextKeyService, progressService);
+        _this._codeActionContextMenu = new CodeActionContextMenu(editor, contextMenuService, function (action) { return _this._onApplyCodeAction(action); });
+        _this._lightBulbWidget = _this._register(new LightBulbWidget(editor));
+        _this._updateLightBulbTitle();
+        _this._register(_this._codeActionContextMenu.onDidExecuteCodeAction(function (_) { return _this._model.trigger({ type: 'auto', filter: {} }); }));
+        _this._register(_this._lightBulbWidget.onClick(_this._handleLightBulbSelect, _this));
+        _this._register(_this._model.onDidChangeState(function (e) { return _this._onDidChangeCodeActionsState(e); }));
+        _this._register(_this._keybindingService.onDidUpdateKeybindings(_this._updateLightBulbTitle, _this));
+        return _this;
     }
     QuickFixController.get = function (editor) {
         return editor.getContribution(QuickFixController.ID);
     };
     QuickFixController.prototype.dispose = function () {
+        _super.prototype.dispose.call(this);
         this._model.dispose();
-        dispose(this._disposables);
     };
     QuickFixController.prototype._onDidChangeCodeActionsState = function (newState) {
         var _this = this;
@@ -112,10 +116,10 @@ var QuickFixController = /** @class */ (function () {
             if (newState.trigger.filter && newState.trigger.filter.kind) {
                 // Triggered for specific scope
                 newState.actions.then(function (fixes) {
-                    if (fixes.length > 0) {
+                    if (fixes.actions.length > 0) {
                         // Apply if we only have one action or requested autoApply
-                        if (newState.trigger.autoApply === 1 /* First */ || (newState.trigger.autoApply === 0 /* IfSingle */ && fixes.length === 1)) {
-                            _this._onApplyCodeAction(fixes[0]);
+                        if (newState.trigger.autoApply === 1 /* First */ || (newState.trigger.autoApply === 0 /* IfSingle */ && fixes.actions.length === 1)) {
+                            _this._onApplyCodeAction(fixes.actions[0]);
                             return;
                         }
                     }
@@ -175,7 +179,7 @@ var QuickFixController = /** @class */ (function () {
         __param(7, IBulkEditService)
     ], QuickFixController);
     return QuickFixController;
-}());
+}(Disposable));
 export { QuickFixController };
 export function applyCodeAction(action, bulkEditService, commandService, editor) {
     return __awaiter(this, void 0, void 0, function () {
@@ -208,7 +212,7 @@ function showCodeActionsForEditorSelection(editor, notAvailableMessage, filter, 
     }
     var pos = editor.getPosition();
     controller.triggerFromEditorSelection(filter, autoApply).then(function (codeActions) {
-        if (!codeActions || !codeActions.length) {
+        if (!codeActions || !codeActions.actions.length) {
             MessageController.get(editor).showMessage(notAvailableMessage, pos);
         }
     });
@@ -437,6 +441,23 @@ var OrganizeImportsAction = /** @class */ (function (_super) {
     return OrganizeImportsAction;
 }(EditorAction));
 export { OrganizeImportsAction };
+var FixAllAction = /** @class */ (function (_super) {
+    __extends(FixAllAction, _super);
+    function FixAllAction() {
+        return _super.call(this, {
+            id: FixAllAction.Id,
+            label: nls.localize('fixAll.label', "Fix All"),
+            alias: 'Fix All',
+            precondition: ContextKeyExpr.and(EditorContextKeys.writable, contextKeyForSupportedActions(CodeActionKind.SourceFixAll))
+        }) || this;
+    }
+    FixAllAction.prototype.run = function (_accessor, editor) {
+        return showCodeActionsForEditorSelection(editor, nls.localize('fixAll.noneMessage', "No fix all action available"), { kind: CodeActionKind.SourceFixAll, includeSourceActions: true }, 0 /* IfSingle */);
+    };
+    FixAllAction.Id = 'editor.action.fixAll';
+    return FixAllAction;
+}(EditorAction));
+export { FixAllAction };
 var AutoFixAction = /** @class */ (function (_super) {
     __extends(AutoFixAction, _super);
     function AutoFixAction() {

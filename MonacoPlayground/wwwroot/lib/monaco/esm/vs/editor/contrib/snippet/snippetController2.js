@@ -144,7 +144,7 @@ var SnippetController2 = /** @class */ (function () {
                     insertText: option.value,
                     // insertText: `\${1|${after.concat(before).join(',')}|}$0`,
                     // snippetType: 'textmate',
-                    sortText: repeat('a', i),
+                    sortText: repeat('a', i + 1),
                     range: Range.fromPositions(_this._editor.getPosition(), _this._editor.getPosition().delta(0, first_1.value.length))
                 };
             }));
@@ -155,7 +155,8 @@ var SnippetController2 = /** @class */ (function () {
             this.next();
         }
     };
-    SnippetController2.prototype.cancel = function () {
+    SnippetController2.prototype.cancel = function (resetSelection) {
+        if (resetSelection === void 0) { resetSelection = false; }
         this._inSnippet.reset();
         this._hasPrevTabstop.reset();
         this._hasNextTabstop.reset();
@@ -163,6 +164,12 @@ var SnippetController2 = /** @class */ (function () {
         dispose(this._session);
         this._session = undefined;
         this._modelVersionId = -1;
+        if (resetSelection) {
+            // reset selection to the primary cursor when being asked
+            // for. this happens when explicitly cancelling snippet mode,
+            // e.g. when pressing ESC
+            this._editor.setSelections([this._editor.getSelection()]);
+        }
     };
     SnippetController2.prototype.prev = function () {
         if (this._session) {
@@ -214,7 +221,7 @@ registerEditorCommand(new CommandCtor({
 registerEditorCommand(new CommandCtor({
     id: 'leaveSnippet',
     precondition: SnippetController2.InSnippetMode,
-    handler: function (ctrl) { return ctrl.cancel(); },
+    handler: function (ctrl) { return ctrl.cancel(true); },
     kbOpts: {
         weight: 100 /* EditorContrib */ + 30,
         kbExpr: EditorContextKeys.editorTextFocus,

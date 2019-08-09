@@ -263,8 +263,10 @@ var SuggestController = /** @class */ (function () {
     };
     SuggestController.prototype._alertCompletionItem = function (_a) {
         var suggestion = _a.completion;
-        var msg = nls.localize('arai.alert.snippet', "Accepting '{0}' did insert the following text: {1}", suggestion.label, suggestion.insertText);
-        alert(msg);
+        if (isNonEmptyArray(suggestion.additionalTextEdits)) {
+            var msg = nls.localize('arai.alert.snippet', "Accepting '{0}' made {1} additional edits", suggestion.label, suggestion.additionalTextEdits.length);
+            alert(msg);
+        }
     };
     SuggestController.prototype.triggerSuggest = function (onlyFrom) {
         if (this._editor.hasModel()) {

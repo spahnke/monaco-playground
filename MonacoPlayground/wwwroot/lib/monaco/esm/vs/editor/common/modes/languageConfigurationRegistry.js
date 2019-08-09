@@ -126,25 +126,25 @@ var LanguageConfigurationChangeEvent = /** @class */ (function () {
 export { LanguageConfigurationChangeEvent };
 var LanguageConfigurationRegistryImpl = /** @class */ (function () {
     function LanguageConfigurationRegistryImpl() {
+        this._entries = new Map();
         this._onDidChange = new Emitter();
         this.onDidChange = this._onDidChange.event;
-        this._entries = [];
     }
     LanguageConfigurationRegistryImpl.prototype.register = function (languageIdentifier, configuration) {
         var _this = this;
         var previous = this._getRichEditSupport(languageIdentifier.id);
         var current = new RichEditSupport(languageIdentifier, previous, configuration);
-        this._entries[languageIdentifier.id] = current;
+        this._entries.set(languageIdentifier.id, current);
         this._onDidChange.fire({ languageIdentifier: languageIdentifier });
         return toDisposable(function () {
-            if (_this._entries[languageIdentifier.id] === current) {
-                _this._entries[languageIdentifier.id] = previous;
+            if (_this._entries.get(languageIdentifier.id) === current) {
+                _this._entries.set(languageIdentifier.id, previous);
                 _this._onDidChange.fire({ languageIdentifier: languageIdentifier });
             }
         });
     };
     LanguageConfigurationRegistryImpl.prototype._getRichEditSupport = function (languageId) {
-        return this._entries[languageId] || null;
+        return this._entries.get(languageId);
     };
     // begin electricCharacter
     LanguageConfigurationRegistryImpl.prototype._getElectricCharacterSupport = function (languageId) {

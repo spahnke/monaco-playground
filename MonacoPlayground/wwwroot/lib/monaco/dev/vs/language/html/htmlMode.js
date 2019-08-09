@@ -1940,10 +1940,12 @@ define('vs/language/html/languageFeatures',["require", "exports", "vscode-langua
                 if (!items) {
                     return;
                 }
-                return items.map(function (item) { return ({
-                    range: toRange(item.range),
-                    url: item.target
-                }); });
+                return {
+                    links: items.map(function (item) { return ({
+                        range: toRange(item.range),
+                        url: item.target
+                    }); })
+                };
             });
         };
         return DocumentLinkAdapter;

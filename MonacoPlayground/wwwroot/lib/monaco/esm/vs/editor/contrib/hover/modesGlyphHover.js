@@ -22,6 +22,7 @@ import { HoverOperation } from './hoverOperation.js';
 import { GlyphHoverWidget } from './hoverWidgets.js';
 import { MarkdownRenderer } from '../markdown/markdownRenderer.js';
 import { NullOpenerService } from '../../../platform/opener/common/opener.js';
+import { asArray } from '../../../base/common/arrays.js';
 var MarginComputer = /** @class */ (function () {
     function MarginComputer(editor) {
         this._editor = editor;
@@ -54,12 +55,7 @@ var MarginComputer = /** @class */ (function () {
             if (!hoverMessage || isEmptyMarkdownString(hoverMessage)) {
                 continue;
             }
-            if (Array.isArray(hoverMessage)) {
-                result.push.apply(result, hoverMessage.map(toHoverMessage));
-            }
-            else {
-                result.push(toHoverMessage(hoverMessage));
-            }
+            result.push.apply(result, asArray(hoverMessage).map(toHoverMessage));
         }
         return result;
     };

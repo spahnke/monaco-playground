@@ -11,8 +11,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { RunOnceScheduler, createCancelablePromise } from '../../../base/common/async.js';
-import { onUnexpectedError } from '../../../base/common/errors.js';
+import { RunOnceScheduler, createCancelablePromise, disposableTimeout } from '../../../base/common/async.js';
+import { onUnexpectedError, onUnexpectedExternalError } from '../../../base/common/errors.js';
 import { dispose, toDisposable } from '../../../base/common/lifecycle.js';
 import { StableEditorScrollState } from '../../browser/core/editorState.js';
 import { registerEditorContribution } from '../../browser/editorExtensions.js';
@@ -21,12 +21,14 @@ import { getCodeLensData } from './codelens.js';
 import { CodeLens, CodeLensHelper } from './codelensWidget.js';
 import { ICommandService } from '../../../platform/commands/common/commands.js';
 import { INotificationService } from '../../../platform/notification/common/notification.js';
+import { ICodeLensCache } from './codeLensCache.js';
 var CodeLensContribution = /** @class */ (function () {
-    function CodeLensContribution(_editor, _commandService, _notificationService) {
+    function CodeLensContribution(_editor, _commandService, _notificationService, _codeLensCache) {
         var _this = this;
         this._editor = _editor;
         this._commandService = _commandService;
         this._notificationService = _notificationService;
+        this._codeLensCache = _codeLensCache;
         this._isEnabled = this._editor.getConfiguration().contribInfo.codeLens;
         this._globalToDispose = [];
         this._localToDispose = [];
@@ -74,7 +76,22 @@ var CodeLensContribution = /** @class */ (function () {
         if (!this._isEnabled) {
             return;
         }
+        var cachedLenses = this._codeLensCache.get(model);
+        if (cachedLenses) {
+            this._renderCodeLensSymbols(cachedLenses);
+        }
         if (!CodeLensProviderRegistry.has(model)) {
+            // no provider -> return but check with
+            // cached lenses. they expire after 30 seconds
+            if (cachedLenses) {
+                this._localToDispose.push(disposableTimeout(function () {
+                    var cachedLensesNow = _this._codeLensCache.get(model);
+                    if (cachedLenses === cachedLensesNow) {
+                        _this._codeLensCache.delete(model);
+                        _this._onModelChange();
+                    }
+                }, 30 * 1000));
+            }
             return;
         }
         for (var _i = 0, _a = CodeLensProviderRegistry.all(model); _i < _a.length; _i++) {
@@ -86,7 +103,7 @@ var CodeLensContribution = /** @class */ (function () {
         }
         this._detectVisibleLenses = new RunOnceScheduler(function () {
             _this._onViewportChanged();
-        }, 500);
+        }, 250);
         var scheduler = new RunOnceScheduler(function () {
             var counterValue = ++_this._modelChangeCounter;
             if (_this._currentFindCodeLensSymbolsPromise) {
@@ -95,6 +112,7 @@ var CodeLensContribution = /** @class */ (function () {
             _this._currentFindCodeLensSymbolsPromise = createCancelablePromise(function (token) { return getCodeLensData(model, token); });
             _this._currentFindCodeLensSymbolsPromise.then(function (result) {
                 if (counterValue === _this._modelChangeCounter) { // only the last one wins
+                    _this._codeLensCache.put(model, result);
                     _this._renderCodeLensSymbols(result);
                     _this._detectVisibleLenses.schedule();
                 }
@@ -276,7 +294,7 @@ var CodeLensContribution = /** @class */ (function () {
                     if (!request.symbol.command && typeof request.provider.resolveCodeLens === 'function') {
                         return Promise.resolve(request.provider.resolveCodeLens(model, request.symbol, token)).then(function (symbol) {
                             resolvedSymbols[i] = symbol;
-                        });
+                        }, onUnexpectedExternalError);
                     }
                     else {
                         resolvedSymbols[i] = request.symbol;
@@ -299,7 +317,8 @@ var CodeLensContribution = /** @class */ (function () {
     CodeLensContribution.ID = 'css.editor.codeLens';
     CodeLensContribution = __decorate([
         __param(1, ICommandService),
-        __param(2, INotificationService)
+        __param(2, INotificationService),
+        __param(3, ICodeLensCache)
     ], CodeLensContribution);
     return CodeLensContribution;
 }());

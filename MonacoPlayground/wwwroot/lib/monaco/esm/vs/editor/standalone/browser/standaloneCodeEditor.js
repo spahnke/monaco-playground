@@ -24,7 +24,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import * as nls from '../../../nls.js';
 import * as browser from '../../../base/browser/browser.js';
 import * as aria from '../../../base/browser/ui/aria/aria.js';
 import { Disposable, combinedDisposable, toDisposable } from '../../../base/common/lifecycle.js';
@@ -45,6 +44,7 @@ import { IKeybindingService } from '../../../platform/keybinding/common/keybindi
 import { INotificationService } from '../../../platform/notification/common/notification.js';
 import { IThemeService } from '../../../platform/theme/common/themeService.js';
 import { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';
+import { StandaloneCodeEditorNLS } from '../../common/standaloneStrings.js';
 var LAST_GENERATED_COMMAND_ID = 0;
 var ariaDomNodeCreated = false;
 function createAriaDomNode() {
@@ -62,10 +62,10 @@ var StandaloneCodeEditor = /** @class */ (function (_super) {
     function StandaloneCodeEditor(domElement, options, instantiationService, codeEditorService, commandService, contextKeyService, keybindingService, themeService, notificationService, accessibilityService) {
         var _this = this;
         options = options || {};
-        options.ariaLabel = options.ariaLabel || nls.localize('editorViewAccessibleLabel', "Editor content");
+        options.ariaLabel = options.ariaLabel || StandaloneCodeEditorNLS.editorViewAccessibleLabel;
         options.ariaLabel = options.ariaLabel + ';' + (browser.isIE
-            ? nls.localize('accessibilityHelpMessageIE', "Press Ctrl+F1 for Accessibility Options.")
-            : nls.localize('accessibilityHelpMessage', "Press Alt+F1 for Accessibility Options."));
+            ? StandaloneCodeEditorNLS.accessibilityHelpMessageIE
+            : StandaloneCodeEditorNLS.accessibilityHelpMessage);
         _this = _super.call(this, domElement, options, {}, instantiationService, codeEditorService, commandService, contextKeyService, themeService, notificationService, accessibilityService) || this;
         if (keybindingService instanceof StandaloneKeybindingService) {
             _this._standaloneKeybindingService = keybindingService;

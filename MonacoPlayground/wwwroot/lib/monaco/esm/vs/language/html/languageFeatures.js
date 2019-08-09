@@ -367,10 +367,12 @@ var DocumentLinkAdapter = /** @class */ (function () {
             if (!items) {
                 return;
             }
-            return items.map(function (item) { return ({
-                range: toRange(item.range),
-                url: item.target
-            }); });
+            return {
+                links: items.map(function (item) { return ({
+                    range: toRange(item.range),
+                    url: item.target
+                }); })
+            };
         });
     };
     return DocumentLinkAdapter;

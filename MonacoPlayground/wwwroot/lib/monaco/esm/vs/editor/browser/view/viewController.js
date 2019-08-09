@@ -249,6 +249,9 @@ var ViewController = /** @class */ (function () {
     ViewController.prototype.emitMouseDrop = function (e) {
         this.outgoingEvents.emitMouseDrop(e);
     };
+    ViewController.prototype.emitMouseWheel = function (e) {
+        this.outgoingEvents.emitMouseWheel(e);
+    };
     return ViewController;
 }());
 export { ViewController };

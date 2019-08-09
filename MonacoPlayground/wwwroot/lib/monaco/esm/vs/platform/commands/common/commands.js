@@ -63,11 +63,11 @@ export var CommandsRegistry = new /** @class */ (function () {
     };
     class_1.prototype.registerCommandAlias = function (oldId, newId) {
         return CommandsRegistry.registerCommand(oldId, function (accessor) {
+            var _a;
             var args = [];
             for (var _i = 1; _i < arguments.length; _i++) {
                 args[_i - 1] = arguments[_i];
             }
-            var _a;
             return (_a = accessor.get(ICommandService)).executeCommand.apply(_a, [newId].concat(args));
         });
     };

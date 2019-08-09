@@ -38,7 +38,7 @@ export function getIconClasses(modelService, modeService, resource, fileKind) {
                 classes.push("ext-file-icon"); // extra segment to increase file-ext score
             }
             // Configured Language
-            var configuredLangId = getConfiguredLangId(modelService, resource);
+            var configuredLangId = getConfiguredLangId(modelService, modeService, resource);
             configuredLangId = configuredLangId || (path ? modeService.getModeIdByFilepathOrFirstLine(path) : null);
             if (configuredLangId) {
                 classes.push(cssEscape(configuredLangId) + "-lang-file-icon");
@@ -47,15 +47,27 @@ export function getIconClasses(modelService, modeService, resource, fileKind) {
     }
     return classes;
 }
-export function getConfiguredLangId(modelService, resource) {
+export function getConfiguredLangId(modelService, modeService, resource) {
     var configuredLangId = null;
     if (resource) {
-        var model = modelService.getModel(resource);
-        if (model) {
-            var modeId = model.getLanguageIdentifier().language;
-            if (modeId && modeId !== PLAINTEXT_MODE_ID) {
-                configuredLangId = modeId; // only take if the mode is specific (aka no just plain text)
+        var modeId = null;
+        // Data URI: check for encoded metadata
+        if (resource.scheme === Schemas.data) {
+            var metadata = DataUri.parseMetaData(resource);
+            var mime = metadata.get(DataUri.META_DATA_MIME);
+            if (mime) {
+                modeId = modeService.getModeId(mime);
             }
+        }
+        // Any other URI: check for model if existing
+        else {
+            var model = modelService.getModel(resource);
+            if (model) {
+                modeId = model.getLanguageIdentifier().language;
+            }
+        }
+        if (modeId && modeId !== PLAINTEXT_MODE_ID) {
+            configuredLangId = modeId; // only take if the mode is specific (aka no just plain text)
         }
     }
     return configuredLangId;

@@ -33,21 +33,21 @@ var DragAndDropController = /** @class */ (function () {
         this._toUnhook.push(this._editor.onDidBlurEditorWidget(function () { return _this.onEditorBlur(); }));
         this._dndDecorationIds = [];
         this._mouseDown = false;
-        this._modiferPressed = false;
+        this._modifierPressed = false;
         this._dragSelection = null;
     }
     DragAndDropController.prototype.onEditorBlur = function () {
         this._removeDecoration();
         this._dragSelection = null;
         this._mouseDown = false;
-        this._modiferPressed = false;
+        this._modifierPressed = false;
     };
     DragAndDropController.prototype.onEditorKeyDown = function (e) {
         if (!this._editor.getConfiguration().dragAndDrop) {
             return;
         }
         if (hasTriggerModifier(e)) {
-            this._modiferPressed = true;
+            this._modifierPressed = true;
         }
         if (this._mouseDown && hasTriggerModifier(e)) {
             this._editor.updateOptions({
@@ -60,7 +60,7 @@ var DragAndDropController = /** @class */ (function () {
             return;
         }
         if (hasTriggerModifier(e)) {
-            this._modiferPressed = false;
+            this._modifierPressed = false;
         }
         if (this._mouseDown && e.keyCode === DragAndDropController.TRIGGER_KEY_VALUE) {
             this._editor.updateOptions({
@@ -136,10 +136,10 @@ var DragAndDropController = /** @class */ (function () {
             }
             else if (!this._dragSelection.containsPosition(newCursorPosition_1) ||
                 ((hasTriggerModifier(mouseEvent.event) ||
-                    this._modiferPressed) && (this._dragSelection.getEndPosition().equals(newCursorPosition_1) || this._dragSelection.getStartPosition().equals(newCursorPosition_1)) // we allow users to paste content beside the selection
+                    this._modifierPressed) && (this._dragSelection.getEndPosition().equals(newCursorPosition_1) || this._dragSelection.getStartPosition().equals(newCursorPosition_1)) // we allow users to paste content beside the selection
                 )) {
                 this._editor.pushUndoStop();
-                this._editor.executeCommand(DragAndDropController.ID, new DragAndDropCommand(this._dragSelection, newCursorPosition_1, hasTriggerModifier(mouseEvent.event) || this._modiferPressed));
+                this._editor.executeCommand(DragAndDropController.ID, new DragAndDropCommand(this._dragSelection, newCursorPosition_1, hasTriggerModifier(mouseEvent.event) || this._modifierPressed));
                 this._editor.pushUndoStop();
             }
         }
@@ -177,7 +177,7 @@ var DragAndDropController = /** @class */ (function () {
         this._removeDecoration();
         this._dragSelection = null;
         this._mouseDown = false;
-        this._modiferPressed = false;
+        this._modifierPressed = false;
         this._toUnhook = dispose(this._toUnhook);
     };
     DragAndDropController.ID = 'editor.contrib.dragAndDrop';

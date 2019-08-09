@@ -450,7 +450,7 @@ var TypeOperations = /** @class */ (function () {
             var position = selection.getPosition();
             var lineText = model.getLineContent(position.lineNumber);
             // Do not auto-close ' or " after a word character
-            if (chIsQuote && position.column > 1) {
+            if ((chIsQuote && position.column > 1) && autoCloseConfig !== 'always') {
                 var wordSeparators = getMapForWordSeparators(config.wordSeparators);
                 var characterBeforeCode = lineText.charCodeAt(position.column - 2);
                 var characterBeforeType = wordSeparators.get(characterBeforeCode);

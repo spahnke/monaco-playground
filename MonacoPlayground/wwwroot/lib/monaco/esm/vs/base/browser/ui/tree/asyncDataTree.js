@@ -57,6 +57,10 @@ import { Iterator } from '../../../common/iterator.js';
 import { ElementsDragAndDropData } from '../list/listView.js';
 import { isPromiseCanceledError, onUnexpectedError } from '../../../common/errors.js';
 import { toggleClass } from '../../dom.js';
+import { values } from '../../../common/map.js';
+function createAsyncDataTreeNode(props) {
+    return __assign({}, props, { children: [], loading: false, stale: true, slow: false });
+}
 function isAncestor(ancestor, descendant) {
     if (!descendant.parent) {
         return false;
@@ -166,12 +170,6 @@ function asTreeEvent(e) {
         elements: e.elements.map(function (e) { return e.element; })
     };
 }
-function asTreeMouseEvent(e) {
-    return {
-        browserEvent: e.browserEvent,
-        element: e.element && e.element.element
-    };
-}
 export var ChildrenResolutionReason;
 (function (ChildrenResolutionReason) {
     ChildrenResolutionReason[ChildrenResolutionReason["Refresh"] = 0] = "Refresh";
@@ -244,15 +242,19 @@ function asTreeElement(node, viewStateContext) {
     }
     return {
         element: node,
-        children: Iterator.map(Iterator.fromArray(node.children), function (child) { return asTreeElement(child, viewStateContext); }),
+        children: node.hasChildren ? Iterator.map(Iterator.fromArray(node.children), function (child) { return asTreeElement(child, viewStateContext); }) : [],
         collapsible: node.hasChildren,
         collapsed: collapsed
     };
 }
+function dfs(node, fn) {
+    fn(node);
+    node.children.forEach(function (child) { return dfs(child, fn); });
+}
 var AsyncDataTree = /** @class */ (function () {
     function AsyncDataTree(container, delegate, renderers, dataSource, options) {
-        if (options === void 0) { options = {}; }
         var _this = this;
+        if (options === void 0) { options = {}; }
         this.dataSource = dataSource;
         this.nodes = new Map();
         this.subTreeRefreshPromises = new Map();
@@ -267,16 +269,11 @@ var AsyncDataTree = /** @class */ (function () {
         var objectTreeRenderers = renderers.map(function (r) { return new DataTreeRenderer(r, _this._onDidChangeNodeSlowState.event); });
         var objectTreeOptions = asObjectTreeOptions(options) || {};
         this.tree = new ObjectTree(container, objectTreeDelegate, objectTreeRenderers, objectTreeOptions);
-        this.root = {
+        this.root = createAsyncDataTreeNode({
             element: undefined,
             parent: null,
-            children: [],
-            state: "uninitialized" /* Uninitialized */,
-            hasChildren: true,
-            needsRefresh: false,
-            disposed: false,
-            slow: false
-        };
+            hasChildren: true
+        });
         if (this.identityProvider) {
             this.root = __assign({}, this.root, { id: null });
         }
@@ -293,8 +290,8 @@ var AsyncDataTree = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(AsyncDataTree.prototype, "onMouseDblClick", {
-        get: function () { return Event.map(this.tree.onMouseDblClick, asTreeMouseEvent); },
+    Object.defineProperty(AsyncDataTree.prototype, "onDidOpen", {
+        get: function () { return Event.map(this.tree.onDidOpen, asTreeEvent); },
         enumerable: true,
         configurable: true
     });
@@ -374,7 +371,7 @@ var AsyncDataTree = /** @class */ (function () {
                         if (typeof this.root.element === 'undefined') {
                             throw new Error('Tree input not set');
                         }
-                        if (!(this.root.state === "loading" /* Loading */)) return [3 /*break*/, 3];
+                        if (!this.root.loading) return [3 /*break*/, 3];
                         return [4 /*yield*/, this.subTreeRefreshPromises.get(this.root)];
                     case 1:
                         _a.sent();
@@ -414,7 +411,7 @@ var AsyncDataTree = /** @class */ (function () {
                         if (typeof this.root.element === 'undefined') {
                             throw new Error('Tree input not set');
                         }
-                        if (!(this.root.state === "loading" /* Loading */)) return [3 /*break*/, 3];
+                        if (!this.root.loading) return [3 /*break*/, 3];
                         return [4 /*yield*/, this.subTreeRefreshPromises.get(this.root)];
                     case 1:
                         _a.sent();
@@ -424,11 +421,11 @@ var AsyncDataTree = /** @class */ (function () {
                         _a.label = 3;
                     case 3:
                         node = this.getDataNode(element);
-                        if (node !== this.root && node.state !== "loading" /* Loading */ && !this.tree.isCollapsed(node)) {
+                        if (node !== this.root && !node.loading && !this.tree.isCollapsed(node)) {
                             return [2 /*return*/, false];
                         }
                         result = this.tree.expand(node === this.root ? null : node, recursive);
-                        if (!(node.state === "loading" /* Loading */)) return [3 /*break*/, 6];
+                        if (!node.loading) return [3 /*break*/, 6];
                         return [4 /*yield*/, this.subTreeRefreshPromises.get(node)];
                     case 4:
                         _a.sent();
@@ -499,10 +496,6 @@ var AsyncDataTree = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (node.disposed) {
-                            console.error('Async data tree node is disposed');
-                            return [2 /*return*/];
-                        }
                         this.subTreeRefreshPromises.forEach(function (refreshPromise, refreshNode) {
                             if (!result && intersects(refreshNode, node)) {
                                 result = refreshPromise.then(function () { return _this.refreshNode(node, recursive, viewStateContext); });
@@ -535,38 +528,22 @@ var AsyncDataTree = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        node.state = "loading" /* Loading */;
+                        node.loading = true;
                         _a.label = 1;
                     case 1:
-                        _a.trys.push([1, , 5, 6]);
+                        _a.trys.push([1, , 4, 5]);
                         return [4 /*yield*/, this.doRefreshNode(node, recursive, viewStateContext)];
                     case 2:
-                        _a.sent();
-                        if (!recursive) return [3 /*break*/, 4];
-                        childrenToRefresh = node.children
-                            .filter(function (child) {
-                            if (child.needsRefresh) {
-                                child.needsRefresh = false;
-                                return true;
-                            }
-                            // TODO@joao: is this still needed?
-                            if (child.hasChildren && child.state === "loaded" /* Loaded */) {
-                                return true;
-                            }
-                            if (!viewStateContext || !viewStateContext.viewState.expanded || !child.id) {
-                                return false;
-                            }
-                            return viewStateContext.viewState.expanded.indexOf(child.id) > -1;
-                        });
+                        childrenToRefresh = _a.sent();
+                        node.stale = false;
                         return [4 /*yield*/, Promise.all(childrenToRefresh.map(function (child) { return _this.doRefreshSubTree(child, recursive, viewStateContext); }))];
                     case 3:
                         _a.sent();
-                        _a.label = 4;
-                    case 4: return [3 /*break*/, 6];
-                    case 5:
-                        node.state = "loaded" /* Loaded */;
+                        return [3 /*break*/, 5];
+                    case 4:
+                        node.loading = false;
                         return [7 /*endfinally*/];
-                    case 6: return [2 /*return*/];
+                    case 5: return [2 /*return*/];
                 }
             });
         });
@@ -597,16 +574,14 @@ var AsyncDataTree = /** @class */ (function () {
                         return [4 /*yield*/, childrenPromise];
                     case 2:
                         children = _a.sent();
-                        this.setChildren(node, children, recursive, viewStateContext);
-                        return [3 /*break*/, 5];
+                        return [2 /*return*/, this.setChildren(node, children, recursive, viewStateContext)];
                     case 3:
                         err_1 = _a.sent();
-                        node.needsRefresh = true;
                         if (node !== this.root) {
                             this.tree.collapse(node === this.root ? null : node);
                         }
                         if (isPromiseCanceledError(err_1)) {
-                            return [2 /*return*/];
+                            return [2 /*return*/, []];
                         }
                         throw err_1;
                     case 4:
@@ -645,7 +620,7 @@ var AsyncDataTree = /** @class */ (function () {
     };
     AsyncDataTree.prototype._onDidChangeCollapseState = function (_a) {
         var node = _a.node, deep = _a.deep;
-        if (!node.collapsed && (node.element.state === "uninitialized" /* Uninitialized */ || node.element.needsRefresh)) {
+        if (!node.collapsed && node.element.stale) {
             if (deep) {
                 this.collapse(node.element.element);
             }
@@ -658,83 +633,78 @@ var AsyncDataTree = /** @class */ (function () {
     AsyncDataTree.prototype.setChildren = function (node, childrenElements, recursive, viewStateContext) {
         var _this = this;
         var _a;
-        var nodeChildren;
-        if (this.identityProvider) {
-            nodeChildren = new Map();
-            for (var _i = 0, _b = node.children; _i < _b.length; _i++) {
-                var child = _b[_i];
-                nodeChildren.set(child.id, child);
+        // perf: if the node was and still is a leaf, avoid all this hassle
+        if (node.children.length === 0 && childrenElements.length === 0) {
+            return [];
+        }
+        var nodesToForget = new Map();
+        var childrenTreeNodesById = new Map();
+        for (var _i = 0, _b = node.children; _i < _b.length; _i++) {
+            var child = _b[_i];
+            nodesToForget.set(child.element, child);
+            if (this.identityProvider) {
+                childrenTreeNodesById.set(child.id, this.tree.getNode(child));
             }
         }
+        var childrenToRefresh = [];
         var children = childrenElements.map(function (element) {
             if (!_this.identityProvider) {
-                var hasChildren_1 = !!_this.dataSource.hasChildren(element);
-                return {
+                return createAsyncDataTreeNode({
                     element: element,
                     parent: node,
-                    children: [],
-                    state: "uninitialized" /* Uninitialized */,
-                    hasChildren: hasChildren_1,
-                    needsRefresh: false,
-                    disposed: false,
-                    slow: false
-                };
+                    hasChildren: !!_this.dataSource.hasChildren(element)
+                });
             }
             var id = _this.identityProvider.getId(element).toString();
-            var asyncDataTreeNode = nodeChildren.get(id);
-            if (!asyncDataTreeNode) {
-                var childAsyncDataTreeNode = {
-                    element: element,
-                    parent: node,
-                    children: [],
-                    id: id,
-                    state: "uninitialized" /* Uninitialized */,
-                    hasChildren: !!_this.dataSource.hasChildren(element),
-                    needsRefresh: false,
-                    disposed: false,
-                    slow: false
-                };
-                if (viewStateContext && viewStateContext.viewState.focus && viewStateContext.viewState.focus.indexOf(id) > -1) {
-                    viewStateContext.focus.push(childAsyncDataTreeNode);
+            var childNode = childrenTreeNodesById.get(id);
+            if (childNode) {
+                var asyncDataTreeNode = childNode.element;
+                nodesToForget.delete(asyncDataTreeNode.element);
+                _this.nodes.delete(asyncDataTreeNode.element);
+                _this.nodes.set(element, asyncDataTreeNode);
+                asyncDataTreeNode.element = element;
+                asyncDataTreeNode.hasChildren = !!_this.dataSource.hasChildren(element);
+                if (recursive) {
+                    if (childNode.collapsed) {
+                        dfs(asyncDataTreeNode, function (node) { return node.stale = true; });
+                    }
+                    else {
+                        childrenToRefresh.push(asyncDataTreeNode);
+                    }
                 }
-                if (viewStateContext && viewStateContext.viewState.selection && viewStateContext.viewState.selection.indexOf(id) > -1) {
-                    viewStateContext.selection.push(childAsyncDataTreeNode);
-                }
-                return childAsyncDataTreeNode;
+                return asyncDataTreeNode;
             }
-            asyncDataTreeNode.element = element;
-            var hasChildren = _this.dataSource.hasChildren(asyncDataTreeNode.element);
-            if (asyncDataTreeNode.state === "loaded" /* Loaded */ || (asyncDataTreeNode.state !== "uninitialized" /* Uninitialized */ && asyncDataTreeNode.hasChildren !== !!hasChildren)) {
-                asyncDataTreeNode.needsRefresh = true;
+            var childAsyncDataTreeNode = createAsyncDataTreeNode({
+                element: element,
+                parent: node,
+                id: id,
+                hasChildren: !!_this.dataSource.hasChildren(element)
+            });
+            if (viewStateContext && viewStateContext.viewState.focus && viewStateContext.viewState.focus.indexOf(id) > -1) {
+                viewStateContext.focus.push(childAsyncDataTreeNode);
             }
-            asyncDataTreeNode.hasChildren = hasChildren;
-            return asyncDataTreeNode;
+            if (viewStateContext && viewStateContext.viewState.selection && viewStateContext.viewState.selection.indexOf(id) > -1) {
+                viewStateContext.selection.push(childAsyncDataTreeNode);
+            }
+            if (viewStateContext && viewStateContext.viewState.expanded && viewStateContext.viewState.expanded.indexOf(id) > -1) {
+                childrenToRefresh.push(childAsyncDataTreeNode);
+            }
+            return childAsyncDataTreeNode;
         });
-        // perf: if the node was and still is a leaf, avoid all these expensive no-ops
-        if (node.children.length === 0 && childrenElements.length === 0) {
-            return;
+        for (var _c = 0, _d = values(nodesToForget); _c < _d.length; _c++) {
+            var node_1 = _d[_c];
+            dfs(node_1, function (node) { return _this.nodes.delete(node.element); });
+        }
+        for (var _e = 0, children_1 = children; _e < children_1.length; _e++) {
+            var child = children_1[_e];
+            this.nodes.set(child.element, child);
         }
         (_a = node.children).splice.apply(_a, [0, node.children.length].concat(children));
+        return childrenToRefresh;
     };
     AsyncDataTree.prototype.render = function (node, viewStateContext) {
-        var _this = this;
-        var insertedElements = new Set();
-        var onDidCreateNode = function (treeNode) {
-            if (treeNode.element.element) {
-                insertedElements.add(treeNode.element.element);
-                _this.nodes.set(treeNode.element.element, treeNode.element);
-            }
-        };
-        var onDidDeleteNode = function (treeNode) {
-            if (treeNode.element.element) {
-                if (!insertedElements.has(treeNode.element.element)) {
-                    treeNode.element.disposed = true;
-                    _this.nodes.delete(treeNode.element.element);
-                }
-            }
-        };
         var children = node.children.map(function (c) { return asTreeElement(c, viewStateContext); });
-        this.tree.setChildren(node === this.root ? null : node, children, onDidCreateNode, onDidDeleteNode);
+        this.tree.setChildren(node === this.root ? null : node, children);
         this._onDidRender.fire();
     };
     AsyncDataTree.prototype.dispose = function () {

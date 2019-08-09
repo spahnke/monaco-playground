@@ -25,6 +25,7 @@ import * as types from '../../../common/types.js';
 import { EventType, Gesture } from '../../touch.js';
 import { StandardKeyboardEvent } from '../../keyboardEvent.js';
 import { Emitter } from '../../../common/event.js';
+import { asArray } from '../../../common/arrays.js';
 var BaseActionItem = /** @class */ (function (_super) {
     __extends(BaseActionItem, _super);
     function BaseActionItem(context, action, options) {
@@ -468,7 +469,7 @@ var ActionBar = /** @class */ (function (_super) {
     ActionBar.prototype.push = function (arg, options) {
         var _this = this;
         if (options === void 0) { options = {}; }
-        var actions = !Array.isArray(arg) ? [arg] : arg;
+        var actions = asArray(arg);
         var index = types.isNumber(options.index) ? options.index : null;
         actions.forEach(function (action) {
             var actionItemElement = document.createElement('li');
@@ -479,7 +480,7 @@ var ActionBar = /** @class */ (function (_super) {
                 e.preventDefault();
                 e.stopPropagation();
             }));
-            var item = null;
+            var item;
             if (_this.options.actionItemProvider) {
                 item = _this.options.actionItemProvider(action);
             }

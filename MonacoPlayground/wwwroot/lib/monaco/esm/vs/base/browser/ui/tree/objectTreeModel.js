@@ -101,8 +101,14 @@ var ObjectTreeModel = /** @class */ (function () {
     };
     ObjectTreeModel.prototype.getNode = function (element) {
         if (element === void 0) { element = null; }
-        var location = this.getElementLocation(element);
-        return this.model.getNode(location);
+        if (element === null) {
+            return this.model.getNode(this.model.rootRef);
+        }
+        var node = this.nodes.get(element);
+        if (!node) {
+            throw new Error("Tree element not found: " + element);
+        }
+        return node;
     };
     ObjectTreeModel.prototype.getNodeLocation = function (node) {
         return node.element;

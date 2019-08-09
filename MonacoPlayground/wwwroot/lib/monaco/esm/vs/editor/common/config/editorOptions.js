@@ -18,6 +18,7 @@ import * as arrays from '../../../base/common/arrays.js';
 import * as objects from '../../../base/common/objects.js';
 import * as platform from '../../../base/common/platform.js';
 import { USUAL_WORD_SEPARATORS } from '../model/wordHelper.js';
+import { isObject } from '../../../base/common/types.js';
 /**
  * @internal
  */
@@ -352,7 +353,21 @@ var InternalEditorOptions = /** @class */ (function () {
                 && a.snippets === b.snippets
                 && a.snippetsPreventQuickSuggestions === b.snippetsPreventQuickSuggestions
                 && a.localityBonus === b.localityBonus
-                && a.shareSuggestSelections === b.shareSuggestSelections;
+                && a.shareSuggestSelections === b.shareSuggestSelections
+                && a.showIcons === b.showIcons
+                && a.maxVisibleSuggestions === b.maxVisibleSuggestions
+                && objects.equals(a.filteredTypes, b.filteredTypes);
+        }
+    };
+    InternalEditorOptions._equalsGotoLocationOptions = function (a, b) {
+        if (a === b) {
+            return true;
+        }
+        else if (!a || !b) {
+            return false;
+        }
+        else {
+            return a.multiple === b.multiple;
         }
     };
     /**
@@ -380,7 +395,6 @@ var InternalEditorOptions = /** @class */ (function () {
             && InternalEditorOptions._equalsQuickSuggestions(a.quickSuggestions, b.quickSuggestions)
             && a.quickSuggestionsDelay === b.quickSuggestionsDelay
             && this._equalsParameterHintOptions(a.parameterHints, b.parameterHints)
-            && a.iconsInSuggestions === b.iconsInSuggestions
             && a.formatOnType === b.formatOnType
             && a.formatOnPaste === b.formatOnPaste
             && a.suggestOnTriggerCharacters === b.suggestOnTriggerCharacters
@@ -392,6 +406,7 @@ var InternalEditorOptions = /** @class */ (function () {
             && a.suggestLineHeight === b.suggestLineHeight
             && a.tabCompletion === b.tabCompletion
             && this._equalsSuggestOptions(a.suggest, b.suggest)
+            && InternalEditorOptions._equalsGotoLocationOptions(a.gotoLocation, b.gotoLocation)
             && a.selectionHighlight === b.selectionHighlight
             && a.occurrencesHighlight === b.occurrencesHighlight
             && a.codeLens === b.codeLens
@@ -692,7 +707,16 @@ var EditorOptionsValidator = /** @class */ (function () {
             snippets: _stringSet(opts.snippetSuggestions, defaults.snippets, ['top', 'bottom', 'inline', 'none']),
             snippetsPreventQuickSuggestions: _boolean(suggestOpts.snippetsPreventQuickSuggestions, defaults.filterGraceful),
             localityBonus: _boolean(suggestOpts.localityBonus, defaults.localityBonus),
-            shareSuggestSelections: _boolean(suggestOpts.shareSuggestSelections, defaults.shareSuggestSelections)
+            shareSuggestSelections: _boolean(suggestOpts.shareSuggestSelections, defaults.shareSuggestSelections),
+            showIcons: _boolean(suggestOpts.showIcons, defaults.showIcons),
+            maxVisibleSuggestions: _clampedInt(suggestOpts.maxVisibleSuggestions, defaults.maxVisibleSuggestions, 1, 15),
+            filteredTypes: isObject(suggestOpts.filteredTypes) ? suggestOpts.filteredTypes : Object.create(null)
+        };
+    };
+    EditorOptionsValidator._sanitizeGotoLocationOpts = function (opts, defaults) {
+        var gotoOpts = opts.gotoLocation || {};
+        return {
+            multiple: _stringSet(gotoOpts.multiple, defaults.multiple, ['peek', 'gotoAndPeek', 'goto'])
         };
     };
     EditorOptionsValidator._sanitizeTabCompletionOpts = function (opts, defaults) {
@@ -833,7 +857,6 @@ var EditorOptionsValidator = /** @class */ (function () {
             quickSuggestions: quickSuggestions,
             quickSuggestionsDelay: _clampedInt(opts.quickSuggestionsDelay, defaults.quickSuggestionsDelay, -1073741824 /* MIN_SAFE_SMALL_INTEGER */, 1073741824 /* MAX_SAFE_SMALL_INTEGER */),
             parameterHints: this._sanitizeParameterHintOpts(opts.parameterHints, defaults.parameterHints),
-            iconsInSuggestions: _boolean(opts.iconsInSuggestions, defaults.iconsInSuggestions),
             formatOnType: _boolean(opts.formatOnType, defaults.formatOnType),
             formatOnPaste: _boolean(opts.formatOnPaste, defaults.formatOnPaste),
             suggestOnTriggerCharacters: _boolean(opts.suggestOnTriggerCharacters, defaults.suggestOnTriggerCharacters),
@@ -845,6 +868,7 @@ var EditorOptionsValidator = /** @class */ (function () {
             suggestLineHeight: _clampedInt(opts.suggestLineHeight, defaults.suggestLineHeight, 0, 1000),
             tabCompletion: this._sanitizeTabCompletionOpts(opts.tabCompletion, defaults.tabCompletion),
             suggest: this._sanitizeSuggestOpts(opts, defaults.suggest),
+            gotoLocation: this._sanitizeGotoLocationOpts(opts, defaults.gotoLocation),
             selectionHighlight: _boolean(opts.selectionHighlight, defaults.selectionHighlight),
             occurrencesHighlight: _boolean(opts.occurrencesHighlight, defaults.occurrencesHighlight),
             codeLens: _boolean(opts.codeLens, defaults.codeLens),
@@ -947,7 +971,6 @@ var InternalEditorOptionsFactory = /** @class */ (function () {
                 quickSuggestions: opts.contribInfo.quickSuggestions,
                 quickSuggestionsDelay: opts.contribInfo.quickSuggestionsDelay,
                 parameterHints: opts.contribInfo.parameterHints,
-                iconsInSuggestions: opts.contribInfo.iconsInSuggestions,
                 formatOnType: opts.contribInfo.formatOnType,
                 formatOnPaste: opts.contribInfo.formatOnPaste,
                 suggestOnTriggerCharacters: opts.contribInfo.suggestOnTriggerCharacters,
@@ -959,6 +982,7 @@ var InternalEditorOptionsFactory = /** @class */ (function () {
                 suggestLineHeight: opts.contribInfo.suggestLineHeight,
                 tabCompletion: opts.contribInfo.tabCompletion,
                 suggest: opts.contribInfo.suggest,
+                gotoLocation: opts.contribInfo.gotoLocation,
                 selectionHighlight: (accessibilityIsOn ? false : opts.contribInfo.selectionHighlight),
                 occurrencesHighlight: (accessibilityIsOn ? false : opts.contribInfo.occurrencesHighlight),
                 codeLens: (accessibilityIsOn ? false : opts.contribInfo.codeLens),
@@ -1316,7 +1340,7 @@ export var EDITOR_DEFAULTS = {
         ariaLabel: nls.localize('editorViewAccessibleLabel', "Editor content"),
         renderLineNumbers: 1 /* On */,
         renderCustomLineNumbers: null,
-        renderFinalNewline: (platform.isLinux ? false : true),
+        renderFinalNewline: true,
         selectOnLineNumbers: true,
         glyphMargin: true,
         revealHorizontalRightPadding: 30,
@@ -1378,7 +1402,6 @@ export var EDITOR_DEFAULTS = {
             enabled: true,
             cycle: false
         },
-        iconsInSuggestions: true,
         formatOnType: false,
         formatOnPaste: false,
         suggestOnTriggerCharacters: true,
@@ -1394,7 +1417,13 @@ export var EDITOR_DEFAULTS = {
             snippets: 'inline',
             snippetsPreventQuickSuggestions: true,
             localityBonus: false,
-            shareSuggestSelections: false
+            shareSuggestSelections: false,
+            showIcons: true,
+            maxVisibleSuggestions: 12,
+            filteredTypes: Object.create(null)
+        },
+        gotoLocation: {
+            multiple: 'peek'
         },
         selectionHighlight: true,
         occurrencesHighlight: true,

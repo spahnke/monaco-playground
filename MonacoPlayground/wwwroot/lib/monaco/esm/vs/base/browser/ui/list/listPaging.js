@@ -52,8 +52,8 @@ var PagedRenderer = /** @class */ (function () {
 }());
 var PagedList = /** @class */ (function () {
     function PagedList(container, virtualDelegate, renderers, options) {
-        if (options === void 0) { options = {}; }
         var _this = this;
+        if (options === void 0) { options = {}; }
         var pagedRenderers = renderers.map(function (r) { return new PagedRenderer(r, function () { return _this.model; }); });
         this.list = new List(container, virtualDelegate, pagedRenderers, options);
     }

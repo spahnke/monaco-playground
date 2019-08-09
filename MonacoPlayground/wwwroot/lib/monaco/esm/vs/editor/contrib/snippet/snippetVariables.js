@@ -6,7 +6,8 @@ import * as nls from '../../../nls.js';
 import { basename, dirname } from '../../../base/common/path.js';
 import { Text } from './snippetParser.js';
 import { LanguageConfigurationRegistry } from '../../common/modes/languageConfigurationRegistry.js';
-import { getLeadingWhitespace, commonPrefixLength, isFalsyOrWhitespace, pad } from '../../../base/common/strings.js';
+import { getLeadingWhitespace, commonPrefixLength, isFalsyOrWhitespace, pad, endsWith } from '../../../base/common/strings.js';
+import { isSingleFolderWorkspaceIdentifier, toWorkspaceIdentifier, WORKSPACE_EXTENSION } from '../../../platform/workspaces/common/workspaces.js';
 var CompositeSnippetVariableResolver = /** @class */ (function () {
     function CompositeSnippetVariableResolver(_delegates) {
         this._delegates = _delegates;
@@ -209,3 +210,28 @@ var TimeBasedVariableResolver = /** @class */ (function () {
     return TimeBasedVariableResolver;
 }());
 export { TimeBasedVariableResolver };
+var WorkspaceBasedVariableResolver = /** @class */ (function () {
+    function WorkspaceBasedVariableResolver(_workspaceService) {
+        this._workspaceService = _workspaceService;
+        //
+    }
+    WorkspaceBasedVariableResolver.prototype.resolve = function (variable) {
+        if (variable.name !== 'WORKSPACE_NAME' || !this._workspaceService) {
+            return undefined;
+        }
+        var workspaceIdentifier = toWorkspaceIdentifier(this._workspaceService.getWorkspace());
+        if (!workspaceIdentifier) {
+            return undefined;
+        }
+        if (isSingleFolderWorkspaceIdentifier(workspaceIdentifier)) {
+            return basename(workspaceIdentifier.path);
+        }
+        var filename = basename(workspaceIdentifier.configPath.path);
+        if (endsWith(filename, WORKSPACE_EXTENSION)) {
+            filename = filename.substr(0, filename.length - WORKSPACE_EXTENSION.length - 1);
+        }
+        return filename;
+    };
+    return WorkspaceBasedVariableResolver;
+}());
+export { WorkspaceBasedVariableResolver };

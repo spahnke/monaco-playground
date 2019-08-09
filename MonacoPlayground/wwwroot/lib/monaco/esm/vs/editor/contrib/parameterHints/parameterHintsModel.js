@@ -41,12 +41,14 @@ var ParameterHintState;
         }
         return class_1;
     }());
-    ParameterHintState.Pending = new /** @class */ (function () {
-        function class_2() {
+    var Pending = /** @class */ (function () {
+        function Pending(request) {
+            this.request = request;
             this.type = 2 /* Pending */;
         }
-        return class_2;
+        return Pending;
     }());
+    ParameterHintState.Pending = Pending;
     var Active = /** @class */ (function () {
         function Active(hints) {
             this.hints = hints;
@@ -63,7 +65,7 @@ var ParameterHintsModel = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this._onChangedHints = _this._register(new Emitter());
         _this.onChangedHints = _this._onChangedHints.event;
-        _this.state = ParameterHintState.Default;
+        _this._state = ParameterHintState.Default;
         _this.triggerChars = new CharacterSet();
         _this.retriggerChars = new CharacterSet();
         _this.triggerId = 0;
@@ -81,6 +83,17 @@ var ParameterHintsModel = /** @class */ (function (_super) {
         _this.onModelChanged();
         return _this;
     }
+    Object.defineProperty(ParameterHintsModel.prototype, "state", {
+        get: function () { return this._state; },
+        set: function (value) {
+            if (this._state.type === 2 /* Pending */) {
+                this._state.request.cancel();
+            }
+            this._state = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
     ParameterHintsModel.prototype.cancel = function (silent) {
         if (silent === void 0) { silent = false; }
         this.state = ParameterHintState.Default;
@@ -88,15 +101,11 @@ var ParameterHintsModel = /** @class */ (function (_super) {
         if (!silent) {
             this._onChangedHints.fire(undefined);
         }
-        if (this.provideSignatureHelpRequest) {
-            this.provideSignatureHelpRequest.cancel();
-            this.provideSignatureHelpRequest = undefined;
-        }
     };
     ParameterHintsModel.prototype.trigger = function (context, delay) {
         var _this = this;
         var model = this.editor.getModel();
-        if (model === null || !modes.SignatureHelpProviderRegistry.has(model)) {
+        if (!model || !modes.SignatureHelpProviderRegistry.has(model)) {
             return;
         }
         var triggerId = ++this.triggerId;
@@ -152,11 +161,10 @@ var ParameterHintsModel = /** @class */ (function (_super) {
         }
         var model = this.editor.getModel();
         var position = this.editor.getPosition();
-        this.state = ParameterHintState.Pending;
-        this.provideSignatureHelpRequest = createCancelablePromise(function (token) {
+        this.state = new ParameterHintState.Pending(createCancelablePromise(function (token) {
             return provideSignatureHelp(model, position, triggerContext, token);
-        });
-        return this.provideSignatureHelpRequest.then(function (result) {
+        }));
+        return this.state.request.then(function (result) {
             // Check that we are still resolving the correct signature help
             if (triggerId !== _this.triggerId) {
                 return false;
@@ -171,7 +179,9 @@ var ParameterHintsModel = /** @class */ (function (_super) {
                 return true;
             }
         }).catch(function (error) {
-            _this.state = ParameterHintState.Default;
+            if (triggerId === _this.triggerId) {
+                _this.state = ParameterHintState.Default;
+            }
             onUnexpectedError(error);
             return false;
         });

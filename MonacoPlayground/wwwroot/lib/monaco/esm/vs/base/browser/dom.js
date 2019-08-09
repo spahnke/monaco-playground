@@ -392,66 +392,66 @@ export function addDisposableThrottledListener(node, type, handler, eventMerger,
 export function getComputedStyle(el) {
     return document.defaultView.getComputedStyle(el, null);
 }
-// Adapted from WinJS
-// Converts a CSS positioning string for the specified element to pixels.
-var convertToPixels = (function () {
-    return function (element, value) {
+var SizeUtils = /** @class */ (function () {
+    function SizeUtils() {
+    }
+    // Adapted from WinJS
+    // Converts a CSS positioning string for the specified element to pixels.
+    SizeUtils.convertToPixels = function (element, value) {
         return parseFloat(value) || 0;
     };
-})();
-function getDimension(element, cssPropertyName, jsPropertyName) {
-    var computedStyle = getComputedStyle(element);
-    var value = '0';
-    if (computedStyle) {
-        if (computedStyle.getPropertyValue) {
-            value = computedStyle.getPropertyValue(cssPropertyName);
+    SizeUtils.getDimension = function (element, cssPropertyName, jsPropertyName) {
+        var computedStyle = getComputedStyle(element);
+        var value = '0';
+        if (computedStyle) {
+            if (computedStyle.getPropertyValue) {
+                value = computedStyle.getPropertyValue(cssPropertyName);
+            }
+            else {
+                // IE8
+                value = computedStyle.getAttribute(jsPropertyName);
+            }
         }
-        else {
-            // IE8
-            value = computedStyle.getAttribute(jsPropertyName);
-        }
-    }
-    return convertToPixels(element, value);
-}
-var sizeUtils = {
-    getBorderLeftWidth: function (element) {
-        return getDimension(element, 'border-left-width', 'borderLeftWidth');
-    },
-    getBorderRightWidth: function (element) {
-        return getDimension(element, 'border-right-width', 'borderRightWidth');
-    },
-    getBorderTopWidth: function (element) {
-        return getDimension(element, 'border-top-width', 'borderTopWidth');
-    },
-    getBorderBottomWidth: function (element) {
-        return getDimension(element, 'border-bottom-width', 'borderBottomWidth');
-    },
-    getPaddingLeft: function (element) {
-        return getDimension(element, 'padding-left', 'paddingLeft');
-    },
-    getPaddingRight: function (element) {
-        return getDimension(element, 'padding-right', 'paddingRight');
-    },
-    getPaddingTop: function (element) {
-        return getDimension(element, 'padding-top', 'paddingTop');
-    },
-    getPaddingBottom: function (element) {
-        return getDimension(element, 'padding-bottom', 'paddingBottom');
-    },
-    getMarginLeft: function (element) {
-        return getDimension(element, 'margin-left', 'marginLeft');
-    },
-    getMarginTop: function (element) {
-        return getDimension(element, 'margin-top', 'marginTop');
-    },
-    getMarginRight: function (element) {
-        return getDimension(element, 'margin-right', 'marginRight');
-    },
-    getMarginBottom: function (element) {
-        return getDimension(element, 'margin-bottom', 'marginBottom');
-    },
-    __commaSentinel: false
-};
+        return SizeUtils.convertToPixels(element, value);
+    };
+    SizeUtils.getBorderLeftWidth = function (element) {
+        return SizeUtils.getDimension(element, 'border-left-width', 'borderLeftWidth');
+    };
+    SizeUtils.getBorderRightWidth = function (element) {
+        return SizeUtils.getDimension(element, 'border-right-width', 'borderRightWidth');
+    };
+    SizeUtils.getBorderTopWidth = function (element) {
+        return SizeUtils.getDimension(element, 'border-top-width', 'borderTopWidth');
+    };
+    SizeUtils.getBorderBottomWidth = function (element) {
+        return SizeUtils.getDimension(element, 'border-bottom-width', 'borderBottomWidth');
+    };
+    SizeUtils.getPaddingLeft = function (element) {
+        return SizeUtils.getDimension(element, 'padding-left', 'paddingLeft');
+    };
+    SizeUtils.getPaddingRight = function (element) {
+        return SizeUtils.getDimension(element, 'padding-right', 'paddingRight');
+    };
+    SizeUtils.getPaddingTop = function (element) {
+        return SizeUtils.getDimension(element, 'padding-top', 'paddingTop');
+    };
+    SizeUtils.getPaddingBottom = function (element) {
+        return SizeUtils.getDimension(element, 'padding-bottom', 'paddingBottom');
+    };
+    SizeUtils.getMarginLeft = function (element) {
+        return SizeUtils.getDimension(element, 'margin-left', 'marginLeft');
+    };
+    SizeUtils.getMarginTop = function (element) {
+        return SizeUtils.getDimension(element, 'margin-top', 'marginTop');
+    };
+    SizeUtils.getMarginRight = function (element) {
+        return SizeUtils.getDimension(element, 'margin-right', 'marginRight');
+    };
+    SizeUtils.getMarginBottom = function (element) {
+        return SizeUtils.getDimension(element, 'margin-bottom', 'marginBottom');
+    };
+    return SizeUtils;
+}());
 // ----------------------------------------------------------------------------------------
 // Position & Dimension
 var Dimension = /** @class */ (function () {
@@ -473,8 +473,8 @@ export function getTopLeftOffset(element) {
             left -= c.direction !== 'rtl' ? element.scrollLeft : -element.scrollLeft;
         }
         if (element === offsetParent) {
-            left += sizeUtils.getBorderLeftWidth(element);
-            top += sizeUtils.getBorderTopWidth(element);
+            left += SizeUtils.getBorderLeftWidth(element);
+            top += SizeUtils.getBorderTopWidth(element);
             top += element.offsetTop;
             left += element.offsetLeft;
             offsetParent = element.offsetParent;
@@ -531,25 +531,25 @@ export var StandardWindow = new /** @class */ (function () {
 // Adapted from WinJS
 // Gets the width of the element, including margins.
 export function getTotalWidth(element) {
-    var margin = sizeUtils.getMarginLeft(element) + sizeUtils.getMarginRight(element);
+    var margin = SizeUtils.getMarginLeft(element) + SizeUtils.getMarginRight(element);
     return element.offsetWidth + margin;
 }
 export function getContentWidth(element) {
-    var border = sizeUtils.getBorderLeftWidth(element) + sizeUtils.getBorderRightWidth(element);
-    var padding = sizeUtils.getPaddingLeft(element) + sizeUtils.getPaddingRight(element);
+    var border = SizeUtils.getBorderLeftWidth(element) + SizeUtils.getBorderRightWidth(element);
+    var padding = SizeUtils.getPaddingLeft(element) + SizeUtils.getPaddingRight(element);
     return element.offsetWidth - border - padding;
 }
 // Adapted from WinJS
 // Gets the height of the content of the specified element. The content height does not include borders or padding.
 export function getContentHeight(element) {
-    var border = sizeUtils.getBorderTopWidth(element) + sizeUtils.getBorderBottomWidth(element);
-    var padding = sizeUtils.getPaddingTop(element) + sizeUtils.getPaddingBottom(element);
+    var border = SizeUtils.getBorderTopWidth(element) + SizeUtils.getBorderBottomWidth(element);
+    var padding = SizeUtils.getPaddingTop(element) + SizeUtils.getPaddingBottom(element);
     return element.offsetHeight - border - padding;
 }
 // Adapted from WinJS
 // Gets the height of the element, including its margins.
 export function getTotalHeight(element) {
-    var margin = sizeUtils.getMarginTop(element) + sizeUtils.getMarginBottom(element);
+    var margin = SizeUtils.getMarginTop(element) + SizeUtils.getMarginBottom(element);
     return element.offsetHeight + margin;
 }
 // ----------------------------------------------------------------------------------------

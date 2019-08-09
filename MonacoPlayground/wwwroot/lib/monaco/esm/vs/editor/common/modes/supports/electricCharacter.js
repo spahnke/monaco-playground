@@ -12,7 +12,7 @@ var BracketElectricCharacterSupport = /** @class */ (function () {
         this._complexAutoClosePairs = autoClosePairs.filter(function (pair) { return pair.open.length > 1 && !!pair.close; }).map(function (el) { return new StandardAutoClosingPairConditional(el); });
         if (contribution.docComment) {
             // IDocComment is legacy, only partially supported
-            this._complexAutoClosePairs.push(new StandardAutoClosingPairConditional({ open: contribution.docComment.open, close: contribution.docComment.close }));
+            this._complexAutoClosePairs.push(new StandardAutoClosingPairConditional({ open: contribution.docComment.open, close: contribution.docComment.close || '' }));
         }
     }
     BracketElectricCharacterSupport.prototype.getElectricCharacters = function () {

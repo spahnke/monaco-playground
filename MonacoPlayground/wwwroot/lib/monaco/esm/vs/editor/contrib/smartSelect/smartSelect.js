@@ -63,6 +63,7 @@ import { dispose } from '../../../base/common/lifecycle.js';
 import { WordSelectionRangeProvider } from './wordSelections.js';
 import { BracketSelectionRangeProvider } from './bracketSelections.js';
 import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
+import { onUnexpectedExternalError } from '../../../base/common/errors.js';
 var SelectionRanges = /** @class */ (function () {
     function SelectionRanges(index, ranges) {
         this.index = index;
@@ -263,7 +264,7 @@ export function provideSelectionRanges(model, positions, token) {
                     }
                 }
             }
-        }));
+        }, onUnexpectedExternalError));
     }
     return Promise.all(work).then(function () {
         return allRawRanges.map(function (oneRawRanges) {

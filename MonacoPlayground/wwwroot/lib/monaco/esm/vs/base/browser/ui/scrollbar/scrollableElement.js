@@ -418,7 +418,7 @@ var DomScrollableElement = /** @class */ (function (_super) {
         return _this;
     }
     DomScrollableElement.prototype.scanDomNode = function () {
-        // widh, scrollLeft, scrollWidth, height, scrollTop, scrollHeight
+        // width, scrollLeft, scrollWidth, height, scrollTop, scrollHeight
         this.setScrollDimensions({
             width: this._element.clientWidth,
             scrollWidth: this._element.scrollWidth,

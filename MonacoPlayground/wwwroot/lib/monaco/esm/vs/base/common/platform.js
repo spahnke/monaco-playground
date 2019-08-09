@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-export var LANGUAGE_DEFAULT = 'en';
+var LANGUAGE_DEFAULT = 'en';
 var _isWindows = false;
 var _isMacintosh = false;
 var _isLinux = false;

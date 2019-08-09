@@ -639,16 +639,12 @@ var FindWidget = /** @class */ (function (_super) {
             appendWholeWordsLabel: this._keybindingLabelFor(FIND_IDS.ToggleWholeWordCommand),
             appendRegexLabel: this._keybindingLabelFor(FIND_IDS.ToggleRegexCommand),
             validation: function (value) {
-                if (value.length === 0) {
-                    return null;
-                }
-                if (!_this._findInput.getRegex()) {
+                if (value.length === 0 || !_this._findInput.getRegex()) {
                     return null;
                 }
                 try {
-                    /* tslint:disable:no-unused-expression */
+                    /* tslint:disable-next-line:no-unused-expression */
                     new RegExp(value);
-                    /* tslint:enable:no-unused-expression */
                     return null;
                 }
                 catch (e) {

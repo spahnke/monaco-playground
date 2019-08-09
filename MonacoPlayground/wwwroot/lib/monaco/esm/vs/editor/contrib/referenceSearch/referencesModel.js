@@ -10,9 +10,10 @@ import * as strings from '../../../base/common/strings.js';
 import { defaultGenerator } from '../../../base/common/idGenerator.js';
 import { Range } from '../../common/core/range.js';
 var OneReference = /** @class */ (function () {
-    function OneReference(parent, _range) {
+    function OneReference(parent, _range, isProviderFirst) {
         this.parent = parent;
         this._range = _range;
+        this.isProviderFirst = isProviderFirst;
         this._onRefChanged = new Emitter();
         this.onRefChanged = this._onRefChanged.event;
         this.id = defaultGenerator.nextId();
@@ -165,6 +166,7 @@ var ReferencesModel = /** @class */ (function () {
         this.onDidChangeReferenceRange = this._onDidChangeReferenceRange.event;
         this._disposables = [];
         // grouping and sorting
+        var providersFirst = references[0];
         references.sort(ReferencesModel._compareReferences);
         var current;
         for (var _i = 0, references_1 = references; _i < references_1.length; _i++) {
@@ -177,7 +179,7 @@ var ReferencesModel = /** @class */ (function () {
             // append, check for equality first!
             if (current.children.length === 0
                 || !Range.equalsRange(ref.range, current.children[current.children.length - 1].range)) {
-                var oneRef = new OneReference(current, ref.targetSelectionRange || ref.range);
+                var oneRef = new OneReference(current, ref.targetSelectionRange || ref.range, providersFirst === ref);
                 this._disposables.push(oneRef.onRefChanged(function (e) { return _this._onDidChangeReferenceRange.fire(e); }));
                 this.references.push(oneRef);
                 current.children.push(oneRef);
@@ -258,6 +260,15 @@ var ReferencesModel = /** @class */ (function () {
             return this.references[nearest.idx];
         }
         return undefined;
+    };
+    ReferencesModel.prototype.firstReference = function () {
+        for (var _i = 0, _a = this.references; _i < _a.length; _i++) {
+            var ref = _a[_i];
+            if (ref.isProviderFirst) {
+                return ref;
+            }
+        }
+        return this.references[0];
     };
     ReferencesModel.prototype.dispose = function () {
         dispose(this.groups);

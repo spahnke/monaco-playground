@@ -7,11 +7,10 @@ import { TimeoutTimer } from '../../../base/common/async.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { Emitter } from '../../../base/common/event.js';
 import { dispose } from '../../../base/common/lifecycle.js';
-import { values } from '../../../base/common/map.js';
 import { Selection } from '../../common/core/selection.js';
-import { CompletionProviderRegistry } from '../../common/modes.js';
+import { CompletionProviderRegistry, completionKindFromString } from '../../common/modes.js';
 import { CompletionModel } from './completionModel.js';
-import { getSuggestionComparator, provideSuggestionItems, getSnippetSuggestSupport } from './suggest.js';
+import { getSuggestionComparator, provideSuggestionItems, getSnippetSuggestSupport, CompletionOptions } from './suggest.js';
 import { SnippetController2 } from '../snippet/snippetController2.js';
 import { CancellationTokenSource } from '../../../base/common/cancellation.js';
 import { WordDistance } from './wordDistance.js';
@@ -143,7 +142,7 @@ var SuggestModel = /** @class */ (function () {
                 // keep existing items that where not computed by the
                 // supports/providers that want to trigger now
                 var items = _this._completionModel ? _this._completionModel.adopt(supports) : undefined;
-                _this.trigger({ auto: true, shy: false, triggerCharacter: lastChar }, Boolean(_this._completionModel), values(supports), items);
+                _this.trigger({ auto: true, shy: false, triggerCharacter: lastChar }, Boolean(_this._completionModel), supports, items);
             }
         });
     };
@@ -267,7 +266,7 @@ var SuggestModel = /** @class */ (function () {
             var position = _this._editor.getPosition();
             var ctx = new LineContext(model, position, _this._state === 2 /* Auto */, false);
             _this._onNewContext(ctx);
-        }, 25);
+        }, 0);
     };
     SuggestModel.prototype.trigger = function (context, retrigger, onlyFrom, existingItems) {
         var _this = this;
@@ -292,15 +291,41 @@ var SuggestModel = /** @class */ (function () {
                 triggerCharacter: context.triggerCharacter
             };
         }
-        else if (onlyFrom && onlyFrom.length) {
+        else if (onlyFrom && onlyFrom.size > 0) {
             suggestCtx = { triggerKind: 2 /* TriggerForIncompleteCompletions */ };
         }
         else {
             suggestCtx = { triggerKind: 0 /* Invoke */ };
         }
         this._requestToken = new CancellationTokenSource();
+        // kind filter and snippet sort rules
+        var contribInfo = this._editor.getConfiguration().contribInfo;
+        var itemKindFilter = new Set();
+        var snippetSortOrder = 1 /* Inline */;
+        switch (contribInfo.suggest.snippets) {
+            case 'top':
+                snippetSortOrder = 0 /* Top */;
+                break;
+            // 	↓ that's the default anyways...
+            // case 'inline':
+            // 	snippetSortOrder = SnippetSortOrder.Inline;
+            // 	break;
+            case 'bottom':
+                snippetSortOrder = 2 /* Bottom */;
+                break;
+            case 'none':
+                itemKindFilter.add(25 /* Snippet */);
+                break;
+        }
+        // kind filter
+        for (var key in contribInfo.suggest.filteredTypes) {
+            var kind = completionKindFromString(key, true);
+            if (typeof kind !== 'undefined' && contribInfo.suggest.filteredTypes[key] === false) {
+                itemKindFilter.add(kind);
+            }
+        }
         var wordDistance = WordDistance.create(this._editorWorker, this._editor);
-        var items = provideSuggestionItems(model, this._editor.getPosition(), this._editor.getConfiguration().contribInfo.suggest.snippets, onlyFrom, suggestCtx, this._requestToken.token);
+        var items = provideSuggestionItems(model, this._editor.getPosition(), new CompletionOptions(snippetSortOrder, itemKindFilter, onlyFrom), suggestCtx, this._requestToken.token);
         Promise.all([items, wordDistance]).then(function (_a) {
             var items = _a[0], wordDistance = _a[1];
             dispose(_this._requestToken);
@@ -312,7 +337,7 @@ var SuggestModel = /** @class */ (function () {
             }
             var model = _this._editor.getModel();
             if (isNonEmptyArray(existingItems)) {
-                var cmpFn = getSuggestionComparator(_this._editor.getConfiguration().contribInfo.suggest.snippets);
+                var cmpFn = getSuggestionComparator(snippetSortOrder);
                 items = items.concat(existingItems).sort(cmpFn);
             }
             var ctx = new LineContext(model, _this._editor.getPosition(), auto, context.shy);
@@ -357,7 +382,7 @@ var SuggestModel = /** @class */ (function () {
             // typed -> moved cursor RIGHT & incomple model & still on a word -> retrigger
             var incomplete = this._completionModel.incomplete;
             var adopted = this._completionModel.adopt(incomplete);
-            this.trigger({ auto: this._state === 2 /* Auto */, shy: false }, true, values(incomplete), adopted);
+            this.trigger({ auto: this._state === 2 /* Auto */, shy: false }, true, incomplete, adopted);
         }
         else {
             // typed -> moved cursor RIGHT -> update UI

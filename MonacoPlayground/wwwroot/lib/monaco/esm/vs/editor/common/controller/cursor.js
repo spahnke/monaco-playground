@@ -15,7 +15,6 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-import * as nls from '../../../nls.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { Emitter } from '../../../base/common/event.js';
 import * as strings from '../../../base/common/strings.js';
@@ -681,7 +680,8 @@ var CommandExecutor = /** @class */ (function () {
             command.getEditOperations(ctx.model, editOperationBuilder);
         }
         catch (e) {
-            e.friendlyMessage = nls.localize('corrupt.commands', "Unexpected exception while executing command.");
+            // TODO@Alex use notification service if this should be user facing
+            // e.friendlyMessage = nls.localize('corrupt.commands', "Unexpected exception while executing command.");
             onUnexpectedError(e);
             return {
                 operations: [],

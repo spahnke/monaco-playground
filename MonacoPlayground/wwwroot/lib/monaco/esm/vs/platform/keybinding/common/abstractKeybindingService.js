@@ -19,6 +19,7 @@ import * as nls from '../../../nls.js';
 import { IntervalTimer } from '../../../base/common/async.js';
 import { Emitter, Event } from '../../../base/common/event.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
+import { withNullAsUndefined } from '../../../base/common/types.js';
 var AbstractKeybindingService = /** @class */ (function (_super) {
     __extends(AbstractKeybindingService, _super);
     function AbstractKeybindingService(contextKeyService, commandService, telemetryService, notificationService, statusService) {
@@ -49,7 +50,7 @@ var AbstractKeybindingService = /** @class */ (function (_super) {
         if (!result) {
             return undefined;
         }
-        return result.resolvedKeybinding || undefined;
+        return withNullAsUndefined(result.resolvedKeybinding);
     };
     AbstractKeybindingService.prototype.softDispatch = function (e, target) {
         var keybinding = this.resolveKeyboardEvent(e);

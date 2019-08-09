@@ -31,20 +31,19 @@ var CodeLensViewZone = /** @class */ (function () {
     return CodeLensViewZone;
 }());
 var CodeLensContentWidget = /** @class */ (function () {
-    function CodeLensContentWidget(editor, symbolRange) {
+    function CodeLensContentWidget(editor, symbolRange, data) {
         // Editor.IContentWidget.allowEditorOverflow
         this.allowEditorOverflow = false;
         this.suppressMouseDown = true;
-        this._commands = Object.create(null);
+        this._commands = new Map();
         this._id = 'codeLensWidget' + (++CodeLensContentWidget._idPool);
         this._editor = editor;
         this.setSymbolRange(symbolRange);
         this._domNode = document.createElement('span');
         this._domNode.innerHTML = '&nbsp;';
         dom.addClass(this._domNode, 'codelens-decoration');
-        dom.addClass(this._domNode, 'invisible-cl');
         this.updateHeight();
-        this.updateVisibility();
+        this.withCommands(data.map(function (data) { return data.symbol; }), false);
     }
     CodeLensContentWidget.prototype.updateHeight = function () {
         var _a = this._editor.getConfiguration(), fontInfo = _a.fontInfo, lineHeight = _a.lineHeight;
@@ -54,14 +53,8 @@ var CodeLensContentWidget = /** @class */ (function () {
         this._domNode.style.paddingRight = Math.round(fontInfo.fontSize * 0.45) + "px";
         this._domNode.innerHTML = '&nbsp;';
     };
-    CodeLensContentWidget.prototype.updateVisibility = function () {
-        if (this.isVisible()) {
-            dom.removeClass(this._domNode, 'invisible-cl');
-            dom.addClass(this._domNode, 'fadein');
-        }
-    };
-    CodeLensContentWidget.prototype.withCommands = function (inSymbols) {
-        this._commands = Object.create(null);
+    CodeLensContentWidget.prototype.withCommands = function (inSymbols, animate) {
+        this._commands.clear();
         var symbols = coalesce(inSymbols);
         if (isFalsyOrEmpty(symbols)) {
             this._domNode.innerHTML = '<span>no commands</span>';
@@ -75,7 +68,7 @@ var CodeLensContentWidget = /** @class */ (function () {
                 var part = void 0;
                 if (command.id) {
                     part = "<a id=" + i + ">" + title + "</a>";
-                    this._commands[i] = command;
+                    this._commands.set(String(i), command);
                 }
                 else {
                     part = "<span>" + title + "</span>";
@@ -83,12 +76,16 @@ var CodeLensContentWidget = /** @class */ (function () {
                 html.push(part);
             }
         }
+        var wasEmpty = this._domNode.innerHTML === '' || this._domNode.innerHTML === '&nbsp;';
         this._domNode.innerHTML = html.join('<span>&nbsp;|&nbsp;</span>');
         this._editor.layoutContentWidget(this);
+        if (wasEmpty && animate) {
+            dom.addClass(this._domNode, 'fadein');
+        }
     };
     CodeLensContentWidget.prototype.getCommand = function (link) {
         return link.parentElement === this._domNode
-            ? this._commands[link.id]
+            ? this._commands.get(link.id)
             : undefined;
     };
     CodeLensContentWidget.prototype.getId = function () {
@@ -160,7 +157,7 @@ var CodeLens = /** @class */ (function () {
             }
         });
         if (range) {
-            this._contentWidget = new CodeLensContentWidget(editor, range);
+            this._contentWidget = new CodeLensContentWidget(editor, range, this._data);
             this._viewZone = new CodeLensViewZone(range.startLineNumber - 1, updateCallback);
             this._viewZoneId = viewZoneChangeAccessor.addZone(this._viewZone);
             this._editor.addContentWidget(this._contentWidget);
@@ -202,7 +199,6 @@ var CodeLens = /** @class */ (function () {
         });
     };
     CodeLens.prototype.computeIfNecessary = function (model) {
-        this._contentWidget.updateVisibility(); // trigger the fade in
         if (!this._contentWidget.isVisible()) {
             return null;
         }
@@ -216,7 +212,7 @@ var CodeLens = /** @class */ (function () {
         return this._data;
     };
     CodeLens.prototype.updateCommands = function (symbols) {
-        this._contentWidget.withCommands(symbols);
+        this._contentWidget.withCommands(symbols, true);
         for (var i = 0; i < this._data.length; i++) {
             var resolved = symbols[i];
             if (resolved) {

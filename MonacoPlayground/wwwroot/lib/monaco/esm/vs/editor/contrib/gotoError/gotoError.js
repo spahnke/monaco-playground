@@ -242,6 +242,8 @@ var MarkerController = /** @class */ (function () {
         this._themeService = _themeService;
         this._editorService = _editorService;
         this._keybindingService = _keybindingService;
+        this._model = null;
+        this._widget = null;
         this._disposeOnClose = [];
         this._editor = editor;
         this._widgetVisible = CONTEXT_MARKERS_NAVIGATION_VISIBLE.bindTo(this._contextKeyService);
@@ -288,6 +290,7 @@ var MarkerController = /** @class */ (function () {
         ];
         this._widget = new MarkerNavigationWidget(this._editor, actions, this._themeService);
         this._widgetVisible.set(true);
+        this._widget.onDidClose(function () { return _this._cleanUp(); }, this, this._disposeOnClose);
         this._disposeOnClose.push(this._model);
         this._disposeOnClose.push(this._widget);
         (_a = this._disposeOnClose).push.apply(_a, actions);

@@ -87,7 +87,7 @@ var Menu = /** @class */ (function () {
             var activeActions = [];
             for (var _b = 0, items_1 = items; _b < items_1.length; _b++) {
                 var item = items_1[_b];
-                if (this._contextKeyService.contextMatchesRules(item.when || null)) {
+                if (this._contextKeyService.contextMatchesRules(item.when)) {
                     var action = isIMenuItem(item) ? new MenuItemAction(item.command, item.alt, options, this._contextKeyService, this._commandService) : new SubmenuItemAction(item);
                     activeActions.push(action);
                 }

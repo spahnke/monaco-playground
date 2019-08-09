@@ -54,6 +54,20 @@ function _validateUri(ret, _strict) {
         }
     }
 }
+// for a while we allowed uris *without* schemes and this is the migration
+// for them, e.g. an uri without scheme and without strict-mode warns and falls
+// back to the file-scheme. that should cause the least carnage and still be a
+// clear warning
+function _schemeFix(scheme, _strict) {
+    if (_strict || _throwOnMissingSchema) {
+        return scheme || _empty;
+    }
+    if (!scheme) {
+        console.trace('BAD uri lacks scheme, falling back to file-scheme.');
+        scheme = 'file';
+    }
+    return scheme;
+}
 // implements a bit of https://tools.ietf.org/html/rfc3986#section-5
 function _referenceResolution(scheme, path) {
     // the slash-character is our 'default base' as we don't
@@ -96,6 +110,7 @@ var URI = /** @class */ (function () {
      * @internal
      */
     function URI(schemeOrData, authority, path, query, fragment, _strict) {
+        if (_strict === void 0) { _strict = false; }
         if (typeof schemeOrData === 'object') {
             this.scheme = schemeOrData.scheme || _empty;
             this.authority = schemeOrData.authority || _empty;
@@ -107,7 +122,7 @@ var URI = /** @class */ (function () {
             // _validateUri(this);
         }
         else {
-            this.scheme = schemeOrData || _empty;
+            this.scheme = _schemeFix(schemeOrData, _strict);
             this.authority = authority || _empty;
             this.path = _referenceResolution(this.scheme, path || _empty);
             this.query = query || _empty;

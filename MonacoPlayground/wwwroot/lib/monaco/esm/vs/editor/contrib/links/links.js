@@ -215,6 +215,7 @@ var LinkDetector = /** @class */ (function () {
         this.listenersToRemove.push(LinkProviderRegistry.onDidChange(function (e) { return _this.onModelModeChanged(); }));
         this.timeout = new async.TimeoutTimer();
         this.computePromise = null;
+        this.activeLinksList = null;
         this.currentOccurrences = {};
         this.activeLinkDecorationId = null;
         this.beginCompute();
@@ -241,9 +242,9 @@ var LinkDetector = /** @class */ (function () {
     };
     LinkDetector.prototype.beginCompute = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var model, links, err_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var model, _a, err_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
                         if (!this.editor.hasModel() || !this.enabled) {
                             return [2 /*return*/];
@@ -252,17 +253,22 @@ var LinkDetector = /** @class */ (function () {
                         if (!LinkProviderRegistry.has(model)) {
                             return [2 /*return*/];
                         }
+                        if (this.activeLinksList) {
+                            this.activeLinksList.dispose();
+                            this.activeLinksList = null;
+                        }
                         this.computePromise = async.createCancelablePromise(function (token) { return getLinks(model, token); });
-                        _a.label = 1;
+                        _b.label = 1;
                     case 1:
-                        _a.trys.push([1, 3, 4, 5]);
+                        _b.trys.push([1, 3, 4, 5]);
+                        _a = this;
                         return [4 /*yield*/, this.computePromise];
                     case 2:
-                        links = _a.sent();
-                        this.updateDecorations(links);
+                        _a.activeLinksList = _b.sent();
+                        this.updateDecorations(this.activeLinksList.links);
                         return [3 /*break*/, 5];
                     case 3:
-                        err_1 = _a.sent();
+                        err_1 = _b.sent();
                         onUnexpectedError(err_1);
                         return [3 /*break*/, 5];
                     case 4:
@@ -384,6 +390,9 @@ var LinkDetector = /** @class */ (function () {
     };
     LinkDetector.prototype.stop = function () {
         this.timeout.cancel();
+        if (this.activeLinksList) {
+            this.activeLinksList.dispose();
+        }
         if (this.computePromise) {
             this.computePromise.cancel();
             this.computePromise = null;

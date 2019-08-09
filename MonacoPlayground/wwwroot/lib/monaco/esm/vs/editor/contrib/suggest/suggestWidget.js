@@ -54,7 +54,6 @@ import { URI } from '../../../base/common/uri.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { FileKind } from '../../../platform/files/common/files.js';
 var expandSuggestionDocsByDefault = false;
-var maxSuggestionsToShow = 12;
 /**
  * Suggest widget colors
  */
@@ -355,12 +354,11 @@ var SuggestWidget = /** @class */ (function () {
         this.focusedItem = null;
         this.storageService = storageService;
         this.element = $('.editor-widget.suggest-widget');
-        if (!this.editor.getConfiguration().contribInfo.iconsInSuggestions) {
-            addClass(this.element, 'no-icons');
-        }
         this.messageElement = append(this.element, $('.message'));
         this.listElement = append(this.element, $('.tree'));
         this.details = new SuggestionDetails(this.element, this, this.editor, markdownRenderer, triggerKeybindingLabel);
+        var applyIconStyle = function () { return toggleClass(_this.element, 'no-icons', !_this.editor.getConfiguration().contribInfo.suggest.showIcons); };
+        applyIconStyle();
         var renderer = instantiationService.createInstance(Renderer, this, this.editor, triggerKeybindingLabel);
         this.list = new List(this.listElement, this, [renderer], {
             useShadows: false,
@@ -377,7 +375,8 @@ var SuggestWidget = /** @class */ (function () {
             this.list.onMouseDown(function (e) { return _this.onListMouseDown(e); }),
             this.list.onSelectionChange(function (e) { return _this.onListSelection(e); }),
             this.list.onFocusChange(function (e) { return _this.onListFocus(e); }),
-            this.editor.onDidChangeCursorSelection(function () { return _this.onCursorSelectionChanged(); })
+            this.editor.onDidChangeCursorSelection(function () { return _this.onCursorSelectionChanged(); }),
+            this.editor.onDidChangeConfiguration(function (e) { return e.contribInfo && applyIconStyle(); })
         ];
         this.suggestWidgetVisible = SuggestContext.Visible.bindTo(contextKeyService);
         this.suggestWidgetMultipleSuggestions = SuggestContext.MultipleSuggestions.bindTo(contextKeyService);
@@ -419,23 +418,15 @@ var SuggestWidget = /** @class */ (function () {
         }
         item.resolve(CancellationToken.None).then(function () {
             _this.onDidSelectEmitter.fire({ item: item, index: index, model: completionModel });
-            alert(nls.localize('suggestionAriaAccepted', "{0}, accepted", item.completion.label));
             _this.editor.focus();
         });
     };
     SuggestWidget.prototype._getSuggestionAriaAlertLabel = function (item) {
-        var isSnippet = item.completion.kind === 25 /* Snippet */;
-        if (!canExpandCompletionItem(item)) {
-            return isSnippet ? nls.localize('ariaCurrentSnippetSuggestion', "{0}, snippet suggestion", item.completion.label)
-                : nls.localize('ariaCurrentSuggestion', "{0}, suggestion", item.completion.label);
-        }
-        else if (this.expandDocsSettingFromStorage()) {
-            return isSnippet ? nls.localize('ariaCurrentSnippeSuggestionReadDetails', "{0}, snippet suggestion. Reading details. {1}", item.completion.label, this.details.getAriaLabel())
-                : nls.localize('ariaCurrenttSuggestionReadDetails', "{0}, suggestion. Reading details. {1}", item.completion.label, this.details.getAriaLabel());
+        if (this.expandDocsSettingFromStorage()) {
+            return nls.localize('ariaCurrenttSuggestionReadDetails', "Item {0}, docs: {1}", item.completion.label, this.details.getAriaLabel());
         }
         else {
-            return isSnippet ? nls.localize('ariaCurrentSnippetSuggestionWithDetails', "{0}, snippet suggestion, has details", item.completion.label)
-                : nls.localize('ariaCurrentSuggestionWithDetails', "{0}, suggestion, has details", item.completion.label);
+            return item.completion.label;
         }
     };
     SuggestWidget.prototype._ariaAlert = function (newAriaAlertLabel) {
@@ -444,7 +435,7 @@ var SuggestWidget = /** @class */ (function () {
         }
         this._lastAriaAlertLabel = newAriaAlertLabel;
         if (this._lastAriaAlertLabel) {
-            alert(this._lastAriaAlertLabel);
+            alert(this._lastAriaAlertLabel, true);
         }
     };
     SuggestWidget.prototype.onThemeChange = function (theme) {
@@ -855,7 +846,8 @@ var SuggestWidget = /** @class */ (function () {
         }
         else {
             var suggestionCount = this.list.contentHeight / this.unfocusedHeight;
-            height = Math.min(suggestionCount, maxSuggestionsToShow) * this.unfocusedHeight;
+            var maxVisibleSuggestions = this.editor.getConfiguration().contribInfo.suggest.maxVisibleSuggestions;
+            height = Math.min(suggestionCount, maxVisibleSuggestions) * this.unfocusedHeight;
         }
         this.element.style.lineHeight = this.unfocusedHeight + "px";
         this.listElement.style.height = height + "px";
@@ -927,7 +919,7 @@ var SuggestWidget = /** @class */ (function () {
     Object.defineProperty(SuggestWidget.prototype, "maxWidgetHeight", {
         // Heights
         get: function () {
-            return this.unfocusedHeight * maxSuggestionsToShow;
+            return this.unfocusedHeight * this.editor.getConfiguration().contribInfo.suggest.maxVisibleSuggestions;
         },
         enumerable: true,
         configurable: true

@@ -43,7 +43,7 @@ var ContextKeyExpr = /** @class */ (function () {
         var _this = this;
         if (strict === void 0) { strict = false; }
         if (!serialized) {
-            return null;
+            return undefined;
         }
         var pieces = serialized.split('&&');
         var result = new ContextKeyAndExpr(pieces.map(function (p) { return _this._deserializeOne(p, strict); }));
@@ -410,7 +410,7 @@ var ContextKeyAndExpr = /** @class */ (function () {
     };
     ContextKeyAndExpr.prototype.normalize = function () {
         if (this.expr.length === 0) {
-            return null;
+            return undefined;
         }
         if (this.expr.length === 1) {
             return this.expr[0];

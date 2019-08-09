@@ -19,6 +19,7 @@ var CodeActionKind = /** @class */ (function () {
     CodeActionKind.Refactor = new CodeActionKind('refactor');
     CodeActionKind.Source = new CodeActionKind('source');
     CodeActionKind.SourceOrganizeImports = new CodeActionKind('source.organizeImports');
+    CodeActionKind.SourceFixAll = new CodeActionKind('source.fixAll');
     return CodeActionKind;
 }());
 export { CodeActionKind };

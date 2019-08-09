@@ -68,8 +68,8 @@ import { getHover } from './getHover.js';
 import { HoverOperation } from './hoverOperation.js';
 import { ContentHoverWidget } from './hoverWidgets.js';
 import { MarkdownRenderer } from '../markdown/markdownRenderer.js';
-import { coalesce, isNonEmptyArray } from '../../../base/common/arrays.js';
-import { IMarkerData } from '../../../platform/markers/common/markers.js';
+import { coalesce, isNonEmptyArray, asArray } from '../../../base/common/arrays.js';
+import { IMarkerData, MarkerSeverity } from '../../../platform/markers/common/markers.js';
 import { basename } from '../../../base/common/resources.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { NullOpenerService } from '../../../platform/opener/common/opener.js';
@@ -79,6 +79,7 @@ import { getCodeActions } from '../codeAction/codeAction.js';
 import { applyCodeAction, QuickFixAction } from '../codeAction/codeActionCommands.js';
 import { Action } from '../../../base/common/actions.js';
 import { CodeActionKind } from '../codeAction/codeActionTrigger.js';
+import { withNullAsUndefined } from '../../../base/common/types.js';
 var $ = dom.$;
 var ColorHover = /** @class */ (function () {
     function ColorHover(range, color, provider) {
@@ -155,15 +156,7 @@ var ModesContentComputer = /** @class */ (function () {
                 if (isEmptyMarkdownString(d.options.hoverMessage)) {
                     return null;
                 }
-                var contents = [];
-                if (d.options.hoverMessage) {
-                    if (Array.isArray(d.options.hoverMessage)) {
-                        contents = d.options.hoverMessage.slice();
-                    }
-                    else {
-                        contents = [d.options.hoverMessage];
-                    }
-                }
+                var contents = d.options.hoverMessage ? asArray(d.options.hoverMessage) : [];
                 return { contents: contents, range: range };
             }
         });
@@ -194,7 +187,7 @@ var ModesContentComputer = /** @class */ (function () {
     };
     ModesContentComputer.prototype._getLoadingMessage = function () {
         return {
-            range: this._range || undefined,
+            range: withNullAsUndefined(this._range),
             contents: [new MarkdownString().appendText(nls.localize('modesContentHover.loading', "Loading..."))]
         };
     };
@@ -429,7 +422,8 @@ var ModesContentHoverWidget = /** @class */ (function (_super) {
         });
         if (markerMessages.length) {
             markerMessages.forEach(function (msg) { return fragment.appendChild(_this.renderMarkerHover(msg)); });
-            fragment.appendChild(this.renderMarkerStatusbar(markerMessages[0]));
+            var markerHoverForStatusbar = markerMessages.length === 1 ? markerMessages[0] : markerMessages.sort(function (a, b) { return MarkerSeverity.compare(a.marker.severity, b.marker.severity); })[0];
+            fragment.appendChild(this.renderMarkerStatusbar(markerHoverForStatusbar));
         }
         // show
         if (!containColorPicker && !isEmptyHoverContent) {
@@ -512,15 +506,17 @@ var ModesContentHoverWidget = /** @class */ (function (_super) {
                 });
             }); }
         }));
-        disposables.push(this.renderAction(actionsElement, {
-            label: nls.localize('peek problem', "Peek Problem"),
-            commandId: NextMarkerAction.ID,
-            run: function () {
-                _this.hide();
-                MarkerController.get(_this._editor).show(markerHover.marker);
-                _this._editor.focus();
-            }
-        }));
+        if (markerHover.marker.severity === MarkerSeverity.Error || markerHover.marker.severity === MarkerSeverity.Warning || markerHover.marker.severity === MarkerSeverity.Info) {
+            disposables.push(this.renderAction(actionsElement, {
+                label: nls.localize('peek problem', "Peek Problem"),
+                commandId: NextMarkerAction.ID,
+                run: function () {
+                    _this.hide();
+                    MarkerController.get(_this._editor).show(markerHover.marker);
+                    _this._editor.focus();
+                }
+            }));
+        }
         this.renderDisposable = combinedDisposable(disposables);
         return hoverElement;
     };
@@ -534,8 +530,8 @@ var ModesContentHoverWidget = /** @class */ (function (_super) {
                     case 0: return [4 /*yield*/, getCodeActions(this._editor.getModel(), new Range(marker.startLineNumber, marker.startColumn, marker.endLineNumber, marker.endColumn), { type: 'manual', filter: { kind: CodeActionKind.QuickFix } }, cancellationToken)];
                     case 1:
                         codeActions = _a.sent();
-                        if (codeActions.length) {
-                            return [2 /*return*/, codeActions.map(function (codeAction) { return new Action(codeAction.command ? codeAction.command.id : codeAction.title, codeAction.title, undefined, true, function () { return applyCodeAction(codeAction, _this._bulkEditService, _this._commandService); }); })];
+                        if (codeActions.actions.length) {
+                            return [2 /*return*/, codeActions.actions.map(function (codeAction) { return new Action(codeAction.command ? codeAction.command.id : codeAction.title, codeAction.title, undefined, true, function () { return applyCodeAction(codeAction, _this._bulkEditService, _this._commandService); }); })];
                         }
                         return [2 /*return*/, [
                                 new Action('', nls.localize('editor.action.quickFix.noneMessage', "No code actions available"))

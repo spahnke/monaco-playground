@@ -38,6 +38,7 @@ import { ContextKeyExpr, IContextKeyService } from '../../platform/contextkey/co
 import { KeybindingsRegistry } from '../../platform/keybinding/common/keybindingsRegistry.js';
 import { Registry } from '../../platform/registry/common/platform.js';
 import { ITelemetryService } from '../../platform/telemetry/common/telemetry.js';
+import { withNullAsUndefined } from '../../base/common/types.js';
 var Command = /** @class */ (function () {
     function Command(opts) {
         this.id = opts.id;
@@ -73,7 +74,7 @@ var Command = /** @class */ (function () {
                 id: this.id,
                 handler: function (accessor, args) { return _this.runCommand(accessor, args); },
                 weight: this._kbOpts.weight,
-                when: kbWhen || null,
+                when: kbWhen,
                 primary: this._kbOpts.primary,
                 secondary: this._kbOpts.secondary,
                 win: this._kbOpts.win,
@@ -129,7 +130,7 @@ var EditorCommand = /** @class */ (function (_super) {
         }
         return editor.invokeWithinContext(function (editorAccessor) {
             var kbService = editorAccessor.get(IContextKeyService);
-            if (!kbService.contextMatchesRules(_this.precondition)) {
+            if (!kbService.contextMatchesRules(withNullAsUndefined(_this.precondition))) {
                 // precondition does not hold
                 return;
             }

@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.16.0(bc18b87d7c7e1da49acc024666aaa85e3633e722)
+ * Version: 0.17.0(63d87164d0bc8c6206d9339c195289c93665028e)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -1949,6 +1949,17 @@ define(__m[21/*vs/base/common/arrays*/], __M([0/*require*/,1/*exports*/]), funct
         });
     }
     exports.distinct = distinct;
+    function distinctES6(array) {
+        var seen = new Set();
+        return array.filter(function (element) {
+            if (seen.has(element)) {
+                return false;
+            }
+            seen.add(element);
+            return true;
+        });
+    }
+    exports.distinctES6 = distinctES6;
     function firstIndex(array, fn) {
         for (var i = 0; i < array.length; i++) {
             var element = array[i];
@@ -1960,7 +1971,7 @@ define(__m[21/*vs/base/common/arrays*/], __M([0/*require*/,1/*exports*/]), funct
     }
     exports.firstIndex = firstIndex;
     function first(array, fn, notFoundValue) {
-        if (notFoundValue === void 0) { notFoundValue = null; }
+        if (notFoundValue === void 0) { notFoundValue = undefined; }
         var index = firstIndex(array, fn);
         return index < 0 ? notFoundValue : array[index];
     }
@@ -2003,6 +2014,32 @@ define(__m[21/*vs/base/common/arrays*/], __M([0/*require*/,1/*exports*/]), funct
         return before.concat(insertArr, after);
     }
     exports.arrayInsert = arrayInsert;
+    /**
+     * Pushes an element to the start of the array, if found.
+     */
+    function pushToStart(arr, value) {
+        var index = arr.indexOf(value);
+        if (index > -1) {
+            arr.splice(index, 1);
+            arr.unshift(value);
+        }
+    }
+    exports.pushToStart = pushToStart;
+    /**
+     * Pushes an element to the end of the array, if found.
+     */
+    function pushToEnd(arr, value) {
+        var index = arr.indexOf(value);
+        if (index > -1) {
+            arr.splice(index, 1);
+            arr.push(value);
+        }
+    }
+    exports.pushToEnd = pushToEnd;
+    function asArray(x) {
+        return Array.isArray(x) ? x : [x];
+    }
+    exports.asArray = asArray;
 });
 
 /*---------------------------------------------------------------------------------------------
@@ -3505,11 +3542,16 @@ define(__m[16/*vs/base/common/linkedList*/], __M([0/*require*/,1/*exports*/,11/*
     var Node = /** @class */ (function () {
         function Node(element) {
             this.element = element;
+            this.next = Node.Undefined;
+            this.prev = Node.Undefined;
         }
+        Node.Undefined = new Node(undefined);
         return Node;
     }());
     var LinkedList = /** @class */ (function () {
         function LinkedList() {
+            this._first = Node.Undefined;
+            this._last = Node.Undefined;
             this._size = 0;
         }
         Object.defineProperty(LinkedList.prototype, "size", {
@@ -3520,7 +3562,12 @@ define(__m[16/*vs/base/common/linkedList*/], __M([0/*require*/,1/*exports*/,11/*
             configurable: true
         });
         LinkedList.prototype.isEmpty = function () {
-            return !this._first;
+            return this._first === Node.Undefined;
+        };
+        LinkedList.prototype.clear = function () {
+            this._first = Node.Undefined;
+            this._last = Node.Undefined;
+            this._size = 0;
         };
         LinkedList.prototype.unshift = function (element) {
             return this._insert(element, false);
@@ -3529,8 +3576,9 @@ define(__m[16/*vs/base/common/linkedList*/], __M([0/*require*/,1/*exports*/,11/*
             return this._insert(element, true);
         };
         LinkedList.prototype._insert = function (element, atTheEnd) {
+            var _this = this;
             var newNode = new Node(element);
-            if (!this._first) {
+            if (this._first === Node.Undefined) {
                 this._first = newNode;
                 this._last = newNode;
             }
@@ -3549,10 +3597,16 @@ define(__m[16/*vs/base/common/linkedList*/], __M([0/*require*/,1/*exports*/,11/*
                 oldFirst.prev = newNode;
             }
             this._size += 1;
-            return this._remove.bind(this, newNode);
+            var didRemove = false;
+            return function () {
+                if (!didRemove) {
+                    didRemove = true;
+                    _this._remove(newNode);
+                }
+            };
         };
         LinkedList.prototype.shift = function () {
-            if (!this._first) {
+            if (this._first === Node.Undefined) {
                 return undefined;
             }
             else {
@@ -3562,44 +3616,36 @@ define(__m[16/*vs/base/common/linkedList*/], __M([0/*require*/,1/*exports*/,11/*
             }
         };
         LinkedList.prototype._remove = function (node) {
-            var candidate = this._first;
-            while (candidate instanceof Node) {
-                if (candidate !== node) {
-                    candidate = candidate.next;
-                    continue;
-                }
-                if (candidate.prev && candidate.next) {
-                    // middle
-                    var anchor = candidate.prev;
-                    anchor.next = candidate.next;
-                    candidate.next.prev = anchor;
-                }
-                else if (!candidate.prev && !candidate.next) {
-                    // only node
-                    this._first = undefined;
-                    this._last = undefined;
-                }
-                else if (!candidate.next) {
-                    // last
-                    this._last = this._last.prev;
-                    this._last.next = undefined;
-                }
-                else if (!candidate.prev) {
-                    // first
-                    this._first = this._first.next;
-                    this._first.prev = undefined;
-                }
-                // done
-                this._size -= 1;
-                break;
+            if (node.prev !== Node.Undefined && node.next !== Node.Undefined) {
+                // middle
+                var anchor = node.prev;
+                anchor.next = node.next;
+                node.next.prev = anchor;
             }
+            else if (node.prev === Node.Undefined && node.next === Node.Undefined) {
+                // only node
+                this._first = Node.Undefined;
+                this._last = Node.Undefined;
+            }
+            else if (node.next === Node.Undefined) {
+                // last
+                this._last = this._last.prev;
+                this._last.next = Node.Undefined;
+            }
+            else if (node.prev === Node.Undefined) {
+                // first
+                this._first = this._first.next;
+                this._first.prev = Node.Undefined;
+            }
+            // done
+            this._size -= 1;
         };
         LinkedList.prototype.iterator = function () {
             var element;
             var node = this._first;
             return {
                 next: function () {
-                    if (!node) {
+                    if (node === Node.Undefined) {
                         return iterator_1.FIN;
                     }
                     if (!element) {
@@ -3613,6 +3659,13 @@ define(__m[16/*vs/base/common/linkedList*/], __M([0/*require*/,1/*exports*/,11/*
                 }
             };
         };
+        LinkedList.prototype.toArray = function () {
+            var result = [];
+            for (var node = this._first; node !== Node.Undefined; node = node.next) {
+                result.push(node.element);
+            }
+            return result;
+        };
         return LinkedList;
     }());
     exports.LinkedList = LinkedList;
@@ -3622,6 +3675,19 @@ define(__m[16/*vs/base/common/linkedList*/], __M([0/*require*/,1/*exports*/,11/*
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+
+
+
+
+
+
+
+
+
+
+
+
+
 define(__m[9/*vs/base/common/event*/], __M([0/*require*/,1/*exports*/,5/*vs/base/common/errors*/,17/*vs/base/common/functional*/,10/*vs/base/common/lifecycle*/,16/*vs/base/common/linkedList*/]), function (require, exports, errors_1, functional_1, lifecycle_1, linkedList_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -3864,32 +3930,6 @@ define(__m[9/*vs/base/common/event*/], __M([0/*require*/,1/*exports*/,5/*vs/base
             return emitter.event;
         }
         Event.buffer = buffer;
-        /**
-         * Similar to `buffer` but it buffers indefinitely and repeats
-         * the buffered events to every new listener.
-         */
-        function echo(event, nextTick, buffer) {
-            if (nextTick === void 0) { nextTick = false; }
-            if (buffer === void 0) { buffer = []; }
-            buffer = buffer.slice();
-            event(function (e) {
-                buffer.push(e);
-                emitter.fire(e);
-            });
-            var flush = function (listener, thisArgs) { return buffer.forEach(function (e) { return listener.call(thisArgs, e); }); };
-            var emitter = new Emitter({
-                onListenerDidAdd: function (emitter, listener, thisArgs) {
-                    if (nextTick) {
-                        setTimeout(function () { return flush(listener, thisArgs); });
-                    }
-                    else {
-                        flush(listener, thisArgs);
-                    }
-                }
-            });
-            return emitter.event;
-        }
-        Event.echo = echo;
         var ChainableEvent = /** @class */ (function () {
             function ChainableEvent(event) {
                 this.event = event;
@@ -4106,12 +4146,12 @@ define(__m[9/*vs/base/common/event*/], __M([0/*require*/,1/*exports*/,5/*vs/base
                 // then emit all event. an inner/nested event might be
                 // the driver of this
                 if (!this._deliveryQueue) {
-                    this._deliveryQueue = [];
+                    this._deliveryQueue = new linkedList_1.LinkedList();
                 }
                 for (var iter = this._listeners.iterator(), e = iter.next(); !e.done; e = iter.next()) {
                     this._deliveryQueue.push([e.value, event]);
                 }
-                while (this._deliveryQueue.length > 0) {
+                while (this._deliveryQueue.size > 0) {
                     var _a = this._deliveryQueue.shift(), listener = _a[0], event_1 = _a[1];
                     try {
                         if (typeof listener === 'function') {
@@ -4129,10 +4169,10 @@ define(__m[9/*vs/base/common/event*/], __M([0/*require*/,1/*exports*/,5/*vs/base
         };
         Emitter.prototype.dispose = function () {
             if (this._listeners) {
-                this._listeners = undefined;
+                this._listeners.clear();
             }
             if (this._deliveryQueue) {
-                this._deliveryQueue.length = 0;
+                this._deliveryQueue.clear();
             }
             if (this._leakageMon) {
                 this._leakageMon.dispose();
@@ -4143,6 +4183,49 @@ define(__m[9/*vs/base/common/event*/], __M([0/*require*/,1/*exports*/,5/*vs/base
         return Emitter;
     }());
     exports.Emitter = Emitter;
+    var PauseableEmitter = /** @class */ (function (_super) {
+        __extends(PauseableEmitter, _super);
+        function PauseableEmitter(options) {
+            var _this = _super.call(this, options) || this;
+            _this._isPaused = 0;
+            _this._eventQueue = new linkedList_1.LinkedList();
+            _this._mergeFn = options && options.merge;
+            return _this;
+        }
+        PauseableEmitter.prototype.pause = function () {
+            this._isPaused++;
+        };
+        PauseableEmitter.prototype.resume = function () {
+            if (this._isPaused !== 0 && --this._isPaused === 0) {
+                if (this._mergeFn) {
+                    // use the merge function to create a single composite
+                    // event. make a copy in case firing pauses this emitter
+                    var events = this._eventQueue.toArray();
+                    this._eventQueue.clear();
+                    _super.prototype.fire.call(this, this._mergeFn(events));
+                }
+                else {
+                    // no merging, fire each event individually and test
+                    // that this emitter isn't paused halfway through
+                    while (!this._isPaused && this._eventQueue.size !== 0) {
+                        _super.prototype.fire.call(this, this._eventQueue.shift());
+                    }
+                }
+            }
+        };
+        PauseableEmitter.prototype.fire = function (event) {
+            if (this._listeners) {
+                if (this._isPaused !== 0) {
+                    this._eventQueue.push(event);
+                }
+                else {
+                    _super.prototype.fire.call(this, event);
+                }
+            }
+        };
+        return PauseableEmitter;
+    }(Emitter));
+    exports.PauseableEmitter = PauseableEmitter;
     var EventMultiplexer = /** @class */ (function () {
         function EventMultiplexer() {
             var _this = this;
@@ -4374,7 +4457,10 @@ define(__m[18/*vs/base/common/cancellation*/], __M([0/*require*/,1/*exports*/,9/
         return MutableToken;
     }());
     var CancellationTokenSource = /** @class */ (function () {
-        function CancellationTokenSource() {
+        function CancellationTokenSource(parent) {
+            this._token = undefined;
+            this._parentListener = undefined;
+            this._parentListener = parent && parent.onCancellationRequested(this.cancel, this);
         }
         Object.defineProperty(CancellationTokenSource.prototype, "token", {
             get: function () {
@@ -4401,6 +4487,9 @@ define(__m[18/*vs/base/common/cancellation*/], __M([0/*require*/,1/*exports*/,9/
             }
         };
         CancellationTokenSource.prototype.dispose = function () {
+            if (this._parentListener) {
+                this._parentListener.dispose();
+            }
             if (!this._token) {
                 // ensure to initialize with an empty token if we had none
                 this._token = CancellationToken.None;
@@ -4422,14 +4511,14 @@ define(__m[18/*vs/base/common/cancellation*/], __M([0/*require*/,1/*exports*/,9/
 define(__m[3/*vs/base/common/platform*/], __M([0/*require*/,1/*exports*/]), function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.LANGUAGE_DEFAULT = 'en';
+    var LANGUAGE_DEFAULT = 'en';
     var _isWindows = false;
     var _isMacintosh = false;
     var _isLinux = false;
     var _isNative = false;
     var _isWeb = false;
     var _locale = undefined;
-    var _language = exports.LANGUAGE_DEFAULT;
+    var _language = LANGUAGE_DEFAULT;
     var _translationsConfigFile = undefined;
     var isElectronRenderer = (typeof process !== 'undefined' && typeof process.versions !== 'undefined' && typeof process.versions.electron !== 'undefined' && process.type === 'renderer');
     // OS detection
@@ -4446,8 +4535,8 @@ define(__m[3/*vs/base/common/platform*/], __M([0/*require*/,1/*exports*/]), func
         _isWindows = (process.platform === 'win32');
         _isMacintosh = (process.platform === 'darwin');
         _isLinux = (process.platform === 'linux');
-        _locale = exports.LANGUAGE_DEFAULT;
-        _language = exports.LANGUAGE_DEFAULT;
+        _locale = LANGUAGE_DEFAULT;
+        _language = LANGUAGE_DEFAULT;
         var rawNlsConfig = process.env['VSCODE_NLS_CONFIG'];
         if (rawNlsConfig) {
             try {
@@ -4455,7 +4544,7 @@ define(__m[3/*vs/base/common/platform*/], __M([0/*require*/,1/*exports*/]), func
                 var resolved = nlsConfig.availableLanguages['*'];
                 _locale = nlsConfig.locale;
                 // VSCode's default language is 'en'
-                _language = resolved ? resolved : exports.LANGUAGE_DEFAULT;
+                _language = resolved ? resolved : LANGUAGE_DEFAULT;
                 _translationsConfigFile = nlsConfig._translationsConfigFile;
             }
             catch (e) {
@@ -4870,9 +4959,9 @@ define(__m[13/*vs/base/common/strings*/], __M([0/*require*/,1/*exports*/]), func
     // Code points U+0000 to U+D7FF and U+E000 to U+FFFF are represented on a single character
     // Code points U+10000 to U+10FFFF are represented on two consecutive characters
     //export function getUnicodePoint(str:string, index:number, len:number):number {
-    //	let chrCode = str.charCodeAt(index);
+    //	const chrCode = str.charCodeAt(index);
     //	if (0xD800 <= chrCode && chrCode <= 0xDBFF && index + 1 < len) {
-    //		let nextChrCode = str.charCodeAt(index + 1);
+    //		const nextChrCode = str.charCodeAt(index + 1);
     //		if (0xDC00 <= nextChrCode && nextChrCode <= 0xDFFF) {
     //			return (chrCode - 0xD800) << 10 + (nextChrCode - 0xDC00) + 0x10000;
     //		}
@@ -5128,36 +5217,6 @@ define(__m[7/*vs/base/common/types*/], __M([0/*require*/,1/*exports*/]), functio
         }
     }
     exports.validateConstraint = validateConstraint;
-    /**
-     * Creates a new object of the provided class and will call the constructor with
-     * any additional argument supplied.
-     */
-    function create(ctor) {
-        var args = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            args[_i - 1] = arguments[_i];
-        }
-        var _a;
-        if (isNativeClass(ctor)) {
-            return new ((_a = ctor).bind.apply(_a, [void 0].concat(args)))();
-        }
-        else {
-            var obj = Object.create(ctor.prototype);
-            ctor.apply(obj, args);
-            return obj;
-        }
-    }
-    exports.create = create;
-    // https://stackoverflow.com/a/32235645/1499159
-    function isNativeClass(thing) {
-        return typeof thing === 'function'
-            && thing.hasOwnProperty('prototype')
-            && !thing.hasOwnProperty('arguments');
-    }
-    /**
-     *
-     *
-     */
     function getAllPropertyNames(obj) {
         var res = [];
         var proto = Object.getPrototypeOf(obj);
@@ -5168,6 +5227,20 @@ define(__m[7/*vs/base/common/types*/], __M([0/*require*/,1/*exports*/]), functio
         return res;
     }
     exports.getAllPropertyNames = getAllPropertyNames;
+    /**
+     * Converts null to undefined, passes all other values through.
+     */
+    function withNullAsUndefined(x) {
+        return x === null ? undefined : x;
+    }
+    exports.withNullAsUndefined = withNullAsUndefined;
+    /**
+     * Converts undefined to null, passes all other values through.
+     */
+    function withUndefinedAsNull(x) {
+        return typeof x === 'undefined' ? null : x;
+    }
+    exports.withUndefinedAsNull = withUndefinedAsNull;
 });
 
 /*---------------------------------------------------------------------------------------------
@@ -5228,6 +5301,20 @@ define(__m[12/*vs/base/common/uri*/], __M([0/*require*/,1/*exports*/,3/*vs/base/
             }
         }
     }
+    // for a while we allowed uris *without* schemes and this is the migration
+    // for them, e.g. an uri without scheme and without strict-mode warns and falls
+    // back to the file-scheme. that should cause the least carnage and still be a
+    // clear warning
+    function _schemeFix(scheme, _strict) {
+        if (_strict || _throwOnMissingSchema) {
+            return scheme || _empty;
+        }
+        if (!scheme) {
+            console.trace('BAD uri lacks scheme, falling back to file-scheme.');
+            scheme = 'file';
+        }
+        return scheme;
+    }
     // implements a bit of https://tools.ietf.org/html/rfc3986#section-5
     function _referenceResolution(scheme, path) {
         // the slash-character is our 'default base' as we don't
@@ -5270,6 +5357,7 @@ define(__m[12/*vs/base/common/uri*/], __M([0/*require*/,1/*exports*/,3/*vs/base/
          * @internal
          */
         function URI(schemeOrData, authority, path, query, fragment, _strict) {
+            if (_strict === void 0) { _strict = false; }
             if (typeof schemeOrData === 'object') {
                 this.scheme = schemeOrData.scheme || _empty;
                 this.authority = schemeOrData.authority || _empty;
@@ -5281,7 +5369,7 @@ define(__m[12/*vs/base/common/uri*/], __M([0/*require*/,1/*exports*/,3/*vs/base/
                 // _validateUri(this);
             }
             else {
-                this.scheme = schemeOrData || _empty;
+                this.scheme = _schemeFix(schemeOrData, _strict);
                 this.authority = authority || _empty;
                 this.path = _referenceResolution(this.scheme, path || _empty);
                 this.query = query || _empty;
@@ -9313,11 +9401,14 @@ define(__m[31/*vs/editor/common/services/editorSimpleWorker*/], __M([0/*require*
             if (!model) {
                 return Promise.resolve(null);
             }
+            var seen = Object.create(null);
             var suggestions = [];
             var wordDefRegExp = new RegExp(wordDef, wordDefFlags);
-            var currentWord = model.getWordUntilPosition(position, wordDefRegExp);
-            var seen = Object.create(null);
-            seen[currentWord.word] = true;
+            var wordUntil = model.getWordUntilPosition(position, wordDefRegExp);
+            var wordAt = model.getWordAtPosition(position, wordDefRegExp);
+            if (wordAt) {
+                seen[model.getValueInRange(wordAt)] = true;
+            }
             for (var iter = model.createWordIterator(wordDefRegExp), e = iter.next(); !e.done && suggestions.length <= BaseEditorSimpleWorker._suggestionsLimit; e = iter.next()) {
                 var word = e.value;
                 if (seen[word]) {
@@ -9331,7 +9422,7 @@ define(__m[31/*vs/editor/common/services/editorSimpleWorker*/], __M([0/*require*
                     kind: 18 /* Text */,
                     label: word,
                     insertText: word,
-                    range: { startLineNumber: position.lineNumber, startColumn: currentWord.startColumn, endLineNumber: position.lineNumber, endColumn: currentWord.endColumn }
+                    range: { startLineNumber: position.lineNumber, startColumn: wordUntil.startColumn, endLineNumber: position.lineNumber, endColumn: wordUntil.endColumn }
                 });
             }
             return Promise.resolve({ suggestions: suggestions });
@@ -9444,7 +9535,7 @@ define(__m[31/*vs/editor/common/services/editorSimpleWorker*/], __M([0/*require*
         };
         // ---- END diff --------------------------------------------------------------------------
         // ---- BEGIN minimal edits ---------------------------------------------------------------
-        BaseEditorSimpleWorker._diffLimit = 10000;
+        BaseEditorSimpleWorker._diffLimit = 100000;
         // ---- BEGIN suggest --------------------------------------------------------------------------
         BaseEditorSimpleWorker._suggestionsLimit = 10000;
         return BaseEditorSimpleWorker;
@@ -9505,6 +9596,7 @@ define(__m[31/*vs/editor/common/services/editorSimpleWorker*/], __M([0/*require*
     }
 });
 
+"use strict";
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.

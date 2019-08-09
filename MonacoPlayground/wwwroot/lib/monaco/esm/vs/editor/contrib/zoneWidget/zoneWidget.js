@@ -102,8 +102,8 @@ var Arrow = /** @class */ (function () {
 }());
 var ZoneWidget = /** @class */ (function () {
     function ZoneWidget(editor, options) {
-        if (options === void 0) { options = {}; }
         var _this = this;
+        if (options === void 0) { options = {}; }
         this._positionMarkerId = [];
         this._disposables = [];
         this._isShowing = false;

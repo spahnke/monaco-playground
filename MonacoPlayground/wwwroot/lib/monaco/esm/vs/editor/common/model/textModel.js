@@ -39,6 +39,7 @@ import { LanguageConfigurationRegistry } from '../modes/languageConfigurationReg
 import { NULL_LANGUAGE_IDENTIFIER } from '../modes/nullMode.js';
 import { ignoreBracketsInToken } from '../modes/supports.js';
 import { BracketsUtils } from '../modes/supports/richEditBrackets.js';
+import { withUndefinedAsNull } from '../../../base/common/types.js';
 var CHEAP_TOKENIZATION_LENGTH_LIMIT = 2048;
 function createTextBufferBuilder() {
     return new PieceTreeTextBufferBuilder();
@@ -629,20 +630,20 @@ var TextModel = /** @class */ (function (_super) {
      * @param strict Do NOT allow a position inside a high-low surrogate pair
      */
     TextModel.prototype._isValidPosition = function (lineNumber, column, strict) {
-        if (isNaN(lineNumber)) {
+        if (typeof lineNumber !== 'number' || typeof column !== 'number') {
             return false;
         }
-        if (lineNumber < 1) {
+        if (isNaN(lineNumber) || isNaN(column)) {
+            return false;
+        }
+        if (lineNumber < 1 || column < 1) {
+            return false;
+        }
+        if ((lineNumber | 0) !== lineNumber || (column | 0) !== column) {
             return false;
         }
         var lineCount = this._buffer.getLineCount();
         if (lineNumber > lineCount) {
-            return false;
-        }
-        if (isNaN(column)) {
-            return false;
-        }
-        if (column < 1) {
             return false;
         }
         var maxColumn = this.getLineMaxColumn(lineNumber);
@@ -2276,8 +2277,8 @@ var ModelDecorationOptions = /** @class */ (function () {
         this.stickiness = options.stickiness || 0 /* AlwaysGrowsWhenTypingAtEdges */;
         this.zIndex = options.zIndex || 0;
         this.className = options.className ? cleanClassName(options.className) : null;
-        this.hoverMessage = options.hoverMessage || null;
-        this.glyphMarginHoverMessage = options.glyphMarginHoverMessage || null;
+        this.hoverMessage = withUndefinedAsNull(options.hoverMessage);
+        this.glyphMarginHoverMessage = withUndefinedAsNull(options.glyphMarginHoverMessage);
         this.isWholeLine = options.isWholeLine || false;
         this.showIfCollapsed = options.showIfCollapsed || false;
         this.collapseOnReplaceEdit = options.collapseOnReplaceEdit || false;

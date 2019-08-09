@@ -2,6 +2,19 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 import { onUnexpectedError } from './errors.js';
 import { once as onceFn } from './functional.js';
 import { combinedDisposable, Disposable, toDisposable } from './lifecycle.js';
@@ -245,32 +258,6 @@ export var Event;
         return emitter.event;
     }
     Event.buffer = buffer;
-    /**
-     * Similar to `buffer` but it buffers indefinitely and repeats
-     * the buffered events to every new listener.
-     */
-    function echo(event, nextTick, buffer) {
-        if (nextTick === void 0) { nextTick = false; }
-        if (buffer === void 0) { buffer = []; }
-        buffer = buffer.slice();
-        event(function (e) {
-            buffer.push(e);
-            emitter.fire(e);
-        });
-        var flush = function (listener, thisArgs) { return buffer.forEach(function (e) { return listener.call(thisArgs, e); }); };
-        var emitter = new Emitter({
-            onListenerDidAdd: function (emitter, listener, thisArgs) {
-                if (nextTick) {
-                    setTimeout(function () { return flush(listener, thisArgs); });
-                }
-                else {
-                    flush(listener, thisArgs);
-                }
-            }
-        });
-        return emitter.event;
-    }
-    Event.echo = echo;
     var ChainableEvent = /** @class */ (function () {
         function ChainableEvent(event) {
             this.event = event;
@@ -487,12 +474,12 @@ var Emitter = /** @class */ (function () {
             // then emit all event. an inner/nested event might be
             // the driver of this
             if (!this._deliveryQueue) {
-                this._deliveryQueue = [];
+                this._deliveryQueue = new LinkedList();
             }
             for (var iter = this._listeners.iterator(), e = iter.next(); !e.done; e = iter.next()) {
                 this._deliveryQueue.push([e.value, event]);
             }
-            while (this._deliveryQueue.length > 0) {
+            while (this._deliveryQueue.size > 0) {
                 var _a = this._deliveryQueue.shift(), listener = _a[0], event_1 = _a[1];
                 try {
                     if (typeof listener === 'function') {
@@ -510,10 +497,10 @@ var Emitter = /** @class */ (function () {
     };
     Emitter.prototype.dispose = function () {
         if (this._listeners) {
-            this._listeners = undefined;
+            this._listeners.clear();
         }
         if (this._deliveryQueue) {
-            this._deliveryQueue.length = 0;
+            this._deliveryQueue.clear();
         }
         if (this._leakageMon) {
             this._leakageMon.dispose();
@@ -524,6 +511,49 @@ var Emitter = /** @class */ (function () {
     return Emitter;
 }());
 export { Emitter };
+var PauseableEmitter = /** @class */ (function (_super) {
+    __extends(PauseableEmitter, _super);
+    function PauseableEmitter(options) {
+        var _this = _super.call(this, options) || this;
+        _this._isPaused = 0;
+        _this._eventQueue = new LinkedList();
+        _this._mergeFn = options && options.merge;
+        return _this;
+    }
+    PauseableEmitter.prototype.pause = function () {
+        this._isPaused++;
+    };
+    PauseableEmitter.prototype.resume = function () {
+        if (this._isPaused !== 0 && --this._isPaused === 0) {
+            if (this._mergeFn) {
+                // use the merge function to create a single composite
+                // event. make a copy in case firing pauses this emitter
+                var events = this._eventQueue.toArray();
+                this._eventQueue.clear();
+                _super.prototype.fire.call(this, this._mergeFn(events));
+            }
+            else {
+                // no merging, fire each event individually and test
+                // that this emitter isn't paused halfway through
+                while (!this._isPaused && this._eventQueue.size !== 0) {
+                    _super.prototype.fire.call(this, this._eventQueue.shift());
+                }
+            }
+        }
+    };
+    PauseableEmitter.prototype.fire = function (event) {
+        if (this._listeners) {
+            if (this._isPaused !== 0) {
+                this._eventQueue.push(event);
+            }
+            else {
+                _super.prototype.fire.call(this, event);
+            }
+        }
+    };
+    return PauseableEmitter;
+}(Emitter));
+export { PauseableEmitter };
 var EventMultiplexer = /** @class */ (function () {
     function EventMultiplexer() {
         var _this = this;

@@ -46,8 +46,8 @@ var ContextMenuController = /** @class */ (function () {
         this._contextMenuIsBeingShownCount = 0;
         this._editor = editor;
         this._toDispose.push(this._editor.onContextMenu(function (e) { return _this._onContextMenu(e); }));
-        this._toDispose.push(this._editor.onDidScrollChange(function (e) {
-            if (_this._contextMenuIsBeingShownCount > 0 && e.scrollTopChanged) {
+        this._toDispose.push(this._editor.onMouseWheel(function (e) {
+            if (_this._contextMenuIsBeingShownCount > 0) {
                 _this._contextViewService.hideContextView();
             }
         }));
@@ -169,7 +169,7 @@ var ContextMenuController = /** @class */ (function () {
                 return new ActionItem(action, action, { icon: true, label: true, isMenu: true });
             },
             getKeyBinding: function (action) {
-                return _this._keybindingFor(action) || undefined;
+                return _this._keybindingFor(action);
             },
             onHide: function (wasCancelled) {
                 _this._contextMenuIsBeingShownCount--;

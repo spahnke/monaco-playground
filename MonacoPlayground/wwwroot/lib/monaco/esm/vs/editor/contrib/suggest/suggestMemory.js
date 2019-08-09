@@ -26,7 +26,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 import { LRUCache, TernarySearchTree } from '../../../base/common/map.js';
 import { IStorageService } from '../../../platform/storage/common/storage.js';
-import { completionKindFromLegacyString } from '../../common/modes.js';
+import { completionKindFromString } from '../../common/modes.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { RunOnceScheduler } from '../../../base/common/async.js';
 import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
@@ -132,7 +132,7 @@ var LRUMemory = /** @class */ (function (_super) {
         for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
             var _a = data_1[_i], key = _a[0], value = _a[1];
             value.touch = seq;
-            value.type = typeof value.type === 'number' ? value.type : completionKindFromLegacyString(value.type);
+            value.type = typeof value.type === 'number' ? value.type : completionKindFromString(value.type);
             this._cache.set(key, value);
         }
         this._seq = this._cache.size;
@@ -194,7 +194,7 @@ var PrefixMemory = /** @class */ (function (_super) {
             this._seq = data[0][1].touch + 1;
             for (var _i = 0, data_2 = data; _i < data_2.length; _i++) {
                 var _a = data_2[_i], key = _a[0], value = _a[1];
-                value.type = typeof value.type === 'number' ? value.type : completionKindFromLegacyString(value.type);
+                value.type = typeof value.type === 'number' ? value.type : completionKindFromString(value.type);
                 this._trie.set(key, value);
             }
         }

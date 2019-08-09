@@ -188,7 +188,7 @@ var ViewZones = /** @class */ (function (_super) {
         if (this._zones.hasOwnProperty(id.toString())) {
             var zone = this._zones[id.toString()];
             var props = this._computeWhitespaceProps(zone.delegate);
-            // let newOrdinal = this._getZoneOrdinal(zone.delegate);
+            // const newOrdinal = this._getZoneOrdinal(zone.delegate);
             changed = this._context.viewLayout.changeWhitespace(zone.whitespaceId, props.afterViewLineNumber, props.heightInPx) || changed;
             // TODO@Alex: change `newOrdinal` too
             if (changed) {

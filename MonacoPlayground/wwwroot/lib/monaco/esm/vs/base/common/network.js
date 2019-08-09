@@ -32,4 +32,5 @@ export var Schemas;
     Schemas.untitled = 'untitled';
     Schemas.data = 'data';
     Schemas.command = 'command';
+    Schemas.vscodeRemote = 'vscode-remote';
 })(Schemas || (Schemas = {}));

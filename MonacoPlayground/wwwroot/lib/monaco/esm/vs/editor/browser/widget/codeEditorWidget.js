@@ -55,6 +55,7 @@ import { ServiceCollection } from '../../../platform/instantiation/common/servic
 import { INotificationService } from '../../../platform/notification/common/notification.js';
 import { IThemeService, registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
 import { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';
+import { withNullAsUndefined } from '../../../base/common/types.js';
 var EDITOR_ID = 0;
 var SHOW_UNUSED_ENABLED_CLASS = 'showUnused';
 var ModelData = /** @class */ (function () {
@@ -136,6 +137,8 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         _this.onMouseMove = _this._onMouseMove.event;
         _this._onMouseLeave = _this._register(new Emitter());
         _this.onMouseLeave = _this._onMouseLeave.event;
+        _this._onMouseWheel = _this._register(new Emitter());
+        _this.onMouseWheel = _this._onMouseWheel.event;
         _this._onKeyUp = _this._register(new Emitter());
         _this.onKeyUp = _this._onKeyUp.event;
         _this._onKeyDown = _this._register(new Emitter());
@@ -199,7 +202,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
             }
         }
         EditorExtensionsRegistry.getEditorActions().forEach(function (action) {
-            var internalAction = new InternalEditorAction(action.id, action.label, action.alias, action.precondition, function () {
+            var internalAction = new InternalEditorAction(action.id, action.label, action.alias, withNullAsUndefined(action.precondition), function () {
                 return _this._instantiationService.invokeFunction(function (accessor) {
                     return Promise.resolve(action.runEditorCommand(accessor, _this, null));
                 });
@@ -210,7 +213,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         return _this;
     }
     CodeEditorWidget.prototype._createConfiguration = function (options, accessibilityService) {
-        return new Configuration(options, this._domElement, accessibilityService);
+        return new Configuration(this.isSimpleWidget, options, this._domElement, accessibilityService);
     };
     CodeEditorWidget.prototype.getId = function () {
         return this.getEditorType() + ':' + this._id;
@@ -1070,6 +1073,7 @@ var CodeEditorWidget = /** @class */ (function (_super) {
         viewOutgoingEvents.onKeyUp = function (e) { return _this._onKeyUp.fire(e); };
         viewOutgoingEvents.onMouseMove = function (e) { return _this._onMouseMove.fire(e); };
         viewOutgoingEvents.onMouseLeave = function (e) { return _this._onMouseLeave.fire(e); };
+        viewOutgoingEvents.onMouseWheel = function (e) { return _this._onMouseWheel.fire(e); };
         viewOutgoingEvents.onKeyDown = function (e) { return _this._onKeyDown.fire(e); };
         var view = new View(commandDelegate, this._configuration, this._themeService, viewModel, cursor, viewOutgoingEvents);
         return [view, true];
@@ -1203,30 +1207,33 @@ var EditorContextKeysManager = /** @class */ (function (_super) {
 }(Disposable));
 var EditorModeContext = /** @class */ (function (_super) {
     __extends(EditorModeContext, _super);
-    function EditorModeContext(editor, contextKeyService) {
+    function EditorModeContext(_editor, _contextKeyService) {
         var _this = _super.call(this) || this;
-        _this._editor = editor;
-        _this._langId = EditorContextKeys.languageId.bindTo(contextKeyService);
-        _this._hasCompletionItemProvider = EditorContextKeys.hasCompletionItemProvider.bindTo(contextKeyService);
-        _this._hasCodeActionsProvider = EditorContextKeys.hasCodeActionsProvider.bindTo(contextKeyService);
-        _this._hasCodeLensProvider = EditorContextKeys.hasCodeLensProvider.bindTo(contextKeyService);
-        _this._hasDefinitionProvider = EditorContextKeys.hasDefinitionProvider.bindTo(contextKeyService);
-        _this._hasDeclarationProvider = EditorContextKeys.hasDeclarationProvider.bindTo(contextKeyService);
-        _this._hasImplementationProvider = EditorContextKeys.hasImplementationProvider.bindTo(contextKeyService);
-        _this._hasTypeDefinitionProvider = EditorContextKeys.hasTypeDefinitionProvider.bindTo(contextKeyService);
-        _this._hasHoverProvider = EditorContextKeys.hasHoverProvider.bindTo(contextKeyService);
-        _this._hasDocumentHighlightProvider = EditorContextKeys.hasDocumentHighlightProvider.bindTo(contextKeyService);
-        _this._hasDocumentSymbolProvider = EditorContextKeys.hasDocumentSymbolProvider.bindTo(contextKeyService);
-        _this._hasReferenceProvider = EditorContextKeys.hasReferenceProvider.bindTo(contextKeyService);
-        _this._hasRenameProvider = EditorContextKeys.hasRenameProvider.bindTo(contextKeyService);
-        _this._hasDocumentFormattingProvider = EditorContextKeys.hasDocumentFormattingProvider.bindTo(contextKeyService);
-        _this._hasDocumentSelectionFormattingProvider = EditorContextKeys.hasDocumentSelectionFormattingProvider.bindTo(contextKeyService);
-        _this._hasSignatureHelpProvider = EditorContextKeys.hasSignatureHelpProvider.bindTo(contextKeyService);
-        _this._isInWalkThrough = EditorContextKeys.isInEmbeddedEditor.bindTo(contextKeyService);
+        _this._editor = _editor;
+        _this._contextKeyService = _contextKeyService;
+        _this._langId = EditorContextKeys.languageId.bindTo(_contextKeyService);
+        _this._hasCompletionItemProvider = EditorContextKeys.hasCompletionItemProvider.bindTo(_contextKeyService);
+        _this._hasCodeActionsProvider = EditorContextKeys.hasCodeActionsProvider.bindTo(_contextKeyService);
+        _this._hasCodeLensProvider = EditorContextKeys.hasCodeLensProvider.bindTo(_contextKeyService);
+        _this._hasDefinitionProvider = EditorContextKeys.hasDefinitionProvider.bindTo(_contextKeyService);
+        _this._hasDeclarationProvider = EditorContextKeys.hasDeclarationProvider.bindTo(_contextKeyService);
+        _this._hasImplementationProvider = EditorContextKeys.hasImplementationProvider.bindTo(_contextKeyService);
+        _this._hasTypeDefinitionProvider = EditorContextKeys.hasTypeDefinitionProvider.bindTo(_contextKeyService);
+        _this._hasHoverProvider = EditorContextKeys.hasHoverProvider.bindTo(_contextKeyService);
+        _this._hasDocumentHighlightProvider = EditorContextKeys.hasDocumentHighlightProvider.bindTo(_contextKeyService);
+        _this._hasDocumentSymbolProvider = EditorContextKeys.hasDocumentSymbolProvider.bindTo(_contextKeyService);
+        _this._hasReferenceProvider = EditorContextKeys.hasReferenceProvider.bindTo(_contextKeyService);
+        _this._hasRenameProvider = EditorContextKeys.hasRenameProvider.bindTo(_contextKeyService);
+        _this._hasSignatureHelpProvider = EditorContextKeys.hasSignatureHelpProvider.bindTo(_contextKeyService);
+        _this._hasDocumentFormattingProvider = EditorContextKeys.hasDocumentFormattingProvider.bindTo(_contextKeyService);
+        _this._hasDocumentSelectionFormattingProvider = EditorContextKeys.hasDocumentSelectionFormattingProvider.bindTo(_contextKeyService);
+        _this._hasMultipleDocumentFormattingProvider = EditorContextKeys.hasMultipleDocumentFormattingProvider.bindTo(_contextKeyService);
+        _this._hasMultipleDocumentSelectionFormattingProvider = EditorContextKeys.hasMultipleDocumentSelectionFormattingProvider.bindTo(_contextKeyService);
+        _this._isInWalkThrough = EditorContextKeys.isInEmbeddedEditor.bindTo(_contextKeyService);
         var update = function () { return _this._update(); };
         // update when model/mode changes
-        _this._register(editor.onDidChangeModel(update));
-        _this._register(editor.onDidChangeModelLanguage(update));
+        _this._register(_editor.onDidChangeModel(update));
+        _this._register(_editor.onDidChangeModelLanguage(update));
         // update when registries change
         _this._register(modes.CompletionProviderRegistry.onDidChange(update));
         _this._register(modes.CodeActionProviderRegistry.onDidChange(update));
@@ -1250,47 +1257,55 @@ var EditorModeContext = /** @class */ (function (_super) {
         _super.prototype.dispose.call(this);
     };
     EditorModeContext.prototype.reset = function () {
-        this._langId.reset();
-        this._hasCompletionItemProvider.reset();
-        this._hasCodeActionsProvider.reset();
-        this._hasCodeLensProvider.reset();
-        this._hasDefinitionProvider.reset();
-        this._hasDeclarationProvider.reset();
-        this._hasImplementationProvider.reset();
-        this._hasTypeDefinitionProvider.reset();
-        this._hasHoverProvider.reset();
-        this._hasDocumentHighlightProvider.reset();
-        this._hasDocumentSymbolProvider.reset();
-        this._hasReferenceProvider.reset();
-        this._hasRenameProvider.reset();
-        this._hasDocumentFormattingProvider.reset();
-        this._hasDocumentSelectionFormattingProvider.reset();
-        this._hasSignatureHelpProvider.reset();
-        this._isInWalkThrough.reset();
+        var _this = this;
+        this._contextKeyService.bufferChangeEvents(function () {
+            _this._langId.reset();
+            _this._hasCompletionItemProvider.reset();
+            _this._hasCodeActionsProvider.reset();
+            _this._hasCodeLensProvider.reset();
+            _this._hasDefinitionProvider.reset();
+            _this._hasDeclarationProvider.reset();
+            _this._hasImplementationProvider.reset();
+            _this._hasTypeDefinitionProvider.reset();
+            _this._hasHoverProvider.reset();
+            _this._hasDocumentHighlightProvider.reset();
+            _this._hasDocumentSymbolProvider.reset();
+            _this._hasReferenceProvider.reset();
+            _this._hasRenameProvider.reset();
+            _this._hasDocumentFormattingProvider.reset();
+            _this._hasDocumentSelectionFormattingProvider.reset();
+            _this._hasSignatureHelpProvider.reset();
+            _this._isInWalkThrough.reset();
+        });
     };
     EditorModeContext.prototype._update = function () {
+        var _this = this;
         var model = this._editor.getModel();
         if (!model) {
             this.reset();
             return;
         }
-        this._langId.set(model.getLanguageIdentifier().language);
-        this._hasCompletionItemProvider.set(modes.CompletionProviderRegistry.has(model));
-        this._hasCodeActionsProvider.set(modes.CodeActionProviderRegistry.has(model));
-        this._hasCodeLensProvider.set(modes.CodeLensProviderRegistry.has(model));
-        this._hasDefinitionProvider.set(modes.DefinitionProviderRegistry.has(model));
-        this._hasDeclarationProvider.set(modes.DeclarationProviderRegistry.has(model));
-        this._hasImplementationProvider.set(modes.ImplementationProviderRegistry.has(model));
-        this._hasTypeDefinitionProvider.set(modes.TypeDefinitionProviderRegistry.has(model));
-        this._hasHoverProvider.set(modes.HoverProviderRegistry.has(model));
-        this._hasDocumentHighlightProvider.set(modes.DocumentHighlightProviderRegistry.has(model));
-        this._hasDocumentSymbolProvider.set(modes.DocumentSymbolProviderRegistry.has(model));
-        this._hasReferenceProvider.set(modes.ReferenceProviderRegistry.has(model));
-        this._hasRenameProvider.set(modes.RenameProviderRegistry.has(model));
-        this._hasSignatureHelpProvider.set(modes.SignatureHelpProviderRegistry.has(model));
-        this._hasDocumentFormattingProvider.set(modes.DocumentFormattingEditProviderRegistry.has(model) || modes.DocumentRangeFormattingEditProviderRegistry.has(model));
-        this._hasDocumentSelectionFormattingProvider.set(modes.DocumentRangeFormattingEditProviderRegistry.has(model));
-        this._isInWalkThrough.set(model.uri.scheme === Schemas.walkThroughSnippet);
+        this._contextKeyService.bufferChangeEvents(function () {
+            _this._langId.set(model.getLanguageIdentifier().language);
+            _this._hasCompletionItemProvider.set(modes.CompletionProviderRegistry.has(model));
+            _this._hasCodeActionsProvider.set(modes.CodeActionProviderRegistry.has(model));
+            _this._hasCodeLensProvider.set(modes.CodeLensProviderRegistry.has(model));
+            _this._hasDefinitionProvider.set(modes.DefinitionProviderRegistry.has(model));
+            _this._hasDeclarationProvider.set(modes.DeclarationProviderRegistry.has(model));
+            _this._hasImplementationProvider.set(modes.ImplementationProviderRegistry.has(model));
+            _this._hasTypeDefinitionProvider.set(modes.TypeDefinitionProviderRegistry.has(model));
+            _this._hasHoverProvider.set(modes.HoverProviderRegistry.has(model));
+            _this._hasDocumentHighlightProvider.set(modes.DocumentHighlightProviderRegistry.has(model));
+            _this._hasDocumentSymbolProvider.set(modes.DocumentSymbolProviderRegistry.has(model));
+            _this._hasReferenceProvider.set(modes.ReferenceProviderRegistry.has(model));
+            _this._hasRenameProvider.set(modes.RenameProviderRegistry.has(model));
+            _this._hasSignatureHelpProvider.set(modes.SignatureHelpProviderRegistry.has(model));
+            _this._hasDocumentFormattingProvider.set(modes.DocumentFormattingEditProviderRegistry.has(model) || modes.DocumentRangeFormattingEditProviderRegistry.has(model));
+            _this._hasDocumentSelectionFormattingProvider.set(modes.DocumentRangeFormattingEditProviderRegistry.has(model));
+            _this._hasMultipleDocumentFormattingProvider.set(modes.DocumentFormattingEditProviderRegistry.all(model).length + modes.DocumentRangeFormattingEditProviderRegistry.all(model).length > 1);
+            _this._hasMultipleDocumentSelectionFormattingProvider.set(modes.DocumentRangeFormattingEditProviderRegistry.all(model).length > 1);
+            _this._isInWalkThrough.set(model.uri.scheme === Schemas.walkThroughSnippet);
+        });
     };
     return EditorModeContext;
 }(Disposable));

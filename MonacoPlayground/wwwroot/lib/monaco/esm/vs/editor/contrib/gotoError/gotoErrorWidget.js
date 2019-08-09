@@ -63,7 +63,6 @@ var MessageWidget = /** @class */ (function () {
             horizontalScrollbarSize: 3,
             verticalScrollbarSize: 3
         });
-        dom.addClass(this._scrollable.getDomNode(), 'block');
         parent.appendChild(this._scrollable.getDomNode());
         this._disposables.push(this._scrollable.onScroll(function (e) {
             domNode.style.left = "-" + e.scrollLeft + "px";
@@ -141,6 +140,7 @@ var MessageWidget = /** @class */ (function () {
     };
     MessageWidget.prototype.layout = function (height, width) {
         this._scrollable.getDomNode().style.height = height + "px";
+        this._scrollable.getDomNode().style.width = width + "px";
         this._scrollable.setScrollDimensions({ width: width, height: height });
     };
     MessageWidget.prototype.getHeightInLines = function () {
@@ -262,8 +262,12 @@ var MarkerNavigationWidget = /** @class */ (function (_super) {
     };
     MarkerNavigationWidget.prototype._doLayoutBody = function (heightInPixel, widthInPixel) {
         _super.prototype._doLayoutBody.call(this, heightInPixel, widthInPixel);
+        this._heightInPixel = heightInPixel;
         this._message.layout(heightInPixel, widthInPixel);
         this._container.style.height = heightInPixel + "px";
+    };
+    MarkerNavigationWidget.prototype._onWidth = function (widthInPixel) {
+        this._message.layout(this._heightInPixel, widthInPixel);
     };
     MarkerNavigationWidget.prototype._relayout = function () {
         _super.prototype._relayout.call(this, this.computeRequiredHeight());

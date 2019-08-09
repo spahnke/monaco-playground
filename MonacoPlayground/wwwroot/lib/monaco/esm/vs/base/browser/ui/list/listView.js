@@ -96,15 +96,9 @@ function equalsDragFeedback(f1, f2) {
     return f1 === f2;
 }
 var ListView = /** @class */ (function () {
-    // private _onDragStart = new Emitter<{ element: T, uri: string, event: DragEvent }>();
-    // readonly onDragStart = this._onDragStart.event;
-    // readonly onDragOver: Event<IListDragEvent<T>>;
-    // readonly onDragLeave: Event<void>;
-    // readonly onDrop: Event<IListDragEvent<T>>;
-    // readonly onDragEnd: Event<void>;
     function ListView(container, virtualDelegate, renderers, options) {
-        if (options === void 0) { options = DefaultOptions; }
         var _this = this;
+        if (options === void 0) { options = DefaultOptions; }
         this.virtualDelegate = virtualDelegate;
         this.domId = "list_id_" + ++ListView.InstanceCount;
         this.renderers = new Map();
@@ -151,7 +145,6 @@ var ListView = /** @class */ (function () {
         this.domNode.appendChild(this.scrollableElement.getDomNode());
         container.appendChild(this.domNode);
         this.disposables = [this.rangeMap, this.gesture, this.scrollableElement, this.cache];
-        this.onDidScroll = Event.signal(this.scrollableElement.onScroll);
         this.scrollableElement.onScroll(this.onScroll, this, this.disposables);
         domEvent(this.rowsContainer, TouchEventType.Change)(this.onTouchChange, this, this.disposables);
         // Prevent the monaco-scrollable-element from scrolling
@@ -187,8 +180,8 @@ var ListView = /** @class */ (function () {
     };
     ListView.prototype._splice = function (start, deleteCount, elements) {
         var _this = this;
-        if (elements === void 0) { elements = []; }
         var _a;
+        if (elements === void 0) { elements = []; }
         var previousRenderRange = this.getRenderRange(this.lastRenderTop, this.lastRenderHeight);
         var deleteRange = { start: start, end: start + deleteCount };
         var removeRange = Range.intersect(previousRenderRange, deleteRange);
@@ -633,6 +626,7 @@ var ListView = /** @class */ (function () {
     };
     ListView.prototype.onDragOver = function (event) {
         var _this = this;
+        event.browserEvent.preventDefault(); // needed so that the drop event fires (https://stackoverflow.com/questions/21339924/drop-event-not-firing-in-chrome)
         this.onDragLeaveTimeout.dispose();
         if (StaticDND.CurrentDragAndDropData && StaticDND.CurrentDragAndDropData.getData() === 'vscode-ui') {
             return false;
@@ -885,6 +879,9 @@ var ListView = /** @class */ (function () {
             }
         }
         item.size = row.domNode.offsetHeight;
+        if (this.virtualDelegate.setDynamicHeight) {
+            this.virtualDelegate.setDynamicHeight(item.element, item.size);
+        }
         item.lastDynamicHeightWidth = this.renderWidth;
         this.rowsContainer.removeChild(row.domNode);
         this.cache.release(row);

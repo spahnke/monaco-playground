@@ -9,8 +9,8 @@ import { Range } from '../core/range.js';
 import { Selection } from '../core/selection.js';
 import { TextModel } from '../model/textModel.js';
 import { LanguageConfigurationRegistry } from '../modes/languageConfigurationRegistry.js';
-var autoCloseAlways = function (_) { return true; };
-var autoCloseNever = function (_) { return false; };
+var autoCloseAlways = function () { return true; };
+var autoCloseNever = function () { return false; };
 var autoCloseBeforeWhitespace = function (chr) { return (chr === ' ' || chr === '\t'); };
 var CursorConfiguration = /** @class */ (function () {
     function CursorConfiguration(languageIdentifier, modelOptions, configuration) {

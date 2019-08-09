@@ -34,6 +34,9 @@ import { EditorSimpleWorkerImpl } from './editorSimpleWorker.js';
 import { IModelService } from './modelService.js';
 import { ITextResourceConfigurationService } from './resourceConfiguration.js';
 import { regExpFlags } from '../../../base/common/strings.js';
+import { isNonEmptyArray } from '../../../base/common/arrays.js';
+import { ILogService } from '../../../platform/log/common/log.js';
+import { StopWatch } from '../../../base/common/stopwatch.js';
 /**
  * Stop syncing a model to the worker if it was not needed for 1 min.
  */
@@ -54,17 +57,20 @@ function canSyncModel(modelService, resource) {
 }
 var EditorWorkerServiceImpl = /** @class */ (function (_super) {
     __extends(EditorWorkerServiceImpl, _super);
-    function EditorWorkerServiceImpl(modelService, configurationService) {
+    function EditorWorkerServiceImpl(modelService, configurationService, logService) {
         var _this = _super.call(this) || this;
         _this._modelService = modelService;
         _this._workerManager = _this._register(new WorkerManager(_this._modelService));
+        _this._logService = logService;
         // todo@joh make sure this happens only once
         _this._register(modes.LinkProviderRegistry.register('*', {
             provideLinks: function (model, token) {
                 if (!canSyncModel(_this._modelService, model.uri)) {
-                    return Promise.resolve([]); // File too large
+                    return Promise.resolve({ links: [] }); // File too large
                 }
-                return _this._workerManager.withWorker().then(function (client) { return client.computeLinks(model.uri); });
+                return _this._workerManager.withWorker().then(function (client) { return client.computeLinks(model.uri); }).then(function (links) {
+                    return links && { links: links };
+                });
             }
         }));
         _this._register(modes.CompletionProviderRegistry.register('*', new WordBasedCompletionItemProvider(_this._workerManager, configurationService, _this._modelService)));
@@ -80,14 +86,18 @@ var EditorWorkerServiceImpl = /** @class */ (function (_super) {
         return this._workerManager.withWorker().then(function (client) { return client.computeDiff(original, modified, ignoreTrimWhitespace); });
     };
     EditorWorkerServiceImpl.prototype.computeMoreMinimalEdits = function (resource, edits) {
-        if (!Array.isArray(edits) || edits.length === 0) {
-            return Promise.resolve(edits);
-        }
-        else {
+        var _this = this;
+        if (isNonEmptyArray(edits)) {
             if (!canSyncModel(this._modelService, resource)) {
                 return Promise.resolve(edits); // File too large
             }
-            return this._workerManager.withWorker().then(function (client) { return client.computeMoreMinimalEdits(resource, edits); });
+            var sw_1 = StopWatch.create(true);
+            var result = this._workerManager.withWorker().then(function (client) { return client.computeMoreMinimalEdits(resource, edits); });
+            result.finally(function () { return _this._logService.trace('FORMAT#computeMoreMinimalEdits', resource.toString(true), sw_1.elapsed()); });
+            return result;
+        }
+        else {
+            return Promise.resolve(undefined);
         }
     };
     EditorWorkerServiceImpl.prototype.canNavigateValueSet = function (resource) {
@@ -104,7 +114,8 @@ var EditorWorkerServiceImpl = /** @class */ (function (_super) {
     };
     EditorWorkerServiceImpl = __decorate([
         __param(0, IModelService),
-        __param(1, ITextResourceConfigurationService)
+        __param(1, ITextResourceConfigurationService),
+        __param(2, ILogService)
     ], EditorWorkerServiceImpl);
     return EditorWorkerServiceImpl;
 }(Disposable));

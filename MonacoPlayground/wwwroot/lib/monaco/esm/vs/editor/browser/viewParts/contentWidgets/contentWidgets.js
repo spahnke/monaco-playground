@@ -18,6 +18,7 @@ var __extends = (this && this.__extends) || (function () {
 import * as dom from '../../../../base/browser/dom.js';
 import { createFastDomNode } from '../../../../base/browser/fastDomNode.js';
 import { PartFingerprints, ViewPart } from '../../view/viewPart.js';
+import { withUndefinedAsNull } from '../../../../base/common/types.js';
 var Coordinate = /** @class */ (function () {
     function Coordinate(top, left) {
         this.top = top;
@@ -181,8 +182,8 @@ var Widget = /** @class */ (function () {
         this._setPosition(this._position, this._range);
     };
     Widget.prototype._setPosition = function (position, range) {
-        this._position = position || null;
-        this._range = range || null;
+        this._position = withUndefinedAsNull(position);
+        this._range = withUndefinedAsNull(range);
         this._viewPosition = null;
         this._viewRange = null;
         if (this._position) {
@@ -205,7 +206,7 @@ var Widget = /** @class */ (function () {
     };
     Widget.prototype.setPosition = function (position, range, preference) {
         this._setPosition(position, range);
-        this._preference = preference || null;
+        this._preference = withUndefinedAsNull(preference);
         this._cachedDomNodeClientWidth = -1;
         this._cachedDomNodeClientHeight = -1;
     };

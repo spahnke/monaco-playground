@@ -17,8 +17,8 @@ var defaultOptions = {
  */
 var DiffNavigator = /** @class */ (function () {
     function DiffNavigator(editor, options) {
-        if (options === void 0) { options = {}; }
         var _this = this;
+        if (options === void 0) { options = {}; }
         this._onDidUpdate = new Emitter();
         this._editor = editor;
         this._options = objects.mixin(options, defaultOptions, false);

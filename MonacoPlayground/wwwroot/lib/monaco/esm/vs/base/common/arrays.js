@@ -172,6 +172,16 @@ export function distinct(array, keyFn) {
         return true;
     });
 }
+export function distinctES6(array) {
+    var seen = new Set();
+    return array.filter(function (element) {
+        if (seen.has(element)) {
+            return false;
+        }
+        seen.add(element);
+        return true;
+    });
+}
 export function firstIndex(array, fn) {
     for (var i = 0; i < array.length; i++) {
         var element = array[i];
@@ -182,7 +192,7 @@ export function firstIndex(array, fn) {
     return -1;
 }
 export function first(array, fn, notFoundValue) {
-    if (notFoundValue === void 0) { notFoundValue = null; }
+    if (notFoundValue === void 0) { notFoundValue = undefined; }
     var index = firstIndex(array, fn);
     return index < 0 ? notFoundValue : array[index];
 }
@@ -220,4 +230,27 @@ export function arrayInsert(target, insertIndex, insertArr) {
     var before = target.slice(0, insertIndex);
     var after = target.slice(insertIndex);
     return before.concat(insertArr, after);
+}
+/**
+ * Pushes an element to the start of the array, if found.
+ */
+export function pushToStart(arr, value) {
+    var index = arr.indexOf(value);
+    if (index > -1) {
+        arr.splice(index, 1);
+        arr.unshift(value);
+    }
+}
+/**
+ * Pushes an element to the end of the array, if found.
+ */
+export function pushToEnd(arr, value) {
+    var index = arr.indexOf(value);
+    if (index > -1) {
+        arr.splice(index, 1);
+        arr.push(value);
+    }
+}
+export function asArray(x) {
+    return Array.isArray(x) ? x : [x];
 }

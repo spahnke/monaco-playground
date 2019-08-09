@@ -16,6 +16,7 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 import * as nls from '../../../../nls.js';
+import * as types from '../../../common/types.js';
 import { IconLabel } from '../../../browser/ui/iconLabel/iconLabel.js';
 import { ActionBar } from '../../../browser/ui/actionbar/actionbar.js';
 import { HighlightedLabel } from '../../../browser/ui/highlightedlabel/highlightedLabel.js';
@@ -321,28 +322,27 @@ var Renderer = /** @class */ (function () {
             // Label
             var options = entry.getLabelOptions() || Object.create(null);
             options.matches = labelHighlights || [];
-            options.title = entry.getTooltip() || undefined;
-            options.descriptionTitle = entry.getDescriptionTooltip() || entry.getDescription() || undefined; // tooltip over description because it could overflow
+            options.title = types.withNullAsUndefined(entry.getTooltip());
+            options.descriptionTitle = entry.getDescriptionTooltip() || types.withNullAsUndefined(entry.getDescription()); // tooltip over description because it could overflow
             options.descriptionMatches = descriptionHighlights || [];
-            data.label.setLabel(entry.getLabel() || undefined, entry.getDescription() || undefined, options);
+            data.label.setLabel(types.withNullAsUndefined(entry.getLabel()), types.withNullAsUndefined(entry.getDescription()), options);
             // Meta
-            data.detail.set(entry.getDetail() || undefined, detailHighlights);
+            data.detail.set(types.withNullAsUndefined(entry.getDetail()), detailHighlights);
             // Keybinding
             data.keybinding.set(entry.getKeybinding());
         }
     };
     Renderer.prototype.disposeTemplate = function (templateId, templateData) {
-        var data = templateData;
-        data.actionBar.dispose();
-        data.actionBar = null;
-        data.container = null;
-        data.entry = null;
-        data.keybinding = null;
-        data.detail = null;
-        data.group = null;
-        data.icon = null;
-        data.label.dispose();
-        data.label = null;
+        templateData.actionBar.dispose();
+        templateData.actionBar = null;
+        templateData.container = null;
+        templateData.entry = null;
+        templateData.keybinding = null;
+        templateData.detail = null;
+        templateData.group = null;
+        templateData.icon = null;
+        templateData.label.dispose();
+        templateData.label = null;
     };
     return Renderer;
 }());

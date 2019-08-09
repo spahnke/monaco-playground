@@ -351,11 +351,14 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
         if (!model) {
             return Promise.resolve(null);
         }
+        var seen = Object.create(null);
         var suggestions = [];
         var wordDefRegExp = new RegExp(wordDef, wordDefFlags);
-        var currentWord = model.getWordUntilPosition(position, wordDefRegExp);
-        var seen = Object.create(null);
-        seen[currentWord.word] = true;
+        var wordUntil = model.getWordUntilPosition(position, wordDefRegExp);
+        var wordAt = model.getWordAtPosition(position, wordDefRegExp);
+        if (wordAt) {
+            seen[model.getValueInRange(wordAt)] = true;
+        }
         for (var iter = model.createWordIterator(wordDefRegExp), e = iter.next(); !e.done && suggestions.length <= BaseEditorSimpleWorker._suggestionsLimit; e = iter.next()) {
             var word = e.value;
             if (seen[word]) {
@@ -369,7 +372,7 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
                 kind: 18 /* Text */,
                 label: word,
                 insertText: word,
-                range: { startLineNumber: position.lineNumber, startColumn: currentWord.startColumn, endLineNumber: position.lineNumber, endColumn: currentWord.endColumn }
+                range: { startLineNumber: position.lineNumber, startColumn: wordUntil.startColumn, endLineNumber: position.lineNumber, endColumn: wordUntil.endColumn }
             });
         }
         return Promise.resolve({ suggestions: suggestions });
@@ -484,7 +487,7 @@ var BaseEditorSimpleWorker = /** @class */ (function () {
     };
     // ---- END diff --------------------------------------------------------------------------
     // ---- BEGIN minimal edits ---------------------------------------------------------------
-    BaseEditorSimpleWorker._diffLimit = 10000;
+    BaseEditorSimpleWorker._diffLimit = 100000;
     // ---- BEGIN suggest --------------------------------------------------------------------------
     BaseEditorSimpleWorker._suggestionsLimit = 10000;
     return BaseEditorSimpleWorker;

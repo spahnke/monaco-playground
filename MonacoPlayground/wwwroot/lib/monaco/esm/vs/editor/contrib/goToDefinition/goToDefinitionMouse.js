@@ -29,6 +29,7 @@ import { EditorState } from '../../browser/core/editorState.js';
 import { DefinitionAction, DefinitionActionConfig } from './goToDefinitionCommands.js';
 import { ClickLinkGesture } from './clickLinkGesture.js';
 import { Position } from '../../common/core/position.js';
+import { withNullAsUndefined } from '../../../base/common/types.js';
 var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
     function GotoDefinitionWithMouseEditorContribution(editor, textModelResolverService, modeService) {
         var _this = this;
@@ -42,7 +43,7 @@ var GotoDefinitionWithMouseEditorContribution = /** @class */ (function () {
         this.toUnhook.push(linkGesture);
         this.toUnhook.push(linkGesture.onMouseMoveOrRelevantKeyDown(function (_a) {
             var mouseEvent = _a[0], keyboardEvent = _a[1];
-            _this.startFindDefinition(mouseEvent, keyboardEvent || undefined);
+            _this.startFindDefinition(mouseEvent, withNullAsUndefined(keyboardEvent));
         }));
         this.toUnhook.push(linkGesture.onExecute(function (mouseEvent) {
             if (_this.isEnabled(mouseEvent)) {

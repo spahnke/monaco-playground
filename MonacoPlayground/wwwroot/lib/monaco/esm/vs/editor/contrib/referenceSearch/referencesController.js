@@ -54,7 +54,7 @@ import { IInstantiationService } from '../../../platform/instantiation/common/in
 import { IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
 import { IStorageService } from '../../../platform/storage/common/storage.js';
-import { ReferenceWidget } from './referencesWidget.js';
+import { ReferenceWidget, LayoutData } from './referencesWidget.js';
 import { Range } from '../../common/core/range.js';
 import { Position } from '../../common/core/position.js';
 import { INotificationService } from '../../../platform/notification/common/notification.js';
@@ -111,7 +111,7 @@ var ReferencesController = /** @class */ (function () {
             }
         }));
         var storageKey = 'peekViewLayout';
-        var data = JSON.parse(this._storageService.get(storageKey, 0 /* GLOBAL */, '{}'));
+        var data = LayoutData.fromJSON(this._storageService.get(storageKey, 0 /* GLOBAL */, '{}'));
         this._widget = this._instantiationService.createInstance(ReferenceWidget, this._editor, this._defaultTreeKeyboardSupport, data);
         this._widget.setTitle(nls.localize('labelLoading', "Loading..."));
         this._widget.show(range);

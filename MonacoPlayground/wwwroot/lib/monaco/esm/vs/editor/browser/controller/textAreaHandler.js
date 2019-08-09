@@ -414,7 +414,7 @@ var TextAreaHandler = /** @class */ (function (_super) {
             return;
         }
         // (in WebKit the textarea is 1px by 1px because it cannot handle input to a 0x0 textarea)
-        // specifically, when doing Korean IME, setting the textare to 0x0 breaks IME badly.
+        // specifically, when doing Korean IME, setting the textarea to 0x0 breaks IME badly.
         ta.setWidth(1);
         ta.setHeight(1);
         tac.setWidth(1);

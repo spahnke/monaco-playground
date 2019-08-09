@@ -33,7 +33,7 @@ import { append, $, toggleClass, getDomNodePagePosition, removeClass, addClass, 
 import { Event, Relay, Emitter, EventBufferer } from '../../../common/event.js';
 import { StandardKeyboardEvent } from '../../keyboardEvent.js';
 import { StaticDND, DragAndDropData } from '../../dnd.js';
-import { range, equals } from '../../../common/arrays.js';
+import { range, equals, distinctES6 } from '../../../common/arrays.js';
 import { ElementsDragAndDropData } from '../list/listView.js';
 import { domEvent } from '../../event.js';
 import { fuzzyScore, FuzzyScore } from '../../../common/filters.js';
@@ -161,6 +161,11 @@ var ComposedTreeDelegate = /** @class */ (function () {
     };
     ComposedTreeDelegate.prototype.hasDynamicHeight = function (element) {
         return !!this.delegate.hasDynamicHeight && this.delegate.hasDynamicHeight(element.element);
+    };
+    ComposedTreeDelegate.prototype.setDynamicHeight = function (element, height) {
+        if (this.delegate.setDynamicHeight) {
+            this.delegate.setDynamicHeight(element.element, height);
+        }
     };
     return ComposedTreeDelegate;
 }());
@@ -416,7 +421,7 @@ var TypeFilterController = /** @class */ (function () {
             .map(function (e) { return new StandardKeyboardEvent(e); })
             .filter(this.keyboardNavigationEventFilter || (function () { return true; }))
             .filter(function () { return _this.automaticKeyboardNavigation || _this.triggered; })
-            .filter(function (e) { return isPrintableCharEvent(e) || ((_this.pattern.length > 0 || _this.triggered) && ((e.keyCode === 9 /* Escape */ || e.keyCode === 1 /* Backspace */) && !e.altKey && !e.ctrlKey && !e.metaKey) || (e.keyCode === 1 /* Backspace */ && (isMacintosh ? e.altKey : e.ctrlKey) && !e.shiftKey)); })
+            .filter(function (e) { return isPrintableCharEvent(e) || ((_this.pattern.length > 0 || _this.triggered) && ((e.keyCode === 9 /* Escape */ || e.keyCode === 1 /* Backspace */) && !e.altKey && !e.ctrlKey && !e.metaKey) || (e.keyCode === 1 /* Backspace */ && (isMacintosh ? (e.altKey && !e.metaKey) : e.ctrlKey) && !e.shiftKey)); })
             .forEach(function (e) { e.stopPropagation(); e.preventDefault(); })
             .event;
         var onClear = domEvent(this.clearDomNode, 'click');
@@ -503,6 +508,7 @@ var TypeFilterController = /** @class */ (function () {
             }
         };
         var onDragOver = function (event) {
+            event.preventDefault(); // needed so that the drop event fires (https://stackoverflow.com/questions/21339924/drop-event-not-firing-in-chrome)
             var x = event.screenX - left;
             if (event.dataTransfer) {
                 event.dataTransfer.dropEffect = 'none';
@@ -587,10 +593,10 @@ var TypeFilterController = /** @class */ (function () {
 function isInputElement(e) {
     return e.tagName === 'INPUT' || e.tagName === 'TEXTAREA';
 }
-function asTreeMouseEvent(event) {
+function asTreeEvent(event) {
     return {
-        browserEvent: event.browserEvent,
-        element: event.element ? event.element.element : null
+        elements: event.elements.map(function (node) { return node.element; }),
+        browserEvent: event.browserEvent
     };
 }
 function dfs(node, fn) {
@@ -638,6 +644,7 @@ var Trait = /** @class */ (function () {
         return this.nodeSet.has(node);
     };
     Trait.prototype.onDidModelSplice = function (_a) {
+        var _this = this;
         var insertedNodes = _a.insertedNodes, deletedNodes = _a.deletedNodes;
         if (!this.identityProvider) {
             var set_1 = this.createNodeSet();
@@ -646,16 +653,28 @@ var Trait = /** @class */ (function () {
             this.set(values(set_1));
             return;
         }
-        var identityProvider = this.identityProvider;
-        var nodesByIdentity = new Map();
-        this.nodes.forEach(function (node) { return nodesByIdentity.set(identityProvider.getId(node.element).toString(), node); });
-        var toDeleteByIdentity = new Map();
-        var toRemoveSetter = function (node) { return toDeleteByIdentity.set(identityProvider.getId(node.element).toString(), node); };
-        var toRemoveDeleter = function (node) { return toDeleteByIdentity.delete(identityProvider.getId(node.element).toString()); };
-        deletedNodes.forEach(function (node) { return dfs(node, toRemoveSetter); });
-        insertedNodes.forEach(function (node) { return dfs(node, toRemoveDeleter); });
-        toDeleteByIdentity.forEach(function (_, id) { return nodesByIdentity.delete(id); });
-        this.set(values(nodesByIdentity));
+        var deletedNodesIdSet = new Set();
+        var deletedNodesVisitor = function (node) { return deletedNodesIdSet.add(_this.identityProvider.getId(node.element).toString()); };
+        deletedNodes.forEach(function (node) { return dfs(node, deletedNodesVisitor); });
+        var insertedNodesMap = new Map();
+        var insertedNodesVisitor = function (node) { return insertedNodesMap.set(_this.identityProvider.getId(node.element).toString(), node); };
+        insertedNodes.forEach(function (node) { return dfs(node, insertedNodesVisitor); });
+        var nodes = [];
+        for (var _i = 0, _b = this.nodes; _i < _b.length; _i++) {
+            var node = _b[_i];
+            var id = this.identityProvider.getId(node.element).toString();
+            var wasDeleted = deletedNodesIdSet.has(id);
+            if (!wasDeleted) {
+                nodes.push(node);
+            }
+            else {
+                var insertedNode = insertedNodesMap.get(id);
+                if (insertedNode) {
+                    nodes.push(insertedNode);
+                }
+            }
+        }
+        this.set(nodes);
     };
     Trait.prototype.createNodeSet = function () {
         var set = new Set();
@@ -735,7 +754,7 @@ var TreeNodeList = /** @class */ (function (_super) {
         var additionalFocus = [];
         var additionalSelection = [];
         elements.forEach(function (node, index) {
-            if (_this.selectionTrait.has(node)) {
+            if (_this.focusTrait.has(node)) {
                 additionalFocus.push(start + index);
             }
             if (_this.selectionTrait.has(node)) {
@@ -743,10 +762,10 @@ var TreeNodeList = /** @class */ (function (_super) {
             }
         });
         if (additionalFocus.length > 0) {
-            _super.prototype.setFocus.call(this, _super.prototype.getFocus.call(this).concat(additionalFocus));
+            _super.prototype.setFocus.call(this, distinctES6(_super.prototype.getFocus.call(this).concat(additionalFocus)));
         }
         if (additionalSelection.length > 0) {
-            _super.prototype.setSelection.call(this, _super.prototype.getSelection.call(this).concat(additionalSelection));
+            _super.prototype.setSelection.call(this, distinctES6(_super.prototype.getSelection.call(this).concat(additionalSelection)));
         }
     };
     TreeNodeList.prototype.setFocus = function (indexes, browserEvent, fromAPI) {
@@ -769,9 +788,9 @@ var TreeNodeList = /** @class */ (function (_super) {
 }(List));
 var AbstractTree = /** @class */ (function () {
     function AbstractTree(container, delegate, renderers, _options) {
+        var _this = this;
         var _a;
         if (_options === void 0) { _options = {}; }
-        var _this = this;
         this._options = _options;
         this.eventBufferer = new EventBufferer();
         this.disposables = [];
@@ -821,8 +840,8 @@ var AbstractTree = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(AbstractTree.prototype, "onMouseDblClick", {
-        get: function () { return Event.map(this.view.onMouseDblClick, asTreeMouseEvent); },
+    Object.defineProperty(AbstractTree.prototype, "onDidOpen", {
+        get: function () { return Event.map(this.view.onDidOpen, asTreeEvent); },
         enumerable: true,
         configurable: true
     });

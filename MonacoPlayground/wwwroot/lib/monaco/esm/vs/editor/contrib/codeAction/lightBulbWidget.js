@@ -23,7 +23,6 @@ import { Disposable } from '../../../base/common/lifecycle.js';
 import './lightBulbWidget.css';
 import { TextModel } from '../../common/model/textModel.js';
 import { CodeActionsState } from './codeActionModel.js';
-import { CodeActionKind } from './codeActionTrigger.js';
 var LightBulbWidget = /** @class */ (function (_super) {
     __extends(LightBulbWidget, _super);
     function LightBulbWidget(editor) {
@@ -118,7 +117,7 @@ var LightBulbWidget = /** @class */ (function (_super) {
         }
         var selection = this._state.rangeOrSelection;
         this._state.actions.then(function (fixes) {
-            if (!token.isCancellationRequested && fixes && fixes.length > 0 && selection) {
+            if (!token.isCancellationRequested && fixes.actions.length > 0 && selection) {
                 _this._show(fixes);
             }
             else {
@@ -178,7 +177,7 @@ var LightBulbWidget = /** @class */ (function (_super) {
             position: { lineNumber: effectiveLineNumber, column: 1 },
             preference: LightBulbWidget._posPref
         };
-        dom.toggleClass(this._domNode, 'autofixable', codeActions.some(function (fix) { return !!fix.kind && CodeActionKind.QuickFix.contains(new CodeActionKind(fix.kind)) && !!fix.isPreferred; }));
+        dom.toggleClass(this._domNode, 'autofixable', codeActions.hasAutoFix);
         this._editor.layoutContentWidget(this);
     };
     LightBulbWidget.prototype.hide = function () {

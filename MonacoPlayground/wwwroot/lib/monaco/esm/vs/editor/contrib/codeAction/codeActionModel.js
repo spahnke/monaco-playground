@@ -12,8 +12,8 @@ import { getCodeActions } from './codeAction.js';
 export var SUPPORTED_CODE_ACTIONS = new RawContextKey('supportedCodeAction', '');
 var CodeActionOracle = /** @class */ (function () {
     function CodeActionOracle(_editor, _markerService, _signalChange, _delay, _progressService) {
-        if (_delay === void 0) { _delay = 250; }
         var _this = this;
+        if (_delay === void 0) { _delay = 250; }
         this._editor = _editor;
         this._markerService = _markerService;
         this._signalChange = _signalChange;

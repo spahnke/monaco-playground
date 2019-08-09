@@ -24,6 +24,7 @@ var IndexTreeModel = /** @class */ (function () {
     function IndexTreeModel(list, rootElement, options) {
         if (options === void 0) { options = {}; }
         this.list = list;
+        this.rootRef = [];
         this.eventBufferer = new EventBufferer();
         this._onDidChangeCollapseState = new Emitter();
         this.onDidChangeCollapseState = this.eventBufferer.wrapEvent(this._onDidChangeCollapseState.event);

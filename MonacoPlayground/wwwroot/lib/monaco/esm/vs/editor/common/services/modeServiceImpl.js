@@ -44,8 +44,8 @@ var LanguageSelection = /** @class */ (function (_super) {
 }(Disposable));
 var ModeServiceImpl = /** @class */ (function () {
     function ModeServiceImpl(warnOnOverwrite) {
-        if (warnOnOverwrite === void 0) { warnOnOverwrite = false; }
         var _this = this;
+        if (warnOnOverwrite === void 0) { warnOnOverwrite = false; }
         this._onDidCreateMode = new Emitter();
         this.onDidCreateMode = this._onDidCreateMode.event;
         this._onLanguagesMaybeChanged = new Emitter();
