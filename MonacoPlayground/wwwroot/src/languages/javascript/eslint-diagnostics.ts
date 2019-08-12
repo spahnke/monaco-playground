@@ -90,7 +90,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		const start = model.getPositionAt(fix.range[0]);
 		const end = model.getPositionAt(fix.range[1]);
 		const textEdit: monaco.languages.TextEdit = {
-			range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
+			range: monaco.Range.fromPositions(start, end),
 			text: fix.text
 		};
 		this.currentFixes.set(this.computeCode(marker), textEdit);
