@@ -1,6 +1,7 @@
-﻿import { registerLanguages } from "./languages/language-registry.js";
-import { ILibrary, addLibrary, doAllowTopLevelReturn } from "./languages/javascript/javascript-extensions.js";
+﻿import { doAllowTopLevelReturn } from "./languages/javascript/javascript-extensions.js";
 import { dom } from "./languages/javascript/lib.js";
+import { registerLanguages } from "./languages/language-registry.js";
+import { addLibrary, ILibrary } from "./monaco-helper.js";
 
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;

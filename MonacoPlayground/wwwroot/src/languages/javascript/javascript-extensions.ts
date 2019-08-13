@@ -1,4 +1,5 @@
-﻿import { EsLintDiagnostics } from "./eslint-diagnostics.js";
+﻿import { addLibrary, ILibrary } from "../../monaco-helper.js";
+import { EsLintDiagnostics } from "./eslint-diagnostics.js";
 import { esnext } from "./lib.js";
 
 export function registerJavascriptLanguageExtensions() {
@@ -47,16 +48,6 @@ declare class Facts {
 	});
 }
 
-export function addLibrary(library: ILibrary): monaco.IDisposable[] {
-	const disposables: monaco.IDisposable[] = [];
-	const uri = monaco.Uri.file(library.filePath);
-	// TODO should make peek/goto definition work but leads to an error
-	if (library.filePath.endsWith("d.ts"))
-		disposables.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, uri.toString()));
-	disposables.push(monaco.editor.createModel(library.contents, library.language, uri));
-	return disposables;
-}
-
 export function doAllowTopLevelReturn(editor: monaco.editor.IStandaloneCodeEditor): monaco.IDisposable {
 	// there is not option in TypeScript to allow top level return statements
 	// so we listen to changes to decorations and filter the marker list
@@ -72,10 +63,4 @@ export function doAllowTopLevelReturn(editor: monaco.editor.IStandaloneCodeEdito
 		if (filteredMarkers.length !== markers.length)
 			monaco.editor.setModelMarkers(model, owner, filteredMarkers);
 	});
-}
-
-export interface ILibrary {
-	contents: string;
-	language: string;
-	filePath: string;
 }
