@@ -1,0 +1,1050 @@
+﻿[
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "closeReferenceSearchEditor"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "closeReferenceSearchEditor"
+	},
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "cancelSelection"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "cancelSelection"
+	},
+	{
+		"key": "ctrl+End",
+		"chord": null,
+		"command": "cursorBottom",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+End",
+		"chord": null,
+		"command": "cursorBottomSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+alt+DownArrow",
+		"chord": null,
+		"command": "cursorColumnSelectDown",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+alt+LeftArrow",
+		"chord": null,
+		"command": "cursorColumnSelectLeft",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+alt+PageDown",
+		"chord": null,
+		"command": "cursorColumnSelectPageDown",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+alt+PageUp",
+		"chord": null,
+		"command": "cursorColumnSelectPageUp",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+alt+RightArrow",
+		"chord": null,
+		"command": "cursorColumnSelectRight",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+alt+UpArrow",
+		"chord": null,
+		"command": "cursorColumnSelectUp",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "DownArrow",
+		"chord": null,
+		"command": "cursorDown",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+DownArrow",
+		"chord": null,
+		"command": "cursorDownSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+DownArrow",
+		"chord": null,
+		"command": "cursorDownSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "End",
+		"chord": null,
+		"command": "cursorEnd",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+End",
+		"chord": null,
+		"command": "cursorEndSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "Home",
+		"chord": null,
+		"command": "cursorHome",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+Home",
+		"chord": null,
+		"command": "cursorHomeSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "LeftArrow",
+		"chord": null,
+		"command": "cursorLeft",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+LeftArrow",
+		"chord": null,
+		"command": "cursorLeftSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "PageDown",
+		"chord": null,
+		"command": "cursorPageDown",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+PageDown",
+		"chord": null,
+		"command": "cursorPageDownSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "PageUp",
+		"chord": null,
+		"command": "cursorPageUp",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+PageUp",
+		"chord": null,
+		"command": "cursorPageUpSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "RightArrow",
+		"chord": null,
+		"command": "cursorRight",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+RightArrow",
+		"chord": null,
+		"command": "cursorRightSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+Home",
+		"chord": null,
+		"command": "cursorTop",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+Home",
+		"chord": null,
+		"command": "cursorTopSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "UpArrow",
+		"chord": null,
+		"command": "cursorUp",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+UpArrow",
+		"chord": null,
+		"command": "cursorUpSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+UpArrow",
+		"chord": null,
+		"command": "cursorUpSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+Backspace",
+		"chord": null,
+		"command": "deleteLeft"
+	},
+	{
+		"key": "Backspace",
+		"chord": null,
+		"command": "deleteLeft"
+	},
+	{
+		"key": "Delete",
+		"chord": null,
+		"command": "deleteRight"
+	},
+	{
+		"key": "ctrl+A",
+		"chord": null,
+		"command": "editor.action.selectAll",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+I",
+		"chord": null,
+		"command": "expandLineSelection",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "shift+Tab",
+		"chord": null,
+		"command": "outdent"
+	},
+	{
+		"key": "ctrl+shift+Z",
+		"chord": null,
+		"command": "redo"
+	},
+	{
+		"key": "ctrl+Y",
+		"chord": null,
+		"command": "redo"
+	},
+	{
+		"key": "ctrl+DownArrow",
+		"chord": null,
+		"command": "scrollLineDown",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+UpArrow",
+		"chord": null,
+		"command": "scrollLineUp",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+PageDown",
+		"chord": null,
+		"command": "scrollPageDown",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+PageUp",
+		"chord": null,
+		"command": "scrollPageUp",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "Tab",
+		"chord": null,
+		"command": "tab"
+	},
+	{
+		"key": "ctrl+Z",
+		"chord": null,
+		"command": "undo"
+	},
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "removeSecondaryCursors"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "removeSecondaryCursors"
+	},
+	{
+		"key": "ctrl+F",
+		"chord": null,
+		"command": "actions.find",
+		"when": ""
+	},
+	{
+		"key": "ctrl+U",
+		"chord": null,
+		"command": "cursorUndo",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+RightArrow",
+		"chord": null,
+		"command": "cursorWordEndRight",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+RightArrow",
+		"chord": null,
+		"command": "cursorWordEndRightSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+LeftArrow",
+		"chord": null,
+		"command": "cursorWordStartLeft",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+shift+LeftArrow",
+		"chord": null,
+		"command": "cursorWordStartLeftSelect",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+Backspace",
+		"chord": null,
+		"command": "deleteWordLeft"
+	},
+	{
+		"key": "ctrl+Delete",
+		"chord": null,
+		"command": "deleteWordRight"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+C",
+		"command": "editor.action.addCommentLine"
+	},
+	{
+		"key": "ctrl+D",
+		"chord": null,
+		"command": "editor.action.addSelectionToNextFindMatch",
+		"when": "editorFocus"
+	},
+	{
+		"key": "shift+alt+A",
+		"chord": null,
+		"command": "editor.action.blockComment"
+	},
+	{
+		"key": "ctrl+F2",
+		"chord": null,
+		"command": "editor.action.changeAll"
+	},
+	{
+		"key": "ctrl+/",
+		"chord": null,
+		"command": "editor.action.commentLine"
+	},
+	{
+		"key": "shift+alt+DownArrow",
+		"chord": null,
+		"command": "editor.action.copyLinesDownAction"
+	},
+	{
+		"key": "shift+alt+UpArrow",
+		"chord": null,
+		"command": "editor.action.copyLinesUpAction"
+	},
+	{
+		"key": "ctrl+shift+K",
+		"chord": null,
+		"command": "editor.action.deleteLines"
+	},
+	{
+		"key": "F7",
+		"chord": null,
+		"command": "editor.action.diffReview.next",
+		"when": "isInDiffEditor"
+	},
+	{
+		"key": "shift+F7",
+		"chord": null,
+		"command": "editor.action.diffReview.prev",
+		"when": "isInDiffEditor"
+	},
+	{
+		"key": "shift+alt+F",
+		"chord": null,
+		"command": "editor.action.formatDocument"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+F",
+		"command": "editor.action.formatSelection"
+	},
+	{
+		"key": "ctrl+F12",
+		"chord": null,
+		"command": "editor.action.goToDeclaration"
+	},
+	{
+		"key": "ctrl+F12",
+		"chord": null,
+		"command": "editor.action.goToImplementation"
+	},
+	{
+		"key": "ctrl+G",
+		"chord": null,
+		"command": "editor.action.gotoLine",
+		"when": "editorFocus"
+	},
+	{
+		"key": "ctrl+shift+.",
+		"chord": null,
+		"command": "editor.action.inPlaceReplace.down"
+	},
+	{
+		"key": "ctrl+shift+,",
+		"chord": null,
+		"command": "editor.action.inPlaceReplace.up"
+	},
+	{
+		"key": "ctrl+]",
+		"chord": null,
+		"command": "editor.action.indentLines"
+	},
+	{
+		"key": "ctrl+alt+UpArrow",
+		"chord": null,
+		"command": "editor.action.insertCursorAbove",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "shift+alt+I",
+		"chord": null,
+		"command": "editor.action.insertCursorAtEndOfEachLineSelected",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+alt+DownArrow",
+		"chord": null,
+		"command": "editor.action.insertCursorBelow",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+Enter",
+		"chord": null,
+		"command": "editor.action.insertLineAfter"
+	},
+	{
+		"key": "ctrl+shift+Enter",
+		"chord": null,
+		"command": "editor.action.insertLineBefore"
+	},
+	{
+		"key": "ctrl+shift+\\",
+		"chord": null,
+		"command": "editor.action.jumpToBracket",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "F8",
+		"chord": null,
+		"command": "editor.action.marker.nextInFiles"
+	},
+	{
+		"key": "shift+F8",
+		"chord": null,
+		"command": "editor.action.marker.prevInFiles"
+	},
+	{
+		"key": "alt+DownArrow",
+		"chord": null,
+		"command": "editor.action.moveLinesDownAction"
+	},
+	{
+		"key": "alt+UpArrow",
+		"chord": null,
+		"command": "editor.action.moveLinesUpAction"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+D",
+		"command": "editor.action.moveSelectionToNextFindMatch",
+		"when": "editorFocus"
+	},
+	{
+		"key": "F3",
+		"chord": null,
+		"command": "editor.action.nextMatchFindAction",
+		"when": "editorFocus"
+	},
+	{
+		"key": "ctrl+F3",
+		"chord": null,
+		"command": "editor.action.nextSelectionMatchFindAction",
+		"when": "editorFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+F12",
+		"command": "editor.action.openDeclarationToTheSide"
+	},
+	{
+		"key": "shift+alt+O",
+		"chord": null,
+		"command": "editor.action.organizeImports"
+	},
+	{
+		"key": "ctrl+[",
+		"chord": null,
+		"command": "editor.action.outdentLines"
+	},
+	{
+		"key": "ctrl+shift+F12",
+		"chord": null,
+		"command": "editor.action.peekImplementation"
+	},
+	{
+		"key": "alt+F12",
+		"chord": null,
+		"command": "editor.action.previewDeclaration"
+	},
+	{
+		"key": "shift+F3",
+		"chord": null,
+		"command": "editor.action.previousMatchFindAction",
+		"when": "editorFocus"
+	},
+	{
+		"key": "ctrl+shift+F3",
+		"chord": null,
+		"command": "editor.action.previousSelectionMatchFindAction",
+		"when": "editorFocus"
+	},
+	{
+		"key": "F1",
+		"chord": null,
+		"command": "editor.action.quickCommand",
+		"when": "editorFocus"
+	},
+	{
+		"key": "ctrl+.",
+		"chord": null,
+		"command": "editor.action.quickFix"
+	},
+	{
+		"key": "ctrl+shift+O",
+		"chord": null,
+		"command": "editor.action.quickOutline"
+	},
+	{
+		"key": "ctrl+shift+R",
+		"chord": null,
+		"command": "editor.action.refactor"
+	},
+	{
+		"key": "shift+F12",
+		"chord": null,
+		"command": "editor.action.referenceSearch.trigger"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+U",
+		"command": "editor.action.removeCommentLine"
+	},
+	{
+		"key": "F2",
+		"chord": null,
+		"command": "editor.action.rename"
+	},
+	{
+		"key": "ctrl+shift+L",
+		"chord": null,
+		"command": "editor.action.selectHighlights",
+		"when": "editorFocus"
+	},
+	{
+		"key": "alt+F1",
+		"chord": null,
+		"command": "editor.action.showAccessibilityHelp",
+		"when": "editorFocus"
+	},
+	{
+		"key": "shift+F10",
+		"chord": null,
+		"command": "editor.action.showContextMenu",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+I",
+		"command": "editor.action.showHover",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "shift+alt+RightArrow",
+		"chord": null,
+		"command": "editor.action.smartSelect.grow",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "shift+alt+LeftArrow",
+		"chord": null,
+		"command": "editor.action.smartSelect.shrink",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+H",
+		"chord": null,
+		"command": "editor.action.startFindReplaceAction",
+		"when": ""
+	},
+	{
+		"key": "ctrl+M",
+		"chord": null,
+		"command": "editor.action.toggleTabFocusMode",
+		"when": ""
+	},
+	{
+		"key": "ctrl+shift+Space",
+		"chord": null,
+		"command": "editor.action.triggerParameterHints"
+	},
+	{
+		"key": "ctrl+Space",
+		"chord": null,
+		"command": "editor.action.triggerSuggest"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+X",
+		"command": "editor.action.trimTrailingWhitespace"
+	},
+	{
+		"key": "F7",
+		"chord": null,
+		"command": "editor.action.wordHighlight.next"
+	},
+	{
+		"key": "shift+F7",
+		"chord": null,
+		"command": "editor.action.wordHighlight.prev"
+	},
+	{
+		"key": "ctrl+shift+[",
+		"chord": null,
+		"command": "editor.fold",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+0",
+		"command": "editor.foldAll",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+/",
+		"command": "editor.foldAllBlockComments",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+8",
+		"command": "editor.foldAllMarkerRegions",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+1",
+		"command": "editor.foldLevel1",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+2",
+		"command": "editor.foldLevel2",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+3",
+		"command": "editor.foldLevel3",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+4",
+		"command": "editor.foldLevel4",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+5",
+		"command": "editor.foldLevel5",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+6",
+		"command": "editor.foldLevel6",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+7",
+		"command": "editor.foldLevel7",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+[",
+		"command": "editor.foldRecursively",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+shift+]",
+		"chord": null,
+		"command": "editor.unfold",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+J",
+		"command": "editor.unfoldAll",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+9",
+		"command": "editor.unfoldAllMarkerRegions",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+K",
+		"chord": "ctrl+]",
+		"command": "editor.unfoldRecursively",
+		"when": "editorTextFocus"
+	},
+	{
+		"key": "ctrl+Enter",
+		"chord": null,
+		"command": "openReferenceToSide"
+	},
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "closeFindWidget"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "closeFindWidget"
+	},
+	{
+		"key": "ctrl+alt+Enter",
+		"chord": null,
+		"command": "editor.action.replaceAll"
+	},
+	{
+		"key": "ctrl+shift+1",
+		"chord": null,
+		"command": "editor.action.replaceOne"
+	},
+	{
+		"key": "alt+Enter",
+		"chord": null,
+		"command": "editor.action.selectAllMatches"
+	},
+	{
+		"key": "alt+C",
+		"chord": null,
+		"command": "toggleFindCaseSensitive",
+		"when": "editorFocus"
+	},
+	{
+		"key": "alt+L",
+		"chord": null,
+		"command": "toggleFindInSelection",
+		"when": "editorFocus"
+	},
+	{
+		"key": "alt+R",
+		"chord": null,
+		"command": "toggleFindRegex",
+		"when": "editorFocus"
+	},
+	{
+		"key": "alt+W",
+		"chord": null,
+		"command": "toggleFindWholeWord",
+		"when": "editorFocus"
+	},
+	{
+		"key": "Tab",
+		"chord": null,
+		"command": "jumpToNextSnippetPlaceholder"
+	},
+	{
+		"key": "shift+Tab",
+		"chord": null,
+		"command": "jumpToPrevSnippetPlaceholder"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "leaveEditorMessage",
+		"when": "messageVisible"
+	},
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "leaveSnippet"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "leaveSnippet"
+	},
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "closeMarkersNavigation"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "closeMarkersNavigation"
+	},
+	{
+		"key": "F4",
+		"chord": null,
+		"command": "goToNextReferenceFromEmbeddedEditor",
+		"when": "inReferenceSearchEditor"
+	},
+	{
+		"key": "shift+F4",
+		"chord": null,
+		"command": "goToPreviousReferenceFromEmbeddedEditor",
+		"when": "inReferenceSearchEditor"
+	},
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "closeParameterHints"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "closeParameterHints"
+	},
+	{
+		"key": "alt+DownArrow",
+		"chord": null,
+		"command": "showNextParameterHint"
+	},
+	{
+		"key": "DownArrow",
+		"chord": null,
+		"command": "showNextParameterHint"
+	},
+	{
+		"key": "alt+UpArrow",
+		"chord": null,
+		"command": "showPrevParameterHint"
+	},
+	{
+		"key": "UpArrow",
+		"chord": null,
+		"command": "showPrevParameterHint"
+	},
+	{
+		"key": "Tab",
+		"chord": null,
+		"command": "acceptSelectedSuggestion"
+	},
+	{
+		"key": "Enter",
+		"chord": null,
+		"command": "acceptSelectedSuggestionOnEnter"
+	},
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "hideSuggestWidget"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "hideSuggestWidget"
+	},
+	{
+		"key": "Tab",
+		"chord": null,
+		"command": "insertBestCompletion"
+	},
+	{
+		"key": "Tab",
+		"chord": null,
+		"command": "insertNextSuggestion"
+	},
+	{
+		"key": "shift+Tab",
+		"chord": null,
+		"command": "insertPrevSuggestion"
+	},
+	{
+		"key": "ctrl+PageDown",
+		"chord": null,
+		"command": "selectNextPageSuggestion"
+	},
+	{
+		"key": "PageDown",
+		"chord": null,
+		"command": "selectNextPageSuggestion"
+	},
+	{
+		"key": "ctrl+DownArrow",
+		"chord": null,
+		"command": "selectNextSuggestion"
+	},
+	{
+		"key": "DownArrow",
+		"chord": null,
+		"command": "selectNextSuggestion"
+	},
+	{
+		"key": "ctrl+PageUp",
+		"chord": null,
+		"command": "selectPrevPageSuggestion"
+	},
+	{
+		"key": "PageUp",
+		"chord": null,
+		"command": "selectPrevPageSuggestion"
+	},
+	{
+		"key": "ctrl+UpArrow",
+		"chord": null,
+		"command": "selectPrevSuggestion"
+	},
+	{
+		"key": "UpArrow",
+		"chord": null,
+		"command": "selectPrevSuggestion"
+	},
+	{
+		"key": "ctrl+Space",
+		"chord": null,
+		"command": "toggleSuggestionDetails"
+	},
+	{
+		"key": "ctrl+alt+Space",
+		"chord": null,
+		"command": "toggleSuggestionFocus"
+	},
+	{
+		"key": "Enter",
+		"chord": null,
+		"command": "acceptRenameInput"
+	},
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "cancelRenameInput"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "cancelRenameInput"
+	},
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "closeAccessibilityHelp"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "closeAccessibilityHelp"
+	},
+	{
+		"key": "alt+DownArrow",
+		"chord": null,
+		"command": "history.showNext"
+	},
+	{
+		"key": "DownArrow",
+		"chord": null,
+		"command": "history.showNext"
+	},
+	{
+		"key": "alt+UpArrow",
+		"chord": null,
+		"command": "history.showPrevious"
+	},
+	{
+		"key": "UpArrow",
+		"chord": null,
+		"command": "history.showPrevious"
+	},
+	{
+		"key": "shift+Escape",
+		"chord": null,
+		"command": "closeReferenceSearch"
+	},
+	{
+		"key": "Escape",
+		"chord": null,
+		"command": "closeReferenceSearch"
+	},
+	{
+		"key": "F4",
+		"chord": null,
+		"command": "goToNextReference",
+		"when": "referenceSearchVisible"
+	},
+	{
+		"key": "shift+F4",
+		"chord": null,
+		"command": "goToPreviousReference",
+		"when": "referenceSearchVisible"
+	},
+	{
+		"key": "F9",
+		"chord": null,
+		"command": "DYNAMIC_19",
+		"when": ""
+	},
+	{
+		"key": "ctrl+=",
+		"chord": null,
+		"command": "DYNAMIC_20",
+		"when": ""
+	},
+	{
+		"key": "ctrl+-",
+		"chord": null,
+		"command": "DYNAMIC_21",
+		"when": ""
+	},
+	{
+		"key": "ctrl+0",
+		"chord": null,
+		"command": "DYNAMIC_22",
+		"when": ""
+	},
+	{
+		"key": "shift+alt+W",
+		"chord": null,
+		"command": "DYNAMIC_23",
+		"when": ""
+	},
+	{
+		"key": "F2",
+		"chord": null,
+		"command": "DYNAMIC_24",
+		"when": ""
+	}
+]

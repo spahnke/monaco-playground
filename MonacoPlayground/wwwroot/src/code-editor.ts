@@ -29,6 +29,7 @@ export class CodeEditor {
 	private constructor(editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
 		this.editor = editor;
 		this.addCommands();
+		this.patchExistingKeyBindings();
 		if (allowTopLevelReturn)
 			this.resources.push(doAllowTopLevelReturn(editor));
 		console.log("editor", this);
@@ -193,5 +194,24 @@ export class CodeEditor {
 		const currentModel = this.editor.getModel();
 		if (currentModel)
 			currentModel.dispose();
+	}
+
+	private patchExistingKeyBindings() {
+		this.patchKeyBinding("editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter); // Default is Ctrl+.
+		this.patchKeyBinding("editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O); // Default is Ctrl+Shift+O
+	}
+
+	private patchKeyBinding(id: string, newKeyBinding?: number, when?: string) {
+		const action = this.editor.getAction(id);
+		(this.editor as any)._standaloneKeybindingService.addDynamicKeybinding(`-${id}`); // remove existing one; no official API yet
+		if (newKeyBinding) {
+			this.editor.addAction({
+				id: action.id,
+				label: action.label,
+				precondition: when,
+				keybindings: [newKeyBinding],
+				run: () => action.run()
+			});
+		}
 	}
 }
