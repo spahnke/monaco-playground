@@ -1,5 +1,6 @@
-﻿import { esnext } from "./lib.js";
-import { registerLanguages } from "./languages/language-registry.js";
+﻿import { registerLanguages } from "./languages/language-registry.js";
+import { ILibrary, addLibrary, doAllowTopLevelReturn } from "./languages/javascript/javascript-extensions.js";
+import { dom } from "./languages/javascript/lib.js";
 
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
@@ -27,10 +28,9 @@ export class CodeEditor {
 
 	private constructor(editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
 		this.editor = editor;
-		this.configureJavascriptSettings();
 		this.addCommands();
 		if (allowTopLevelReturn)
-			this.allowTopLevelReturn();
+			this.resources.push(doAllowTopLevelReturn(editor));
 		console.log("editor", this);
 	}
 
@@ -156,11 +156,15 @@ export class CodeEditor {
 	}
 
 	addLibrary(library: ILibrary) {
-		const uri = monaco.Uri.file(library.filePath);
-		// TODO should make peek/goto definition work but leads to an error
-		if (library.filePath.endsWith("d.ts"))
-			this.resources.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, uri.toString()));
-		this.resources.push(monaco.editor.createModel(library.contents, library.language, uri));
+		this.resources.push(...addLibrary(library));
+	}
+
+	enableJavaScriptBrowserCompletion() {
+		this.addLibrary({
+			contents: dom,
+			language: "typescript",
+			filePath: "lib.dom.d.ts"
+		});
 	}
 
 	async getJavaScriptWorker(): Promise<any> {
@@ -178,48 +182,6 @@ export class CodeEditor {
 		this.editor.dispose();
 	}
 
-	private configureJavascriptSettings() {
-		// validation settings
-		monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-			noSemanticValidation: false,
-			noSyntaxValidation: false,
-		});
-
-		// compiler options
-		monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
-			target: monaco.languages.typescript.ScriptTarget.ESNext,
-			lib: [],
-			alwaysStrict: true,
-			checkJs: true,
-			allowJs: true,
-			allowNonTsExtensions: true, // not documented in the typings but important to get syntax/semantic validation working
-		});
-
-		const libraries: ILibrary[] = [
-			{
-				contents: `
-declare class Facts {
-	/**
-	 * Returns the next fact
-	 *
-	 * [Online documentation](http://www.google.de)
-	 */
-	static next(): string;
-}`,
-				language: "typescript",
-				filePath: "test.d.ts"
-			},
-			{
-				contents: esnext,
-				language: "typescript",
-				filePath: "lib.esnext.d.ts"
-			},
-		];
-
-		for (const library of libraries)
-			this.addLibrary(library);
-	}
-
 	private addCommands() {
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, () => this.zoomIn(), "");
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), "");
@@ -227,36 +189,9 @@ declare class Facts {
 		this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_W, () => this.toggleWhitespaces(), "");
 	}
 
-	private allowTopLevelReturn() {
-		const model = this.editor.getModel();
-		if (model === null || model.getModeId() !== "javascript")
-			throw new Error("Only available for JavaScript documents.");
-
-		// there is not option in TypeScript to allow top level return statements
-		// so we listen to changes to decorations and filter the marker list
-		// (see https://github.com/Microsoft/monaco-editor/issues/1069)
-		this.resources.push(this.editor.onDidChangeModelDecorations(() => {
-			const model = this.editor.getModel();
-			if (model === null || model.getModeId() !== "javascript")
-				return;
-
-			const owner = model.getModeId();
-			const markers = monaco.editor.getModelMarkers({ owner });
-			const filteredMarkers = markers.filter(x => x.message !== "A 'return' statement can only be used within a function body.");
-			if (filteredMarkers.length !== markers.length)
-				monaco.editor.setModelMarkers(model, owner, filteredMarkers);
-		}));
-	}
-
 	private disposeModel() {
 		const currentModel = this.editor.getModel();
 		if (currentModel)
 			currentModel.dispose();
 	}
-}
-
-interface ILibrary {
-	contents: string;
-	language: string;
-	filePath: string;
 }
