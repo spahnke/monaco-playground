@@ -17,11 +17,17 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	protected async doValidate(resource: monaco.Uri): Promise<void> {
 		try {
-			const model = monaco.editor.getModel(resource);
-			if (!this.worker || !model) {
+			if (!this.worker || !monaco.editor.getModel(resource)) {
 				return;
 			}
-			monaco.editor.setModelMarkers(model, this.owner, await this.getDiagnostics(model));
+
+			const markers = await this.getDiagnostics(resource);
+			if (!monaco.editor.getModel(resource)) {
+				// model was disposed in the meantime
+				return;
+			}
+
+			monaco.editor.setModelMarkers(monaco.editor.getModel(resource)!, this.owner, markers);
 		} catch (e) {
 			console.error(e);
 		}
@@ -50,12 +56,16 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return codeActions;
 	}
 
-	private async getDiagnostics(model: monaco.editor.ITextModel): Promise<monaco.editor.IMarkerData[]> {
+	private async getDiagnostics(resource: monaco.Uri): Promise<monaco.editor.IMarkerData[]> {
 		if (this.config === undefined) {
 			this.config = await fetch(this.configPath).then(r => r.json());
 		}
+		if (!monaco.editor.getModel(resource)) {
+			// model was disposed in the meantime
+			return [];
+		}
 
-		const result = await this.worker.process({ code: model.getValue(), config: this.config });
+		const result = await this.worker.process({ code: monaco.editor.getModel(resource)!.getValue(), config: this.config });
 		if (!result.success)
 			return [];
 
@@ -63,8 +73,13 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		if (lintDiagnostics.length === 1 && lintDiagnostics[0].fatal)
 			return [];
 
+		if (!monaco.editor.getModel(resource)) {
+			// model was disposed in the meantime
+			return [];
+		}
+
 		this.currentFixes.clear();
-		return lintDiagnostics.map(x => this.createMarkerData(model, x));
+		return lintDiagnostics.map(x => this.createMarkerData(monaco.editor.getModel(resource)!, x));
 	}
 
 	private createMarkerData(model: monaco.editor.ITextModel, diagnostic: EsLintDiagnostic): monaco.editor.IMarkerData {
