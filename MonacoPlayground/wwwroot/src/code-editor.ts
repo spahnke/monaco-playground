@@ -12,6 +12,13 @@ export class CodeEditor {
 	static create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
 		return new Promise(resolve => {
 			(<any>window).require.config({ paths: { vs: "lib/monaco/dev/vs" } });
+			//(<any>window).require.config({
+			//	"vs/nls": {
+			//		availableLanguages: {
+			//			"*": "de"
+			//		}
+			//	}
+			//});
 			(<any>window).require(["vs/editor/editor.main"], () => {
 				registerLanguages();
 				resolve(new CodeEditor(monaco.editor.create(element, {
