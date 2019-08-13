@@ -14,6 +14,7 @@ async function main() {
 	}
 }
 
+const text = 'asdf';
 const foo = new Foo();
 foo.bar = Facts.next();`, "javascript");
 }

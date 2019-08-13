@@ -5,13 +5,13 @@ import { languageConfig, languageId, monarchTokenProvider } from "./linq-languag
 import { LinqDiagnostics } from "./linq-diagnostics.js";
 
 export function registerLinq() {
-	if (!monaco.languages.getLanguages().some(x => x.id === languageId)) {
-		monaco.languages.register({ id: languageId });
+	monaco.languages.register({ id: languageId });
+	monaco.languages.onLanguage(languageId, () => {
 		monaco.languages.setLanguageConfiguration(languageId, languageConfig);
 		monaco.languages.setMonarchTokensProvider(languageId, monarchTokenProvider);
 		monaco.languages.registerCompletionItemProvider(languageId, new LinqCompletionProvider());
 		monaco.languages.registerDocumentFormattingEditProvider(languageId, new LinqFormatter());
 		monaco.languages.registerHoverProvider(languageId, new LinqHoverProvider());
 		new LinqDiagnostics(languageId); // has side effects
-	}
+	});
 }

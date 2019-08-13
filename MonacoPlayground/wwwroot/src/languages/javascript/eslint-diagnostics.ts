@@ -3,13 +3,14 @@ import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
-	private config: any;
+	private configPath: string;
+	private config: { [key: string]: any } | undefined;
 	private worker: AsyncWorker;
 	private currentFixes: Map<string, monaco.languages.TextEdit> = new Map();
 
-	constructor(config: any) {
+	constructor(configPath: string) {
 		super("javascript", "ESLint");
-		this.config = config;
+		this.configPath = configPath;
 		this.worker = new AsyncWorker("worker/eslint-worker.js");
 		this.disposables.push(this.worker);
 	}
@@ -50,6 +51,10 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private async getDiagnostics(model: monaco.editor.ITextModel): Promise<monaco.editor.IMarkerData[]> {
+		if (this.config === undefined) {
+			this.config = await fetch(this.configPath).then(r => r.json());
+		}
+
 		const result = await this.worker.process({ code: model.getValue(), config: this.config });
 		if (!result.success)
 			return [];
