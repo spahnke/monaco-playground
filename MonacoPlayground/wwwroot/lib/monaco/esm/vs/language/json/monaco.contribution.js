@@ -60,7 +60,7 @@ function getMode() {
 }
 monaco.languages.register({
     id: 'json',
-    extensions: ['.json', '.bowerrc', '.jshintrc', '.jscsrc', '.eslintrc', '.babelrc'],
+    extensions: ['.json', '.bowerrc', '.jshintrc', '.jscsrc', '.eslintrc', '.babelrc', '.har'],
     aliases: ['JSON', 'json'],
     mimetypes: ['application/json'],
 });

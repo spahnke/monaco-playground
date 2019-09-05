@@ -1914,7 +1914,8 @@ define('vs/language/json/languageFeatures',["require", "exports", "vscode-langua
                     containerName: item.containerName,
                     kind: toSymbolKind(item.kind),
                     range: toRange(item.location.range),
-                    selectionRange: toRange(item.location.range)
+                    selectionRange: toRange(item.location.range),
+                    tags: []
                 }); });
             });
         };
