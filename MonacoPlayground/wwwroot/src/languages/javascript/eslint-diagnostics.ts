@@ -34,7 +34,6 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeActionList {
-		// TODO undo/redo not working after applying a code action -> do we need to use a command? If yes, how?
 		const codeActions: monaco.languages.CodeAction[] = [];
 		for (const marker of context.markers) {
 			const code = this.computeCode(marker);
