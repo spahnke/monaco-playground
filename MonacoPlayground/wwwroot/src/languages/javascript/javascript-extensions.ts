@@ -1,6 +1,7 @@
 ﻿import { addLibrary, ILibrary } from "../../monaco-helper.js";
 import { EsLintDiagnostics } from "./eslint-diagnostics.js";
 import { esnext } from "./lib.js";
+import { TodoDiagnostics } from "./todo-diagnostics.js";
 
 export function registerJavascriptLanguageExtensions() {
 	monaco.languages.onLanguage("javascript", () => {
@@ -45,6 +46,7 @@ declare class Facts {
 			addLibrary(library);
 
 		monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("eslintrc.json"));
+		new TodoDiagnostics();
 	});
 }
 
