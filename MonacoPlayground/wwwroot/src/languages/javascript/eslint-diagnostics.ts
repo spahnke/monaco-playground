@@ -36,21 +36,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeActionList {
 		const codeActions: monaco.languages.CodeAction[] = [];
 		for (const marker of context.markers) {
-			const code = this.computeCode(marker);
-			if (!this.currentFixes.has(code))
-				continue;
-			const fix = this.currentFixes.get(code)!;
-			codeActions.push({
-				title: `Fix: ${marker.message}`,
-				diagnostics: [marker],
-				edit: {
-					edits: [{
-						edits: [fix],
-						resource: model.uri,
-					}],
-				},
-				kind: "quickfix"
-			});
+			codeActions.push(...this.getFixCodeActions(model, range, marker));
+			codeActions.push(...this.getDisableRuleCodeActions(model, range, marker));
 		}
 		return { actions: codeActions, dispose: () => { } };
 	}
@@ -81,6 +68,48 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return lintDiagnostics.map(x => this.createMarkerData(monaco.editor.getModel(resource)!, x));
 	}
 
+	private getFixCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData): monaco.languages.CodeAction[] {
+		const code = this.computeCode(marker);
+		if (!this.currentFixes.has(code)) {
+			return [];
+		}
+
+		return [
+			{
+				title: `Fix '${marker.message}'`,
+				diagnostics: [marker],
+				edit: {
+					edits: [{
+						edits: [this.currentFixes.get(code)!],
+						resource: model.uri,
+					}],
+				},
+				kind: "quickfix",
+			}
+		];
+	}
+
+	private getDisableRuleCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData): monaco.languages.CodeAction[] {
+		const ruleId = marker.code;
+		if (!ruleId) {
+			return [];
+		}
+
+		return [
+			{
+				title: `Disable rule '${marker.code}'`,
+				diagnostics: [marker],
+				edit: {
+					edits: [{
+						edits: [{ range: new monaco.Range(1, 1, 1, 1), text: `/* eslint-disable ${ruleId} */${model.getEOL()}` }],
+						resource: model.uri,
+					}],
+				},
+				kind: "quickfix",
+			}
+		];
+	}
+
 	private createMarkerData(model: monaco.editor.ITextModel, diagnostic: EsLintDiagnostic): monaco.editor.IMarkerData {
 		const marker: monaco.editor.IMarkerData = {
 			message: diagnostic.message,
@@ -90,6 +119,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			endColumn: diagnostic.endColumn || diagnostic.column,
 			source: "ESLint",
 			severity: this.transformSeverity(diagnostic),
+			code: diagnostic.ruleId,
 		};
 		if (diagnostic.fix)
 			this.registerFix(model, diagnostic.fix, marker);
