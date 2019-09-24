@@ -22,13 +22,23 @@ export class CodeEditor {
 			(<any>window).require(["vs/editor/editor.main"], () => {
 				registerLanguages();
 				resolve(new CodeEditor(monaco.editor.create(element, {
-					language: language,
-					fontSize: 12,
-					theme: "vs",
-					mouseWheelZoom: false,
 					automaticLayout: true,
+					fixedOverflowWidgets: true,
+					fontSize: 12,
+					formatOnPaste: true,
+					formatOnType: true,
+					language,
+					lightbulb: { enabled: true },
+					minimap: { enabled: true },
+					mouseWheelZoom: false, // sync/reset of zoom does not work atm when using builtin mouse wheel zoom simultaniously (cf. https://github.com/Microsoft/monaco-editor/issues/196)
+					quickSuggestions: {
+						comments: true,
+						other: false,
+						strings: true,
+					},
+					renderWhitespace: "selection",
 					showUnused: true,
-					lightbulb: { enabled: true }
+					theme: "vs",
 				}), allowTopLevelReturn));
 			});
 		});
@@ -46,7 +56,7 @@ export class CodeEditor {
 	setContents(content: string, language?: string, fileName?: string) {
 		this.disposeModel();
 		const uri = monaco.Uri.file(fileName || "app.js");
-		const model = monaco.editor.createModel(content, language || "javascript", uri);
+		const model = monaco.editor.createModel(content, language, uri);
 		this.editor.setModel(model);
 	}
 
@@ -207,6 +217,7 @@ export class CodeEditor {
 	private patchExistingKeyBindings() {
 		this.patchKeyBinding("editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter); // Default is Ctrl+.
 		this.patchKeyBinding("editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O); // Default is Ctrl+Shift+O
+		this.patchKeyBinding("editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R)); // Default is F2
 	}
 
 	private patchKeyBinding(id: string, newKeyBinding?: number, when?: string) {
