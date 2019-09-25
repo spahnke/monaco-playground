@@ -10,7 +10,7 @@
 			"request": "launch",
 			"preLaunchTask": "build",
 			// If you have changed target frameworks, make sure to update the program path.
-			"program": "${workspaceFolder}/MonacoPlayground/bin/Debug/netcoreapp2.1/MonacoPlayground.dll",
+			"program": "${workspaceFolder}/MonacoPlayground/bin/Debug/netcoreapp3.0/MonacoPlayground.dll",
 			"args": [],
 			"cwd": "${workspaceFolder}/MonacoPlayground",
 			"stopAtEntry": false,
