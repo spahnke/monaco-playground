@@ -6,11 +6,11 @@
 	},
 	"rules": {
 		"no-unused-vars": "error",
-		"semi": "warn",
+		"semi": "info",
 		"curly": "warn",
 		"eqeqeq": "warn",
 		"quotes": [
-			"warn",
+			"info",
 			"double",
 			{
 				"avoidEscape": true,
