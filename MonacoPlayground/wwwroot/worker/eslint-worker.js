@@ -2,7 +2,7 @@
 importScripts("/lib/eslint/eslint.js");
 importScripts("/worker/no-id-tostring-in-query.js");
 
-var linter = new eslint();
+var linter = new eslint.Linter();
 NoIdToStringInQuery.register(linter);
 
 addEventListener("message", function (e) {
