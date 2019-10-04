@@ -22,6 +22,15 @@
 				"kind": "build",
 				"isDefault": true
 			}
+		},
+		{
+			"type": "typescript",
+			"label": "ESLint rules",
+			"tsconfig": "rules/tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
 		}
 	]
 }
