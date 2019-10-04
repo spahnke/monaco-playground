@@ -1,6 +1,8 @@
 ﻿import { AsyncWorker } from "../../async-worker.js";
 import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
 
+const autoFixBlacklist = ["no-id-tostring-in-query"];
+
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
 	private configPath: string;
@@ -88,14 +90,14 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 						resource: model.uri,
 					}],
 				},
-				isPreferred: true,
+				isPreferred: !autoFixBlacklist.includes(marker.code!),
 				kind: "quickfix",
 			}
 		});
 	}
 
 	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, markers: monaco.editor.IMarkerData[]): monaco.languages.CodeAction[] {
-		if (marker.code === undefined || !this.currentFixes.has(marker.code))
+		if (marker.code === undefined || !this.currentFixes.has(marker.code) || autoFixBlacklist.includes(marker.code))
 			return [];
 
 		return [
