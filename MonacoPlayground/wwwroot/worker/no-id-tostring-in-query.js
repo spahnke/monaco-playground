@@ -9,7 +9,7 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-var NoIdToStringInQuery = /** @class */ (function () {
+var NoIdToStringInQuery = (function () {
     function NoIdToStringInQuery() {
     }
     NoIdToStringInQuery.register = function (linter) {
@@ -86,7 +86,7 @@ var NoIdToStringInQuery = /** @class */ (function () {
             start: __assign({}, literal.loc.start),
             end: __assign({}, literal.loc.end),
         };
-        var offset = match.index + 1; // literal starts with `"` so we need to add 1
+        var offset = literal.type === "Literal" ? match.index + 1 : match.index;
         var columnStart = location.start.column + offset;
         location.start.column = columnStart;
         location.end.column = columnStart + match[0].length;
@@ -117,17 +117,18 @@ var NoIdToStringInQuery = /** @class */ (function () {
     NoIdToStringInQuery.prototype.applyFix = function (fixer, node, loc) {
         if (!loc)
             return null;
-        if (typeof node.value !== "string" || !("raw" in node) || !node.raw)
-            return null; // TODO only string literal for now, need to handle other cases
-        console.log(node, loc);
-        var text = node.raw.substring(loc.start.column - node.loc.start.column);
-        console.log(text);
+        var literalString = node.type === "Literal" ? node.raw : node.value.raw;
+        if (!literalString)
+            return null;
+        var text = literalString.substring(loc.start.column - node.loc.start.column);
         var regex = /(id)\.toString\(\)(\s*===?\s*)(".*?")/i;
         var newText = text.replace(regex, "$1$2new Guid($3)");
-        console.log(newText);
         if (text === newText)
             return null;
-        return fixer.replaceText(node, node.raw.replace(text, newText));
+        var newNodeText = literalString.replace(text, newText);
+        if (node.type === "TemplateElement")
+            newNodeText = "`" + newNodeText + "`";
+        return fixer.replaceText(node, newNodeText);
     };
     return NoIdToStringInQuery;
 }());

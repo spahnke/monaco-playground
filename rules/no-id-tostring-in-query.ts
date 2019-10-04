@@ -88,7 +88,7 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 			end: { ...literal.loc.end },
 		};
 
-		const offset = match.index + 1; // literal starts with `"` so we need to add 1
+		const offset = literal.type === "Literal" ? match.index + 1 : match.index; // literal starts with `"` so we need to add 1
 		const columnStart = location.start.column + offset;
 		location.start.column = columnStart;
 		location.end.column = columnStart + match[0].length;
@@ -126,20 +126,28 @@ class NoIdToStringInQuery implements Rule.RuleModule {
 		if (!loc)
 			return null;
 
-		if (typeof node.value !== "string" || !("raw" in node) || !node.raw)
-			return null; // TODO only string literal for now, need to handle other cases
+		const literalString = node.type === "Literal" ? node.raw : node.value.raw;
+		if (!literalString)
+			return null;
 
-		console.log(node, loc);
+		// console.log("");
+		// console.log(literalString);
+		// console.log(node, loc);
 
-		const text = node.raw.substring(loc.start.column - node.loc!.start.column);
-		console.log(text);
+		const text = literalString.substring(loc.start.column - node.loc!.start.column);
+		// console.log(text);
 		const regex = /(id)\.toString\(\)(\s*===?\s*)(".*?")/i;
 		const newText = text.replace(regex, "$1$2new Guid($3)");
-		console.log(newText);
+		// console.log(newText);
 
 		if (text === newText)
 			return null;
 
-		return fixer.replaceText(node, node.raw.replace(text, newText));
+		let newNodeText = literalString.replace(text, newText);
+		if (node.type === "TemplateElement")
+			newNodeText = "`" + newNodeText + "`";
+		// console.log(newNodeText);
+
+		return fixer.replaceText(node, newNodeText);
 	}
 }

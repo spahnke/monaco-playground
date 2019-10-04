@@ -6,6 +6,7 @@
 		"sourceMap": false,
 		"strict": true,
 		"noEmitOnError": true,
+		"removeComments": true,
 		"outDir": "../MonacoPlayground/wwwroot/worker"
 	},
 	"exclude": [
