@@ -5,7 +5,7 @@
 		"ecmaFeatures": { "globalReturn": true }
 	},
 	"rules": {
-		"no-unused-vars": "error",
+		"no-unused-vars": "hint",
 		"semi": "info",
 		"curly": "warn",
 		"eqeqeq": "warn",

@@ -136,7 +136,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	/**
-	 * Creates a new config where all "info" level severities are replaced by "warn".
+	 * Creates a new config where all "info" and "hint" level severities are replaced by "warn".
 	 */
 	private createEsLintCompatibleConfig() {
 		this.eslintCompatibleConfig = JSON.parse(JSON.stringify(this.config));
@@ -146,9 +146,9 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			const rule: string | any[] | undefined = this.eslintCompatibleConfig.rules[ruleId];
 			if (rule === undefined)
 				continue;
-			if (Array.isArray(rule) && rule[0] === "info")
+			if (Array.isArray(rule) && (rule[0] === "info" || rule[0] === "hint"))
 				this.eslintCompatibleConfig.rules[ruleId][0] = "warn";
-			if (rule === "info")
+			if (rule === "info" || rule === "hint")
 				this.eslintCompatibleConfig.rules[ruleId] = "warn";
 		}
 	}
@@ -176,21 +176,25 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private transformSeverity(diagnostic: EsLintDiagnostic): monaco.MarkerSeverity {
 		if (diagnostic.severity === 2)
 			return monaco.MarkerSeverity.Error;
+		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "info"))
+			return monaco.MarkerSeverity.Info;
+		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "hint"))
+			return monaco.MarkerSeverity.Hint;
 		if (diagnostic.severity === 1)
-			return this.isInfoSeverity(diagnostic) ? monaco.MarkerSeverity.Info : monaco.MarkerSeverity.Warning;
-		return monaco.MarkerSeverity.Info;
+			return monaco.MarkerSeverity.Warning;
+		return monaco.MarkerSeverity.Hint;
 	}
 
 	/**
-	 * Checks if a normally "warn" level diagnostic is really an "info" level diagnostic.
+	 * Checks if a normally "warn" level diagnostic is really an "info" or "hint" level diagnostic.
 	 */
-	private isInfoSeverity(diagnostic: EsLintDiagnostic): boolean {
+	private isInfoOrHint(diagnostic: EsLintDiagnostic, severity: "info" | "hint"): boolean {
 		if (this.config === undefined)
 			return false;
 		if (diagnostic.severity !== 1)
 			return false;
 		return this.config.rules[diagnostic.ruleId]
-			&& (this.config.rules[diagnostic.ruleId] === "info" || this.config.rules[diagnostic.ruleId][0] === "info");
+			&& (this.config.rules[diagnostic.ruleId] === severity || this.config.rules[diagnostic.ruleId][0] === severity);
 	}
 
 	private registerFix(model: monaco.editor.ITextModel, fix: EsLintFix, marker: monaco.editor.IMarkerData): void {
