@@ -7,9 +7,9 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	private configPath: string;
 	/** Can contain rules with severity "info" that isn't directly supported by ESLint. */
-	private config: { [key: string]: any } | undefined;
+	private config: EsLintConfig | undefined;
 	/** Config where all rules with severity "info" are replaced by "warn". */
-	private eslintCompatibleConfig: { [key: string]: any } | undefined;
+	private eslintCompatibleConfig: EsLintConfig | undefined;
 	private worker: AsyncWorker;
 	private currentFixes: Map<string, monaco.languages.TextEdit[]> = new Map();
 
@@ -145,11 +145,11 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		if (this.eslintCompatibleConfig === undefined)
 			this.eslintCompatibleConfig = {};
 		for (const ruleId in this.eslintCompatibleConfig.rules) {
-			const rule: string | any[] | undefined = this.eslintCompatibleConfig.rules[ruleId];
+			const rule = this.eslintCompatibleConfig.rules[ruleId];
 			if (rule === undefined)
 				continue;
 			if (Array.isArray(rule) && (rule[0] === "info" || rule[0] === "hint"))
-				this.eslintCompatibleConfig.rules[ruleId][0] = "warn";
+				rule[0] = "warn";
 			if (rule === "info" || rule === "hint")
 				this.eslintCompatibleConfig.rules[ruleId] = "warn";
 		}
@@ -195,6 +195,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			return false;
 		if (diagnostic.severity !== 1)
 			return false;
+		if (this.config.rules === undefined)
+			return false;
 		return this.config.rules[diagnostic.ruleId]
 			&& (this.config.rules[diagnostic.ruleId] === severity || this.config.rules[diagnostic.ruleId][0] === severity);
 	}
@@ -213,6 +215,14 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			this.currentFixes.set(marker.code, [textEdit]);
 		else
 			this.currentFixes.get(marker.code)!.push(textEdit);
+	}
+}
+
+type EsLintRuleValue = "off" | "error" | "warn" | "info" | "hint";
+
+interface EsLintConfig {
+	rules?: {
+		[key: string]: EsLintRuleValue | [EsLintRuleValue, ...any[]];
 	}
 }
 
