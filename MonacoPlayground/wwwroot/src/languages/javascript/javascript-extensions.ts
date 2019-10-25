@@ -2,6 +2,8 @@
 import { EsLintDiagnostics } from "./eslint-diagnostics.js";
 import { esnext } from "./lib.js";
 import { TodoDiagnostics } from "./todo-diagnostics.js";
+import { SnippetCompletionProvider } from "../snippet-completion-provider.js";
+import { JsonSnippetService } from "../json-snippet-service.js";
 
 export function registerJavascriptLanguageExtensions() {
 	monaco.languages.onLanguage("javascript", () => {
@@ -45,7 +47,8 @@ declare class Facts {
 		for (const library of libraries)
 			addLibrary(library);
 
-		monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("eslintrc.json"));
+		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("src/languages/javascript/snippets.json")));
+		monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("src/languages/javascript/eslintrc.json"));
 		new TodoDiagnostics();
 	});
 }
