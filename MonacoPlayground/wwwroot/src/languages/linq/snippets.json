@@ -1,0 +1,11 @@
+{
+	"query": {
+		"prefix": "query",
+		"body": [
+			"from x in @$1",
+			"$0",
+			"select x"
+		],
+		"description": "A basic LINQ query"
+	}
+}

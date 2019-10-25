@@ -51,34 +51,12 @@ export class LinqCompletionProvider implements monaco.languages.CompletionItemPr
 			startColumn: word.startColumn,
 			endColumn: word.endColumn
 		};
-		if (model.getValue() === "" && position.lineNumber === 1 && position.column === 1) {
-			return { suggestions: this.getSnippets(range) };
-		}
 
 		if (isTableOrViewIdentifier(model, position, context)) {
 			return this.getTablesAndViews(range);
 		}
 
 		return Promise.resolve(this.getKeywords(range));
-	}
-
-	private getSnippets(range: monaco.IRange): monaco.languages.CompletionItem[] {
-		return [
-			{
-				label: "query",
-				kind: monaco.languages.CompletionItemKind.Snippet,
-				insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-				insertText: `
-from x in @\$1
-\$0
-select x`.trim(),
-				documentation: {
-					value: "A basic LINQ query"
-				},
-				sortText: "_query",
-				range,
-			},
-		];
 	}
 
 	private async getTablesAndViews(range: monaco.IRange): Promise<monaco.languages.CompletionList> {
