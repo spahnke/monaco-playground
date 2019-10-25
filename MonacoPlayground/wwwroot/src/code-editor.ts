@@ -44,6 +44,17 @@ export class CodeEditor {
 		});
 	}
 
+	/**
+	 * CAUTION: Uses internal API to get an object of the non-exported class ContextKeyExpr
+	 */
+	static deserializeContextKeyExpr(context?: string): Promise<any> {
+		return new Promise(resolve => {
+			(window as any).require(["vs/platform/contextkey/common/contextkey"], (x: any) => {
+				resolve(x.ContextKeyExpr.deserialize(context));
+			});
+		});
+	}
+
 	private constructor(editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
 		this.editor = editor;
 		this.addCommands();
@@ -220,17 +231,12 @@ export class CodeEditor {
 		this.patchKeyBinding("editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R)); // Default is F2
 	}
 
-	private patchKeyBinding(id: string, newKeyBinding?: number, when?: string) {
+	private async patchKeyBinding(id: string, newKeyBinding?: number, context?: string) {
 		const action = this.editor.getAction(id);
 		(this.editor as any)._standaloneKeybindingService.addDynamicKeybinding(`-${id}`); // remove existing one; no official API yet
 		if (newKeyBinding) {
-			this.editor.addAction({
-				id: action.id,
-				label: action.label,
-				precondition: when,
-				keybindings: [newKeyBinding],
-				run: () => action.run()
-			});
+			const when = await CodeEditor.deserializeContextKeyExpr(context);
+			(this.editor as any)._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
 		}
 	}
 }
