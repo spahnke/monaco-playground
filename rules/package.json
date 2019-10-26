@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/eslint": "^4.16.3"
+    "@types/eslint": "^6.1.3"
   }
 }
