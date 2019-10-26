@@ -21,14 +21,6 @@
 				"kind": "build",
 				"isDefault": true
 			}
-		},
-		{
-			"type": "npm",
-			"script": "watchrules",
-			"label": "ESLint rules",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
 		}
 	]
 }
