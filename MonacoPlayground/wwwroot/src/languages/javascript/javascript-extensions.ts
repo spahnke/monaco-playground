@@ -49,7 +49,7 @@ declare class Facts {
 
 		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("src/languages/javascript/snippets.json")));
 		monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("src/languages/javascript/eslintrc.json"));
-		new TodoDiagnostics();
+		new TodoDiagnostics(); // has side effects
 	});
 }
 
