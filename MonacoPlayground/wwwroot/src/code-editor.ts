@@ -87,12 +87,11 @@ export class CodeEditor {
 		return this.editor.getConfiguration().readOnly;
 	}
 
-	getSelectedText(): string | null {
-		const model = this.editor.getModel();
+	getSelectedText(): string | undefined {
 		const selection = this.editor.getSelection();
-		if (model === null || selection === null)
-			return null;
-		return model.getValueInRange(selection);
+		if (selection === null)
+			return undefined;
+		return this.editor.getModel()?.getValueInRange(selection);
 	}
 
 	replaceSelectedText(newText: string) {
@@ -101,11 +100,9 @@ export class CodeEditor {
 			this.editor.executeEdits("replace", [{ range: selection, text: newText }]);
 	}
 
-	getLine(): number | null {
+	getLine(): number | undefined {
 		const position = this.editor.getPosition();
-		if (position === null)
-			return null;
-		return position.lineNumber;
+		return position?.lineNumber;
 	}
 
 	gotoLine(line: number) {
@@ -113,12 +110,11 @@ export class CodeEditor {
 		this.editor.revealLineInCenterIfOutsideViewport(line);
 	}
 
-	getOffset(): number | null {
-		const model = this.editor.getModel();
+	getOffset(): number | undefined {
 		const position = this.editor.getPosition();
-		if (model === null || position === null)
-			return null;
-		return model.getOffsetAt(position);
+		if (position === null)
+			return undefined;
+		return this.editor.getModel()?.getOffsetAt(position);
 	}
 
 	gotoOffset(offset: number) {
@@ -172,13 +168,11 @@ export class CodeEditor {
 		this.editor.updateOptions({ renderWhitespace: this.whitespaceVisible ? "boundary" : "none" });
 	}
 
-	getCurrentWord(): string | null {
-		const model = this.editor.getModel();
+	getCurrentWord(): string | undefined {
 		const position = this.editor.getPosition();
-		if (model === null || position === null)
-			return null;
-		const word = model.getWordAtPosition(position);
-		return word === null ? null : word.word;
+		if (position === null)
+			return undefined;
+		return this.editor.getModel()?.getWordAtPosition(position)?.word;
 	}
 
 	addChangeListener(listener: () => void) {
@@ -220,9 +214,7 @@ export class CodeEditor {
 	}
 
 	private disposeModel() {
-		const currentModel = this.editor.getModel();
-		if (currentModel)
-			currentModel.dispose();
+		this.editor.getModel()?.dispose();
 	}
 
 	private patchExistingKeyBindings() {
