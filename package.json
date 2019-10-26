@@ -2,17 +2,13 @@
 	"name": "monaco-playground",
 	"version": "1.0.0",
 	"description": "",
-	"main": "index.js",
-	"directories": {
-		"lib": "lib"
-	},
 	"scripts": {
-		"clean": "rm -rf MonacoPlayground/wwwroot/dist",
-		"buildsrc": "tsc -p MonacoPlayground/src/tsconfig.json",
-		"buildrules": "tsc -p MonacoPlayground/src/rules/tsconfig.json",
+		"clean": "rm -rf wwwroot/dist",
+		"buildsrc": "tsc -p src/tsconfig.json",
+		"buildrules": "tsc -p src/rules/tsconfig.json",
 		"watchrules": "npm run buildrules -- --watch",
-		"copyconfigs": "pushd MonacoPlayground/src && rsync -R languages/**/*.json ../wwwroot/dist && popd",
-		"copymonaco": "pushd node_modules && rsync -r monaco-editor/ ../MonacoPlayground/wwwroot/lib/monaco && popd",
+		"copyconfigs": "pushd src && rsync -R languages/**/*.json ../wwwroot/dist && popd",
+		"copymonaco": "pushd node_modules && rsync -r monaco-editor/ ../wwwroot/lib/monaco && popd",
 		"copyassets": "npm run copyconfigs && npm run copymonaco",
 		"prebuild": "npm run clean",
 		"build": "npm run buildsrc && npm run buildrules",
@@ -21,9 +17,10 @@
 	},
 	"keywords": [],
 	"author": "",
-	"license": "ISC",
+	"license": "MIT",
 	"devDependencies": {
 		"@types/eslint": "^6.1.3",
+		"http-server": "^0.11.1",
 		"monaco-editor": "^0.18.1",
 		"typescript": "^3.8.0-dev.20191026"
 	}
