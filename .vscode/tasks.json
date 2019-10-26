@@ -24,10 +24,10 @@
 			}
 		},
 		{
-			"type": "typescript",
+			"type": "npm",
+			"script": "watchrules",
 			"label": "ESLint rules",
-			"tsconfig": "rules/tsconfig.json",
-			"option": "watch",
+			"path": "MonacoPlayground/src/rules/",
 			"problemMatcher": [
 				"$tsc-watch"
 			],

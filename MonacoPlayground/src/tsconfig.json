@@ -6,5 +6,6 @@
 		"sourceMap": true,
 		"noEmitOnError": true,
 		"outDir": "../wwwroot/dist/"
-	}
+	},
+	"exclude": ["rules"]
 }

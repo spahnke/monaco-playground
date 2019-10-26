@@ -1,5 +1,5 @@
-import { Linter, Rule } from "./node_modules/@types/eslint/index";
-import { CallExpression, Identifier, Literal, Node, SourceLocation, TemplateElement, VariableDeclarator } from "./node_modules/@types/estree/index";
+import { Linter, Rule } from "eslint";
+import { CallExpression, Identifier, Literal, Node, SourceLocation, TemplateElement, VariableDeclarator } from "estree";
 
 class NoIdToStringInQuery implements Rule.RuleModule {
 	static register(linter: Linter) {
