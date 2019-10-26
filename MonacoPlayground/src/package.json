@@ -1,5 +1,5 @@
 {
-  "name": "wwwroot",
+  "name": "monaco-playground",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -7,7 +7,10 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prebuild": "rm -rf ../wwwroot/dist",
+    "build": "tsc",
+    "postbuild": "rsync -R ./languages/**/*.json ../wwwroot/dist",
+    "watch": "npm run build && tsc --watch"
   },
   "keywords": [],
   "author": "",

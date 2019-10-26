@@ -47,8 +47,8 @@ declare class Facts {
 		for (const library of libraries)
 			addLibrary(library);
 
-		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("src/languages/javascript/snippets.json")));
-		monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("src/languages/javascript/eslintrc.json"));
+		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("dist/languages/javascript/snippets.json")));
+		monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("dist/languages/javascript/eslintrc.json"));
 		new TodoDiagnostics(); // has side effects
 	});
 }

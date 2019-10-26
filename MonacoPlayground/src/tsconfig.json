@@ -4,8 +4,7 @@
 		"target": "es2020",
 		"strict": true,
 		"sourceMap": true,
-		"noEmitOnError": true
-	},
-	"include": ["src/**/*.ts", "lib/monaco/monaco.d.ts"],
-	"compileOnSave":  true
+		"noEmitOnError": true,
+		"outDir": "../wwwroot/dist/"
+	}
 }

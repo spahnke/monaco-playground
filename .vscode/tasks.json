@@ -12,9 +12,9 @@
 			"problemMatcher": "$msCompile"
 		},
 		{
-			"type": "typescript",
-			"tsconfig": "MonacoPlayground/wwwroot/tsconfig.json",
-			"option": "watch",
+			"type": "npm",
+			"script": "watch",
+			"path": "MonacoPlayground/src/",
 			"problemMatcher": [
 				"$tsc-watch"
 			],
