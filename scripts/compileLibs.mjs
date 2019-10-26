@@ -10,7 +10,7 @@ import path from "path";
  */
 
 const options = parseCommandLine({
-	libPath: { type: String, defaultValue: "../MonacoPlayground/src/node_modules/typescript/lib" },
+	libPath: { type: String, defaultValue: "../node_modules/typescript/lib" },
 	target: { type: String, defaultValue: "esnext" },
 	complete: { type: Boolean, defaultValue: false },
 	verbose: { type: Boolean, defaultValue: false },
