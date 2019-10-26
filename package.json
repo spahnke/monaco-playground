@@ -13,7 +13,8 @@
 		"prebuild": "npm run clean",
 		"build": "npm run buildsrc && npm run buildrules",
 		"postbuild": "npm run copyassets",
-		"watch": "npm run build && npm run buildsrc -- --watch"
+		"watch": "npm run build && npm run buildsrc -- --watch",
+		"serve": "http-server -c-1 wwwroot"
 	},
 	"keywords": [],
 	"author": "",

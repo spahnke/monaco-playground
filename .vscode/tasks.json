@@ -11,6 +11,22 @@
 				"isDefault": true
 			},
 			"problemMatcher": "$tsc-watch"
+		},
+		{
+			"label": "serve",
+			"type": "npm",
+			"script": "serve",
+			"isBackground": true,
+			"problemMatcher": {
+				"owner": "custom",
+				"pattern": {
+					"regexp": "_____________________"
+				},
+				"background": {
+					"beginsPattern": "^Starting up",
+					"endsPattern": "^Available on"
+				}
+			}
 		}
 	]
 }
