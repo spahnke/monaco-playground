@@ -4,7 +4,7 @@
 	"description": "",
 	"scripts": {
 		"clean": "rm -rf wwwroot/dist wwwroot/languages",
-		"buildsrc": "tsc -p src/tsconfig.json",
+		"buildsrc": "rollup -c",
 		"buildrules": "tsc -p src/rules/tsconfig.json",
 		"watchrules": "npm run buildrules -- --watch",
 		"copyconfigs": "pushd src && rsync -R languages/**/*.json ../wwwroot && popd",
@@ -21,8 +21,12 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@types/eslint": "^6.1.3",
+		"@types/node": "^12.11.7",
 		"http-server": "^0.11.1",
 		"monaco-editor": "^0.18.1",
+		"rollup": "^1.25.2",
+		"rollup-plugin-typescript": "^1.0.1",
+		"tslib": "^1.10.0",
 		"typescript": "^3.8.0-dev.20191026"
 	}
 }

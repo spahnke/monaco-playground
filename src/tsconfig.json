@@ -7,5 +7,5 @@
 		"noEmitOnError": true,
 		"outDir": "../wwwroot/dist/"
 	},
-	"exclude": ["rules"]
+	"exclude": ["rules", "../node_modules"]
 }
