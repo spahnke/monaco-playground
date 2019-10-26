@@ -3,11 +3,11 @@
 	"version": "1.0.0",
 	"description": "",
 	"scripts": {
-		"clean": "rm -rf wwwroot/dist",
+		"clean": "rm -rf wwwroot/dist wwwroot/languages",
 		"buildsrc": "tsc -p src/tsconfig.json",
 		"buildrules": "tsc -p src/rules/tsconfig.json",
 		"watchrules": "npm run buildrules -- --watch",
-		"copyconfigs": "pushd src && rsync -R languages/**/*.json ../wwwroot/dist && popd",
+		"copyconfigs": "pushd src && rsync -R languages/**/*.json ../wwwroot && popd",
 		"copymonaco": "pushd node_modules && rsync -r monaco-editor/ ../wwwroot/lib/monaco && popd",
 		"copyassets": "npm run copyconfigs && npm run copymonaco",
 		"prebuild": "npm run clean",

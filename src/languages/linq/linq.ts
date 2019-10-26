@@ -12,7 +12,7 @@ export function registerLinq() {
 		monaco.languages.setLanguageConfiguration(languageId, languageConfig);
 		monaco.languages.setMonarchTokensProvider(languageId, monarchTokenProvider);
 		monaco.languages.registerCompletionItemProvider(languageId, new LinqCompletionProvider());
-		monaco.languages.registerCompletionItemProvider(languageId, new SnippetCompletionProvider(new JsonSnippetService("dist/languages/linq/snippets.json")));
+		monaco.languages.registerCompletionItemProvider(languageId, new SnippetCompletionProvider(new JsonSnippetService("languages/linq/snippets.json")));
 		monaco.languages.registerDocumentFormattingEditProvider(languageId, new LinqFormatter());
 		monaco.languages.registerHoverProvider(languageId, new LinqHoverProvider());
 		new LinqDiagnostics(languageId); // has side effects
