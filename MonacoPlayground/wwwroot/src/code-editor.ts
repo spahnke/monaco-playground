@@ -66,7 +66,7 @@ export class CodeEditor {
 
 	setContents(content: string, language?: string, fileName?: string) {
 		this.disposeModel();
-		const uri = monaco.Uri.file(fileName || "app.js");
+		const uri = monaco.Uri.file(fileName ?? "app.js");
 		const model = monaco.editor.createModel(content, language, uri);
 		this.editor.setModel(model);
 	}
