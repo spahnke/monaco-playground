@@ -11,10 +11,12 @@
 		"buildsrc": "tsc -p MonacoPlayground/src/tsconfig.json",
 		"buildrules": "tsc -p MonacoPlayground/src/rules/tsconfig.json",
 		"watchrules": "npm run buildrules -- --watch",
-		"copyassets": "pushd MonacoPlayground/src && rsync -R languages/**/*.json ../wwwroot/dist && popd",
+		"copyconfigs": "pushd MonacoPlayground/src && rsync -R languages/**/*.json ../wwwroot/dist && popd",
+		"copymonaco": "pushd node_modules && rsync -r monaco-editor/ ../MonacoPlayground/wwwroot/lib/monaco && popd",
+		"copyassets": "npm run copyconfigs && npm run copymonaco",
 		"prebuild": "npm run clean",
-		"build": "npm run buildsrc",
-		"postbuild": "npm run copyassets && npm run buildrules",
+		"build": "npm run buildsrc && npm run buildrules",
+		"postbuild": "npm run copyassets",
 		"watch": "npm run build && npm run buildsrc -- --watch"
 	},
 	"keywords": [],
@@ -22,6 +24,7 @@
 	"license": "ISC",
 	"devDependencies": {
 		"@types/eslint": "^6.1.3",
+		"monaco-editor": "^0.18.1",
 		"typescript": "^3.8.0-dev.20191026"
 	}
 }

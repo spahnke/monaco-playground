@@ -1,4 +1,5 @@
 MonacoPlayground/wwwroot/dist/
+MonacoPlayground/wwwroot/lib/monaco
 MonacoPlayground/wwwroot/worker/
 !MonacoPlayground/wwwroot/worker/eslint-worker.js
 

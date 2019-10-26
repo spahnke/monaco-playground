@@ -2,7 +2,8 @@ Playground for the [Monaco editor](https://github.com/Microsoft/monaco-editor) u
 
 ## Running
 ```sh
-$ cd MonacoPlayground
-$ tsc -p wwwroot/tsconfig.json # or run tsc directly in the wwwroot folder
-$ dotnet run
+npm install
+npm run build
+dotnet run
 ```
+Alternatively to the build commands you can use `Cmd-Shift-B` followed by `F5` inside VS Code.
