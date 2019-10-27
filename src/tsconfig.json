@@ -3,9 +3,7 @@
 		"module": "esnext",
 		"target": "es2020",
 		"strict": true,
-		"sourceMap": true,
-		"noEmitOnError": true,
-		"outDir": "../wwwroot/dist/"
+		"sourceMap": true
 	},
 	"exclude": ["rules", "../node_modules"]
 }
