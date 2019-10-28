@@ -25,7 +25,7 @@ export class TodoDiagnostics extends DiagnosticsAdapter {
 					className: "monacoTodo",
 					inlineClassName: "monacoTodo",
 					overviewRuler: {
-						color: "#388813",
+						color: "hsl(100, 75%, 30%)",
 						position: monaco.editor.OverviewRulerLane.Center
 					},
 					stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
