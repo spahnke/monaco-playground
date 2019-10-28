@@ -1,4 +1,6 @@
-﻿export interface ILibrary {
+﻿import { SnippetCompletionProvider, ISnippetService, Snippet } from "./languages/snippet-completion-provider.js";
+
+export interface ILibrary {
 	contents: string;
 	language: string;
 	filePath: string;
@@ -9,6 +11,7 @@ export interface ITemplate {
 	name: string;
 	description: string;
 	templateText: string;
+	sortText?: string;
 }
 
 export function addLibrary(library: ILibrary): monaco.IDisposable[] {
@@ -26,25 +29,18 @@ export function addLibrary(library: ILibrary): monaco.IDisposable[] {
 }
 
 export function addTemplates(language: string, templates: ITemplate[]): monaco.IDisposable {
-	return monaco.languages.registerCompletionItemProvider(language, {
-		provideCompletionItems(model: monaco.editor.ITextModel, position: monaco.Position, context: monaco.languages.CompletionContext, token: monaco.CancellationToken) {
-			const word = model.getWordUntilPosition(position);
-			const range = new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
-			return {
-				suggestions: templates.map(x => asCompletionItem(x, range))
-			};
-		}
-	});
+	return monaco.languages.registerCompletionItemProvider(language, new SnippetCompletionProvider(new InMemorySnippetService(templates)));
 }
 
-function asCompletionItem(template: ITemplate, range: monaco.Range): monaco.languages.CompletionItem {
-	return {
-		label: template.name,
-		filterText: template.prefix,
-		kind: monaco.languages.CompletionItemKind.Snippet,
-		insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-		detail: template.description,
-		insertText: template.templateText,
-		range,
-	};
+class InMemorySnippetService implements ISnippetService {
+	constructor(private readonly orionTemplates: ITemplate[]) {
+	}
+
+	async getSnippets(): Promise<Snippet[]> {
+		return this.orionTemplates.map(this.asSnippet);
+	}
+
+	private asSnippet(template: ITemplate): Snippet {
+		return new Snippet(template.name, template.prefix, template.templateText, template.description, template.name, template.prefix, template.sortText);
+	}
 }
