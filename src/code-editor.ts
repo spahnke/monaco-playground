@@ -61,7 +61,6 @@ export class CodeEditor {
 		this.patchExistingKeyBindings();
 		if (allowTopLevelReturn)
 			this.resources.push(doAllowTopLevelReturn(editor));
-		console.log("editor", this);
 	}
 
 	setContents(content: string, language?: string, fileName?: string) {
