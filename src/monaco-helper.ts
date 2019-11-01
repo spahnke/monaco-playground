@@ -18,12 +18,15 @@ export function addLibrary(library: ILibrary): monaco.IDisposable[] {
 	const disposables: monaco.IDisposable[] = [];
 
 	const uri = monaco.Uri.file(library.filePath);
-	// TODO should make peek/goto definition work but leads to an error
 	if (library.filePath.endsWith("d.ts")) {
 		disposables.push(monaco.languages.typescript.javascriptDefaults.addExtraLib(library.contents, uri.toString()));
 		disposables.push(monaco.languages.typescript.typescriptDefaults.addExtraLib(library.contents, uri.toString()));
 	}
-	disposables.push(monaco.editor.createModel(library.contents, library.language, uri));
+	const model = monaco.editor.getModel(uri);
+	if (!model)
+		disposables.push(monaco.editor.createModel(library.contents, library.language, uri));
+	else
+		model.setValue(library.contents);
 
 	return disposables;
 }
