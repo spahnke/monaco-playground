@@ -89,7 +89,10 @@ export class CodeEditor {
 	}
 
 	setReadonly(value: boolean) {
-		this.editor.updateOptions({ readOnly: value });
+		this.editor.updateOptions({
+			readOnly: value,
+			lightbulb: { enabled: !value } // because of https://github.com/microsoft/monaco-editor/issues/1596
+		});
 	}
 
 	isReadonly(): boolean {
