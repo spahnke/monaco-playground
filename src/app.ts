@@ -1,7 +1,7 @@
 ﻿import { CodeEditor } from "./code-editor.js";
 
 async function main() {
-	const editor = await CodeEditor.create(document.querySelector(".editor") as HTMLElement);
+	const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
 
 	editor.setContents(`class Foo {
 	/**
