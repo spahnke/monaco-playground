@@ -36,11 +36,11 @@ export function addTemplates(language: string, templates: ITemplate[]): monaco.I
 }
 
 class InMemorySnippetService implements ISnippetService {
-	constructor(private readonly orionTemplates: ITemplate[]) {
+	constructor(private readonly templates: ITemplate[]) {
 	}
 
 	async getSnippets(): Promise<Snippet[]> {
-		return this.orionTemplates.map(this.asSnippet);
+		return this.templates.map(this.asSnippet);
 	}
 
 	private asSnippet(template: ITemplate): Snippet {
