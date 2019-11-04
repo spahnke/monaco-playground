@@ -16,7 +16,7 @@ export class Snippet {
 		readonly sortText: string = prefix
 	) {
 		this.body = Array.isArray(body) ? body.join("\n") : body;
-		this.prefixLow = prefix ? prefix.toLowerCase() : prefix;
+		this.prefixLow = prefix?.toLowerCase();
 	}
 
 	get documentation(): monaco.IMarkdownString {
