@@ -1,5 +1,5 @@
 node_modules/
 wwwroot/dist/
 wwwroot/languages/
-wwwroot/lib/monaco
+wwwroot/lib/
 wwwroot/worker/
