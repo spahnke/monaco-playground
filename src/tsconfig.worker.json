@@ -2,9 +2,10 @@
 	"compilerOptions": {
 		"module": "amd",
 		"target": "es5",
-		"lib": ["webworker", "es2015"],
+		"lib": ["dom", "es2015"],
 		"sourceMap": false,
 		"strict": true,
-		"outDir": "../../../../wwwroot/worker"
-	}
+		"outDir": "../wwwroot/worker"
+	},
+	"include": ["**/worker", "*.d.ts"]
 }
