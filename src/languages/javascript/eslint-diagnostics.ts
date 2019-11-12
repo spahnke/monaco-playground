@@ -1,4 +1,4 @@
-import { Linter, Rule } from "eslint";
+﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 
@@ -47,7 +47,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private async getDiagnostics(resource: monaco.Uri): Promise<monaco.editor.IMarkerData[]> {
-		const client = await this.createEslintClient();
+		const client = await this.createEslintWorker();
 		const lintDiagnostics = await client.lint(resource.toString());
 		if (lintDiagnostics.length === 1 && lintDiagnostics[0].fatal)
 			return [this.transformDiagnostic(lintDiagnostics[0])];
@@ -61,7 +61,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return lintDiagnostics.map(x => this.createMarkerData(monaco.editor.getModel(resource)!, x));
 	}
 
-	private async createEslintClient(): Promise<EsLintWorker> {
+	private async createEslintWorker(): Promise<EsLintWorker> {
 		if (this.client !== undefined)
 			return this.client;
 
