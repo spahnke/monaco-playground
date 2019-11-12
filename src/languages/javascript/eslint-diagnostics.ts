@@ -1,4 +1,4 @@
-﻿import { Linter, Rule } from "eslint";
+import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 
@@ -8,9 +8,8 @@ const autoFixBlacklist = ["no-id-tostring-in-query"];
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
-	/** Can contain rules with severity "info" that isn't directly supported by ESLint. */
+	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
 	private config: Linter.Config<Linter.RulesRecord> | undefined;
-	/** Config where all rules with severity "info" are replaced by "warn". */
 	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
 	private client: EsLintWorker | undefined;
 	private currentFixes: Map<string, monaco.languages.TextEdit[]> = new Map();
