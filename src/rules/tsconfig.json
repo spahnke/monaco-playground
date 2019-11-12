@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"module": "esnext",
+		"module": "amd",
 		"target": "es5",
 		"lib": ["webworker", "es2015"],
 		"sourceMap": false,
