@@ -6,7 +6,7 @@
 		"clean": "rm -rf wwwroot/dist wwwroot/languages wwwroot/lib/monaco",
 		"buildrules": "tsc -p src/rules/tsconfig.json",
 		"watchrules": "npm run buildrules -- --watch",
-		"copyconfigs": "pushd src && rsync -R languages/**/*.json ../wwwroot && popd",
+		"copyconfigs": "cd src && rsync -R languages/**/*.json ../wwwroot && cd -",
 		"copymonaco": "rsync -a node_modules/monaco-editor/ wwwroot/lib/monaco",
 		"prebuild": "npm run copyconfigs && npm run copymonaco",
 		"build": "npm run buildrules && rollup -c",
