@@ -3,4 +3,3 @@ wwwroot/dist/
 wwwroot/languages/
 wwwroot/lib/monaco
 wwwroot/worker/
-!wwwroot/worker/eslint-worker.js

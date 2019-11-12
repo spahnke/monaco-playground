@@ -1,16 +1,12 @@
 import { Linter } from "eslint"; // only types
-// @ts-ignore Import lib itself
+// @ts-ignore import lib itself
 import * as eslint from "/lib/eslint/eslint.js";
 import { NoIdToStringInQuery } from "./no-id-tostring-in-query.js";
 
-type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
-
-class EslintWorker {
+class EsLintWorker {
 	private linter: Linter;
-	private eslintCompatibleConfig: Linter.Config<Linter.RulesRecord>;
 
 	constructor(private context: monaco.worker.IWorkerContext, private config: Linter.Config<Linter.RulesRecord>) {
-		this.eslintCompatibleConfig = this.createEsLintCompatibleConfig();
 		this.linter = new eslint.Linter();
 		NoIdToStringInQuery.register(this.linter);
 	}
@@ -19,23 +15,7 @@ class EslintWorker {
 		const model = this.context.getMirrorModels().find(m => m.uri.toString() === fileName);
 		if (!model)
 			return [];
-		return this.linter.verify(model.getValue(), this.eslintCompatibleConfig);
-	}
-
-	private createEsLintCompatibleConfig(): Linter.Config<Linter.RulesRecord> {
-		let compatConfig = JSON.parse(JSON.stringify(this.config)) as Linter.Config<Linter.RulesRecord> | undefined;
-		if (compatConfig === undefined)
-			compatConfig = {};
-		for (const ruleId in compatConfig.rules) {
-			const rule = compatConfig.rules[ruleId];
-			if (rule === undefined)
-				continue;
-			if (Array.isArray(rule) && ((rule[0] as ExtendedRuleLevel) === "info" || (rule[0] as ExtendedRuleLevel) === "hint"))
-				rule[0] = "warn";
-			if ((rule as ExtendedRuleLevel) === "info" || (rule as ExtendedRuleLevel) === "hint")
-				compatConfig.rules[ruleId] = "warn";
-		}
-		return compatConfig;
+		return this.linter.verify(model.getValue(), this.config);
 	}
 }
 
@@ -44,5 +24,5 @@ interface ICreateData {
 }
 
 export function create(context: monaco.worker.IWorkerContext, createData: ICreateData) {
-	return new EslintWorker(context, createData.config);
+	return new EsLintWorker(context, createData.config);
 }

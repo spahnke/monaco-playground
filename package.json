@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"description": "",
 	"scripts": {
-		"clean": "rm -rf wwwroot/dist wwwroot/languages wwwroot/lib/monaco",
+		"clean": "rm -rf wwwroot/dist wwwroot/languages wwwroot/lib/monaco wwwroot/worker",
 		"buildrules": "tsc -p src/rules/tsconfig.json",
 		"watchrules": "npm run buildrules -- --watch",
 		"copyconfigs": "cd src && rsync -R languages/**/*.json ../wwwroot && cd -",
