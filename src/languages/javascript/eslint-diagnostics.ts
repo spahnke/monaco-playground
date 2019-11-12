@@ -71,7 +71,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 		this.config = await fetch(this.configPath).then(r => r.json());
 		this.worker = monaco.editor.createWebWorker<IEsLintClient>({
-			moduleId: "/worker/eslint-webworker",
+			moduleId: "/worker/eslint-worker",
 			label: "ESLint",
 			createData: { config: this.createEsLintCompatibleConfig() }
 		});
