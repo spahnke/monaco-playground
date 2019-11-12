@@ -9,14 +9,17 @@ class EslintWorker {
 	private linter: Linter;
 	private eslintCompatibleConfig: Linter.Config<Linter.RulesRecord>;
 
-	constructor(private config: Linter.Config<Linter.RulesRecord>) {
+	constructor(private context: monaco.worker.IWorkerContext, private config: Linter.Config<Linter.RulesRecord>) {
 		this.eslintCompatibleConfig = this.createEsLintCompatibleConfig();
 		this.linter = new eslint.Linter();
 		NoIdToStringInQuery.register(this.linter);
 	}
 
-	lint(code: string): Linter.LintMessage[] {
-		return this.linter.verify(code, this.eslintCompatibleConfig);
+	lint(fileName: string): Linter.LintMessage[] {
+		const model = this.context.getMirrorModels().find(m => m.uri.toString() === fileName);
+		if (!model)
+			return [];
+		return this.linter.verify(model.getValue(), this.eslintCompatibleConfig);
 	}
 
 	private createEsLintCompatibleConfig(): Linter.Config<Linter.RulesRecord> {
@@ -41,6 +44,5 @@ interface ICreateData {
 }
 
 export function create(context: monaco.worker.IWorkerContext, createData: ICreateData) {
-	console.log(`Creating worker...`, context, createData);
-	return new EslintWorker(createData.config);
+	return new EslintWorker(context, createData.config);
 }
