@@ -4,8 +4,8 @@
 	"description": "",
 	"scripts": {
 		"clean": "rm -rf wwwroot/dist wwwroot/languages wwwroot/lib/monaco wwwroot/worker",
-		"buildworker": "tsc -p src/tsconfig.worker.json",
-		"watchworker": "npm run buildworker -- --watch",
+		"buildworker": "rollup -c rollup.config.worker.js",
+		"watchworker": "npm run buildworker -- -w",
 		"copyconfigs": "cd src && rsync -R languages/**/*.json ../wwwroot && cd -",
 		"copymonaco": "rsync -a node_modules/monaco-editor/ wwwroot/lib/monaco",
 		"prebuild": "npm run copyconfigs && npm run copymonaco",
