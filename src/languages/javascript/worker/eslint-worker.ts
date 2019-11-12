@@ -13,7 +13,7 @@ export class EsLintWorker {
 
 	async lint(fileName: string): Promise<Linter.LintMessage[]> {
 		const model = this.context.getMirrorModels().find(m => m.uri.toString() === fileName);
-		if (!model)
+		if (model === undefined)
 			return [];
 		return this.linter.verify(model.getValue(), this.config);
 	}
