@@ -6,11 +6,19 @@
 		{
 			"type": "npm",
 			"script": "dev",
+			"isBackground": true,
 			"group": {
 				"kind": "build",
 				"isDefault": true
 			},
-			"problemMatcher": "$tsc-watch"
+			"problemMatcher": {
+				"base": "$tsc-watch",
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "^rollup",
+					"endsPattern": "waiting for changes\\.\\.\\.$"
+				}
+			}
 		},
 		{
 			"label": "serve",
