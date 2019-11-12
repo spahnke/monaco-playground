@@ -1,9 +1,6 @@
 ﻿import { Linter, Rule } from "eslint"; // only types
 import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
-
-interface IEsLintClient {
-	lint(fileName: string): Promise<Linter.LintMessage[]>;
-}
+import { EsLintWorker } from "./worker/eslint-worker.js";
 
 type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
 
@@ -14,8 +11,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	/** Can contain rules with severity "info" that isn't directly supported by ESLint. */
 	private config: Linter.Config<Linter.RulesRecord> | undefined;
 	/** Config where all rules with severity "info" are replaced by "warn". */
-	private worker: monaco.editor.MonacoWebWorker<IEsLintClient> | undefined;
-	private client: IEsLintClient | undefined;
+	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
+	private client: EsLintWorker | undefined;
 	private currentFixes: Map<string, monaco.languages.TextEdit[]> = new Map();
 
 	constructor(private configPath: string) {
@@ -65,12 +62,12 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return lintDiagnostics.map(x => this.createMarkerData(monaco.editor.getModel(resource)!, x));
 	}
 
-	private async createEslintClient(): Promise<IEsLintClient> {
+	private async createEslintClient(): Promise<EsLintWorker> {
 		if (this.client !== undefined)
 			return this.client;
 
 		this.config = await fetch(this.configPath).then(r => r.json());
-		this.worker = monaco.editor.createWebWorker<IEsLintClient>({
+		this.worker = monaco.editor.createWebWorker<EsLintWorker>({
 			moduleId: "/worker/eslint-worker",
 			label: "ESLint",
 			createData: { config: this.createEsLintCompatibleConfig() }

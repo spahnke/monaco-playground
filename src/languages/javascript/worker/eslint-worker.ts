@@ -3,7 +3,7 @@ import { Linter } from "eslint"; // only types
 import * as eslint from "/lib/eslint/eslint.js";
 import { NoIdToStringInQuery } from "./no-id-tostring-in-query.js";
 
-class EsLintWorker {
+export class EsLintWorker {
 	private linter: Linter;
 
 	constructor(private context: monaco.worker.IWorkerContext, private config: Linter.Config<Linter.RulesRecord>) {
@@ -11,7 +11,7 @@ class EsLintWorker {
 		NoIdToStringInQuery.register(this.linter);
 	}
 
-	lint(fileName: string): Linter.LintMessage[] {
+	async lint(fileName: string): Promise<Linter.LintMessage[]> {
 		const model = this.context.getMirrorModels().find(m => m.uri.toString() === fileName);
 		if (!model)
 			return [];
