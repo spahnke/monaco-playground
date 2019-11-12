@@ -1,5 +1,5 @@
+import { Linter } from "eslint";
 import "./eslint.js";
-import { Linter } from "eslint"; // only types
 import { NoIdToStringInQuery } from "./no-id-tostring-in-query.js";
 
 declare namespace eslint {

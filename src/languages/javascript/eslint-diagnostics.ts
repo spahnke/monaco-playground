@@ -1,4 +1,4 @@
-﻿import { Linter, Rule } from "eslint"; // only types
+﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 
