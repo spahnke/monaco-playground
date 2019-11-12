@@ -1,7 +1,14 @@
+import "./eslint.js";
 import { Linter } from "eslint"; // only types
-// @ts-ignore import lib itself
-import * as eslint from "/lib/eslint/eslint.js";
 import { NoIdToStringInQuery } from "./no-id-tostring-in-query.js";
+
+declare namespace eslint {
+	interface LinterConstructor {
+		new(): Linter;
+	}
+
+	export const Linter: LinterConstructor;
+}
 
 export class EsLintWorker {
 	private linter: Linter;

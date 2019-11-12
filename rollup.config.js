@@ -27,7 +27,6 @@ export default [
 			format: "amd",
 			sourcemap: true,
 		},
-		external: ["/lib/eslint/eslint.js"],
 		plugins
 	}
 ]
