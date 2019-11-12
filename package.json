@@ -4,13 +4,13 @@
 	"description": "",
 	"scripts": {
 		"clean": "rm -rf wwwroot/dist wwwroot/languages wwwroot/lib/monaco wwwroot/worker",
-		"buildrules": "tsc -p src/rules/tsconfig.json",
-		"watchrules": "npm run buildrules -- --watch",
+		"buildworker": "tsc -p src/languages/javascript/worker/tsconfig.json",
+		"watchworker": "npm run buildworker -- --watch",
 		"copyconfigs": "cd src && rsync -R languages/**/*.json ../wwwroot && cd -",
 		"copymonaco": "rsync -a node_modules/monaco-editor/ wwwroot/lib/monaco",
 		"prebuild": "npm run copyconfigs && npm run copymonaco",
-		"build": "npm run buildrules && rollup -c",
-		"dev": "npm run prebuild && npm run buildrules && rollup -c -w",
+		"build": "npm run buildworker && rollup -c",
+		"dev": "npm run prebuild && npm run buildworker && rollup -c -w",
 		"serve": "http-server -c-1 wwwroot"
 	},
 	"keywords": [],

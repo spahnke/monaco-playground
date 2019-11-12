@@ -5,5 +5,5 @@
 		"strict": true,
 		"sourceMap": true
 	},
-	"exclude": ["rules", "../node_modules"]
+	"exclude": ["languages/javascript/worker", "../node_modules"]
 }
