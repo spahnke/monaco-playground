@@ -10,7 +10,6 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
 	private config: Linter.Config<Linter.RulesRecord> | undefined;
-	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
 	private client: EsLintWorker | undefined;
 	private currentFixes: Map<string, monaco.languages.TextEdit[]> = new Map();
 
@@ -66,14 +65,14 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			return this.client;
 
 		this.config = await fetch(this.configPath).then(r => r.json());
-		this.worker = monaco.editor.createWebWorker<EsLintWorker>({
+		const worker = monaco.editor.createWebWorker<EsLintWorker>({
 			moduleId: "/worker/eslint-worker",
 			label: "ESLint",
 			createData: { config: this.createEsLintCompatibleConfig() }
 		});
-		this.disposables.push(this.worker);
+		this.disposables.push(worker);
 
-		this.client = await this.worker.withSyncedResources(monaco.editor.getModels().filter(m => m.getModeId() === this.languageId).map(m => m.uri));
+		this.client = await worker.withSyncedResources(monaco.editor.getModels().filter(m => m.getModeId() === this.languageId).map(m => m.uri));
 		return this.client;
 	}
 
