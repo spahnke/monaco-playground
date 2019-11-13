@@ -10,7 +10,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
 	private config: Linter.Config<Linter.RulesRecord> | undefined;
-	private client: EsLintWorker | undefined;
+	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
+	private clientPromise: Promise<EsLintWorker> | undefined;
 	private currentFixes: Map<string, monaco.languages.TextEdit[]> = new Map();
 
 	constructor(private configPath: string) {
@@ -46,7 +47,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private async getDiagnostics(resource: monaco.Uri): Promise<monaco.editor.IMarkerData[]> {
-		const client = await this.createEslintWorker();
+		const client = await this.getEslintWorker();
 		const lintDiagnostics = await client.lint(resource.toString());
 		if (lintDiagnostics.length === 1 && lintDiagnostics[0].fatal)
 			return [this.transformDiagnostic(lintDiagnostics[0])];
@@ -60,20 +61,23 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return lintDiagnostics.map(x => this.createMarkerData(monaco.editor.getModel(resource)!, x));
 	}
 
-	private async createEslintWorker(): Promise<EsLintWorker> {
-		if (this.client !== undefined)
-			return this.client;
+	private getEslintWorker(): Promise<EsLintWorker> {
+		if (this.clientPromise === undefined)
+			this.clientPromise = this.createEslintWorker(); // don't await here, otherwise race conditions can occur!
+		return this.clientPromise.then(() => {
+			return this.worker!.withSyncedResources(monaco.editor.getModels().filter(m => m.getModeId() === this.languageId).map(m => m.uri))
+		});
+	}
 
+	private async createEslintWorker(): Promise<EsLintWorker> {
 		this.config = await fetch(this.configPath).then(r => r.json());
-		const worker = monaco.editor.createWebWorker<EsLintWorker>({
+		this.worker = monaco.editor.createWebWorker<EsLintWorker>({
 			moduleId: "/worker/eslint-worker",
 			label: "ESLint",
 			createData: { config: this.createEsLintCompatibleConfig() }
 		});
-		this.disposables.push(worker);
-
-		this.client = await worker.withSyncedResources(monaco.editor.getModels().filter(m => m.getModeId() === this.languageId).map(m => m.uri));
-		return this.client;
+		this.disposables.push(this.worker);
+		return this.worker.getProxy();
 	}
 
 	private getFixCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData): monaco.languages.CodeAction[] {
