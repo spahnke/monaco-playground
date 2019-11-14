@@ -1,10 +1,11 @@
 ﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
+import { ruleId as noIdToStringRuleId } from "./worker/no-id-tostring-in-query.js";
 
 type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
 
-const autoFixBlacklist = ["no-id-tostring-in-query"];
+const autoFixBlacklist = [noIdToStringRuleId];
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 

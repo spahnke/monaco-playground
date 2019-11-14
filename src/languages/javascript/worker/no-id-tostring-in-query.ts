@@ -1,9 +1,11 @@
 import { Linter, Rule } from "eslint";
 import { CallExpression, Identifier, Literal, Node, SourceLocation, TemplateElement, VariableDeclarator } from "estree";
 
+export const ruleId = "no-id-tostring-in-query";
+
 export class NoIdToStringInQuery implements Rule.RuleModule {
 	static register(linter: Linter) {
-		linter.defineRule("no-id-tostring-in-query", new NoIdToStringInQuery());
+		linter.defineRule(ruleId, new NoIdToStringInQuery());
 	}
 
 	create(context: Rule.RuleContext): Rule.RuleListener {
