@@ -64,10 +64,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private getEslintWorker(): Promise<EsLintWorker> {
 		if (this.clientPromise === undefined)
 			this.clientPromise = this.createEslintWorker(); // don't await here, otherwise race conditions can occur!
-		return this.clientPromise.then(() => {
-			// always sync resources
-			return this.worker!.withSyncedResources(monaco.editor.getModels().filter(m => m.getModeId() === this.languageId).map(m => m.uri))
-		});
+		// always sync models
+		return this.clientPromise.then(() => this.worker!.withSyncedResources(monaco.editor.getModels().filter(m => m.getModeId() === this.languageId).map(m => m.uri)));
 	}
 
 	private async createEslintWorker(): Promise<EsLintWorker> {
