@@ -3,7 +3,7 @@
 		"module": "esnext",
 		"target": "es2020",
 		"strict": true,
-		"sourceMap": true
-	},
-	"exclude": ["../node_modules"]
+		"sourceMap": true,
+		"types": ["eslint"]
+	}
 }
