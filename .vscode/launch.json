@@ -5,9 +5,19 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "Launch Edge against localhost",
+			"type": "edge",
+			"version": "dev",
+			"request": "launch",
+			"url": "http://localhost:8080",
+			"webRoot": "${workspaceFolder}/wwwroot",
+			"preLaunchTask": "serve",
+			"port": 9332 // currently needed for some reason (at least on macOS)
+		},
+		{
+			"name": "Launch Chrome against localhost",
 			"type": "chrome",
 			"request": "launch",
-			"name": "Launch Chrome against localhost",
 			"url": "http://localhost:8080",
 			"webRoot": "${workspaceFolder}/wwwroot",
 			"preLaunchTask": "serve"
