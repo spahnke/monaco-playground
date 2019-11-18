@@ -3,20 +3,13 @@
  *--------------------------------------------------------------------------------------------*/
 
 export abstract class DiagnosticsAdapter {
-
-	protected languageId: string;
-	protected owner: string;
 	protected disposables: monaco.IDisposable[] = [];
 	private listeners = new Map<string, monaco.IDisposable>();
 
-	constructor(languageId: string, owner: string = languageId) {
-		this.languageId = languageId;
-		this.owner = owner;
-
+	constructor(protected languageId: string, protected owner: string = languageId) {
 		const onModelAdd = (model: monaco.editor.IModel): void => {
-			if (model.getModeId() !== languageId) {
+			if (model.getModeId() !== languageId)
 				return;
-			}
 
 			let handle: number;
 			const changeSubscription = model.onDidChangeContent(() => {
@@ -38,7 +31,7 @@ export abstract class DiagnosticsAdapter {
 			monaco.editor.setModelMarkers(model, this.owner, []);
 			const key = model.uri.toString();
 			if (this.listeners.has(key)) {
-				this.listeners.get(key)!.dispose();
+				this.listeners.get(key)?.dispose();
 				this.listeners.delete(key);
 			}
 		};
@@ -52,9 +45,7 @@ export abstract class DiagnosticsAdapter {
 
 		this.disposables.push({
 			dispose() {
-				for (const model of monaco.editor.getModels()) {
-					onModelRemoved(model);
-				}
+				monaco.editor.getModels().forEach(onModelRemoved);
 			}
 		});
 
@@ -62,7 +53,7 @@ export abstract class DiagnosticsAdapter {
 	}
 
 	public dispose(): void {
-		this.disposables.forEach(d => d && d.dispose());
+		this.disposables.forEach(d => d?.dispose());
 		this.disposables = [];
 	}
 
