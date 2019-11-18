@@ -3,10 +3,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 export abstract class DiagnosticsAdapter {
-	protected disposables: monaco.IDisposable[] = [];
-	private listeners = new Map<string, monaco.IDisposable>();
+	protected readonly disposables: monaco.IDisposable[] = [];
+	private readonly listeners = new Map<string, monaco.IDisposable>();
 
-	constructor(protected languageId: string, protected owner: string = languageId) {
+	constructor(protected readonly languageId: string, protected readonly owner: string = languageId) {
 		const onModelAdd = (model: monaco.editor.IModel): void => {
 			if (model.getModeId() !== languageId)
 				return;
@@ -54,7 +54,6 @@ export abstract class DiagnosticsAdapter {
 
 	public dispose(): void {
 		this.disposables.forEach(d => d?.dispose());
-		this.disposables = [];
 	}
 
 	protected abstract doValidate(resource: monaco.Uri): Promise<void>;
