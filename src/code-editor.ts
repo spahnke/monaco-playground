@@ -7,6 +7,7 @@ interface IEditorZoom {
 	onDidChangeZoomLevel: monaco.IEvent<number>;
 	/** A number between -5 and 20; 0 being no zoom. */
 	getZoomLevel(): number;
+	/** @param zoomLevel A number between -5 and 20; 0 being no zoom. */
 	setZoomLevel(zoomLevel: number): void;
 }
 
