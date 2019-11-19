@@ -1,4 +1,4 @@
-import { doAllowTopLevelReturn } from "./languages/javascript/javascript-extensions.js";
+﻿import { doAllowTopLevelReturn } from "./languages/javascript/javascript-extensions.js";
 import { dom } from "./languages/javascript/lib.js";
 import { registerLanguages } from "./languages/language-registry.js";
 import { addLibrary, ILibrary } from "./monaco-helper.js";
@@ -6,7 +6,6 @@ import { addLibrary, ILibrary } from "./monaco-helper.js";
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
 	private resources: monaco.IDisposable[] = [];
-	private zoomFactor: number = 1;
 	private whitespaceVisible: boolean = false;
 
 	static create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
@@ -24,13 +23,13 @@ export class CodeEditor {
 				resolve(new CodeEditor(monaco.editor.create(element, {
 					automaticLayout: true,
 					fixedOverflowWidgets: true,
-					fontSize: 12,
+					fontSize: 13,
 					formatOnPaste: true,
 					formatOnType: true,
 					language,
 					lightbulb: { enabled: true },
 					minimap: { enabled: true },
-					mouseWheelZoom: false, // sync/reset of zoom does not work atm when using builtin mouse wheel zoom simultaniously (cf. https://github.com/Microsoft/monaco-editor/issues/196)
+					mouseWheelZoom: true,
 					quickSuggestions: {
 						comments: true,
 						other: false,
@@ -138,38 +137,17 @@ export class CodeEditor {
 		this.editor.revealPositionInCenterIfOutsideViewport(position);
 	}
 
-	zoom(zoomFactor: number) {
-		if (zoomFactor < 0.69 || zoomFactor > 3.01)
-			return;
-
-		this.zoomFactor = zoomFactor;
-		this.editor.updateOptions({ fontSize: 12 * this.zoomFactor })
-	}
-
 	zoomIn() {
-		this.zoom(this.zoomFactor + 0.1);
+		this.editor.trigger("zoom", "editor.action.fontZoomIn", null);
 	}
 
 	zoomOut() {
-		this.zoom(this.zoomFactor - 0.1);
+		this.editor.trigger("zoom", "editor.action.fontZoomOut", null);
 	}
 
-	// reset of zoom does not work atm when using mouse wheel zoom simultaniously (cf. https://github.com/Microsoft/monaco-editor/issues/196)
 	resetZoom() {
-		this.zoom(1);
+		this.editor.trigger("zoom", "editor.action.fontZoomReset", null);
 	}
-
-	//zoomIn() {
-	//	this.editor.trigger("zoom", "editor.action.fontZoomIn", null);
-	//}
-
-	//zoomOut() {
-	//	this.editor.trigger("zoom", "editor.action.fontZoomOut", null);
-	//}
-
-	//resetZoom() {
-	//	this.editor.trigger("zoom", "editor.action.fontZoomReset", null);
-	//}
 
 	format() {
 		this.editor.trigger("format", "editor.action.formatDocument", null);
