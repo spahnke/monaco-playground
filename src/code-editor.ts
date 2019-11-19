@@ -3,6 +3,24 @@ import { dom } from "./languages/javascript/lib.js";
 import { registerLanguages } from "./languages/language-registry.js";
 import { addLibrary, ILibrary } from "./monaco-helper.js";
 
+interface ContextKeyExpr {
+	equals(other: ContextKeyExpr): boolean;
+	serialize(): string;
+	keys(): string[];
+	negate(): ContextKeyExpr;
+}
+
+interface ContextKeyExprFactory {
+	has(key: string): ContextKeyExpr;
+	equals(key: string, value: any): ContextKeyExpr;
+	notEquals(key: string, value: any): ContextKeyExpr;
+	regex(key: string, value: RegExp): ContextKeyExpr;
+	not(key: string): ContextKeyExpr;
+	and(...expr: Array<ContextKeyExpr | undefined | null>): ContextKeyExpr | undefined;
+	or(...expr: Array<ContextKeyExpr | undefined | null>): ContextKeyExpr | undefined;
+	deserialize(serialized: string | null | undefined, strict?: boolean): ContextKeyExpr | undefined;
+}
+
 interface IEditorZoom {
 	onDidChangeZoomLevel: monaco.IEvent<number>;
 	/** A number between -5 and 20; 0 being no zoom. */
@@ -53,10 +71,10 @@ export class CodeEditor {
 	/**
 	 * CAUTION: Uses an internal API to get an object of the non-exported class ContextKeyExpr.
 	 */
-	static deserializeContextKeyExpr(context?: string): Promise<any> {
+	static get ContextKeyExpr(): Promise<ContextKeyExprFactory> {
 		return new Promise(resolve => {
 			(window as any).require(["vs/platform/contextkey/common/contextkey"], (x: any) => {
-				resolve(x.ContextKeyExpr.deserialize(context));
+				resolve(x.ContextKeyExpr);
 			});
 		});
 	}
@@ -64,7 +82,7 @@ export class CodeEditor {
 	/**
 	 * CAUTION: Uses an internal API to get the EditorZoom option as `editor.getConfiguration().fontInfo.zoomLevel` always returns the initial zoom level.
 	 */
-	static getEditorZoom(): Promise<IEditorZoom> {
+	static get EditorZoom(): Promise<IEditorZoom> {
 		return new Promise(resolve => {
 			(window as any).require(["vs/editor/common/config/editorZoom"], (x: { EditorZoom: IEditorZoom }) => {
 				resolve(x.EditorZoom);
@@ -229,7 +247,8 @@ export class CodeEditor {
 		const action = this.editor.getAction(id);
 		(this.editor as any)._standaloneKeybindingService.addDynamicKeybinding(`-${id}`); // remove existing one; no official API yet
 		if (newKeyBinding) {
-			const when = await CodeEditor.deserializeContextKeyExpr(context);
+			const ContextKeyExpr = await CodeEditor.ContextKeyExpr;
+			const when = ContextKeyExpr.deserialize(context);
 			(this.editor as any)._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
 		}
 	}
