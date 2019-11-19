@@ -5,6 +5,7 @@ import { addLibrary, ILibrary } from "./monaco-helper.js";
 
 interface IEditorZoom {
 	onDidChangeZoomLevel: monaco.IEvent<number>;
+	/** A number between -5 and 20; 0 being no zoom. */
 	getZoomLevel(): number;
 	setZoomLevel(zoomLevel: number): void;
 }
