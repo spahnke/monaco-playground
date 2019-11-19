@@ -13,7 +13,7 @@ interface IEditorZoom {
 
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
-	private resources: monaco.IDisposable[] = [];
+	private disposables: monaco.IDisposable[] = [];
 
 	static create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
 		return new Promise(resolve => {
@@ -77,7 +77,7 @@ export class CodeEditor {
 		this.addCommands();
 		this.patchExistingKeyBindings();
 		if (allowTopLevelReturn)
-			this.resources.push(doAllowTopLevelReturn(editor));
+			this.disposables.push(doAllowTopLevelReturn(editor));
 	}
 
 	setContents(content: string, language?: string, fileName?: string) {
@@ -183,7 +183,7 @@ export class CodeEditor {
 	}
 
 	addLibrary(library: ILibrary) {
-		this.resources.push(...addLibrary(library));
+		this.disposables.push(...addLibrary(library));
 	}
 
 	enableJavaScriptBrowserCompletion() {
@@ -203,7 +203,7 @@ export class CodeEditor {
 	}
 
 	dispose() {
-		for (const resource of this.resources)
+		for (const resource of this.disposables)
 			resource.dispose();
 		this.disposeModel();
 		this.editor.dispose();
