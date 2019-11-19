@@ -16,7 +16,7 @@
 				"background": {
 					"activeOnStart": true,
 					"beginsPattern": "^rollup",
-					"endsPattern": "waiting for changes\\.\\.\\.$"
+					"endsPattern": "waiting for changes\\.\\.\\.$|^\\[!\\]"
 				}
 			}
 		},
