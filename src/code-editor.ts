@@ -82,7 +82,7 @@ export class CodeEditor {
 	/**
 	 * CAUTION: Uses an internal API to get the EditorZoom option as `editor.getConfiguration().fontInfo.zoomLevel` always returns the initial zoom level.
 	 */
-	static get EditorZoom(): Promise<IEditorZoom> {
+	static get editorZoom(): Promise<IEditorZoom> {
 		return new Promise(resolve => {
 			(window as any).require(["vs/editor/common/config/editorZoom"], (x: { EditorZoom: IEditorZoom }) => {
 				resolve(x.EditorZoom);
