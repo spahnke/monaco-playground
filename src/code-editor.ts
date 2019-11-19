@@ -3,6 +3,12 @@ import { dom } from "./languages/javascript/lib.js";
 import { registerLanguages } from "./languages/language-registry.js";
 import { addLibrary, ILibrary } from "./monaco-helper.js";
 
+interface IEditorZoom {
+	onDidChangeZoomLevel: monaco.IEvent<number>;
+	getZoomLevel(): number;
+	setZoomLevel(zoomLevel: number): void;
+}
+
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
 	private resources: monaco.IDisposable[] = [];
@@ -43,12 +49,23 @@ export class CodeEditor {
 	}
 
 	/**
-	 * CAUTION: Uses internal API to get an object of the non-exported class ContextKeyExpr
+	 * CAUTION: Uses an internal API to get an object of the non-exported class ContextKeyExpr.
 	 */
 	static deserializeContextKeyExpr(context?: string): Promise<any> {
 		return new Promise(resolve => {
 			(window as any).require(["vs/platform/contextkey/common/contextkey"], (x: any) => {
 				resolve(x.ContextKeyExpr.deserialize(context));
+			});
+		});
+	}
+
+	/**
+	 * CAUTION: Uses an internal API to get the EditorZoom option as `editor.getConfiguration().fontInfo.zoomLevel` always returns the initial zoom level.
+	 */
+	static getEditorZoom(): Promise<IEditorZoom> {
+		return new Promise(resolve => {
+			(window as any).require(["vs/editor/common/config/editorZoom"], (x: { EditorZoom: IEditorZoom }) => {
+				resolve(x.EditorZoom);
 			});
 		});
 	}
