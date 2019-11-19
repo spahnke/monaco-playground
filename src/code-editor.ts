@@ -1,4 +1,4 @@
-﻿import { doAllowTopLevelReturn } from "./languages/javascript/javascript-extensions.js";
+import { doAllowTopLevelReturn } from "./languages/javascript/javascript-extensions.js";
 import { dom } from "./languages/javascript/lib.js";
 import { registerLanguages } from "./languages/language-registry.js";
 import { addLibrary, ILibrary } from "./monaco-helper.js";
@@ -211,7 +211,7 @@ export class CodeEditor {
 		return await worker(model.uri);
 	}
 
-	destroy() {
+	dispose() {
 		for (const resource of this.resources)
 			resource.dispose();
 		this.disposeModel();
