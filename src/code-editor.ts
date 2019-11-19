@@ -6,7 +6,6 @@ import { addLibrary, ILibrary } from "./monaco-helper.js";
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
 	private resources: monaco.IDisposable[] = [];
-	private whitespaceVisible: boolean = false;
 
 	static create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
 		return new Promise(resolve => {
@@ -153,11 +152,6 @@ export class CodeEditor {
 		this.editor.trigger("format", "editor.action.formatDocument", null);
 	}
 
-	toggleWhitespaces() {
-		this.whitespaceVisible = !this.whitespaceVisible;
-		this.editor.updateOptions({ renderWhitespace: this.whitespaceVisible ? "boundary" : "none" });
-	}
-
 	getCurrentWord(): string | undefined {
 		const position = this.editor.getPosition();
 		if (position === null)
@@ -200,7 +194,6 @@ export class CodeEditor {
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, () => this.zoomIn(), "");
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), "");
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom(), "");
-		this.editor.addCommand(monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.KEY_W, () => this.toggleWhitespaces(), "");
 	}
 
 	private disposeModel() {
