@@ -3,47 +3,21 @@ import { dom } from "./languages/javascript/lib.js";
 import { registerLanguages } from "./languages/language-registry.js";
 import { addLibrary, ILibrary } from "./monaco-helper.js";
 
-interface ContextKeyExpr {
-	equals(other: ContextKeyExpr): boolean;
-	serialize(): string;
-	keys(): string[];
-	negate(): ContextKeyExpr;
-}
-
-interface ContextKeyExprFactory {
-	has(key: string): ContextKeyExpr;
-	equals(key: string, value: any): ContextKeyExpr;
-	notEquals(key: string, value: any): ContextKeyExpr;
-	regex(key: string, value: RegExp): ContextKeyExpr;
-	not(key: string): ContextKeyExpr;
-	and(...expr: Array<ContextKeyExpr | undefined | null>): ContextKeyExpr | undefined;
-	or(...expr: Array<ContextKeyExpr | undefined | null>): ContextKeyExpr | undefined;
-	deserialize(serialized: string | null | undefined, strict?: boolean): ContextKeyExpr | undefined;
-}
-
-interface IEditorZoom {
-	onDidChangeZoomLevel: monaco.IEvent<number>;
-	/** A number between -5 and 20; 0 being no zoom. */
-	getZoomLevel(): number;
-	/** @param zoomLevel A number between -5 and 20; 0 being no zoom. */
-	setZoomLevel(zoomLevel: number): void;
-}
-
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
 	private disposables: monaco.IDisposable[] = [];
 
 	static create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
 		return new Promise(resolve => {
-			(<any>window).require.config({ paths: { vs: "lib/monaco/dev/vs" } });
-			//(<any>window).require.config({
-			//	"vs/nls": {
-			//		availableLanguages: {
-			//			"*": "de"
-			//		}
-			//	}
-			//});
-			(<any>window).require(["vs/editor/editor.main"], () => {
+			window.require.config({ paths: { vs: "lib/monaco/dev/vs" } });
+			// window.require.config({
+			// 	"vs/nls": {
+			// 		availableLanguages: {
+			// 			"*": "de"
+			// 		}
+			// 	}
+			// });
+			window.require(["vs/editor/editor.main"], () => {
 				registerLanguages();
 				resolve(new CodeEditor(monaco.editor.create(element, {
 					automaticLayout: true,
@@ -89,9 +63,9 @@ export class CodeEditor {
 	/**
 	 * CAUTION: Uses an internal API to get an object of the non-exported class ContextKeyExpr.
 	 */
-	static get ContextKeyExpr(): Promise<ContextKeyExprFactory> {
+	static get ContextKeyExpr(): Promise<monaco.platform.IContextKeyExprFactory> {
 		return new Promise(resolve => {
-			(window as any).require(["vs/platform/contextkey/common/contextkey"], (x: { ContextKeyExpr: ContextKeyExprFactory }) => {
+			window.require(["vs/platform/contextkey/common/contextkey"], (x: { ContextKeyExpr: monaco.platform.IContextKeyExprFactory }) => {
 				resolve(x.ContextKeyExpr);
 			});
 		});
@@ -100,9 +74,9 @@ export class CodeEditor {
 	/**
 	 * CAUTION: Uses an internal API to get the EditorZoom option as `editor.getConfiguration().fontInfo.zoomLevel` always returns the initial zoom level.
 	 */
-	static get editorZoom(): Promise<IEditorZoom> {
+	static get editorZoom(): Promise<monaco.editor.IEditorZoom> {
 		return new Promise(resolve => {
-			(window as any).require(["vs/editor/common/config/editorZoom"], (x: { EditorZoom: IEditorZoom }) => {
+			window.require(["vs/editor/common/config/editorZoom"], (x: { EditorZoom: monaco.editor.IEditorZoom }) => {
 				resolve(x.EditorZoom);
 			});
 		});
@@ -246,9 +220,9 @@ export class CodeEditor {
 	}
 
 	private addCommands() {
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, () => this.zoomIn(), "");
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut(), "");
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom(), "");
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, () => this.zoomIn());
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut());
+		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom());
 	}
 
 	private disposeModel() {
@@ -263,11 +237,11 @@ export class CodeEditor {
 
 	private async patchKeyBinding(id: string, newKeyBinding?: number, context?: string) {
 		const action = this.editor.getAction(id);
-		(this.editor as any)._standaloneKeybindingService.addDynamicKeybinding(`-${id}`); // remove existing one; no official API yet
+		this.editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`); // remove existing one; no official API yet
 		if (newKeyBinding) {
 			const ContextKeyExpr = await CodeEditor.ContextKeyExpr;
 			const when = ContextKeyExpr.deserialize(context);
-			(this.editor as any)._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
+			this.editor._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
 		}
 	}
 }
