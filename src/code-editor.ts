@@ -239,8 +239,8 @@ export class CodeEditor {
 	}
 
 	dispose() {
-		for (const resource of this.disposables)
-			resource.dispose();
+		for (const disposable of this.disposables)
+			disposable.dispose();
 		this.disposeModel();
 		this.editor.dispose();
 	}
