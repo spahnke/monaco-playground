@@ -236,9 +236,9 @@ export class CodeEditor {
 	}
 
 	private async patchKeyBinding(id: string, newKeyBinding?: number, context?: string) {
-		const action = this.editor.getAction(id);
 		this.editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`); // remove existing one; no official API yet
 		if (newKeyBinding) {
+			const action = this.editor.getAction(id);
 			const ContextKeyExpr = await CodeEditor.ContextKeyExpr;
 			const when = ContextKeyExpr.deserialize(context);
 			this.editor._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
