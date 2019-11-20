@@ -91,7 +91,7 @@ export class CodeEditor {
 	 */
 	static get ContextKeyExpr(): Promise<ContextKeyExprFactory> {
 		return new Promise(resolve => {
-			(window as any).require(["vs/platform/contextkey/common/contextkey"], (x: any) => {
+			(window as any).require(["vs/platform/contextkey/common/contextkey"], (x: { ContextKeyExpr: ContextKeyExprFactory }) => {
 				resolve(x.ContextKeyExpr);
 			});
 		});
