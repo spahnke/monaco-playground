@@ -17,7 +17,7 @@ export class JsonSnippetService implements ISnippetService {
 			return this.snippets;
 
 		this.snippets = [];
-		const jsonSnippetObject = await fetch(this.snippetsPath).then(x => x.json()) as { [name: string]: JsonSerializedSnippet };
+		const jsonSnippetObject = await fetch(this.snippetsPath).then(x => x.json()) as Record<string, JsonSerializedSnippet>;
 		for (const name in jsonSnippetObject)
 			this.snippets.push(this.parseSnippet(name, jsonSnippetObject[name]));
 		return this.snippets;

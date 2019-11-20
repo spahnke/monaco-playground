@@ -9,9 +9,9 @@ declare namespace monaco {
 	}
 
 	interface IRequireConfig {
-		paths?: { [key: string]: string };
+		paths?: Record<string, string>;
 		"vs/nls"?: {
-			availableLanguages: { [culture: string]: string }
+			availableLanguages: Record<string, string>
 		}
 	}
 
