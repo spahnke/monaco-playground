@@ -5,6 +5,7 @@
 		"strict": true,
 		"sourceMap": true,
 		"noEmitOnError": true,
+		"checkJs": false,
 		"types": ["eslint"]
 	}
 }
