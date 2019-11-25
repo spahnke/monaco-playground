@@ -178,7 +178,11 @@ export class CodeEditor {
 	}
 
 	format() {
-		this.editor.trigger("format", "editor.action.formatDocument", null);
+		const selection = this.editor.getSelection();
+		if (selection === null || selection.isEmpty())
+			this.editor.trigger("format", "editor.action.formatDocument", null);
+		else
+			this.editor.trigger("format", "editor.action.formatSelection", null);
 	}
 
 	getCurrentWord(): string | undefined {
