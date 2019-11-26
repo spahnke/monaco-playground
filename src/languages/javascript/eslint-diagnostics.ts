@@ -6,6 +6,7 @@ import { ruleId as noIdToStringRuleId } from "./worker/no-id-tostring-in-query.j
 type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
 
 const autoFixBlacklist = [noIdToStringRuleId];
+const reportsUnnecessary = ["no-unused-vars"];
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
@@ -176,10 +177,13 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			source: "ESLint",
 			severity: this.transformSeverity(diagnostic),
 			code: diagnostic.ruleId ?? undefined,
+			// tags: diagnostic.ruleId !== null && reportsUnnecessary.includes(diagnostic.ruleId) ? [monaco.MarkerTag.Unnecessary] : [] // preparation for https://github.com/microsoft/monaco-typescript/pull/47
 		};
 	}
 
 	private transformSeverity(diagnostic: Linter.LintMessage): monaco.MarkerSeverity {
+		if (diagnostic.ruleId !== null && reportsUnnecessary.includes(diagnostic.ruleId))
+			return monaco.MarkerSeverity.Hint; // rules that reports unnecessary code (rendered with lower opacity) have to have a Hint level severity
 		if (diagnostic.severity === 2)
 			return monaco.MarkerSeverity.Error;
 		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "info"))
