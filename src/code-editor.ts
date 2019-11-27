@@ -1,85 +1,55 @@
 ﻿import { doAllowTopLevelReturn } from "./languages/javascript/javascript-extensions.js";
 import { dom } from "./languages/javascript/lib.js";
-import { registerLanguages } from "./languages/language-registry.js";
-import { addLibrary, ILibrary } from "./monaco-helper.js";
+import { addLibrary, ILibrary, MonacoHelper } from "./monaco-helper.js";
+
+let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
+let editorZoom: monaco.editor.IEditorZoom;
 
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
 	private disposables: monaco.IDisposable[] = [];
 
-	static create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
-		return new Promise(resolve => {
-			window.require.config({ paths: { vs: "lib/monaco/dev/vs" } });
-			// window.require.config({
-			// 	"vs/nls": {
-			// 		availableLanguages: {
-			// 			"*": "de"
-			// 		}
-			// 	}
-			// });
-			window.require(["vs/editor/editor.main"], () => {
-				registerLanguages();
-				resolve(new CodeEditor(monaco.editor.create(element, {
-					automaticLayout: true,
-					fixedOverflowWidgets: true,
-					fontSize: 13,
-					formatOnPaste: true,
-					formatOnType: true,
-					language,
-					lightbulb: { enabled: true },
-					minimap: { enabled: true },
-					mouseWheelZoom: true,
-					quickSuggestions: {
-						comments: true,
-						other: false,
-						strings: true,
-					},
-					renderWhitespace: "selection",
-					showUnused: true,
-					theme: "vs",
-				}, {
-					// make "Peek Definition" and "Peek References" work until https://github.com/microsoft/vscode/pull/85129 lands
-					textModelService: {
-						createModelReference: (uri: monaco.Uri) => {
-							const textEditorModel = {
-								load() {
-									return Promise.resolve(textEditorModel)
-								},
-								dispose() { },
-								textEditorModel: monaco.editor.getModel(uri)
-							}
-							return Promise.resolve({
-								object: textEditorModel,
-								dispose() { }
-							})
+	static async create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
+		await MonacoHelper.loadEditor();
+		ContextKeyExpr = await MonacoHelper.ContextKeyExpr;
+		editorZoom = await MonacoHelper.editorZoom;
+		return new CodeEditor(monaco.editor.create(element, {
+			automaticLayout: true,
+			fixedOverflowWidgets: true,
+			fontSize: 13,
+			formatOnPaste: true,
+			formatOnType: true,
+			language,
+			lightbulb: { enabled: true },
+			minimap: { enabled: true },
+			mouseWheelZoom: true,
+			quickSuggestions: {
+				comments: true,
+				other: false,
+				strings: true,
+			},
+			renderWhitespace: "selection",
+			showUnused: true,
+			theme: "vs",
+		}, {
+			// make "Peek Definition" and "Peek References" work until https://github.com/microsoft/vscode/pull/85129 lands
+			textModelService: {
+				createModelReference: (uri: monaco.Uri) => {
+					const textEditorModel = {
+						load() {
+							return Promise.resolve(textEditorModel)
 						},
-						registerTextModelContentProvider: () => ({ dispose: () => { } })
-					}
-				}), allowTopLevelReturn));
-			});
-		});
-	}
-
-	/**
-	 * CAUTION: Uses an internal API to get an object of the non-exported class ContextKeyExpr.
-	 */
-	static get ContextKeyExpr(): Promise<monaco.platform.IContextKeyExprFactory> {
-		return new Promise(resolve => {
-			window.require(["vs/platform/contextkey/common/contextkey"], (x: { ContextKeyExpr: monaco.platform.IContextKeyExprFactory }) => {
-				resolve(x.ContextKeyExpr);
-			});
-		});
-	}
-
-	/**
-	 * CAUTION: Uses an internal API to get the EditorZoom option as `editor.getConfiguration().fontInfo.zoomLevel` always returns the initial zoom level.
-	 */
-	static get editorZoom(): Promise<monaco.editor.IEditorZoom> {
-		return new Promise(resolve => {
-			window.require(["vs/editor/common/config/editorZoom"], (x: { EditorZoom: monaco.editor.IEditorZoom }) => {
-				resolve(x.EditorZoom);
-			});
-		});
+						dispose() { },
+						textEditorModel: monaco.editor.getModel(uri)
+					};
+					return Promise.resolve({
+						object: textEditorModel,
+						dispose() { }
+					});
+				},
+				registerTextModelContentProvider: () => ({ dispose: () => { } })
+			}
+		}), allowTopLevelReturn);
 	}
 
 	private constructor(editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
@@ -239,11 +209,10 @@ export class CodeEditor {
 		this.patchKeyBinding("editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R)); // Default is F2
 	}
 
-	private async patchKeyBinding(id: string, newKeyBinding?: number, context?: string) {
+	private patchKeyBinding(id: string, newKeyBinding?: number, context?: string) {
 		this.editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`); // remove existing one; no official API yet
 		if (newKeyBinding) {
 			const action = this.editor.getAction(id);
-			const ContextKeyExpr = await CodeEditor.ContextKeyExpr;
 			const when = ContextKeyExpr.deserialize(context);
 			this.editor._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
 		}
