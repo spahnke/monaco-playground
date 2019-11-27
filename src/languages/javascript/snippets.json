@@ -115,7 +115,7 @@
 		"body": [
 			"",
 			"get ${1:prop}() {",
-			"\t${2:return $0}",
+			"\treturn $0",
 			"}",
 			""
 		],
@@ -126,7 +126,7 @@
 		"body": [
 			"",
 			"set ${1:prop}(value) {",
-			"\tthis.$2 = value;",
+			"\tthis.$0 = value;",
 			"}",
 			""
 		],
