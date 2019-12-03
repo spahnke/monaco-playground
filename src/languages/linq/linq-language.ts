@@ -51,7 +51,7 @@ export const monarchTokenProvider: TokenProvider = {
 	],
 
 	typeKeywords: [
-		"boolean", "byte",
+		"bool", "byte",
 		"char",
 		"decimal",
 		"double",
