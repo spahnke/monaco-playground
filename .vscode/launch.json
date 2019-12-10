@@ -21,6 +21,14 @@
 			"url": "http://localhost:8080",
 			"webRoot": "${workspaceFolder}/wwwroot",
 			"preLaunchTask": "serve"
+		},
+		{
+			"name": "(Experimental Debugger) Launch Chrome against localhost",
+			"type": "pwa-chrome",
+			"request": "launch",
+			"url": "http://localhost:8080",
+			"webRoot": "${workspaceFolder}/wwwroot",
+			"preLaunchTask": "serve"
 		}
 	]
 }
