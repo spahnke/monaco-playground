@@ -31,24 +31,6 @@ export class CodeEditor {
 			renderWhitespace: "selection",
 			showUnused: true,
 			theme: "vs",
-		}, {
-			// make "Peek Definition" and "Peek References" work until https://github.com/microsoft/vscode/pull/85129 lands
-			textModelService: {
-				createModelReference: (uri: monaco.Uri) => {
-					const textEditorModel = {
-						load() {
-							return Promise.resolve(textEditorModel)
-						},
-						dispose() { },
-						textEditorModel: monaco.editor.getModel(uri)
-					};
-					return Promise.resolve({
-						object: textEditorModel,
-						dispose() { }
-					});
-				},
-				registerTextModelContentProvider: () => ({ dispose: () => { } })
-			}
 		}), allowTopLevelReturn);
 	}
 
