@@ -6,6 +6,7 @@ import { ruleId as noIdToStringRuleId } from "./worker/no-id-tostring-in-query.j
 type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
 
 const autoFixBlacklist = [noIdToStringRuleId];
+const ownDiagnostics = [noIdToStringRuleId];
 const reportsUnnecessary = ["no-unused-vars"];
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
@@ -183,8 +184,19 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			endColumn: diagnostic.endColumn ?? diagnostic.column,
 			source: "ESLint",
 			severity: this.transformSeverity(diagnostic),
-			code: diagnostic.ruleId ?? undefined,
-			tags: diagnostic.ruleId !== null && reportsUnnecessary.includes(diagnostic.ruleId) ? [monaco.MarkerTag.Unnecessary] : []
+			code: this.transformCode(diagnostic),
+			tags: diagnostic.ruleId !== null && reportsUnnecessary.includes(diagnostic.ruleId) ? [monaco.MarkerTag.Unnecessary] : [] // preparation for https://github.com/microsoft/monaco-typescript/pull/47
+		};
+	}
+
+	private transformCode(diagnostic: Linter.LintMessage): string | { value: string; link: monaco.Uri; } | undefined {
+		if (!diagnostic.ruleId)
+			return undefined;
+		if (ownDiagnostics.includes(diagnostic.ruleId))
+			return diagnostic.ruleId;
+		return {
+			value: diagnostic.ruleId,
+			link: monaco.Uri.parse(`https://eslint.org/docs/rules/${diagnostic.ruleId}`)
 		};
 	}
 
