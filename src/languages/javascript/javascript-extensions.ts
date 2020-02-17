@@ -7,11 +7,7 @@ import { JsonSnippetService } from "../json-snippet-service.js";
 
 export function registerJavascriptLanguageExtensions() {
 	monaco.languages.onLanguage("javascript", () => {
-		// validation settings
-		monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-			noSemanticValidation: false,
-			noSyntaxValidation: false,
-		});
+		setDiagnosticOptions();
 
 		// compiler options
 		monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
@@ -53,19 +49,14 @@ declare class Facts {
 	});
 }
 
-export function doAllowTopLevelReturn(editor: monaco.editor.IStandaloneCodeEditor): monaco.IDisposable {
-	// there is not option in TypeScript to allow top level return statements
-	// so we listen to changes to decorations and filter the marker list
-	// (see https://github.com/Microsoft/monaco-editor/issues/1069)
-	return editor.onDidChangeModelDecorations(() => {
-		const model = editor.getModel();
-		if (model === null || model.getModeId() !== "javascript")
-			return;
-
-		const owner = model.getModeId();
-		const markers = monaco.editor.getModelMarkers({ owner });
-		const filteredMarkers = markers.filter(x => x.message !== "A 'return' statement can only be used within a function body.");
-		if (filteredMarkers.length !== markers.length)
-			monaco.editor.setModelMarkers(model, owner, filteredMarkers);
-	});
+export function setDiagnosticOptions(codesToIgnore: number[] = []): void {
+	// validation settings
+	const options: monaco.languages.typescript.DiagnosticsOptions = {
+		noSyntaxValidation: false,
+		noSemanticValidation: localStorage.getItem("monaco-no-semantic") !== null,
+		noSuggestionDiagnostics: localStorage.getItem("monaco-no-suggestion") !== null,
+		diagnosticCodesToIgnore: codesToIgnore
+	};
+	monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(options);
+	monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions(options);
 }

@@ -1,4 +1,4 @@
-﻿import { doAllowTopLevelReturn } from "./languages/javascript/javascript-extensions.js";
+﻿import { setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
 import { dom } from "./languages/javascript/lib.js";
 import { addLibrary, ILibrary, MonacoHelper } from "./monaco-helper.js";
 
@@ -39,7 +39,7 @@ export class CodeEditor {
 		this.addCommands();
 		this.patchExistingKeyBindings();
 		if (allowTopLevelReturn)
-			this.disposables.push(doAllowTopLevelReturn(editor));
+			setDiagnosticOptions(allowTopLevelReturn ? [/*top-level return*/ 1108] : []);
 	}
 
 	setContents(content: string, language?: string, fileName?: string) {
