@@ -82,48 +82,51 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private getFixCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData): monaco.languages.CodeAction[] {
-		if (marker.code === undefined || !this.currentFixes.has(marker.code))
+		const ruleId = this.getRuleId(marker);
+		if (ruleId === undefined || !this.currentFixes.has(ruleId))
 			return [];
 
-		const edits = this.currentFixes.get(marker.code)!.filter(edit => monaco.Range.areIntersectingOrTouching(range, edit.range));
+		const edits = this.currentFixes.get(ruleId)!.filter(edit => monaco.Range.areIntersectingOrTouching(range, edit.range));
 		return edits.map(edit => {
 			return {
 				title: `Fix '${marker.message}'`,
 				diagnostics: [marker],
 				edit: {
 					edits: [{
-						edits: [edit],
+						edit,
 						resource: model.uri,
 					}],
 				},
-				isPreferred: !autoFixBlacklist.includes(marker.code!),
+				isPreferred: !autoFixBlacklist.includes(ruleId),
 				kind: "quickfix",
 			}
 		});
 	}
 
 	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, markers: monaco.editor.IMarkerData[]): monaco.languages.CodeAction[] {
-		if (marker.code === undefined || !this.currentFixes.has(marker.code) || autoFixBlacklist.includes(marker.code))
+		const ruleId = this.getRuleId(marker);
+		if (ruleId === undefined || !this.currentFixes.has(ruleId) || autoFixBlacklist.includes(ruleId))
 			return [];
 
-		return [
-			{
-				title: `Fix all '${marker.message}'`,
-				diagnostics: markers.filter(x => x.code === marker.code),
-				edit: {
-					edits: [{
-						edits: this.currentFixes.get(marker.code)!,
-						resource: model.uri,
-					}],
-				},
-				isPreferred: false,
-				kind: "quickfix",
-			}
-		];
+		const edits = this.currentFixes.get(ruleId)!;
+		return [{
+			title: `Fix all '${marker.message}'`,
+			diagnostics: markers.filter(x => x.code === ruleId),
+			edit: {
+				edits: edits.map(edit => {
+					return {
+						edit,
+						resource: model.uri
+					}
+				}),
+			},
+			isPreferred: false,
+			kind: "quickfix",
+		}];
 	}
 
 	private getDisableRuleCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData): monaco.languages.CodeAction[] {
-		const ruleId = marker.code;
+		const ruleId = this.getRuleId(marker);
 		if (!ruleId)
 			return [];
 
@@ -133,7 +136,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				diagnostics: [marker],
 				edit: {
 					edits: [{
-						edits: [{ range: new monaco.Range(1, 1, 1, 1), text: `/* eslint-disable ${ruleId} */${model.getEOL()}` }],
+						edit: { range: new monaco.Range(1, 1, 1, 1), text: `/* eslint-disable ${ruleId} */${model.getEOL()}` },
 						resource: model.uri,
 					}],
 				},
@@ -141,6 +144,10 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				kind: "quickfix",
 			}
 		];
+	}
+
+	private getRuleId(marker: monaco.editor.IMarkerData): string | undefined {
+		return typeof marker.code === "string" ? marker.code : marker.code?.value;
 	}
 
 	/**
@@ -217,7 +224,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private registerFix(model: monaco.editor.ITextModel, fix: Rule.Fix, marker: monaco.editor.IMarkerData): void {
-		if (marker.code === undefined)
+		const ruleId = this.getRuleId(marker);
+		if (ruleId === undefined)
 			return;
 
 		const start = model.getPositionAt(fix.range[0]);
@@ -226,9 +234,9 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			range: monaco.Range.fromPositions(start, end),
 			text: fix.text
 		};
-		if (!this.currentFixes.has(marker.code))
-			this.currentFixes.set(marker.code, [textEdit]);
+		if (!this.currentFixes.has(ruleId))
+			this.currentFixes.set(ruleId, [textEdit]);
 		else
-			this.currentFixes.get(marker.code)!.push(textEdit);
+			this.currentFixes.get(ruleId)!.push(textEdit);
 	}
 }
