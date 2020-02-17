@@ -75,7 +75,7 @@ export class CodeEditor {
 	}
 
 	isReadonly(): boolean {
-		return this.editor.getConfiguration().readOnly;
+		return this.editor.getOptions().get(monaco.editor.EditorOption.readOnly);
 	}
 
 	getSelectedText(): string | undefined {
