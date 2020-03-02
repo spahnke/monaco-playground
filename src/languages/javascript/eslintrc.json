@@ -9,6 +9,9 @@
 		"semi": "info",
 		"curly": "warn",
 		"eqeqeq": "warn",
+		"init-declarations": "info",
+		"no-var": "info",
+		"prefer-const": "info",
 		"quotes": [
 			"info",
 			"double",
