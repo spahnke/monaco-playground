@@ -5,21 +5,21 @@
 		"ecmaFeatures": { "globalReturn": true }
 	},
 	"rules": {
-		"no-unused-vars": "hint",
-		"semi": "info",
 		"curly": "warn",
 		"eqeqeq": "warn",
 		"init-declarations": "info",
+		"no-id-tstring-in-query": "warn",
+		"no-unused-vars": "hint",
 		"no-var": "info",
 		"prefer-const": "info",
 		"quotes": [
 			"info",
 			"double",
 			{
-				"avoidEscape": true,
-				"allowTemplateLiterals": true
+				"allowTemplateLiterals": true,
+				"avoidEscape": true
 			}
 		],
-		"no-id-tostring-in-query": "warn"
+		"semi": "info"
 	}
 }
