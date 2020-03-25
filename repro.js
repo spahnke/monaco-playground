@@ -1,6 +1,6 @@
 // @ts-nocheck
 // We have a bug where the peek definition view shows a blank window but it is not reproducable in the playground
-
+// https://github.com/microsoft/monaco-editor/issues/1884
 const lib = `declare class Facts {
 	/**
 	 * Returns the next fact
@@ -10,20 +10,16 @@ const lib = `declare class Facts {
 	static next(): string;
 }`;
 
-const libUri = monaco.Uri.file("test.d.ts");
-monaco.languages.typescript.javascriptDefaults.addExtraLib(lib, libUri.toString());
-monaco.languages.typescript.typescriptDefaults.addExtraLib(lib, libUri.toString());
-monaco.editor.createModel(lib, "typescript", libUri);
+const uri = monaco.Uri.file("filename/facts.d.ts");
+monaco.languages.typescript.javascriptDefaults.addExtraLib(lib, uri.toString());
+monaco.editor.createModel(lib, "typescript", uri);
 
-const editor = monaco.editor.create(document.getElementById("container"), {
-    language: undefined
-});
-
-editor.getModel()?.dispose();
-const uri = monaco.Uri.file("app.js");
-const model = monaco.editor.createModel(`class Chuck {
+monaco.editor.create(document.getElementById("container"), {
+	value: `class Chuck {
     greet() {
         return Facts.next();
     }
-}`, "javascript", uri);
-editor.setModel(model);
+}`,
+	language: "javascript",
+	automaticLayout: true // this is the culprit
+});
