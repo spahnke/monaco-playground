@@ -8,7 +8,7 @@
 		"curly": "warn",
 		"eqeqeq": "warn",
 		"init-declarations": "info",
-		"no-id-tstring-in-query": "warn",
+		"no-id-tostring-in-query": "warn",
 		"no-unused-vars": "hint",
 		"no-var": "info",
 		"prefer-const": "info",
