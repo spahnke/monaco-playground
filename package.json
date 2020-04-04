@@ -2,6 +2,7 @@
 	"name": "monaco-playground",
 	"version": "1.0.0",
 	"description": "",
+	"type": "module",
 	"scripts": {
 		"clean": "rm -rf wwwroot/dist wwwroot/languages wwwroot/lib wwwroot/worker",
 		"copyconfigs": "cd src && rsync -R languages/**/*.json ../wwwroot && cd -",
