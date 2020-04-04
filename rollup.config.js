@@ -1,13 +1,9 @@
 import typescript from "@rollup/plugin-typescript";
-import { terser } from "rollup-plugin-terser";
-
-const isProduction = process.env.ROLLUP_WATCH !== "true";
 
 const plugins = [
 	typescript({
 		tsconfig: "src/tsconfig.json",
 	}),
-	isProduction && terser()
 ];
 
 export default [
