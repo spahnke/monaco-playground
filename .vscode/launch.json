@@ -5,7 +5,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Launch Edge against localhost",
+			"name": "Launch Edge",
 			"type": "pwa-msedge",
 			"request": "launch",
 			"url": "http://localhost:8080",
@@ -13,8 +13,8 @@
 			"preLaunchTask": "serve",
 		},
 		{
-			"name": "Launch Chrome against localhost",
-			"type": "chrome",
+			"name": "Launch Chrome",
+			"type": "pwa-chrome",
 			"request": "launch",
 			"url": "http://localhost:8080",
 			"webRoot": "${workspaceFolder}/wwwroot",
