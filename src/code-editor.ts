@@ -30,6 +30,9 @@ export class CodeEditor {
 			},
 			renderWhitespace: "selection",
 			showUnused: true,
+			suggest: {
+				hideStatusBar: false,
+			},
 			theme: "vs",
 		}), allowTopLevelReturn);
 	}
