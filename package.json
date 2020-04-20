@@ -16,11 +16,11 @@
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
-		"@rollup/plugin-typescript": "^4.0.0",
-		"@types/eslint": "^6.1.9",
+		"@rollup/plugin-typescript": "^4.1.1",
+		"@types/eslint": "^6.8.0",
 		"http-server": "^0.12.1",
 		"monaco-editor": "^0.20.0",
-		"rollup": "^2.3.2",
+		"rollup": "^2.6.1",
 		"tslib": "^1.11.1",
 		"typescript": "^3.8.3"
 	}
