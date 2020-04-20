@@ -191,7 +191,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	private transformCode(diagnostic: Linter.LintMessage): string | { value: string; link: monaco.Uri; } | undefined {
 		if (!diagnostic.ruleId)
-			return undefined;
+			return "";
 		if (ownDiagnostics.includes(diagnostic.ruleId))
 			return diagnostic.ruleId;
 		return {
