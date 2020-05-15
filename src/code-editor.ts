@@ -206,7 +206,7 @@ export class CodeEditor {
 			this.readonlyHandler = this.editor.onKeyDown(e => {
 				if (!e.ctrlKey && !e.altKey && !e.metaKey) {
 					if (usuallyProducesCharacter(e.keyCode)) {
-						this.editor.trigger('', 'type', { text: 'nothing' });
+						this.editor.trigger("", "type", { text: "nothing" });
 					}
 				}
 			});
