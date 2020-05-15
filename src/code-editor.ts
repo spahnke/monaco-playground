@@ -1,6 +1,6 @@
 ﻿import { setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
 import { dom } from "./languages/javascript/lib.js";
-import { addLibrary, ILibrary, MonacoHelper } from "./monaco-helper.js";
+import { addLibrary, ILibrary, MonacoHelper, usuallyProducesCharacter } from "./monaco-helper.js";
 
 let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
 let editorZoom: monaco.editor.IEditorZoom;
@@ -8,6 +8,7 @@ let editorZoom: monaco.editor.IEditorZoom;
 export class CodeEditor {
 	public editor: monaco.editor.IStandaloneCodeEditor;
 	private disposables: monaco.IDisposable[] = [];
+	private readonlyHandler: monaco.IDisposable | undefined;
 
 	static async create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
 		await MonacoHelper.loadEditor();
@@ -40,6 +41,7 @@ export class CodeEditor {
 	private constructor(editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
 		this.editor = editor;
 		this.addCommands();
+		this.addReadonlyHandling();
 		this.patchExistingKeyBindings();
 		if (allowTopLevelReturn)
 			setDiagnosticOptions(allowTopLevelReturn ? [/*top-level return*/ 1108] : []);
@@ -174,8 +176,13 @@ export class CodeEditor {
 	dispose() {
 		for (const disposable of this.disposables)
 			disposable.dispose();
+		this.readonlyHandler?.dispose();
 		this.disposeModel();
 		this.editor.dispose();
+	}
+
+	private disposeModel() {
+		this.editor.getModel()?.dispose();
 	}
 
 	private addCommands() {
@@ -184,8 +191,28 @@ export class CodeEditor {
 		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom());
 	}
 
-	private disposeModel() {
-		this.editor.getModel()?.dispose();
+	private addReadonlyHandling() {
+		// needed because of https://github.com/microsoft/monaco-editor/issues/1873
+		this.createOrDestroyReadonlyHandler();
+		this.disposables.push(this.editor.onDidChangeConfiguration(e => {
+			if (e.hasChanged(monaco.editor.EditorOption.readOnly)) {
+				this.createOrDestroyReadonlyHandler();
+			}
+		}));
+	}
+
+	private createOrDestroyReadonlyHandler() {
+		if (this.isReadonly()) {
+			this.readonlyHandler = this.editor.onKeyDown(e => {
+				if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+					if (usuallyProducesCharacter(e.keyCode)) {
+						this.editor.trigger('', 'type', { text: 'nothing' });
+					}
+				}
+			});
+		} else {
+			this.readonlyHandler?.dispose();
+		}
 	}
 
 	private patchExistingKeyBindings() {
