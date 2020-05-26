@@ -8,7 +8,7 @@
 			"name": "Launch Edge",
 			"type": "pwa-msedge",
 			"request": "launch",
-			"url": "http://localhost:8080",
+			"url": "http://localhost:9000",
 			"webRoot": "${workspaceFolder}/wwwroot",
 			"preLaunchTask": "serve",
 		},
@@ -16,7 +16,7 @@
 			"name": "Launch Chrome",
 			"type": "pwa-chrome",
 			"request": "launch",
-			"url": "http://localhost:8080",
+			"url": "http://localhost:9000",
 			"webRoot": "${workspaceFolder}/wwwroot",
 			"preLaunchTask": "serve"
 		}

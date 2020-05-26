@@ -10,7 +10,7 @@
 		"prebuild": "npm run copyconfigs && npm run copymonaco",
 		"build": "rollup -c",
 		"dev": "npm run prebuild && rollup -c -w",
-		"serve": "http-server -c-1 wwwroot"
+		"serve": "http-server -c-1 -p 9000 wwwroot"
 	},
 	"keywords": [],
 	"author": "",
