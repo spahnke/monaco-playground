@@ -15564,20 +15564,20 @@ const path = __webpack_require__(379),
       astUtils = __webpack_require__(416),
       ConfigOps = __webpack_require__(417),
       validator = __webpack_require__(418),
-      Traverser = __webpack_require__(645),
+      Traverser = __webpack_require__(646),
       {
   SourceCode
-} = __webpack_require__(781),
-      CodePathAnalyzer = __webpack_require__(796),
-      applyDisableDirectives = __webpack_require__(803),
-      ConfigCommentParser = __webpack_require__(804),
-      NodeEventGenerator = __webpack_require__(817),
-      createReportTranslator = __webpack_require__(819),
-      Rules = __webpack_require__(822),
-      createEmitter = __webpack_require__(824),
-      SourceCodeFixer = __webpack_require__(825),
-      timing = __webpack_require__(826),
-      ruleReplacements = __webpack_require__(827);
+} = __webpack_require__(782),
+      CodePathAnalyzer = __webpack_require__(797),
+      applyDisableDirectives = __webpack_require__(804),
+      ConfigCommentParser = __webpack_require__(805),
+      NodeEventGenerator = __webpack_require__(818),
+      createReportTranslator = __webpack_require__(820),
+      Rules = __webpack_require__(823),
+      createEmitter = __webpack_require__(825),
+      SourceCodeFixer = __webpack_require__(826),
+      timing = __webpack_require__(827),
+      ruleReplacements = __webpack_require__(828);
 
 const debug = __webpack_require__(422)("eslint:linter");
 
@@ -16501,8 +16501,9 @@ function runRules(sourceCode, configuredRules, ruleMapper, parserOptions, parser
     Object.keys(ruleListeners).forEach(selector => {
       emitter.on(selector, timing.enabled ? timing.time(ruleId, ruleListeners[selector]) : ruleListeners[selector]);
     });
-  });
-  const eventGenerator = new CodePathAnalyzer(new NodeEventGenerator(emitter));
+  }); // only run code path analyzer if the top level node is "Program", skip otherwise
+
+  const eventGenerator = nodeQueue[0].node.type === "Program" ? new CodePathAnalyzer(new NodeEventGenerator(emitter)) : new NodeEventGenerator(emitter);
   nodeQueue.forEach(traversalInfo => {
     currentNode = traversalInfo.node;
 
@@ -16803,7 +16804,7 @@ class Linter {
         supportsAutofix
       } = processor;
       const disableFixes = options.disableFixes || !supportsAutofix;
-      return this._verifyWithProcessor(textOrSourceCode, config, _objectSpread({}, options, {
+      return this._verifyWithProcessor(textOrSourceCode, config, _objectSpread(_objectSpread({}, options), {}, {
         disableFixes,
         postprocess,
         preprocess
@@ -16852,13 +16853,13 @@ class Linter {
 
       if (configForRecursive && path.extname(blockName) !== originalExtname) {
         debug("Resolving configuration again because the file extension was changed.");
-        return this._verifyWithConfigArray(blockText, configForRecursive, _objectSpread({}, options, {
+        return this._verifyWithConfigArray(blockText, configForRecursive, _objectSpread(_objectSpread({}, options), {}, {
           filename: blockName
         }));
       } // Does lint.
 
 
-      return this._verifyWithoutProcessors(blockText, config, _objectSpread({}, options, {
+      return this._verifyWithoutProcessors(blockText, config, _objectSpread(_objectSpread({}, options), {}, {
         filename: blockName
       }));
     });
@@ -21806,9 +21807,18 @@ class Referencer extends esrecurse.Visitor {
     }
 
     this.visitChildren(node);
-  }
+  } // TODO: ExportDeclaration doesn't exist. for bc?
+
 
   ExportDeclaration(node) {
+    this.visitExportDeclaration(node);
+  }
+
+  ExportAllDeclaration(node) {
+    this.visitExportDeclaration(node);
+  }
+
+  ExportDefaultDeclaration(node) {
     this.visitExportDeclaration(node);
   }
 
@@ -21817,6 +21827,7 @@ class Referencer extends esrecurse.Visitor {
   }
 
   ExportSpecifier(node) {
+    // TODO: `node.id` doesn't exist. for bc?
     const local = node.id || node.local;
     this.visit(local);
   }
@@ -22113,7 +22124,7 @@ module.exports = PatternVisitor;
 /* 398 */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"_from\":\"eslint-scope@^5.0.0\",\"_id\":\"eslint-scope@5.0.0\",\"_inBundle\":false,\"_integrity\":\"sha512-oYrhJW7S0bxAFDvWqzvMPRm6pcgcnWc4QnofCAqRTRfQC0JcwenzGglTtsLyIuuWFfkqDG9vz67cnttSd53djw==\",\"_location\":\"/eslint-scope\",\"_phantomChildren\":{},\"_requested\":{\"type\":\"range\",\"registry\":true,\"raw\":\"eslint-scope@^5.0.0\",\"name\":\"eslint-scope\",\"escapedName\":\"eslint-scope\",\"rawSpec\":\"^5.0.0\",\"saveSpec\":null,\"fetchSpec\":\"^5.0.0\"},\"_requiredBy\":[\"/\",\"/eslint\"],\"_resolved\":\"https://registry.npmjs.org/eslint-scope/-/eslint-scope-5.0.0.tgz\",\"_shasum\":\"e87c8887c73e8d1ec84f1ca591645c358bfc8fb9\",\"_spec\":\"eslint-scope@^5.0.0\",\"_where\":\"/Users/sebastian/Development/eslint\",\"bugs\":{\"url\":\"https://github.com/eslint/eslint-scope/issues\"},\"bundleDependencies\":false,\"dependencies\":{\"esrecurse\":\"^4.1.0\",\"estraverse\":\"^4.1.1\"},\"deprecated\":false,\"description\":\"ECMAScript scope analyzer for ESLint\",\"devDependencies\":{\"@typescript-eslint/parser\":\"^1.11.0\",\"chai\":\"^4.2.0\",\"eslint\":\"^6.0.1\",\"eslint-config-eslint\":\"^5.0.1\",\"eslint-plugin-node\":\"^9.1.0\",\"eslint-release\":\"^1.0.0\",\"espree\":\"^6.0.0\",\"istanbul\":\"^0.4.5\",\"mocha\":\"^6.1.4\",\"npm-license\":\"^0.3.3\",\"shelljs\":\"^0.8.3\",\"typescript\":\"^3.5.2\"},\"engines\":{\"node\":\">=8.0.0\"},\"files\":[\"LICENSE\",\"README.md\",\"lib\"],\"homepage\":\"http://github.com/eslint/eslint-scope\",\"license\":\"BSD-2-Clause\",\"main\":\"lib/index.js\",\"name\":\"eslint-scope\",\"repository\":{\"type\":\"git\",\"url\":\"git+https://github.com/eslint/eslint-scope.git\"},\"scripts\":{\"generate-alpharelease\":\"eslint-generate-prerelease alpha\",\"generate-betarelease\":\"eslint-generate-prerelease beta\",\"generate-rcrelease\":\"eslint-generate-prerelease rc\",\"generate-release\":\"eslint-generate-release\",\"lint\":\"node Makefile.js lint\",\"publish-release\":\"eslint-publish-release\",\"test\":\"node Makefile.js test\"},\"version\":\"5.0.0\"}");
+module.exports = JSON.parse("{\"_from\":\"eslint-scope@^5.1.0\",\"_id\":\"eslint-scope@5.1.0\",\"_inBundle\":false,\"_integrity\":\"sha512-iiGRvtxWqgtx5m8EyQUJihBloE4EnYeGE/bz1wSPwJE6tZuJUtHlhqDM4Xj2ukE8Dyy1+HCZ4hE0fzIVMzb58w==\",\"_location\":\"/eslint-scope\",\"_phantomChildren\":{},\"_requested\":{\"type\":\"range\",\"registry\":true,\"raw\":\"eslint-scope@^5.1.0\",\"name\":\"eslint-scope\",\"escapedName\":\"eslint-scope\",\"rawSpec\":\"^5.1.0\",\"saveSpec\":null,\"fetchSpec\":\"^5.1.0\"},\"_requiredBy\":[\"/\",\"/eslint\"],\"_resolved\":\"https://registry.npmjs.org/eslint-scope/-/eslint-scope-5.1.0.tgz\",\"_shasum\":\"d0f971dfe59c69e0cada684b23d49dbf82600ce5\",\"_spec\":\"eslint-scope@^5.1.0\",\"_where\":\"/Users/sebastian/Development/eslint\",\"bugs\":{\"url\":\"https://github.com/eslint/eslint-scope/issues\"},\"bundleDependencies\":false,\"dependencies\":{\"esrecurse\":\"^4.1.0\",\"estraverse\":\"^4.1.1\"},\"deprecated\":false,\"description\":\"ECMAScript scope analyzer for ESLint\",\"devDependencies\":{\"@typescript-eslint/parser\":\"^1.11.0\",\"chai\":\"^4.2.0\",\"eslint\":\"^6.0.1\",\"eslint-config-eslint\":\"^5.0.1\",\"eslint-plugin-node\":\"^9.1.0\",\"eslint-release\":\"^1.0.0\",\"eslint-visitor-keys\":\"^1.2.0\",\"espree\":\"^7.1.0\",\"istanbul\":\"^0.4.5\",\"mocha\":\"^6.1.4\",\"npm-license\":\"^0.3.3\",\"shelljs\":\"^0.8.3\",\"typescript\":\"^3.5.2\"},\"engines\":{\"node\":\">=8.0.0\"},\"files\":[\"LICENSE\",\"README.md\",\"lib\"],\"homepage\":\"http://github.com/eslint/eslint-scope\",\"license\":\"BSD-2-Clause\",\"main\":\"lib/index.js\",\"name\":\"eslint-scope\",\"repository\":{\"type\":\"git\",\"url\":\"git+https://github.com/eslint/eslint-scope.git\"},\"scripts\":{\"generate-alpharelease\":\"eslint-generate-prerelease alpha\",\"generate-betarelease\":\"eslint-generate-prerelease beta\",\"generate-rcrelease\":\"eslint-generate-prerelease rc\",\"generate-release\":\"eslint-generate-release\",\"lint\":\"node Makefile.js lint\",\"publish-release\":\"eslint-publish-release\",\"test\":\"node Makefile.js test\"},\"version\":\"5.1.0\"}");
 
 /***/ }),
 /* 399 */
@@ -22201,7 +22212,7 @@ module.exports = Object.freeze({
 /* 400 */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"AssignmentExpression\":[\"left\",\"right\"],\"AssignmentPattern\":[\"left\",\"right\"],\"ArrayExpression\":[\"elements\"],\"ArrayPattern\":[\"elements\"],\"ArrowFunctionExpression\":[\"params\",\"body\"],\"AwaitExpression\":[\"argument\"],\"BlockStatement\":[\"body\"],\"BinaryExpression\":[\"left\",\"right\"],\"BreakStatement\":[\"label\"],\"CallExpression\":[\"callee\",\"arguments\"],\"CatchClause\":[\"param\",\"body\"],\"ClassBody\":[\"body\"],\"ClassDeclaration\":[\"id\",\"superClass\",\"body\"],\"ClassExpression\":[\"id\",\"superClass\",\"body\"],\"ConditionalExpression\":[\"test\",\"consequent\",\"alternate\"],\"ContinueStatement\":[\"label\"],\"DebuggerStatement\":[],\"DoWhileStatement\":[\"body\",\"test\"],\"EmptyStatement\":[],\"ExportAllDeclaration\":[\"source\"],\"ExportDefaultDeclaration\":[\"declaration\"],\"ExportNamedDeclaration\":[\"declaration\",\"specifiers\",\"source\"],\"ExportSpecifier\":[\"exported\",\"local\"],\"ExpressionStatement\":[\"expression\"],\"ExperimentalRestProperty\":[\"argument\"],\"ExperimentalSpreadProperty\":[\"argument\"],\"ForStatement\":[\"init\",\"test\",\"update\",\"body\"],\"ForInStatement\":[\"left\",\"right\",\"body\"],\"ForOfStatement\":[\"left\",\"right\",\"body\"],\"FunctionDeclaration\":[\"id\",\"params\",\"body\"],\"FunctionExpression\":[\"id\",\"params\",\"body\"],\"Identifier\":[],\"IfStatement\":[\"test\",\"consequent\",\"alternate\"],\"ImportDeclaration\":[\"specifiers\",\"source\"],\"ImportDefaultSpecifier\":[\"local\"],\"ImportExpression\":[\"source\"],\"ImportNamespaceSpecifier\":[\"local\"],\"ImportSpecifier\":[\"imported\",\"local\"],\"JSXAttribute\":[\"name\",\"value\"],\"JSXClosingElement\":[\"name\"],\"JSXElement\":[\"openingElement\",\"children\",\"closingElement\"],\"JSXEmptyExpression\":[],\"JSXExpressionContainer\":[\"expression\"],\"JSXIdentifier\":[],\"JSXMemberExpression\":[\"object\",\"property\"],\"JSXNamespacedName\":[\"namespace\",\"name\"],\"JSXOpeningElement\":[\"name\",\"attributes\"],\"JSXSpreadAttribute\":[\"argument\"],\"JSXText\":[],\"JSXFragment\":[\"openingFragment\",\"children\",\"closingFragment\"],\"Literal\":[],\"LabeledStatement\":[\"label\",\"body\"],\"LogicalExpression\":[\"left\",\"right\"],\"MemberExpression\":[\"object\",\"property\"],\"MetaProperty\":[\"meta\",\"property\"],\"MethodDefinition\":[\"key\",\"value\"],\"NewExpression\":[\"callee\",\"arguments\"],\"ObjectExpression\":[\"properties\"],\"ObjectPattern\":[\"properties\"],\"Program\":[\"body\"],\"Property\":[\"key\",\"value\"],\"RestElement\":[\"argument\"],\"ReturnStatement\":[\"argument\"],\"SequenceExpression\":[\"expressions\"],\"SpreadElement\":[\"argument\"],\"Super\":[],\"SwitchStatement\":[\"discriminant\",\"cases\"],\"SwitchCase\":[\"test\",\"consequent\"],\"TaggedTemplateExpression\":[\"tag\",\"quasi\"],\"TemplateElement\":[],\"TemplateLiteral\":[\"quasis\",\"expressions\"],\"ThisExpression\":[],\"ThrowStatement\":[\"argument\"],\"TryStatement\":[\"block\",\"handler\",\"finalizer\"],\"UnaryExpression\":[\"argument\"],\"UpdateExpression\":[\"argument\"],\"VariableDeclaration\":[\"declarations\"],\"VariableDeclarator\":[\"id\",\"init\"],\"WhileStatement\":[\"test\",\"body\"],\"WithStatement\":[\"object\",\"body\"],\"YieldExpression\":[\"argument\"]}");
+module.exports = JSON.parse("{\"AssignmentExpression\":[\"left\",\"right\"],\"AssignmentPattern\":[\"left\",\"right\"],\"ArrayExpression\":[\"elements\"],\"ArrayPattern\":[\"elements\"],\"ArrowFunctionExpression\":[\"params\",\"body\"],\"AwaitExpression\":[\"argument\"],\"BlockStatement\":[\"body\"],\"BinaryExpression\":[\"left\",\"right\"],\"BreakStatement\":[\"label\"],\"CallExpression\":[\"callee\",\"arguments\"],\"CatchClause\":[\"param\",\"body\"],\"ClassBody\":[\"body\"],\"ClassDeclaration\":[\"id\",\"superClass\",\"body\"],\"ClassExpression\":[\"id\",\"superClass\",\"body\"],\"ConditionalExpression\":[\"test\",\"consequent\",\"alternate\"],\"ContinueStatement\":[\"label\"],\"DebuggerStatement\":[],\"DoWhileStatement\":[\"body\",\"test\"],\"EmptyStatement\":[],\"ExportAllDeclaration\":[\"exported\",\"source\"],\"ExportDefaultDeclaration\":[\"declaration\"],\"ExportNamedDeclaration\":[\"declaration\",\"specifiers\",\"source\"],\"ExportSpecifier\":[\"exported\",\"local\"],\"ExpressionStatement\":[\"expression\"],\"ExperimentalRestProperty\":[\"argument\"],\"ExperimentalSpreadProperty\":[\"argument\"],\"ForStatement\":[\"init\",\"test\",\"update\",\"body\"],\"ForInStatement\":[\"left\",\"right\",\"body\"],\"ForOfStatement\":[\"left\",\"right\",\"body\"],\"FunctionDeclaration\":[\"id\",\"params\",\"body\"],\"FunctionExpression\":[\"id\",\"params\",\"body\"],\"Identifier\":[],\"IfStatement\":[\"test\",\"consequent\",\"alternate\"],\"ImportDeclaration\":[\"specifiers\",\"source\"],\"ImportDefaultSpecifier\":[\"local\"],\"ImportExpression\":[\"source\"],\"ImportNamespaceSpecifier\":[\"local\"],\"ImportSpecifier\":[\"imported\",\"local\"],\"JSXAttribute\":[\"name\",\"value\"],\"JSXClosingElement\":[\"name\"],\"JSXElement\":[\"openingElement\",\"children\",\"closingElement\"],\"JSXEmptyExpression\":[],\"JSXExpressionContainer\":[\"expression\"],\"JSXIdentifier\":[],\"JSXMemberExpression\":[\"object\",\"property\"],\"JSXNamespacedName\":[\"namespace\",\"name\"],\"JSXOpeningElement\":[\"name\",\"attributes\"],\"JSXSpreadAttribute\":[\"argument\"],\"JSXText\":[],\"JSXFragment\":[\"openingFragment\",\"children\",\"closingFragment\"],\"Literal\":[],\"LabeledStatement\":[\"label\",\"body\"],\"LogicalExpression\":[\"left\",\"right\"],\"MemberExpression\":[\"object\",\"property\"],\"MetaProperty\":[\"meta\",\"property\"],\"MethodDefinition\":[\"key\",\"value\"],\"NewExpression\":[\"callee\",\"arguments\"],\"ObjectExpression\":[\"properties\"],\"ObjectPattern\":[\"properties\"],\"Program\":[\"body\"],\"Property\":[\"key\",\"value\"],\"RestElement\":[\"argument\"],\"ReturnStatement\":[\"argument\"],\"SequenceExpression\":[\"expressions\"],\"SpreadElement\":[\"argument\"],\"Super\":[],\"SwitchStatement\":[\"discriminant\",\"cases\"],\"SwitchCase\":[\"test\",\"consequent\"],\"TaggedTemplateExpression\":[\"tag\",\"quasi\"],\"TemplateElement\":[],\"TemplateLiteral\":[\"quasis\",\"expressions\"],\"ThisExpression\":[],\"ThrowStatement\":[\"argument\"],\"TryStatement\":[\"block\",\"handler\",\"finalizer\"],\"UnaryExpression\":[\"argument\"],\"UpdateExpression\":[\"argument\"],\"VariableDeclaration\":[\"declarations\"],\"VariableDeclarator\":[\"id\",\"init\"],\"WhileStatement\":[\"test\",\"body\"],\"WithStatement\":[\"object\",\"body\"],\"YieldExpression\":[\"argument\"]}");
 
 /***/ }),
 /* 401 */
@@ -22417,8 +22428,8 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
   // code point above 128.
   // Generated by `bin/generate-identifier-regex.js`.
 
-  var nonASCIIidentifierStartChars = "\xaa\xb5\xba\xc0-\xd6\xd8-\xf6\xf8-\u02c1\u02c6-\u02d1\u02e0-\u02e4\u02ec\u02ee\u0370-\u0374\u0376\u0377\u037a-\u037d\u037f\u0386\u0388-\u038a\u038c\u038e-\u03a1\u03a3-\u03f5\u03f7-\u0481\u048a-\u052f\u0531-\u0556\u0559\u0560-\u0588\u05d0-\u05ea\u05ef-\u05f2\u0620-\u064a\u066e\u066f\u0671-\u06d3\u06d5\u06e5\u06e6\u06ee\u06ef\u06fa-\u06fc\u06ff\u0710\u0712-\u072f\u074d-\u07a5\u07b1\u07ca-\u07ea\u07f4\u07f5\u07fa\u0800-\u0815\u081a\u0824\u0828\u0840-\u0858\u0860-\u086a\u08a0-\u08b4\u08b6-\u08bd\u0904-\u0939\u093d\u0950\u0958-\u0961\u0971-\u0980\u0985-\u098c\u098f\u0990\u0993-\u09a8\u09aa-\u09b0\u09b2\u09b6-\u09b9\u09bd\u09ce\u09dc\u09dd\u09df-\u09e1\u09f0\u09f1\u09fc\u0a05-\u0a0a\u0a0f\u0a10\u0a13-\u0a28\u0a2a-\u0a30\u0a32\u0a33\u0a35\u0a36\u0a38\u0a39\u0a59-\u0a5c\u0a5e\u0a72-\u0a74\u0a85-\u0a8d\u0a8f-\u0a91\u0a93-\u0aa8\u0aaa-\u0ab0\u0ab2\u0ab3\u0ab5-\u0ab9\u0abd\u0ad0\u0ae0\u0ae1\u0af9\u0b05-\u0b0c\u0b0f\u0b10\u0b13-\u0b28\u0b2a-\u0b30\u0b32\u0b33\u0b35-\u0b39\u0b3d\u0b5c\u0b5d\u0b5f-\u0b61\u0b71\u0b83\u0b85-\u0b8a\u0b8e-\u0b90\u0b92-\u0b95\u0b99\u0b9a\u0b9c\u0b9e\u0b9f\u0ba3\u0ba4\u0ba8-\u0baa\u0bae-\u0bb9\u0bd0\u0c05-\u0c0c\u0c0e-\u0c10\u0c12-\u0c28\u0c2a-\u0c39\u0c3d\u0c58-\u0c5a\u0c60\u0c61\u0c80\u0c85-\u0c8c\u0c8e-\u0c90\u0c92-\u0ca8\u0caa-\u0cb3\u0cb5-\u0cb9\u0cbd\u0cde\u0ce0\u0ce1\u0cf1\u0cf2\u0d05-\u0d0c\u0d0e-\u0d10\u0d12-\u0d3a\u0d3d\u0d4e\u0d54-\u0d56\u0d5f-\u0d61\u0d7a-\u0d7f\u0d85-\u0d96\u0d9a-\u0db1\u0db3-\u0dbb\u0dbd\u0dc0-\u0dc6\u0e01-\u0e30\u0e32\u0e33\u0e40-\u0e46\u0e81\u0e82\u0e84\u0e86-\u0e8a\u0e8c-\u0ea3\u0ea5\u0ea7-\u0eb0\u0eb2\u0eb3\u0ebd\u0ec0-\u0ec4\u0ec6\u0edc-\u0edf\u0f00\u0f40-\u0f47\u0f49-\u0f6c\u0f88-\u0f8c\u1000-\u102a\u103f\u1050-\u1055\u105a-\u105d\u1061\u1065\u1066\u106e-\u1070\u1075-\u1081\u108e\u10a0-\u10c5\u10c7\u10cd\u10d0-\u10fa\u10fc-\u1248\u124a-\u124d\u1250-\u1256\u1258\u125a-\u125d\u1260-\u1288\u128a-\u128d\u1290-\u12b0\u12b2-\u12b5\u12b8-\u12be\u12c0\u12c2-\u12c5\u12c8-\u12d6\u12d8-\u1310\u1312-\u1315\u1318-\u135a\u1380-\u138f\u13a0-\u13f5\u13f8-\u13fd\u1401-\u166c\u166f-\u167f\u1681-\u169a\u16a0-\u16ea\u16ee-\u16f8\u1700-\u170c\u170e-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176c\u176e-\u1770\u1780-\u17b3\u17d7\u17dc\u1820-\u1878\u1880-\u18a8\u18aa\u18b0-\u18f5\u1900-\u191e\u1950-\u196d\u1970-\u1974\u1980-\u19ab\u19b0-\u19c9\u1a00-\u1a16\u1a20-\u1a54\u1aa7\u1b05-\u1b33\u1b45-\u1b4b\u1b83-\u1ba0\u1bae\u1baf\u1bba-\u1be5\u1c00-\u1c23\u1c4d-\u1c4f\u1c5a-\u1c7d\u1c80-\u1c88\u1c90-\u1cba\u1cbd-\u1cbf\u1ce9-\u1cec\u1cee-\u1cf3\u1cf5\u1cf6\u1cfa\u1d00-\u1dbf\u1e00-\u1f15\u1f18-\u1f1d\u1f20-\u1f45\u1f48-\u1f4d\u1f50-\u1f57\u1f59\u1f5b\u1f5d\u1f5f-\u1f7d\u1f80-\u1fb4\u1fb6-\u1fbc\u1fbe\u1fc2-\u1fc4\u1fc6-\u1fcc\u1fd0-\u1fd3\u1fd6-\u1fdb\u1fe0-\u1fec\u1ff2-\u1ff4\u1ff6-\u1ffc\u2071\u207f\u2090-\u209c\u2102\u2107\u210a-\u2113\u2115\u2118-\u211d\u2124\u2126\u2128\u212a-\u2139\u213c-\u213f\u2145-\u2149\u214e\u2160-\u2188\u2c00-\u2c2e\u2c30-\u2c5e\u2c60-\u2ce4\u2ceb-\u2cee\u2cf2\u2cf3\u2d00-\u2d25\u2d27\u2d2d\u2d30-\u2d67\u2d6f\u2d80-\u2d96\u2da0-\u2da6\u2da8-\u2dae\u2db0-\u2db6\u2db8-\u2dbe\u2dc0-\u2dc6\u2dc8-\u2dce\u2dd0-\u2dd6\u2dd8-\u2dde\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303c\u3041-\u3096\u309b-\u309f\u30a1-\u30fa\u30fc-\u30ff\u3105-\u312f\u3131-\u318e\u31a0-\u31ba\u31f0-\u31ff\u3400-\u4db5\u4e00-\u9fef\ua000-\ua48c\ua4d0-\ua4fd\ua500-\ua60c\ua610-\ua61f\ua62a\ua62b\ua640-\ua66e\ua67f-\ua69d\ua6a0-\ua6ef\ua717-\ua71f\ua722-\ua788\ua78b-\ua7bf\ua7c2-\ua7c6\ua7f7-\ua801\ua803-\ua805\ua807-\ua80a\ua80c-\ua822\ua840-\ua873\ua882-\ua8b3\ua8f2-\ua8f7\ua8fb\ua8fd\ua8fe\ua90a-\ua925\ua930-\ua946\ua960-\ua97c\ua984-\ua9b2\ua9cf\ua9e0-\ua9e4\ua9e6-\ua9ef\ua9fa-\ua9fe\uaa00-\uaa28\uaa40-\uaa42\uaa44-\uaa4b\uaa60-\uaa76\uaa7a\uaa7e-\uaaaf\uaab1\uaab5\uaab6\uaab9-\uaabd\uaac0\uaac2\uaadb-\uaadd\uaae0-\uaaea\uaaf2-\uaaf4\uab01-\uab06\uab09-\uab0e\uab11-\uab16\uab20-\uab26\uab28-\uab2e\uab30-\uab5a\uab5c-\uab67\uab70-\uabe2\uac00-\ud7a3\ud7b0-\ud7c6\ud7cb-\ud7fb\uf900-\ufa6d\ufa70-\ufad9\ufb00-\ufb06\ufb13-\ufb17\ufb1d\ufb1f-\ufb28\ufb2a-\ufb36\ufb38-\ufb3c\ufb3e\ufb40\ufb41\ufb43\ufb44\ufb46-\ufbb1\ufbd3-\ufd3d\ufd50-\ufd8f\ufd92-\ufdc7\ufdf0-\ufdfb\ufe70-\ufe74\ufe76-\ufefc\uff21-\uff3a\uff41-\uff5a\uff66-\uffbe\uffc2-\uffc7\uffca-\uffcf\uffd2-\uffd7\uffda-\uffdc";
-  var nonASCIIidentifierChars = "\u200c\u200d\xb7\u0300-\u036f\u0387\u0483-\u0487\u0591-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7\u0610-\u061a\u064b-\u0669\u0670\u06d6-\u06dc\u06df-\u06e4\u06e7\u06e8\u06ea-\u06ed\u06f0-\u06f9\u0711\u0730-\u074a\u07a6-\u07b0\u07c0-\u07c9\u07eb-\u07f3\u07fd\u0816-\u0819\u081b-\u0823\u0825-\u0827\u0829-\u082d\u0859-\u085b\u08d3-\u08e1\u08e3-\u0903\u093a-\u093c\u093e-\u094f\u0951-\u0957\u0962\u0963\u0966-\u096f\u0981-\u0983\u09bc\u09be-\u09c4\u09c7\u09c8\u09cb-\u09cd\u09d7\u09e2\u09e3\u09e6-\u09ef\u09fe\u0a01-\u0a03\u0a3c\u0a3e-\u0a42\u0a47\u0a48\u0a4b-\u0a4d\u0a51\u0a66-\u0a71\u0a75\u0a81-\u0a83\u0abc\u0abe-\u0ac5\u0ac7-\u0ac9\u0acb-\u0acd\u0ae2\u0ae3\u0ae6-\u0aef\u0afa-\u0aff\u0b01-\u0b03\u0b3c\u0b3e-\u0b44\u0b47\u0b48\u0b4b-\u0b4d\u0b56\u0b57\u0b62\u0b63\u0b66-\u0b6f\u0b82\u0bbe-\u0bc2\u0bc6-\u0bc8\u0bca-\u0bcd\u0bd7\u0be6-\u0bef\u0c00-\u0c04\u0c3e-\u0c44\u0c46-\u0c48\u0c4a-\u0c4d\u0c55\u0c56\u0c62\u0c63\u0c66-\u0c6f\u0c81-\u0c83\u0cbc\u0cbe-\u0cc4\u0cc6-\u0cc8\u0cca-\u0ccd\u0cd5\u0cd6\u0ce2\u0ce3\u0ce6-\u0cef\u0d00-\u0d03\u0d3b\u0d3c\u0d3e-\u0d44\u0d46-\u0d48\u0d4a-\u0d4d\u0d57\u0d62\u0d63\u0d66-\u0d6f\u0d82\u0d83\u0dca\u0dcf-\u0dd4\u0dd6\u0dd8-\u0ddf\u0de6-\u0def\u0df2\u0df3\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e50-\u0e59\u0eb1\u0eb4-\u0ebc\u0ec8-\u0ecd\u0ed0-\u0ed9\u0f18\u0f19\u0f20-\u0f29\u0f35\u0f37\u0f39\u0f3e\u0f3f\u0f71-\u0f84\u0f86\u0f87\u0f8d-\u0f97\u0f99-\u0fbc\u0fc6\u102b-\u103e\u1040-\u1049\u1056-\u1059\u105e-\u1060\u1062-\u1064\u1067-\u106d\u1071-\u1074\u1082-\u108d\u108f-\u109d\u135d-\u135f\u1369-\u1371\u1712-\u1714\u1732-\u1734\u1752\u1753\u1772\u1773\u17b4-\u17d3\u17dd\u17e0-\u17e9\u180b-\u180d\u1810-\u1819\u18a9\u1920-\u192b\u1930-\u193b\u1946-\u194f\u19d0-\u19da\u1a17-\u1a1b\u1a55-\u1a5e\u1a60-\u1a7c\u1a7f-\u1a89\u1a90-\u1a99\u1ab0-\u1abd\u1b00-\u1b04\u1b34-\u1b44\u1b50-\u1b59\u1b6b-\u1b73\u1b80-\u1b82\u1ba1-\u1bad\u1bb0-\u1bb9\u1be6-\u1bf3\u1c24-\u1c37\u1c40-\u1c49\u1c50-\u1c59\u1cd0-\u1cd2\u1cd4-\u1ce8\u1ced\u1cf4\u1cf7-\u1cf9\u1dc0-\u1df9\u1dfb-\u1dff\u203f\u2040\u2054\u20d0-\u20dc\u20e1\u20e5-\u20f0\u2cef-\u2cf1\u2d7f\u2de0-\u2dff\u302a-\u302f\u3099\u309a\ua620-\ua629\ua66f\ua674-\ua67d\ua69e\ua69f\ua6f0\ua6f1\ua802\ua806\ua80b\ua823-\ua827\ua880\ua881\ua8b4-\ua8c5\ua8d0-\ua8d9\ua8e0-\ua8f1\ua8ff-\ua909\ua926-\ua92d\ua947-\ua953\ua980-\ua983\ua9b3-\ua9c0\ua9d0-\ua9d9\ua9e5\ua9f0-\ua9f9\uaa29-\uaa36\uaa43\uaa4c\uaa4d\uaa50-\uaa59\uaa7b-\uaa7d\uaab0\uaab2-\uaab4\uaab7\uaab8\uaabe\uaabf\uaac1\uaaeb-\uaaef\uaaf5\uaaf6\uabe3-\uabea\uabec\uabed\uabf0-\uabf9\ufb1e\ufe00-\ufe0f\ufe20-\ufe2f\ufe33\ufe34\ufe4d-\ufe4f\uff10-\uff19\uff3f";
+  var nonASCIIidentifierStartChars = "\xaa\xb5\xba\xc0-\xd6\xd8-\xf6\xf8-\u02c1\u02c6-\u02d1\u02e0-\u02e4\u02ec\u02ee\u0370-\u0374\u0376\u0377\u037a-\u037d\u037f\u0386\u0388-\u038a\u038c\u038e-\u03a1\u03a3-\u03f5\u03f7-\u0481\u048a-\u052f\u0531-\u0556\u0559\u0560-\u0588\u05d0-\u05ea\u05ef-\u05f2\u0620-\u064a\u066e\u066f\u0671-\u06d3\u06d5\u06e5\u06e6\u06ee\u06ef\u06fa-\u06fc\u06ff\u0710\u0712-\u072f\u074d-\u07a5\u07b1\u07ca-\u07ea\u07f4\u07f5\u07fa\u0800-\u0815\u081a\u0824\u0828\u0840-\u0858\u0860-\u086a\u08a0-\u08b4\u08b6-\u08c7\u0904-\u0939\u093d\u0950\u0958-\u0961\u0971-\u0980\u0985-\u098c\u098f\u0990\u0993-\u09a8\u09aa-\u09b0\u09b2\u09b6-\u09b9\u09bd\u09ce\u09dc\u09dd\u09df-\u09e1\u09f0\u09f1\u09fc\u0a05-\u0a0a\u0a0f\u0a10\u0a13-\u0a28\u0a2a-\u0a30\u0a32\u0a33\u0a35\u0a36\u0a38\u0a39\u0a59-\u0a5c\u0a5e\u0a72-\u0a74\u0a85-\u0a8d\u0a8f-\u0a91\u0a93-\u0aa8\u0aaa-\u0ab0\u0ab2\u0ab3\u0ab5-\u0ab9\u0abd\u0ad0\u0ae0\u0ae1\u0af9\u0b05-\u0b0c\u0b0f\u0b10\u0b13-\u0b28\u0b2a-\u0b30\u0b32\u0b33\u0b35-\u0b39\u0b3d\u0b5c\u0b5d\u0b5f-\u0b61\u0b71\u0b83\u0b85-\u0b8a\u0b8e-\u0b90\u0b92-\u0b95\u0b99\u0b9a\u0b9c\u0b9e\u0b9f\u0ba3\u0ba4\u0ba8-\u0baa\u0bae-\u0bb9\u0bd0\u0c05-\u0c0c\u0c0e-\u0c10\u0c12-\u0c28\u0c2a-\u0c39\u0c3d\u0c58-\u0c5a\u0c60\u0c61\u0c80\u0c85-\u0c8c\u0c8e-\u0c90\u0c92-\u0ca8\u0caa-\u0cb3\u0cb5-\u0cb9\u0cbd\u0cde\u0ce0\u0ce1\u0cf1\u0cf2\u0d04-\u0d0c\u0d0e-\u0d10\u0d12-\u0d3a\u0d3d\u0d4e\u0d54-\u0d56\u0d5f-\u0d61\u0d7a-\u0d7f\u0d85-\u0d96\u0d9a-\u0db1\u0db3-\u0dbb\u0dbd\u0dc0-\u0dc6\u0e01-\u0e30\u0e32\u0e33\u0e40-\u0e46\u0e81\u0e82\u0e84\u0e86-\u0e8a\u0e8c-\u0ea3\u0ea5\u0ea7-\u0eb0\u0eb2\u0eb3\u0ebd\u0ec0-\u0ec4\u0ec6\u0edc-\u0edf\u0f00\u0f40-\u0f47\u0f49-\u0f6c\u0f88-\u0f8c\u1000-\u102a\u103f\u1050-\u1055\u105a-\u105d\u1061\u1065\u1066\u106e-\u1070\u1075-\u1081\u108e\u10a0-\u10c5\u10c7\u10cd\u10d0-\u10fa\u10fc-\u1248\u124a-\u124d\u1250-\u1256\u1258\u125a-\u125d\u1260-\u1288\u128a-\u128d\u1290-\u12b0\u12b2-\u12b5\u12b8-\u12be\u12c0\u12c2-\u12c5\u12c8-\u12d6\u12d8-\u1310\u1312-\u1315\u1318-\u135a\u1380-\u138f\u13a0-\u13f5\u13f8-\u13fd\u1401-\u166c\u166f-\u167f\u1681-\u169a\u16a0-\u16ea\u16ee-\u16f8\u1700-\u170c\u170e-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176c\u176e-\u1770\u1780-\u17b3\u17d7\u17dc\u1820-\u1878\u1880-\u18a8\u18aa\u18b0-\u18f5\u1900-\u191e\u1950-\u196d\u1970-\u1974\u1980-\u19ab\u19b0-\u19c9\u1a00-\u1a16\u1a20-\u1a54\u1aa7\u1b05-\u1b33\u1b45-\u1b4b\u1b83-\u1ba0\u1bae\u1baf\u1bba-\u1be5\u1c00-\u1c23\u1c4d-\u1c4f\u1c5a-\u1c7d\u1c80-\u1c88\u1c90-\u1cba\u1cbd-\u1cbf\u1ce9-\u1cec\u1cee-\u1cf3\u1cf5\u1cf6\u1cfa\u1d00-\u1dbf\u1e00-\u1f15\u1f18-\u1f1d\u1f20-\u1f45\u1f48-\u1f4d\u1f50-\u1f57\u1f59\u1f5b\u1f5d\u1f5f-\u1f7d\u1f80-\u1fb4\u1fb6-\u1fbc\u1fbe\u1fc2-\u1fc4\u1fc6-\u1fcc\u1fd0-\u1fd3\u1fd6-\u1fdb\u1fe0-\u1fec\u1ff2-\u1ff4\u1ff6-\u1ffc\u2071\u207f\u2090-\u209c\u2102\u2107\u210a-\u2113\u2115\u2118-\u211d\u2124\u2126\u2128\u212a-\u2139\u213c-\u213f\u2145-\u2149\u214e\u2160-\u2188\u2c00-\u2c2e\u2c30-\u2c5e\u2c60-\u2ce4\u2ceb-\u2cee\u2cf2\u2cf3\u2d00-\u2d25\u2d27\u2d2d\u2d30-\u2d67\u2d6f\u2d80-\u2d96\u2da0-\u2da6\u2da8-\u2dae\u2db0-\u2db6\u2db8-\u2dbe\u2dc0-\u2dc6\u2dc8-\u2dce\u2dd0-\u2dd6\u2dd8-\u2dde\u3005-\u3007\u3021-\u3029\u3031-\u3035\u3038-\u303c\u3041-\u3096\u309b-\u309f\u30a1-\u30fa\u30fc-\u30ff\u3105-\u312f\u3131-\u318e\u31a0-\u31bf\u31f0-\u31ff\u3400-\u4dbf\u4e00-\u9ffc\ua000-\ua48c\ua4d0-\ua4fd\ua500-\ua60c\ua610-\ua61f\ua62a\ua62b\ua640-\ua66e\ua67f-\ua69d\ua6a0-\ua6ef\ua717-\ua71f\ua722-\ua788\ua78b-\ua7bf\ua7c2-\ua7ca\ua7f5-\ua801\ua803-\ua805\ua807-\ua80a\ua80c-\ua822\ua840-\ua873\ua882-\ua8b3\ua8f2-\ua8f7\ua8fb\ua8fd\ua8fe\ua90a-\ua925\ua930-\ua946\ua960-\ua97c\ua984-\ua9b2\ua9cf\ua9e0-\ua9e4\ua9e6-\ua9ef\ua9fa-\ua9fe\uaa00-\uaa28\uaa40-\uaa42\uaa44-\uaa4b\uaa60-\uaa76\uaa7a\uaa7e-\uaaaf\uaab1\uaab5\uaab6\uaab9-\uaabd\uaac0\uaac2\uaadb-\uaadd\uaae0-\uaaea\uaaf2-\uaaf4\uab01-\uab06\uab09-\uab0e\uab11-\uab16\uab20-\uab26\uab28-\uab2e\uab30-\uab5a\uab5c-\uab69\uab70-\uabe2\uac00-\ud7a3\ud7b0-\ud7c6\ud7cb-\ud7fb\uf900-\ufa6d\ufa70-\ufad9\ufb00-\ufb06\ufb13-\ufb17\ufb1d\ufb1f-\ufb28\ufb2a-\ufb36\ufb38-\ufb3c\ufb3e\ufb40\ufb41\ufb43\ufb44\ufb46-\ufbb1\ufbd3-\ufd3d\ufd50-\ufd8f\ufd92-\ufdc7\ufdf0-\ufdfb\ufe70-\ufe74\ufe76-\ufefc\uff21-\uff3a\uff41-\uff5a\uff66-\uffbe\uffc2-\uffc7\uffca-\uffcf\uffd2-\uffd7\uffda-\uffdc";
+  var nonASCIIidentifierChars = "\u200c\u200d\xb7\u0300-\u036f\u0387\u0483-\u0487\u0591-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7\u0610-\u061a\u064b-\u0669\u0670\u06d6-\u06dc\u06df-\u06e4\u06e7\u06e8\u06ea-\u06ed\u06f0-\u06f9\u0711\u0730-\u074a\u07a6-\u07b0\u07c0-\u07c9\u07eb-\u07f3\u07fd\u0816-\u0819\u081b-\u0823\u0825-\u0827\u0829-\u082d\u0859-\u085b\u08d3-\u08e1\u08e3-\u0903\u093a-\u093c\u093e-\u094f\u0951-\u0957\u0962\u0963\u0966-\u096f\u0981-\u0983\u09bc\u09be-\u09c4\u09c7\u09c8\u09cb-\u09cd\u09d7\u09e2\u09e3\u09e6-\u09ef\u09fe\u0a01-\u0a03\u0a3c\u0a3e-\u0a42\u0a47\u0a48\u0a4b-\u0a4d\u0a51\u0a66-\u0a71\u0a75\u0a81-\u0a83\u0abc\u0abe-\u0ac5\u0ac7-\u0ac9\u0acb-\u0acd\u0ae2\u0ae3\u0ae6-\u0aef\u0afa-\u0aff\u0b01-\u0b03\u0b3c\u0b3e-\u0b44\u0b47\u0b48\u0b4b-\u0b4d\u0b55-\u0b57\u0b62\u0b63\u0b66-\u0b6f\u0b82\u0bbe-\u0bc2\u0bc6-\u0bc8\u0bca-\u0bcd\u0bd7\u0be6-\u0bef\u0c00-\u0c04\u0c3e-\u0c44\u0c46-\u0c48\u0c4a-\u0c4d\u0c55\u0c56\u0c62\u0c63\u0c66-\u0c6f\u0c81-\u0c83\u0cbc\u0cbe-\u0cc4\u0cc6-\u0cc8\u0cca-\u0ccd\u0cd5\u0cd6\u0ce2\u0ce3\u0ce6-\u0cef\u0d00-\u0d03\u0d3b\u0d3c\u0d3e-\u0d44\u0d46-\u0d48\u0d4a-\u0d4d\u0d57\u0d62\u0d63\u0d66-\u0d6f\u0d81-\u0d83\u0dca\u0dcf-\u0dd4\u0dd6\u0dd8-\u0ddf\u0de6-\u0def\u0df2\u0df3\u0e31\u0e34-\u0e3a\u0e47-\u0e4e\u0e50-\u0e59\u0eb1\u0eb4-\u0ebc\u0ec8-\u0ecd\u0ed0-\u0ed9\u0f18\u0f19\u0f20-\u0f29\u0f35\u0f37\u0f39\u0f3e\u0f3f\u0f71-\u0f84\u0f86\u0f87\u0f8d-\u0f97\u0f99-\u0fbc\u0fc6\u102b-\u103e\u1040-\u1049\u1056-\u1059\u105e-\u1060\u1062-\u1064\u1067-\u106d\u1071-\u1074\u1082-\u108d\u108f-\u109d\u135d-\u135f\u1369-\u1371\u1712-\u1714\u1732-\u1734\u1752\u1753\u1772\u1773\u17b4-\u17d3\u17dd\u17e0-\u17e9\u180b-\u180d\u1810-\u1819\u18a9\u1920-\u192b\u1930-\u193b\u1946-\u194f\u19d0-\u19da\u1a17-\u1a1b\u1a55-\u1a5e\u1a60-\u1a7c\u1a7f-\u1a89\u1a90-\u1a99\u1ab0-\u1abd\u1abf\u1ac0\u1b00-\u1b04\u1b34-\u1b44\u1b50-\u1b59\u1b6b-\u1b73\u1b80-\u1b82\u1ba1-\u1bad\u1bb0-\u1bb9\u1be6-\u1bf3\u1c24-\u1c37\u1c40-\u1c49\u1c50-\u1c59\u1cd0-\u1cd2\u1cd4-\u1ce8\u1ced\u1cf4\u1cf7-\u1cf9\u1dc0-\u1df9\u1dfb-\u1dff\u203f\u2040\u2054\u20d0-\u20dc\u20e1\u20e5-\u20f0\u2cef-\u2cf1\u2d7f\u2de0-\u2dff\u302a-\u302f\u3099\u309a\ua620-\ua629\ua66f\ua674-\ua67d\ua69e\ua69f\ua6f0\ua6f1\ua802\ua806\ua80b\ua823-\ua827\ua82c\ua880\ua881\ua8b4-\ua8c5\ua8d0-\ua8d9\ua8e0-\ua8f1\ua8ff-\ua909\ua926-\ua92d\ua947-\ua953\ua980-\ua983\ua9b3-\ua9c0\ua9d0-\ua9d9\ua9e5\ua9f0-\ua9f9\uaa29-\uaa36\uaa43\uaa4c\uaa4d\uaa50-\uaa59\uaa7b-\uaa7d\uaab0\uaab2-\uaab4\uaab7\uaab8\uaabe\uaabf\uaac1\uaaeb-\uaaef\uaaf5\uaaf6\uabe3-\uabea\uabec\uabed\uabf0-\uabf9\ufb1e\ufe00-\ufe0f\ufe20-\ufe2f\ufe33\ufe34\ufe4d-\ufe4f\uff10-\uff19\uff3f";
   var nonASCIIidentifierStart = new RegExp("[" + nonASCIIidentifierStartChars + "]");
   var nonASCIIidentifier = new RegExp("[" + nonASCIIidentifierStartChars + nonASCIIidentifierChars + "]");
   nonASCIIidentifierStartChars = nonASCIIidentifierChars = null; // These are a run-length and offset encoded representation of the
@@ -22428,9 +22439,9 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
   // generated by bin/generate-identifier-regex.js
   // eslint-disable-next-line comma-spacing
 
-  var astralIdentifierStartCodes = [0, 11, 2, 25, 2, 18, 2, 1, 2, 14, 3, 13, 35, 122, 70, 52, 268, 28, 4, 48, 48, 31, 14, 29, 6, 37, 11, 29, 3, 35, 5, 7, 2, 4, 43, 157, 19, 35, 5, 35, 5, 39, 9, 51, 157, 310, 10, 21, 11, 7, 153, 5, 3, 0, 2, 43, 2, 1, 4, 0, 3, 22, 11, 22, 10, 30, 66, 18, 2, 1, 11, 21, 11, 25, 71, 55, 7, 1, 65, 0, 16, 3, 2, 2, 2, 28, 43, 28, 4, 28, 36, 7, 2, 27, 28, 53, 11, 21, 11, 18, 14, 17, 111, 72, 56, 50, 14, 50, 14, 35, 477, 28, 11, 0, 9, 21, 155, 22, 13, 52, 76, 44, 33, 24, 27, 35, 30, 0, 12, 34, 4, 0, 13, 47, 15, 3, 22, 0, 2, 0, 36, 17, 2, 24, 85, 6, 2, 0, 2, 3, 2, 14, 2, 9, 8, 46, 39, 7, 3, 1, 3, 21, 2, 6, 2, 1, 2, 4, 4, 0, 19, 0, 13, 4, 159, 52, 19, 3, 21, 0, 33, 47, 21, 1, 2, 0, 185, 46, 42, 3, 37, 47, 21, 0, 60, 42, 14, 0, 72, 26, 230, 43, 117, 63, 32, 0, 161, 7, 3, 38, 17, 0, 2, 0, 29, 0, 11, 39, 8, 0, 22, 0, 12, 45, 20, 0, 35, 56, 264, 8, 2, 36, 18, 0, 50, 29, 113, 6, 2, 1, 2, 37, 22, 0, 26, 5, 2, 1, 2, 31, 15, 0, 328, 18, 270, 921, 103, 110, 18, 195, 2749, 1070, 4050, 582, 8634, 568, 8, 30, 114, 29, 19, 47, 17, 3, 32, 20, 6, 18, 689, 63, 129, 74, 6, 0, 67, 12, 65, 1, 2, 0, 29, 6135, 9, 754, 9486, 286, 50, 2, 18, 3, 9, 395, 2309, 106, 6, 12, 4, 8, 8, 9, 5991, 84, 2, 70, 2, 1, 3, 0, 3, 1, 3, 3, 2, 11, 2, 0, 2, 6, 2, 64, 2, 3, 3, 7, 2, 6, 2, 27, 2, 3, 2, 4, 2, 0, 4, 6, 2, 339, 3, 24, 2, 24, 2, 30, 2, 24, 2, 30, 2, 24, 2, 30, 2, 24, 2, 30, 2, 24, 2, 7, 2357, 44, 11, 6, 17, 0, 370, 43, 1301, 196, 60, 67, 8, 0, 1205, 3, 2, 26, 2, 1, 2, 0, 3, 0, 2, 9, 2, 3, 2, 0, 2, 0, 7, 0, 5, 0, 2, 0, 2, 0, 2, 2, 2, 1, 2, 0, 3, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 1, 2, 0, 3, 3, 2, 6, 2, 3, 2, 3, 2, 0, 2, 9, 2, 16, 6, 2, 2, 4, 2, 16, 4421, 42710, 42, 4148, 12, 221, 3, 5761, 15, 7472, 3104, 541]; // eslint-disable-next-line comma-spacing
+  var astralIdentifierStartCodes = [0, 11, 2, 25, 2, 18, 2, 1, 2, 14, 3, 13, 35, 122, 70, 52, 268, 28, 4, 48, 48, 31, 14, 29, 6, 37, 11, 29, 3, 35, 5, 7, 2, 4, 43, 157, 19, 35, 5, 35, 5, 39, 9, 51, 157, 310, 10, 21, 11, 7, 153, 5, 3, 0, 2, 43, 2, 1, 4, 0, 3, 22, 11, 22, 10, 30, 66, 18, 2, 1, 11, 21, 11, 25, 71, 55, 7, 1, 65, 0, 16, 3, 2, 2, 2, 28, 43, 28, 4, 28, 36, 7, 2, 27, 28, 53, 11, 21, 11, 18, 14, 17, 111, 72, 56, 50, 14, 50, 14, 35, 349, 41, 7, 1, 79, 28, 11, 0, 9, 21, 107, 20, 28, 22, 13, 52, 76, 44, 33, 24, 27, 35, 30, 0, 3, 0, 9, 34, 4, 0, 13, 47, 15, 3, 22, 0, 2, 0, 36, 17, 2, 24, 85, 6, 2, 0, 2, 3, 2, 14, 2, 9, 8, 46, 39, 7, 3, 1, 3, 21, 2, 6, 2, 1, 2, 4, 4, 0, 19, 0, 13, 4, 159, 52, 19, 3, 21, 2, 31, 47, 21, 1, 2, 0, 185, 46, 42, 3, 37, 47, 21, 0, 60, 42, 14, 0, 72, 26, 230, 43, 117, 63, 32, 7, 3, 0, 3, 7, 2, 1, 2, 23, 16, 0, 2, 0, 95, 7, 3, 38, 17, 0, 2, 0, 29, 0, 11, 39, 8, 0, 22, 0, 12, 45, 20, 0, 35, 56, 264, 8, 2, 36, 18, 0, 50, 29, 113, 6, 2, 1, 2, 37, 22, 0, 26, 5, 2, 1, 2, 31, 15, 0, 328, 18, 190, 0, 80, 921, 103, 110, 18, 195, 2749, 1070, 4050, 582, 8634, 568, 8, 30, 114, 29, 19, 47, 17, 3, 32, 20, 6, 18, 689, 63, 129, 74, 6, 0, 67, 12, 65, 1, 2, 0, 29, 6135, 9, 1237, 43, 8, 8952, 286, 50, 2, 18, 3, 9, 395, 2309, 106, 6, 12, 4, 8, 8, 9, 5991, 84, 2, 70, 2, 1, 3, 0, 3, 1, 3, 3, 2, 11, 2, 0, 2, 6, 2, 64, 2, 3, 3, 7, 2, 6, 2, 27, 2, 3, 2, 4, 2, 0, 4, 6, 2, 339, 3, 24, 2, 24, 2, 30, 2, 24, 2, 30, 2, 24, 2, 30, 2, 24, 2, 30, 2, 24, 2, 7, 2357, 44, 11, 6, 17, 0, 370, 43, 1301, 196, 60, 67, 8, 0, 1205, 3, 2, 26, 2, 1, 2, 0, 3, 0, 2, 9, 2, 3, 2, 0, 2, 0, 7, 0, 5, 0, 2, 0, 2, 0, 2, 2, 2, 1, 2, 0, 3, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 1, 2, 0, 3, 3, 2, 6, 2, 3, 2, 3, 2, 0, 2, 9, 2, 16, 6, 2, 2, 4, 2, 16, 4421, 42717, 35, 4148, 12, 221, 3, 5761, 15, 7472, 3104, 541, 1507, 4938]; // eslint-disable-next-line comma-spacing
 
-  var astralIdentifierCodes = [509, 0, 227, 0, 150, 4, 294, 9, 1368, 2, 2, 1, 6, 3, 41, 2, 5, 0, 166, 1, 574, 3, 9, 9, 525, 10, 176, 2, 54, 14, 32, 9, 16, 3, 46, 10, 54, 9, 7, 2, 37, 13, 2, 9, 6, 1, 45, 0, 13, 2, 49, 13, 9, 3, 4, 9, 83, 11, 7, 0, 161, 11, 6, 9, 7, 3, 56, 1, 2, 6, 3, 1, 3, 2, 10, 0, 11, 1, 3, 6, 4, 4, 193, 17, 10, 9, 5, 0, 82, 19, 13, 9, 214, 6, 3, 8, 28, 1, 83, 16, 16, 9, 82, 12, 9, 9, 84, 14, 5, 9, 243, 14, 166, 9, 232, 6, 3, 6, 4, 0, 29, 9, 41, 6, 2, 3, 9, 0, 10, 10, 47, 15, 406, 7, 2, 7, 17, 9, 57, 21, 2, 13, 123, 5, 4, 0, 2, 1, 2, 6, 2, 0, 9, 9, 49, 4, 2, 1, 2, 4, 9, 9, 330, 3, 19306, 9, 135, 4, 60, 6, 26, 9, 1014, 0, 2, 54, 8, 3, 19723, 1, 5319, 4, 4, 5, 9, 7, 3, 6, 31, 3, 149, 2, 1418, 49, 513, 54, 5, 49, 9, 0, 15, 0, 23, 4, 2, 14, 1361, 6, 2, 16, 3, 6, 2, 1, 2, 4, 262, 6, 10, 9, 419, 13, 1495, 6, 110, 6, 6, 9, 792487, 239]; // This has a complexity linear to the value of the code. The
+  var astralIdentifierCodes = [509, 0, 227, 0, 150, 4, 294, 9, 1368, 2, 2, 1, 6, 3, 41, 2, 5, 0, 166, 1, 574, 3, 9, 9, 370, 1, 154, 10, 176, 2, 54, 14, 32, 9, 16, 3, 46, 10, 54, 9, 7, 2, 37, 13, 2, 9, 6, 1, 45, 0, 13, 2, 49, 13, 9, 3, 2, 11, 83, 11, 7, 0, 161, 11, 6, 9, 7, 3, 56, 1, 2, 6, 3, 1, 3, 2, 10, 0, 11, 1, 3, 6, 4, 4, 193, 17, 10, 9, 5, 0, 82, 19, 13, 9, 214, 6, 3, 8, 28, 1, 83, 16, 16, 9, 82, 12, 9, 9, 84, 14, 5, 9, 243, 14, 166, 9, 71, 5, 2, 1, 3, 3, 2, 0, 2, 1, 13, 9, 120, 6, 3, 6, 4, 0, 29, 9, 41, 6, 2, 3, 9, 0, 10, 10, 47, 15, 406, 7, 2, 7, 17, 9, 57, 21, 2, 13, 123, 5, 4, 0, 2, 1, 2, 6, 2, 0, 9, 9, 49, 4, 2, 1, 2, 4, 9, 9, 330, 3, 19306, 9, 135, 4, 60, 6, 26, 9, 1014, 0, 2, 54, 8, 3, 82, 0, 12, 1, 19628, 1, 5319, 4, 4, 5, 9, 7, 3, 6, 31, 3, 149, 2, 1418, 49, 513, 54, 5, 49, 9, 0, 15, 0, 23, 4, 2, 14, 1361, 6, 2, 16, 3, 6, 2, 1, 2, 4, 262, 6, 10, 9, 419, 13, 1495, 6, 110, 6, 6, 9, 4759, 9, 787719, 239]; // This has a complexity linear to the value of the code. The
   // assumption is that looking up astral identifier characters is
   // rare.
 
@@ -22660,6 +22671,7 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     starstar: new TokenType("**", {
       beforeExpr: true
     }),
+    coalesce: binop("??", 1),
     // Keyword token types.
     _break: kw("break"),
     _case: kw("case", beforeExpr),
@@ -23138,7 +23150,11 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
       }
 
       if ((match[1] || match[2]) === "use strict") {
-        return true;
+        skipWhiteSpace.lastIndex = start + match[0].length;
+        var spaceAfter = skipWhiteSpace.exec(this.input),
+            end = spaceAfter.index + spaceAfter[0].length;
+        var next = this.input.charAt(end);
+        return next === ";" || next === "}" || lineBreak.test(spaceAfter[0]) && !(/[(`.[+\-/*%<>=,?^&]/.test(next) || next === "!" && this.input.charAt(end + 1) === "=");
       }
 
       start += match[0].length; // Skip semicolon, if any.
@@ -23483,7 +23499,7 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
           var next = this.pos + skip[0].length,
               nextCh = this.input.charCodeAt(next);
 
-          if (nextCh === 40) // '('
+          if (nextCh === 40 || nextCh === 46) // '(' or '.'
             {
               return this.parseExpressionStatement(node, this.parseExpression());
             }
@@ -23887,7 +23903,7 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
   // function bodies).
 
 
-  pp$1.parseBlock = function (createNewLexicalScope, node) {
+  pp$1.parseBlock = function (createNewLexicalScope, node, exitStrict) {
     if (createNewLexicalScope === void 0) createNewLexicalScope = true;
     if (node === void 0) node = this.startNode();
     node.body = [];
@@ -23897,10 +23913,16 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
       this.enterScope(0);
     }
 
-    while (!this.eat(types.braceR)) {
+    while (this.type !== types.braceR) {
       var stmt = this.parseStatement(null);
       node.body.push(stmt);
     }
+
+    if (exitStrict) {
+      this.strict = false;
+    }
+
+    this.next();
 
     if (createNewLexicalScope) {
       this.exitScope();
@@ -24054,7 +24076,7 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     classBody.body = [];
     this.expect(types.braceL);
 
-    while (!this.eat(types.braceR)) {
+    while (this.type !== types.braceR) {
       var element = this.parseClassElement(node.superClass !== null);
 
       if (element) {
@@ -24070,8 +24092,9 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
       }
     }
 
-    node.body = this.finishNode(classBody, "ClassBody");
     this.strict = oldStrict;
+    this.next();
+    node.body = this.finishNode(classBody, "ClassBody");
     return this.finishNode(node, isStatement ? "ClassDeclaration" : "ClassExpression");
   };
 
@@ -24197,6 +24220,15 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     this.next(); // export * from '...'
 
     if (this.eat(types.star)) {
+      if (this.options.ecmaVersion >= 11) {
+        if (this.eatContextual("as")) {
+          node.exported = this.parseIdent(true);
+          this.checkExport(exports, node.exported.name, this.lastTokStart);
+        } else {
+          node.exported = null;
+        }
+      }
+
       this.expectContextual("from");
 
       if (this.type !== types.string) {
@@ -24970,12 +25002,25 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     if (prec != null && (!noIn || this.type !== types._in)) {
       if (prec > minPrec) {
         var logical = this.type === types.logicalOR || this.type === types.logicalAND;
+        var coalesce = this.type === types.coalesce;
+
+        if (coalesce) {
+          // Handle the precedence of `tt.coalesce` as equal to the range of logical expressions.
+          // In other words, `node.right` shouldn't contain logical expressions in order to check the mixed error.
+          prec = types.logicalAND.binop;
+        }
+
         var op = this.value;
         this.next();
         var startPos = this.start,
             startLoc = this.startLoc;
         var right = this.parseExprOp(this.parseMaybeUnary(null, false), startPos, startLoc, prec, noIn);
-        var node = this.buildBinary(leftStartPos, leftStartLoc, left, right, op, logical);
+        var node = this.buildBinary(leftStartPos, leftStartLoc, left, right, op, logical || coalesce);
+
+        if (logical && this.type === types.coalesce || coalesce && (this.type === types.logicalOR || this.type === types.logicalAND)) {
+          this.raiseRecoverable(this.start, "Logical expressions and coalesce expressions cannot be mixed. Wrap either by parentheses");
+        }
+
         return this.parseExprOp(node, leftStartPos, leftStartLoc, minPrec, noIn);
       }
     }
@@ -25069,7 +25114,7 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
   };
 
   pp$3.parseSubscripts = function (base, startPos, startLoc, noCalls) {
-    var maybeAsyncArrow = this.options.ecmaVersion >= 8 && base.type === "Identifier" && base.name === "async" && this.lastTokEnd === base.end && !this.canInsertSemicolon() && this.input.slice(base.start, base.end) === "async";
+    var maybeAsyncArrow = this.options.ecmaVersion >= 8 && base.type === "Identifier" && base.name === "async" && this.lastTokEnd === base.end && !this.canInsertSemicolon() && base.end - base.start === 5 && this.potentialArrowAt === base.start;
 
     while (true) {
       var element = this.parseSubscript(base, startPos, startLoc, noCalls, maybeAsyncArrow);
@@ -25286,12 +25331,22 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
   };
 
   pp$3.parseExprImport = function () {
-    var node = this.startNode();
-    this.next(); // skip `import`
+    var node = this.startNode(); // Consume `import` as an identifier for `import.meta`.
+    // Because `this.parseIdent(true)` doesn't check escape sequences, it needs the check of `this.containsEsc`.
+
+    if (this.containsEsc) {
+      this.raiseRecoverable(this.start, "Escape sequence in keyword import");
+    }
+
+    var meta = this.parseIdent(true);
 
     switch (this.type) {
       case types.parenL:
         return this.parseDynamicImport(node);
+
+      case types.dot:
+        node.meta = meta;
+        return this.parseImportMeta(node);
 
       default:
         this.unexpected();
@@ -25315,6 +25370,27 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     }
 
     return this.finishNode(node, "ImportExpression");
+  };
+
+  pp$3.parseImportMeta = function (node) {
+    this.next(); // skip `.`
+
+    var containsEsc = this.containsEsc;
+    node.property = this.parseIdent(true);
+
+    if (node.property.name !== "meta") {
+      this.raiseRecoverable(node.property.start, "The only valid meta property for import is 'import.meta'");
+    }
+
+    if (containsEsc) {
+      this.raiseRecoverable(node.start, "'import.meta' must not contain escaped characters");
+    }
+
+    if (this.options.sourceType !== "module") {
+      this.raiseRecoverable(node.start, "Cannot use 'import.meta' outside a module");
+    }
+
+    return this.finishNode(node, "MetaProperty");
   };
 
   pp$3.parseLiteral = function (value) {
@@ -25449,12 +25525,16 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
       var containsEsc = this.containsEsc;
       node.property = this.parseIdent(true);
 
-      if (node.property.name !== "target" || containsEsc) {
-        this.raiseRecoverable(node.property.start, "The only valid meta property for new is new.target");
+      if (node.property.name !== "target") {
+        this.raiseRecoverable(node.property.start, "The only valid meta property for new is 'new.target'");
+      }
+
+      if (containsEsc) {
+        this.raiseRecoverable(node.start, "'new.target' must not contain escaped characters");
       }
 
       if (!this.inNonArrowFunction()) {
-        this.raiseRecoverable(node.start, "new.target can only be used in functions");
+        this.raiseRecoverable(node.start, "'new.target' can only be used in functions");
       }
 
       return this.finishNode(node, "MetaProperty");
@@ -25822,20 +25902,19 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
       // if a let/const declaration in the function clashes with one of the params.
 
 
-      this.checkParams(node, !oldStrict && !useStrict && !isArrowFunction && !isMethod && this.isSimpleParamList(node.params));
-      node.body = this.parseBlock(false);
+      this.checkParams(node, !oldStrict && !useStrict && !isArrowFunction && !isMethod && this.isSimpleParamList(node.params)); // Ensure the function name isn't a forbidden identifier in strict mode, e.g. 'eval'
+
+      if (this.strict && node.id) {
+        this.checkLVal(node.id, BIND_OUTSIDE);
+      }
+
+      node.body = this.parseBlock(false, undefined, useStrict && !oldStrict);
       node.expression = false;
       this.adaptDirectivePrologue(node.body.body);
       this.labels = oldLabels;
     }
 
-    this.exitScope(); // Ensure the function name isn't a forbidden identifier in strict mode, e.g. 'eval'
-
-    if (this.strict && node.id) {
-      this.checkLVal(node.id, BIND_OUTSIDE);
-    }
-
-    this.strict = oldStrict;
+    this.exitScope();
   };
 
   pp$3.isSimpleParamList = function (params) {
@@ -26433,7 +26512,8 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
   // Otherwise, this returns the code unit of the index (can be a part of a surrogate pair).
 
 
-  RegExpValidationState.prototype.at = function at(i) {
+  RegExpValidationState.prototype.at = function at(i, forceU) {
+    if (forceU === void 0) forceU = false;
     var s = this.source;
     var l = s.length;
 
@@ -26443,7 +26523,7 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
 
     var c = s.charCodeAt(i);
 
-    if (!this.switchU || c <= 0xD7FF || c >= 0xE000 || i + 1 >= l) {
+    if (!(forceU || this.switchU) || c <= 0xD7FF || c >= 0xE000 || i + 1 >= l) {
       return c;
     }
 
@@ -26451,7 +26531,8 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     return next >= 0xDC00 && next <= 0xDFFF ? (c << 10) + next - 0x35FDC00 : c;
   };
 
-  RegExpValidationState.prototype.nextIndex = function nextIndex(i) {
+  RegExpValidationState.prototype.nextIndex = function nextIndex(i, forceU) {
+    if (forceU === void 0) forceU = false;
     var s = this.source;
     var l = s.length;
 
@@ -26462,28 +26543,33 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     var c = s.charCodeAt(i),
         next;
 
-    if (!this.switchU || c <= 0xD7FF || c >= 0xE000 || i + 1 >= l || (next = s.charCodeAt(i + 1)) < 0xDC00 || next > 0xDFFF) {
+    if (!(forceU || this.switchU) || c <= 0xD7FF || c >= 0xE000 || i + 1 >= l || (next = s.charCodeAt(i + 1)) < 0xDC00 || next > 0xDFFF) {
       return i + 1;
     }
 
     return i + 2;
   };
 
-  RegExpValidationState.prototype.current = function current() {
-    return this.at(this.pos);
+  RegExpValidationState.prototype.current = function current(forceU) {
+    if (forceU === void 0) forceU = false;
+    return this.at(this.pos, forceU);
   };
 
-  RegExpValidationState.prototype.lookahead = function lookahead() {
-    return this.at(this.nextIndex(this.pos));
+  RegExpValidationState.prototype.lookahead = function lookahead(forceU) {
+    if (forceU === void 0) forceU = false;
+    return this.at(this.nextIndex(this.pos, forceU), forceU);
   };
 
-  RegExpValidationState.prototype.advance = function advance() {
-    this.pos = this.nextIndex(this.pos);
+  RegExpValidationState.prototype.advance = function advance(forceU) {
+    if (forceU === void 0) forceU = false;
+    this.pos = this.nextIndex(this.pos, forceU);
   };
 
-  RegExpValidationState.prototype.eat = function eat(ch) {
-    if (this.current() === ch) {
-      this.advance();
+  RegExpValidationState.prototype.eat = function eat(ch, forceU) {
+    if (forceU === void 0) forceU = false;
+
+    if (this.current(forceU) === ch) {
+      this.advance(forceU);
       return true;
     }
 
@@ -26933,9 +27019,9 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
       }
 
     return false;
-  }; // GroupSpecifier[U] ::
+  }; // GroupSpecifier ::
   //   [empty]
-  //   `?` GroupName[?U]
+  //   `?` GroupName
 
 
   pp$8.regexp_groupSpecifier = function (state) {
@@ -26953,8 +27039,8 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
 
       state.raise("Invalid group");
     }
-  }; // GroupName[U] ::
-  //   `<` RegExpIdentifierName[?U] `>`
+  }; // GroupName ::
+  //   `<` RegExpIdentifierName `>`
   // Note: this updates `state.lastStringValue` property with the eaten name.
 
 
@@ -26974,9 +27060,9 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     }
 
     return false;
-  }; // RegExpIdentifierName[U] ::
-  //   RegExpIdentifierStart[?U]
-  //   RegExpIdentifierName[?U] RegExpIdentifierPart[?U]
+  }; // RegExpIdentifierName ::
+  //   RegExpIdentifierStart
+  //   RegExpIdentifierName RegExpIdentifierPart
   // Note: this updates `state.lastStringValue` property with the eaten name.
 
 
@@ -26994,21 +27080,22 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     }
 
     return false;
-  }; // RegExpIdentifierStart[U] ::
+  }; // RegExpIdentifierStart ::
   //   UnicodeIDStart
   //   `$`
   //   `_`
-  //   `\` RegExpUnicodeEscapeSequence[?U]
+  //   `\` RegExpUnicodeEscapeSequence[+U]
 
 
   pp$8.regexp_eatRegExpIdentifierStart = function (state) {
     var start = state.pos;
-    var ch = state.current();
-    state.advance();
+    var forceU = this.options.ecmaVersion >= 11;
+    var ch = state.current(forceU);
+    state.advance(forceU);
 
     if (ch === 0x5C
     /* \ */
-    && this.regexp_eatRegExpUnicodeEscapeSequence(state)) {
+    && this.regexp_eatRegExpUnicodeEscapeSequence(state, forceU)) {
       ch = state.lastIntValue;
     }
 
@@ -27026,23 +27113,24 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     /* $ */
     || ch === 0x5F;
     /* _ */
-  } // RegExpIdentifierPart[U] ::
+  } // RegExpIdentifierPart ::
   //   UnicodeIDContinue
   //   `$`
   //   `_`
-  //   `\` RegExpUnicodeEscapeSequence[?U]
+  //   `\` RegExpUnicodeEscapeSequence[+U]
   //   <ZWNJ>
   //   <ZWJ>
 
 
   pp$8.regexp_eatRegExpIdentifierPart = function (state) {
     var start = state.pos;
-    var ch = state.current();
-    state.advance();
+    var forceU = this.options.ecmaVersion >= 11;
+    var ch = state.current(forceU);
+    state.advance(forceU);
 
     if (ch === 0x5C
     /* \ */
-    && this.regexp_eatRegExpUnicodeEscapeSequence(state)) {
+    && this.regexp_eatRegExpUnicodeEscapeSequence(state, forceU)) {
       ch = state.lastIntValue;
     }
 
@@ -27128,7 +27216,7 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
 
 
   pp$8.regexp_eatCharacterEscape = function (state) {
-    return this.regexp_eatControlEscape(state) || this.regexp_eatCControlLetter(state) || this.regexp_eatZero(state) || this.regexp_eatHexEscapeSequence(state) || this.regexp_eatRegExpUnicodeEscapeSequence(state) || !state.switchU && this.regexp_eatLegacyOctalEscapeSequence(state) || this.regexp_eatIdentityEscape(state);
+    return this.regexp_eatControlEscape(state) || this.regexp_eatCControlLetter(state) || this.regexp_eatZero(state) || this.regexp_eatHexEscapeSequence(state) || this.regexp_eatRegExpUnicodeEscapeSequence(state, false) || !state.switchU && this.regexp_eatLegacyOctalEscapeSequence(state) || this.regexp_eatIdentityEscape(state);
   };
 
   pp$8.regexp_eatCControlLetter = function (state) {
@@ -27242,8 +27330,10 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
   } // https://www.ecma-international.org/ecma-262/8.0/#prod-RegExpUnicodeEscapeSequence
 
 
-  pp$8.regexp_eatRegExpUnicodeEscapeSequence = function (state) {
+  pp$8.regexp_eatRegExpUnicodeEscapeSequence = function (state, forceU) {
+    if (forceU === void 0) forceU = false;
     var start = state.pos;
+    var switchU = forceU || state.switchU;
 
     if (state.eat(0x75
     /* u */
@@ -27251,7 +27341,7 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
       if (this.regexp_eatFixedHexDigits(state, 4)) {
         var lead = state.lastIntValue;
 
-        if (state.switchU && lead >= 0xD800 && lead <= 0xDBFF) {
+        if (switchU && lead >= 0xD800 && lead <= 0xDBFF) {
           var leadSurrogateEnd = state.pos;
 
           if (state.eat(0x5C
@@ -27274,7 +27364,7 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
         return true;
       }
 
-      if (state.switchU && state.eat(0x7B
+      if (switchU && state.eat(0x7B
       /* { */
       ) && this.regexp_eatHexDigits(state) && state.eat(0x7D
       /* } */
@@ -27282,7 +27372,7 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
         return true;
       }
 
-      if (state.switchU) {
+      if (switchU) {
         state.raise("Invalid unicode escape");
       }
 
@@ -28183,6 +28273,19 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
     return this.finishOp(code === 61 ? types.eq : types.prefix, 1);
   };
 
+  pp$9.readToken_question = function () {
+    // '?'
+    if (this.options.ecmaVersion >= 11) {
+      var next = this.input.charCodeAt(this.pos + 1);
+
+      if (next === 63) {
+        return this.finishOp(types.coalesce, 2);
+      }
+    }
+
+    return this.finishOp(types.question, 1);
+  };
+
   pp$9.getTokenFromCode = function (code) {
     switch (code) {
       // The interpretation of a dot depends on whether it is followed
@@ -28227,10 +28330,6 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
       case 58:
         ++this.pos;
         return this.finishToken(types.colon);
-
-      case 63:
-        ++this.pos;
-        return this.finishToken(types.question);
 
       case 96:
         // '`'
@@ -28319,6 +28418,10 @@ exports.supportedEcmaVersions = getSupportedEcmaVersions();
       case 33:
         // '=!'
         return this.readToken_eq_excl(code);
+
+      case 63:
+        // '?'
+        return this.readToken_question();
 
       case 126:
         // '~'
@@ -30436,7 +30539,7 @@ module.exports = {
 /* 409 */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"_from\":\"espree@^6.2.1\",\"_id\":\"espree@6.2.1\",\"_inBundle\":false,\"_integrity\":\"sha512-ysCxRQY3WaXJz9tdbWOwuWr5Y/XrPTGX9Kiz3yoUXwW0VZ4w30HTkQLaGx/+ttFjF8i+ACbArnB4ce68a9m5hw==\",\"_location\":\"/espree\",\"_phantomChildren\":{},\"_requested\":{\"type\":\"range\",\"registry\":true,\"raw\":\"espree@^6.2.1\",\"name\":\"espree\",\"escapedName\":\"espree\",\"rawSpec\":\"^6.2.1\",\"saveSpec\":null,\"fetchSpec\":\"^6.2.1\"},\"_requiredBy\":[\"/\",\"/eslint\"],\"_resolved\":\"https://registry.npmjs.org/espree/-/espree-6.2.1.tgz\",\"_shasum\":\"77fc72e1fd744a2052c20f38a5b575832e82734a\",\"_spec\":\"espree@^6.2.1\",\"_where\":\"/Users/sebastian/Development/eslint\",\"author\":{\"name\":\"Nicholas C. Zakas\",\"email\":\"nicholas+npm@nczconsulting.com\"},\"bugs\":{\"url\":\"http://github.com/eslint/espree.git\"},\"bundleDependencies\":false,\"dependencies\":{\"acorn\":\"^7.1.1\",\"acorn-jsx\":\"^5.2.0\",\"eslint-visitor-keys\":\"^1.1.0\"},\"deprecated\":false,\"description\":\"An Esprima-compatible JavaScript parser built on Acorn\",\"devDependencies\":{\"browserify\":\"^16.5.0\",\"chai\":\"^4.2.0\",\"eslint\":\"^6.0.1\",\"eslint-config-eslint\":\"^5.0.1\",\"eslint-plugin-node\":\"^9.1.0\",\"eslint-release\":\"^1.0.0\",\"esprima\":\"latest\",\"esprima-fb\":\"^8001.2001.0-dev-harmony-fb\",\"json-diff\":\"^0.5.4\",\"leche\":\"^2.3.0\",\"mocha\":\"^6.2.0\",\"nyc\":\"^14.1.1\",\"regenerate\":\"^1.4.0\",\"shelljs\":\"^0.3.0\",\"shelljs-nodecli\":\"^0.1.1\",\"unicode-6.3.0\":\"^0.7.5\"},\"engines\":{\"node\":\">=6.0.0\"},\"files\":[\"lib\",\"espree.js\"],\"homepage\":\"https://github.com/eslint/espree\",\"keywords\":[\"ast\",\"ecmascript\",\"javascript\",\"parser\",\"syntax\",\"acorn\"],\"license\":\"BSD-2-Clause\",\"main\":\"espree.js\",\"name\":\"espree\",\"repository\":{\"type\":\"git\",\"url\":\"git+https://github.com/eslint/espree.git\"},\"scripts\":{\"browserify\":\"node Makefile.js browserify\",\"generate-alpharelease\":\"eslint-generate-prerelease alpha\",\"generate-betarelease\":\"eslint-generate-prerelease beta\",\"generate-rcrelease\":\"eslint-generate-prerelease rc\",\"generate-regex\":\"node tools/generate-identifier-regex.js\",\"generate-release\":\"eslint-generate-release\",\"lint\":\"node Makefile.js lint\",\"publish-release\":\"eslint-publish-release\",\"test\":\"npm run-script lint && node Makefile.js test\"},\"version\":\"6.2.1\"}");
+module.exports = JSON.parse("{\"_from\":\"espree@^7.1.0\",\"_id\":\"espree@7.1.0\",\"_inBundle\":false,\"_integrity\":\"sha512-dcorZSyfmm4WTuTnE5Y7MEN1DyoPYy1ZR783QW1FJoenn7RailyWFsq/UL6ZAAA7uXurN9FIpYyUs3OfiIW+Qw==\",\"_location\":\"/espree\",\"_phantomChildren\":{},\"_requested\":{\"type\":\"range\",\"registry\":true,\"raw\":\"espree@^7.1.0\",\"name\":\"espree\",\"escapedName\":\"espree\",\"rawSpec\":\"^7.1.0\",\"saveSpec\":null,\"fetchSpec\":\"^7.1.0\"},\"_requiredBy\":[\"/\",\"/eslint\"],\"_resolved\":\"https://registry.npmjs.org/espree/-/espree-7.1.0.tgz\",\"_shasum\":\"a9c7f18a752056735bf1ba14cb1b70adc3a5ce1c\",\"_spec\":\"espree@^7.1.0\",\"_where\":\"/Users/sebastian/Development/eslint\",\"author\":{\"name\":\"Nicholas C. Zakas\",\"email\":\"nicholas+npm@nczconsulting.com\"},\"bugs\":{\"url\":\"http://github.com/eslint/espree.git\"},\"bundleDependencies\":false,\"dependencies\":{\"acorn\":\"^7.2.0\",\"acorn-jsx\":\"^5.2.0\",\"eslint-visitor-keys\":\"^1.2.0\"},\"deprecated\":false,\"description\":\"An Esprima-compatible JavaScript parser built on Acorn\",\"devDependencies\":{\"browserify\":\"^16.5.0\",\"chai\":\"^4.2.0\",\"eslint\":\"^6.0.1\",\"eslint-config-eslint\":\"^5.0.1\",\"eslint-plugin-node\":\"^9.1.0\",\"eslint-release\":\"^1.0.0\",\"esprima\":\"latest\",\"esprima-fb\":\"^8001.2001.0-dev-harmony-fb\",\"json-diff\":\"^0.5.4\",\"leche\":\"^2.3.0\",\"mocha\":\"^6.2.0\",\"nyc\":\"^14.1.1\",\"regenerate\":\"^1.4.0\",\"shelljs\":\"^0.3.0\",\"shelljs-nodecli\":\"^0.1.1\",\"unicode-6.3.0\":\"^0.7.5\"},\"engines\":{\"node\":\"^10.12.0 || >=12.0.0\"},\"files\":[\"lib\",\"espree.js\"],\"homepage\":\"https://github.com/eslint/espree\",\"keywords\":[\"ast\",\"ecmascript\",\"javascript\",\"parser\",\"syntax\",\"acorn\"],\"license\":\"BSD-2-Clause\",\"main\":\"espree.js\",\"name\":\"espree\",\"repository\":{\"type\":\"git\",\"url\":\"git+https://github.com/eslint/espree.git\"},\"scripts\":{\"browserify\":\"node Makefile.js browserify\",\"fixlint\":\"node Makefile.js lint --fix\",\"generate-alpharelease\":\"eslint-generate-prerelease alpha\",\"generate-betarelease\":\"eslint-generate-prerelease beta\",\"generate-rcrelease\":\"eslint-generate-prerelease rc\",\"generate-regex\":\"node tools/generate-identifier-regex.js\",\"generate-release\":\"eslint-generate-release\",\"lint\":\"node Makefile.js lint\",\"publish-release\":\"eslint-publish-release\",\"sync-docs\":\"node Makefile.js docs\",\"test\":\"npm run-script lint && node Makefile.js test\"},\"version\":\"7.1.0\"}");
 
 /***/ }),
 /* 410 */
@@ -47656,13 +47759,13 @@ module.exports = new Map(Object.entries({
     }
   },
   es2017: {
-    globals: _objectSpread({}, newGlobals2015, {}, newGlobals2017),
+    globals: _objectSpread(_objectSpread({}, newGlobals2015), newGlobals2017),
     parserOptions: {
       ecmaVersion: 8
     }
   },
   es2020: {
-    globals: _objectSpread({}, newGlobals2015, {}, newGlobals2017, {}, newGlobals2020),
+    globals: _objectSpread(_objectSpread(_objectSpread({}, newGlobals2015), newGlobals2017), newGlobals2020),
     parserOptions: {
       ecmaVersion: 11
     }
@@ -47772,7 +47875,7 @@ module.exports = JSON.parse("{\"builtin\":{\"Array\":false,\"ArrayBuffer\":false
 /* 415 */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"name\":\"eslint\",\"version\":\"7.0.0-alpha.3\",\"author\":\"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>\",\"description\":\"An AST-based pattern checker for JavaScript.\",\"bin\":{\"eslint\":\"./bin/eslint.js\"},\"main\":\"./lib/api.js\",\"scripts\":{\"test\":\"node Makefile.js test\",\"test:cli\":\"mocha\",\"lint\":\"node Makefile.js lint\",\"fix\":\"node Makefile.js lint -- fix\",\"fuzz\":\"node Makefile.js fuzz\",\"generate-release\":\"node Makefile.js generateRelease\",\"generate-alpharelease\":\"node Makefile.js generatePrerelease -- alpha\",\"generate-betarelease\":\"node Makefile.js generatePrerelease -- beta\",\"generate-rcrelease\":\"node Makefile.js generatePrerelease -- rc\",\"publish-release\":\"node Makefile.js publishRelease\",\"docs\":\"node Makefile.js docs\",\"gensite\":\"node Makefile.js gensite\",\"webpack\":\"node Makefile.js webpack\",\"perf\":\"node Makefile.js perf\"},\"gitHooks\":{\"pre-commit\":\"lint-staged\"},\"lint-staged\":{\"*.js\":[\"eslint --fix\",\"git add\"],\"*.md\":\"markdownlint\"},\"files\":[\"LICENSE\",\"README.md\",\"bin\",\"conf\",\"lib\",\"messages\"],\"repository\":\"eslint/eslint\",\"funding\":\"https://opencollective.com/eslint\",\"homepage\":\"https://eslint.org\",\"bugs\":\"https://github.com/eslint/eslint/issues/\",\"dependencies\":{\"@babel/code-frame\":\"^7.0.0\",\"ajv\":\"^6.10.0\",\"chalk\":\"^3.0.0\",\"cross-spawn\":\"^7.0.1\",\"debug\":\"^4.0.1\",\"doctrine\":\"^3.0.0\",\"eslint-scope\":\"^5.0.0\",\"eslint-utils\":\"^2.0.0\",\"eslint-visitor-keys\":\"^1.1.0\",\"espree\":\"^6.2.1\",\"esquery\":\"^1.2.0\",\"esutils\":\"^2.0.2\",\"file-entry-cache\":\"^5.0.1\",\"functional-red-black-tree\":\"^1.0.1\",\"glob-parent\":\"^5.0.0\",\"globals\":\"^12.1.0\",\"ignore\":\"^4.0.6\",\"import-fresh\":\"^3.0.0\",\"imurmurhash\":\"^0.1.4\",\"inquirer\":\"^7.0.0\",\"is-glob\":\"^4.0.0\",\"js-yaml\":\"^3.13.1\",\"json-stable-stringify-without-jsonify\":\"^1.0.1\",\"levn\":\"^0.4.1\",\"lodash\":\"^4.17.14\",\"minimatch\":\"^3.0.4\",\"natural-compare\":\"^1.4.0\",\"optionator\":\"^0.9.1\",\"progress\":\"^2.0.0\",\"regexpp\":\"^3.0.0\",\"semver\":\"^7.1.1\",\"strip-ansi\":\"^6.0.0\",\"strip-json-comments\":\"^3.0.1\",\"table\":\"^5.2.3\",\"text-table\":\"^0.2.0\",\"v8-compile-cache\":\"^2.0.3\"},\"devDependencies\":{\"@babel/core\":\"^7.4.3\",\"@babel/preset-env\":\"^7.4.3\",\"acorn\":\"^7.1.1\",\"babel-loader\":\"^8.0.5\",\"chai\":\"^4.0.1\",\"cheerio\":\"^0.22.0\",\"common-tags\":\"^1.8.0\",\"core-js\":\"^3.1.3\",\"dateformat\":\"^3.0.3\",\"ejs\":\"^2.6.1\",\"eslint\":\"file:.\",\"eslint-config-eslint\":\"file:packages/eslint-config-eslint\",\"eslint-plugin-eslint-plugin\":\"^2.2.1\",\"eslint-plugin-internal-rules\":\"file:tools/internal-rules\",\"eslint-plugin-jsdoc\":\"^15.9.5\",\"eslint-plugin-node\":\"^11.1.0\",\"eslint-release\":\"^1.2.0\",\"eslump\":\"^2.0.0\",\"esprima\":\"^4.0.1\",\"glob\":\"^7.1.3\",\"jsdoc\":\"^3.5.5\",\"karma\":\"^4.0.1\",\"karma-chrome-launcher\":\"^2.2.0\",\"karma-mocha\":\"^1.3.0\",\"karma-mocha-reporter\":\"^2.2.3\",\"karma-webpack\":\"^4.0.0-rc.6\",\"leche\":\"^2.2.3\",\"lint-staged\":\"^8.1.5\",\"load-perf\":\"^0.2.0\",\"markdownlint\":\"^0.15.0\",\"markdownlint-cli\":\"^0.17.0\",\"memfs\":\"^3.0.1\",\"mocha\":\"^6.1.2\",\"mocha-junit-reporter\":\"^1.23.0\",\"npm-license\":\"^0.3.3\",\"nyc\":\"^14.1.1\",\"proxyquire\":\"^2.0.1\",\"puppeteer\":\"^1.18.0\",\"recast\":\"^0.18.1\",\"regenerator-runtime\":\"^0.13.2\",\"shelljs\":\"^0.8.2\",\"sinon\":\"^7.3.2\",\"temp\":\"^0.9.0\",\"webpack\":\"^4.35.0\",\"webpack-cli\":\"^3.3.5\",\"yorkie\":\"^2.0.0\"},\"keywords\":[\"ast\",\"lint\",\"javascript\",\"ecmascript\",\"espree\"],\"license\":\"MIT\",\"engines\":{\"node\":\"^10.12.0 || >=12.0.0\"}}");
+module.exports = JSON.parse("{\"name\":\"eslint\",\"version\":\"7.1.0\",\"author\":\"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>\",\"description\":\"An AST-based pattern checker for JavaScript.\",\"bin\":{\"eslint\":\"./bin/eslint.js\"},\"main\":\"./lib/api.js\",\"scripts\":{\"test\":\"node Makefile.js test\",\"test:cli\":\"mocha\",\"lint\":\"node Makefile.js lint\",\"fix\":\"node Makefile.js lint -- fix\",\"fuzz\":\"node Makefile.js fuzz\",\"generate-release\":\"node Makefile.js generateRelease\",\"generate-alpharelease\":\"node Makefile.js generatePrerelease -- alpha\",\"generate-betarelease\":\"node Makefile.js generatePrerelease -- beta\",\"generate-rcrelease\":\"node Makefile.js generatePrerelease -- rc\",\"publish-release\":\"node Makefile.js publishRelease\",\"docs\":\"node Makefile.js docs\",\"gensite\":\"node Makefile.js gensite\",\"webpack\":\"node Makefile.js webpack\",\"perf\":\"node Makefile.js perf\"},\"gitHooks\":{\"pre-commit\":\"lint-staged\"},\"lint-staged\":{\"*.js\":[\"eslint --fix\",\"git add\"],\"*.md\":\"markdownlint\"},\"files\":[\"LICENSE\",\"README.md\",\"bin\",\"conf\",\"lib\",\"messages\"],\"repository\":\"eslint/eslint\",\"funding\":\"https://opencollective.com/eslint\",\"homepage\":\"https://eslint.org\",\"bugs\":\"https://github.com/eslint/eslint/issues/\",\"dependencies\":{\"@babel/code-frame\":\"^7.0.0\",\"ajv\":\"^6.10.0\",\"chalk\":\"^4.0.0\",\"cross-spawn\":\"^7.0.2\",\"debug\":\"^4.0.1\",\"doctrine\":\"^3.0.0\",\"eslint-scope\":\"^5.1.0\",\"eslint-utils\":\"^2.0.0\",\"eslint-visitor-keys\":\"^1.2.0\",\"espree\":\"^7.1.0\",\"esquery\":\"^1.2.0\",\"esutils\":\"^2.0.2\",\"file-entry-cache\":\"^5.0.1\",\"functional-red-black-tree\":\"^1.0.1\",\"glob-parent\":\"^5.0.0\",\"globals\":\"^12.1.0\",\"ignore\":\"^4.0.6\",\"import-fresh\":\"^3.0.0\",\"imurmurhash\":\"^0.1.4\",\"inquirer\":\"^7.0.0\",\"is-glob\":\"^4.0.0\",\"js-yaml\":\"^3.13.1\",\"json-stable-stringify-without-jsonify\":\"^1.0.1\",\"levn\":\"^0.4.1\",\"lodash\":\"^4.17.14\",\"minimatch\":\"^3.0.4\",\"natural-compare\":\"^1.4.0\",\"optionator\":\"^0.9.1\",\"progress\":\"^2.0.0\",\"regexpp\":\"^3.1.0\",\"semver\":\"^7.2.1\",\"strip-ansi\":\"^6.0.0\",\"strip-json-comments\":\"^3.1.0\",\"table\":\"^5.2.3\",\"text-table\":\"^0.2.0\",\"v8-compile-cache\":\"^2.0.3\"},\"devDependencies\":{\"@babel/core\":\"^7.4.3\",\"@babel/preset-env\":\"^7.4.3\",\"acorn\":\"^7.2.0\",\"babel-loader\":\"^8.0.5\",\"chai\":\"^4.0.1\",\"cheerio\":\"^0.22.0\",\"common-tags\":\"^1.8.0\",\"core-js\":\"^3.1.3\",\"dateformat\":\"^3.0.3\",\"ejs\":\"^3.0.2\",\"escape-string-regexp\":\"^3.0.0\",\"eslint\":\"file:.\",\"eslint-config-eslint\":\"file:packages/eslint-config-eslint\",\"eslint-plugin-eslint-plugin\":\"^2.2.1\",\"eslint-plugin-internal-rules\":\"file:tools/internal-rules\",\"eslint-plugin-jsdoc\":\"^22.1.0\",\"eslint-plugin-node\":\"^11.1.0\",\"eslint-release\":\"^2.0.0\",\"eslump\":\"^2.0.0\",\"esprima\":\"^4.0.1\",\"glob\":\"^7.1.6\",\"jsdoc\":\"^3.5.5\",\"karma\":\"^4.0.1\",\"karma-chrome-launcher\":\"^3.1.0\",\"karma-mocha\":\"^1.3.0\",\"karma-mocha-reporter\":\"^2.2.3\",\"karma-webpack\":\"^4.0.0-rc.6\",\"leche\":\"^2.2.3\",\"lint-staged\":\"^10.1.2\",\"load-perf\":\"^0.2.0\",\"markdownlint\":\"^0.19.0\",\"markdownlint-cli\":\"^0.22.0\",\"memfs\":\"^3.0.1\",\"mocha\":\"^7.1.1\",\"mocha-junit-reporter\":\"^1.23.0\",\"npm-license\":\"^0.3.3\",\"nyc\":\"^15.0.1\",\"proxyquire\":\"^2.0.1\",\"puppeteer\":\"^2.1.1\",\"recast\":\"^0.19.0\",\"regenerator-runtime\":\"^0.13.2\",\"shelljs\":\"^0.8.2\",\"sinon\":\"^9.0.1\",\"temp\":\"^0.9.0\",\"webpack\":\"^4.35.0\",\"webpack-cli\":\"^3.3.5\",\"yorkie\":\"^2.0.0\"},\"keywords\":[\"ast\",\"lint\",\"javascript\",\"ecmascript\",\"espree\"],\"license\":\"MIT\",\"engines\":{\"node\":\"^10.12.0 || >=12.0.0\"}}");
 
 /***/ }),
 /* 416 */
@@ -47961,9 +48064,9 @@ const util = __webpack_require__(383),
       ConfigOps = __webpack_require__(417),
       {
   emitDeprecationWarning
-} = __webpack_require__(732);
+} = __webpack_require__(733);
 
-const ajv = __webpack_require__(733)();
+const ajv = __webpack_require__(734)();
 
 const ruleValidators = new WeakMap();
 const noop = Function.prototype; //------------------------------------------------------------------------------
@@ -48541,148 +48644,149 @@ module.exports = new LazyLoadingRuleMap(Object.entries({
   "no-lone-blocks": () => __webpack_require__(575),
   "no-lonely-if": () => __webpack_require__(576),
   "no-loop-func": () => __webpack_require__(577),
-  "no-magic-numbers": () => __webpack_require__(578),
-  "no-misleading-character-class": () => __webpack_require__(579),
-  "no-mixed-operators": () => __webpack_require__(585),
-  "no-mixed-requires": () => __webpack_require__(586),
-  "no-mixed-spaces-and-tabs": () => __webpack_require__(587),
-  "no-multi-assign": () => __webpack_require__(588),
-  "no-multi-spaces": () => __webpack_require__(589),
-  "no-multi-str": () => __webpack_require__(590),
-  "no-multiple-empty-lines": () => __webpack_require__(591),
-  "no-native-reassign": () => __webpack_require__(592),
-  "no-negated-condition": () => __webpack_require__(593),
-  "no-negated-in-lhs": () => __webpack_require__(594),
-  "no-nested-ternary": () => __webpack_require__(595),
-  "no-new": () => __webpack_require__(596),
-  "no-new-func": () => __webpack_require__(597),
-  "no-new-object": () => __webpack_require__(598),
-  "no-new-require": () => __webpack_require__(599),
-  "no-new-symbol": () => __webpack_require__(600),
-  "no-new-wrappers": () => __webpack_require__(601),
-  "no-obj-calls": () => __webpack_require__(602),
-  "no-octal": () => __webpack_require__(603),
-  "no-octal-escape": () => __webpack_require__(604),
-  "no-param-reassign": () => __webpack_require__(605),
-  "no-path-concat": () => __webpack_require__(606),
-  "no-plusplus": () => __webpack_require__(607),
-  "no-process-env": () => __webpack_require__(608),
-  "no-process-exit": () => __webpack_require__(609),
-  "no-proto": () => __webpack_require__(610),
-  "no-prototype-builtins": () => __webpack_require__(611),
-  "no-redeclare": () => __webpack_require__(612),
-  "no-regex-spaces": () => __webpack_require__(613),
-  "no-restricted-exports": () => __webpack_require__(614),
-  "no-restricted-globals": () => __webpack_require__(615),
-  "no-restricted-imports": () => __webpack_require__(616),
-  "no-restricted-modules": () => __webpack_require__(618),
-  "no-restricted-properties": () => __webpack_require__(619),
-  "no-restricted-syntax": () => __webpack_require__(620),
-  "no-return-assign": () => __webpack_require__(621),
-  "no-return-await": () => __webpack_require__(622),
-  "no-script-url": () => __webpack_require__(623),
-  "no-self-assign": () => __webpack_require__(624),
-  "no-self-compare": () => __webpack_require__(625),
-  "no-sequences": () => __webpack_require__(626),
-  "no-setter-return": () => __webpack_require__(627),
-  "no-shadow": () => __webpack_require__(628),
-  "no-shadow-restricted-names": () => __webpack_require__(629),
-  "no-spaced-func": () => __webpack_require__(630),
-  "no-sparse-arrays": () => __webpack_require__(631),
-  "no-sync": () => __webpack_require__(632),
-  "no-tabs": () => __webpack_require__(633),
-  "no-template-curly-in-string": () => __webpack_require__(634),
-  "no-ternary": () => __webpack_require__(635),
-  "no-this-before-super": () => __webpack_require__(636),
-  "no-throw-literal": () => __webpack_require__(637),
-  "no-trailing-spaces": () => __webpack_require__(638),
-  "no-undef": () => __webpack_require__(639),
-  "no-undef-init": () => __webpack_require__(640),
-  "no-undefined": () => __webpack_require__(641),
-  "no-underscore-dangle": () => __webpack_require__(642),
-  "no-unexpected-multiline": () => __webpack_require__(643),
-  "no-unmodified-loop-condition": () => __webpack_require__(644),
-  "no-unneeded-ternary": () => __webpack_require__(646),
-  "no-unreachable": () => __webpack_require__(647),
-  "no-unsafe-finally": () => __webpack_require__(648),
-  "no-unsafe-negation": () => __webpack_require__(649),
-  "no-unused-expressions": () => __webpack_require__(650),
-  "no-unused-labels": () => __webpack_require__(651),
-  "no-unused-vars": () => __webpack_require__(652),
-  "no-use-before-define": () => __webpack_require__(653),
-  "no-useless-backreference": () => __webpack_require__(654),
-  "no-useless-call": () => __webpack_require__(655),
-  "no-useless-catch": () => __webpack_require__(656),
-  "no-useless-computed-key": () => __webpack_require__(657),
-  "no-useless-concat": () => __webpack_require__(658),
-  "no-useless-constructor": () => __webpack_require__(659),
-  "no-useless-escape": () => __webpack_require__(660),
-  "no-useless-rename": () => __webpack_require__(661),
-  "no-useless-return": () => __webpack_require__(662),
-  "no-var": () => __webpack_require__(663),
-  "no-void": () => __webpack_require__(664),
-  "no-warning-comments": () => __webpack_require__(665),
-  "no-whitespace-before-property": () => __webpack_require__(666),
-  "no-with": () => __webpack_require__(667),
-  "nonblock-statement-body-position": () => __webpack_require__(668),
-  "object-curly-newline": () => __webpack_require__(669),
-  "object-curly-spacing": () => __webpack_require__(670),
-  "object-property-newline": () => __webpack_require__(671),
-  "object-shorthand": () => __webpack_require__(672),
-  "one-var": () => __webpack_require__(673),
-  "one-var-declaration-per-line": () => __webpack_require__(674),
-  "operator-assignment": () => __webpack_require__(675),
-  "operator-linebreak": () => __webpack_require__(676),
-  "padded-blocks": () => __webpack_require__(677),
-  "padding-line-between-statements": () => __webpack_require__(678),
-  "prefer-arrow-callback": () => __webpack_require__(679),
-  "prefer-const": () => __webpack_require__(680),
-  "prefer-destructuring": () => __webpack_require__(681),
-  "prefer-exponentiation-operator": () => __webpack_require__(682),
-  "prefer-named-capture-group": () => __webpack_require__(683),
-  "prefer-numeric-literals": () => __webpack_require__(684),
-  "prefer-object-spread": () => __webpack_require__(685),
-  "prefer-promise-reject-errors": () => __webpack_require__(686),
-  "prefer-reflect": () => __webpack_require__(687),
-  "prefer-regex-literals": () => __webpack_require__(688),
-  "prefer-rest-params": () => __webpack_require__(689),
-  "prefer-spread": () => __webpack_require__(690),
-  "prefer-template": () => __webpack_require__(691),
-  "quote-props": () => __webpack_require__(692),
-  quotes: () => __webpack_require__(693),
-  radix: () => __webpack_require__(694),
-  "require-atomic-updates": () => __webpack_require__(695),
-  "require-await": () => __webpack_require__(696),
-  "require-jsdoc": () => __webpack_require__(697),
-  "require-unicode-regexp": () => __webpack_require__(698),
-  "require-yield": () => __webpack_require__(699),
-  "rest-spread-spacing": () => __webpack_require__(700),
-  semi: () => __webpack_require__(701),
-  "semi-spacing": () => __webpack_require__(702),
-  "semi-style": () => __webpack_require__(703),
-  "sort-imports": () => __webpack_require__(704),
-  "sort-keys": () => __webpack_require__(705),
-  "sort-vars": () => __webpack_require__(707),
-  "space-before-blocks": () => __webpack_require__(708),
-  "space-before-function-paren": () => __webpack_require__(709),
-  "space-in-parens": () => __webpack_require__(710),
-  "space-infix-ops": () => __webpack_require__(711),
-  "space-unary-ops": () => __webpack_require__(712),
-  "spaced-comment": () => __webpack_require__(713),
-  strict: () => __webpack_require__(714),
-  "switch-colon-spacing": () => __webpack_require__(715),
-  "symbol-description": () => __webpack_require__(716),
-  "template-curly-spacing": () => __webpack_require__(717),
-  "template-tag-spacing": () => __webpack_require__(718),
-  "unicode-bom": () => __webpack_require__(719),
-  "use-isnan": () => __webpack_require__(720),
-  "valid-jsdoc": () => __webpack_require__(721),
-  "valid-typeof": () => __webpack_require__(726),
-  "vars-on-top": () => __webpack_require__(727),
-  "wrap-iife": () => __webpack_require__(728),
-  "wrap-regex": () => __webpack_require__(729),
-  "yield-star-spacing": () => __webpack_require__(730),
-  yoda: () => __webpack_require__(731)
+  "no-loss-of-precision": () => __webpack_require__(578),
+  "no-magic-numbers": () => __webpack_require__(579),
+  "no-misleading-character-class": () => __webpack_require__(580),
+  "no-mixed-operators": () => __webpack_require__(586),
+  "no-mixed-requires": () => __webpack_require__(587),
+  "no-mixed-spaces-and-tabs": () => __webpack_require__(588),
+  "no-multi-assign": () => __webpack_require__(589),
+  "no-multi-spaces": () => __webpack_require__(590),
+  "no-multi-str": () => __webpack_require__(591),
+  "no-multiple-empty-lines": () => __webpack_require__(592),
+  "no-native-reassign": () => __webpack_require__(593),
+  "no-negated-condition": () => __webpack_require__(594),
+  "no-negated-in-lhs": () => __webpack_require__(595),
+  "no-nested-ternary": () => __webpack_require__(596),
+  "no-new": () => __webpack_require__(597),
+  "no-new-func": () => __webpack_require__(598),
+  "no-new-object": () => __webpack_require__(599),
+  "no-new-require": () => __webpack_require__(600),
+  "no-new-symbol": () => __webpack_require__(601),
+  "no-new-wrappers": () => __webpack_require__(602),
+  "no-obj-calls": () => __webpack_require__(603),
+  "no-octal": () => __webpack_require__(604),
+  "no-octal-escape": () => __webpack_require__(605),
+  "no-param-reassign": () => __webpack_require__(606),
+  "no-path-concat": () => __webpack_require__(607),
+  "no-plusplus": () => __webpack_require__(608),
+  "no-process-env": () => __webpack_require__(609),
+  "no-process-exit": () => __webpack_require__(610),
+  "no-proto": () => __webpack_require__(611),
+  "no-prototype-builtins": () => __webpack_require__(612),
+  "no-redeclare": () => __webpack_require__(613),
+  "no-regex-spaces": () => __webpack_require__(614),
+  "no-restricted-exports": () => __webpack_require__(615),
+  "no-restricted-globals": () => __webpack_require__(616),
+  "no-restricted-imports": () => __webpack_require__(617),
+  "no-restricted-modules": () => __webpack_require__(619),
+  "no-restricted-properties": () => __webpack_require__(620),
+  "no-restricted-syntax": () => __webpack_require__(621),
+  "no-return-assign": () => __webpack_require__(622),
+  "no-return-await": () => __webpack_require__(623),
+  "no-script-url": () => __webpack_require__(624),
+  "no-self-assign": () => __webpack_require__(625),
+  "no-self-compare": () => __webpack_require__(626),
+  "no-sequences": () => __webpack_require__(627),
+  "no-setter-return": () => __webpack_require__(628),
+  "no-shadow": () => __webpack_require__(629),
+  "no-shadow-restricted-names": () => __webpack_require__(630),
+  "no-spaced-func": () => __webpack_require__(631),
+  "no-sparse-arrays": () => __webpack_require__(632),
+  "no-sync": () => __webpack_require__(633),
+  "no-tabs": () => __webpack_require__(634),
+  "no-template-curly-in-string": () => __webpack_require__(635),
+  "no-ternary": () => __webpack_require__(636),
+  "no-this-before-super": () => __webpack_require__(637),
+  "no-throw-literal": () => __webpack_require__(638),
+  "no-trailing-spaces": () => __webpack_require__(639),
+  "no-undef": () => __webpack_require__(640),
+  "no-undef-init": () => __webpack_require__(641),
+  "no-undefined": () => __webpack_require__(642),
+  "no-underscore-dangle": () => __webpack_require__(643),
+  "no-unexpected-multiline": () => __webpack_require__(644),
+  "no-unmodified-loop-condition": () => __webpack_require__(645),
+  "no-unneeded-ternary": () => __webpack_require__(647),
+  "no-unreachable": () => __webpack_require__(648),
+  "no-unsafe-finally": () => __webpack_require__(649),
+  "no-unsafe-negation": () => __webpack_require__(650),
+  "no-unused-expressions": () => __webpack_require__(651),
+  "no-unused-labels": () => __webpack_require__(652),
+  "no-unused-vars": () => __webpack_require__(653),
+  "no-use-before-define": () => __webpack_require__(654),
+  "no-useless-backreference": () => __webpack_require__(655),
+  "no-useless-call": () => __webpack_require__(656),
+  "no-useless-catch": () => __webpack_require__(657),
+  "no-useless-computed-key": () => __webpack_require__(658),
+  "no-useless-concat": () => __webpack_require__(659),
+  "no-useless-constructor": () => __webpack_require__(660),
+  "no-useless-escape": () => __webpack_require__(661),
+  "no-useless-rename": () => __webpack_require__(662),
+  "no-useless-return": () => __webpack_require__(663),
+  "no-var": () => __webpack_require__(664),
+  "no-void": () => __webpack_require__(665),
+  "no-warning-comments": () => __webpack_require__(666),
+  "no-whitespace-before-property": () => __webpack_require__(667),
+  "no-with": () => __webpack_require__(668),
+  "nonblock-statement-body-position": () => __webpack_require__(669),
+  "object-curly-newline": () => __webpack_require__(670),
+  "object-curly-spacing": () => __webpack_require__(671),
+  "object-property-newline": () => __webpack_require__(672),
+  "object-shorthand": () => __webpack_require__(673),
+  "one-var": () => __webpack_require__(674),
+  "one-var-declaration-per-line": () => __webpack_require__(675),
+  "operator-assignment": () => __webpack_require__(676),
+  "operator-linebreak": () => __webpack_require__(677),
+  "padded-blocks": () => __webpack_require__(678),
+  "padding-line-between-statements": () => __webpack_require__(679),
+  "prefer-arrow-callback": () => __webpack_require__(680),
+  "prefer-const": () => __webpack_require__(681),
+  "prefer-destructuring": () => __webpack_require__(682),
+  "prefer-exponentiation-operator": () => __webpack_require__(683),
+  "prefer-named-capture-group": () => __webpack_require__(684),
+  "prefer-numeric-literals": () => __webpack_require__(685),
+  "prefer-object-spread": () => __webpack_require__(686),
+  "prefer-promise-reject-errors": () => __webpack_require__(687),
+  "prefer-reflect": () => __webpack_require__(688),
+  "prefer-regex-literals": () => __webpack_require__(689),
+  "prefer-rest-params": () => __webpack_require__(690),
+  "prefer-spread": () => __webpack_require__(691),
+  "prefer-template": () => __webpack_require__(692),
+  "quote-props": () => __webpack_require__(693),
+  quotes: () => __webpack_require__(694),
+  radix: () => __webpack_require__(695),
+  "require-atomic-updates": () => __webpack_require__(696),
+  "require-await": () => __webpack_require__(697),
+  "require-jsdoc": () => __webpack_require__(698),
+  "require-unicode-regexp": () => __webpack_require__(699),
+  "require-yield": () => __webpack_require__(700),
+  "rest-spread-spacing": () => __webpack_require__(701),
+  semi: () => __webpack_require__(702),
+  "semi-spacing": () => __webpack_require__(703),
+  "semi-style": () => __webpack_require__(704),
+  "sort-imports": () => __webpack_require__(705),
+  "sort-keys": () => __webpack_require__(706),
+  "sort-vars": () => __webpack_require__(708),
+  "space-before-blocks": () => __webpack_require__(709),
+  "space-before-function-paren": () => __webpack_require__(710),
+  "space-in-parens": () => __webpack_require__(711),
+  "space-infix-ops": () => __webpack_require__(712),
+  "space-unary-ops": () => __webpack_require__(713),
+  "spaced-comment": () => __webpack_require__(714),
+  strict: () => __webpack_require__(715),
+  "switch-colon-spacing": () => __webpack_require__(716),
+  "symbol-description": () => __webpack_require__(717),
+  "template-curly-spacing": () => __webpack_require__(718),
+  "template-tag-spacing": () => __webpack_require__(719),
+  "unicode-bom": () => __webpack_require__(720),
+  "use-isnan": () => __webpack_require__(721),
+  "valid-jsdoc": () => __webpack_require__(722),
+  "valid-typeof": () => __webpack_require__(727),
+  "vars-on-top": () => __webpack_require__(728),
+  "wrap-iife": () => __webpack_require__(729),
+  "wrap-regex": () => __webpack_require__(730),
+  "yield-star-spacing": () => __webpack_require__(731),
+  yoda: () => __webpack_require__(732)
 }));
 
 /***/ }),
@@ -49875,7 +49979,7 @@ module.exports = (flag, argv) => {
 
 "use strict";
 /**
- * @fileoverview Rule to flag wrapping non-iife in parens
+ * @fileoverview Rule to enforce getter and setter pairs in objects and classes.
  * @author Gyandeep Singh
  */
  //------------------------------------------------------------------------------
@@ -50651,6 +50755,50 @@ function equalTokens(left, right, sourceCode) {
   }
 
   return true;
+}
+/**
+ * Check if the given node is a true logical expression or not.
+ *
+ * The three binary expressions logical-or (`||`), logical-and (`&&`), and
+ * coalesce (`??`) are known as `ShortCircuitExpression`.
+ * But ESTree represents those by `LogicalExpression` node.
+ *
+ * This function rejects coalesce expressions of `LogicalExpression` node.
+ * @param {ASTNode} node The node to check.
+ * @returns {boolean} `true` if the node is `&&` or `||`.
+ * @see https://tc39.es/ecma262/#prod-ShortCircuitExpression
+ */
+
+
+function isLogicalExpression(node) {
+  return node.type === "LogicalExpression" && (node.operator === "&&" || node.operator === "||");
+}
+/**
+ * Check if the given node is a nullish coalescing expression or not.
+ *
+ * The three binary expressions logical-or (`||`), logical-and (`&&`), and
+ * coalesce (`??`) are known as `ShortCircuitExpression`.
+ * But ESTree represents those by `LogicalExpression` node.
+ *
+ * This function finds only coalesce expressions of `LogicalExpression` node.
+ * @param {ASTNode} node The node to check.
+ * @returns {boolean} `true` if the node is `??`.
+ */
+
+
+function isCoalesceExpression(node) {
+  return node.type === "LogicalExpression" && node.operator === "??";
+}
+/**
+ * Check if given two nodes are the pair of a logical expression and a coalesce expression.
+ * @param {ASTNode} left A node to check.
+ * @param {ASTNode} right Another node to check.
+ * @returns {boolean} `true` if the two nodes are the pair of a logical expression and a coalesce expression.
+ */
+
+
+function isMixedLogicalAndCoalesceExpressions(left, right) {
+  return isLogicalExpression(left) && isCoalesceExpression(right) || isCoalesceExpression(left) && isLogicalExpression(right);
 } //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------
@@ -50988,6 +51136,7 @@ module.exports = {
       case "LogicalExpression":
         switch (node.operator) {
           case "||":
+          case "??":
             return 4;
 
           case "&&":
@@ -51450,18 +51599,67 @@ module.exports = {
 
   /**
    * Gets next location when the result is not out of bound, otherwise returns null.
+   *
+   * Assumptions:
+   *
+   * - The given location represents a valid location in the given source code.
+   * - Columns are 0-based.
+   * - Lines are 1-based.
+   * - Column immediately after the last character in a line (not incl. linebreaks) is considered to be a valid location.
+   * - If the source code ends with a linebreak, `sourceCode.lines` array will have an extra element (empty string) at the end.
+   *   The start (column 0) of that extra line is considered to be a valid location.
+   *
+   * Examples of successive locations (line, column):
+   *
+   * code: foo
+   * locations: (1, 0) -> (1, 1) -> (1, 2) -> (1, 3) -> null
+   *
+   * code: foo<LF>
+   * locations: (1, 0) -> (1, 1) -> (1, 2) -> (1, 3) -> (2, 0) -> null
+   *
+   * code: foo<CR><LF>
+   * locations: (1, 0) -> (1, 1) -> (1, 2) -> (1, 3) -> (2, 0) -> null
+   *
+   * code: a<LF>b
+   * locations: (1, 0) -> (1, 1) -> (2, 0) -> (2, 1) -> null
+   *
+   * code: a<LF>b<LF>
+   * locations: (1, 0) -> (1, 1) -> (2, 0) -> (2, 1) -> (3, 0) -> null
+   *
+   * code: a<CR><LF>b<CR><LF>
+   * locations: (1, 0) -> (1, 1) -> (2, 0) -> (2, 1) -> (3, 0) -> null
+   *
+   * code: a<LF><LF>
+   * locations: (1, 0) -> (1, 1) -> (2, 0) -> (3, 0) -> null
+   *
+   * code: <LF>
+   * locations: (1, 0) -> (2, 0) -> null
+   *
+   * code:
+   * locations: (1, 0) -> null
    * @param {SourceCode} sourceCode The sourceCode
    * @param {{line: number, column: number}} location The location
    * @returns {{line: number, column: number} | null} Next location
    */
-  getNextLocation(sourceCode, location) {
-    const index = sourceCode.getIndexFromLoc(location); // Avoid out of bound location
-
-    if (index + 1 > sourceCode.text.length) {
-      return null;
+  getNextLocation(sourceCode, {
+    line,
+    column
+  }) {
+    if (column < sourceCode.lines[line - 1].length) {
+      return {
+        line,
+        column: column + 1
+      };
     }
 
-    return sourceCode.getLocFromIndex(index + 1);
+    if (line < sourceCode.lines.length) {
+      return {
+        line: line + 1,
+        column: 0
+      };
+    }
+
+    return null;
   },
 
   /**
@@ -51565,7 +51763,7 @@ module.exports = {
 
       try {
         tokens = espree.tokenize(leftValue, espreeOptions);
-      } catch (e) {
+      } catch (_unused) {
         return false;
       }
 
@@ -51594,7 +51792,7 @@ module.exports = {
 
       try {
         tokens = espree.tokenize(rightValue, espreeOptions);
-      } catch (e) {
+      } catch (_unused2) {
         return false;
       }
 
@@ -51678,8 +51876,11 @@ module.exports = {
    */
   hasOctalEscapeSequence(rawString) {
     return OCTAL_ESCAPE_PATTERN.test(rawString);
-  }
+  },
 
+  isLogicalExpression,
+  isCoalesceExpression,
+  isMixedLogicalAndCoalesceExpressions
 };
 
 /***/ }),
@@ -52747,24 +52948,6 @@ function isReachable(segment) {
   return segment.reachable;
 }
 /**
- * Gets a readable location.
- *
- * - FunctionExpression -> the function name or `function` keyword.
- * - ArrowFunctionExpression -> `=>` token.
- * @param {ASTNode} node A function node to get.
- * @param {SourceCode} sourceCode A source code to get tokens.
- * @returns {ASTNode|Token} The node or the token of a location.
- */
-
-
-function getLocation(node, sourceCode) {
-  if (node.type === "ArrowFunctionExpression") {
-    return sourceCode.getTokenBefore(node.body);
-  }
-
-  return node.id || node;
-}
-/**
  * Checks a given node is a MemberExpression node which has the specified name's
  * property.
  * @param {ASTNode} node A node to check.
@@ -52894,6 +53077,7 @@ module.exports = {
       allowImplicit: false,
       checkForEach: false
     };
+    const sourceCode = context.getSourceCode();
     let funcInfo = {
       arrayMethodName: null,
       upper: null,
@@ -52930,11 +53114,11 @@ module.exports = {
       }
 
       if (messageId) {
-        let name = astUtils.getFunctionNameWithKind(funcInfo.node);
+        let name = astUtils.getFunctionNameWithKind(node);
         name = messageId === "expectedNoReturnValue" ? lodash.upperFirst(name) : name;
         context.report({
           node,
-          loc: getLocation(node, context.getSourceCode()).loc.start,
+          loc: astUtils.getFunctionHeadLoc(node, sourceCode),
           messageId,
           data: {
             name
@@ -53631,10 +53815,28 @@ module.exports = {
         const asyncToken = isAsync ? sourceCode.getTokenBefore(firstTokenOfParam) : null;
         const shouldAddSpaceForAsync = asyncToken && asyncToken.range[1] === firstTokenOfParam.range[0];
         return fixer.replaceTextRange([firstTokenOfParam.range[0], closingParenToken.range[1]], "".concat(shouldAddSpaceForAsync ? " " : "").concat(paramToken.value));
+      }
+      /**
+       * Checks whether there are comments inside the params or not.
+       * @returns {boolean} `true` if there are comments inside of parens, else `false`
+       */
+
+
+      function hasCommentsInParens() {
+        if (astUtils.isOpeningParenToken(firstTokenOfParam)) {
+          const closingParenToken = sourceCode.getTokenAfter(node.params[0], astUtils.isClosingParenToken);
+          return closingParenToken && sourceCode.commentsExistBetween(firstTokenOfParam, closingParenToken);
+        }
+
+        return false;
+      }
+
+      if (hasCommentsInParens()) {
+        return;
       } // "as-needed", { "requireForBlockBody": true }: x => x
 
 
-      if (requireForBlockBody && node.params.length === 1 && node.params[0].type === "Identifier" && !node.params[0].typeAnnotation && node.body.type !== "BlockStatement" && !node.returnType) {
+      if (requireForBlockBody && node.params[0].type === "Identifier" && !node.params[0].typeAnnotation && node.body.type !== "BlockStatement" && !node.returnType) {
         if (astUtils.isOpeningParenToken(firstTokenOfParam)) {
           context.report({
             node,
@@ -53665,7 +53867,7 @@ module.exports = {
       } // "as-needed": x => x
 
 
-      if (asNeeded && node.params.length === 1 && node.params[0].type === "Identifier" && !node.params[0].typeAnnotation && !node.returnType) {
+      if (asNeeded && node.params[0].type === "Identifier" && !node.params[0].typeAnnotation && !node.returnType) {
         if (astUtils.isOpeningParenToken(firstTokenOfParam)) {
           context.report({
             node,
@@ -53697,7 +53899,7 @@ module.exports = {
     }
 
     return {
-      ArrowFunctionExpression: parens
+      "ArrowFunctionExpression[params.length=1]": parens
     };
   }
 
@@ -54091,9 +54293,18 @@ module.exports = {
 
 
       if (!isValid(openBrace, firstToken)) {
+        let loc = openBrace.loc;
+
+        if (messageId === "extra") {
+          loc = {
+            start: openBrace.loc.end,
+            end: firstToken.loc.start
+          };
+        }
+
         context.report({
           node,
-          loc: openBrace.loc.start,
+          loc,
           messageId,
           data: {
             location: "after",
@@ -54112,9 +54323,18 @@ module.exports = {
       }
 
       if (!isValid(lastToken, closeBrace)) {
+        let loc = closeBrace.loc;
+
+        if (messageId === "extra") {
+          loc = {
+            start: lastToken.loc.end,
+            end: closeBrace.loc.start
+          };
+        }
+
         context.report({
           node,
-          loc: closeBrace.loc.start,
+          loc,
           messageId,
           data: {
             location: "before",
@@ -54344,7 +54564,7 @@ module.exports = {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/callback-return"],
+    replacedBy: [],
     type: "suggestion",
     docs: {
       description: "require `return` statements after callbacks",
@@ -58529,7 +58749,8 @@ module.exports = {
       }]
     },
     messages: {
-      unexpected: "Unexpected newline between function name and paren.",
+      unexpectedWhitespace: "Unexpected whitespace between function name and paren.",
+      unexpectedNewline: "Unexpected newline between function name and paren.",
       missing: "Missing space between function name and paren."
     }
   },
@@ -58580,7 +58801,7 @@ module.exports = {
         context.report({
           node,
           loc: leftToken.loc.start,
-          messageId: "unexpected",
+          messageId: "unexpectedWhitespace",
 
           fix(fixer) {
             /*
@@ -58610,7 +58831,7 @@ module.exports = {
         context.report({
           node,
           loc: leftToken.loc.start,
-          messageId: "unexpected",
+          messageId: "unexpectedNewline",
 
           fix(fixer) {
             return fixer.replaceTextRange([leftToken.range[1], rightToken.range[0]], " ");
@@ -59811,18 +60032,6 @@ const TARGET_NODE_TYPE = /^(?:Arrow)?FunctionExpression$/u;
 
 function isReachable(segment) {
   return segment.reachable;
-}
-/**
- * Gets a readable location.
- *
- * - FunctionExpression -> the function name or `function` keyword.
- * @param {ASTNode} node A function node to get.
- * @returns {ASTNode|Token} The node or the token of a location.
- */
-
-
-function getId(node) {
-  return node.id || node;
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
@@ -59858,6 +60067,7 @@ module.exports = {
     const options = context.options[0] || {
       allowImplicit: false
     };
+    const sourceCode = context.getSourceCode();
     let funcInfo = {
       upper: null,
       codePath: null,
@@ -59879,7 +60089,7 @@ module.exports = {
       if (funcInfo.shouldCheck && funcInfo.codePath.currentSegments.some(isReachable)) {
         context.report({
           node,
-          loc: getId(node).loc.start,
+          loc: astUtils.getFunctionHeadLoc(node, sourceCode),
           messageId: funcInfo.hasReturn ? "expectedAlways" : "expected",
           data: {
             name: astUtils.getFunctionNameWithKind(funcInfo.node)
@@ -60005,7 +60215,7 @@ function isShadowed(scope, node) {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/global-require"],
+    replacedBy: [],
     type: "suggestion",
     docs: {
       description: "require `require()` calls to be placed at top-level module scope",
@@ -60355,7 +60565,7 @@ module.exports = {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/handle-callback-err"],
+    replacedBy: [],
     type: "suggestion",
     docs: {
       description: "require error handling in callbacks",
@@ -65022,7 +65232,7 @@ function isSingleLine(node) {
 /**
  * Checks whether the properties on a single line.
  * @param {ASTNode[]} properties List of Property AST nodes.
- * @returns {boolean} True if all properies is on a single line.
+ * @returns {boolean} True if all properties is on a single line.
  */
 
 
@@ -66087,6 +66297,11 @@ module.exports = {
         checkSpacingAround(sourceCode.getTokenAfter(firstToken));
       }
 
+      if (node.type === "ExportAllDeclaration" && node.exported) {
+        const asToken = sourceCode.getTokenBefore(node.exported);
+        checkSpacingBefore(asToken, PREV_TOKEN_M);
+      }
+
       if (node.source) {
         const fromToken = sourceCode.getTokenBefore(node.source);
         checkSpacingBefore(fromToken, PREV_TOKEN_M);
@@ -66397,8 +66612,14 @@ module.exports = {
           context.report({
             node,
             loc: {
-              line: i,
-              column: sourceCode.lines[i - 1].length
+              start: {
+                line: i,
+                column: sourceCode.lines[i - 1].length
+              },
+              end: {
+                line: i + 1,
+                column: 0
+              }
             },
             messageId: expectedLF ? "expectedLF" : "expectedCRLF",
             fix: createFix(range, expectedLFChars)
@@ -68052,7 +68273,7 @@ module.exports = {
 
 
     function isIIFE(node) {
-      return node.type === "FunctionExpression" && node.parent && node.parent.type === "CallExpression" && node.parent.callee === node;
+      return (node.type === "FunctionExpression" || node.type === "ArrowFunctionExpression") && node.parent && node.parent.type === "CallExpression" && node.parent.callee === node;
     }
     /**
      * Identifies is a node is a FunctionExpression which is embedded within a MethodDefinition or Property
@@ -70670,7 +70891,7 @@ module.exports = {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/no-deprecated-api"],
+    replacedBy: [],
     type: "problem",
     docs: {
       description: "disallow use of the `Buffer()` constructor",
@@ -71831,7 +72052,7 @@ const collector = new class {
 
       this._validator.validatePattern(regexpStr); // Call onCharacter hook
 
-    } catch (err) {// Ignore syntax errors in RegExp.
+    } catch (_unused) {// Ignore syntax errors in RegExp.
     }
 
     return this._controlChars;
@@ -76901,6 +77122,10 @@ module.exports = {
           return precedence(node) < precedence(parent);
 
         case "LogicalExpression":
+          if (astUtils.isMixedLogicalAndCoalesceExpressions(node, parent)) {
+            return true;
+          }
+
           if (previousNode === parent.left) {
             return precedence(node) < precedence(parent);
           }
@@ -79523,13 +79748,13 @@ module.exports = {
       const shouldSkipRight = NESTED_BINARY && (node.right.type === "BinaryExpression" || node.right.type === "LogicalExpression");
 
       if (!shouldSkipLeft && hasExcessParens(node.left)) {
-        if (!(node.left.type === "UnaryExpression" && isExponentiation) && (leftPrecedence > prec || leftPrecedence === prec && !isExponentiation) || isParenthesisedTwice(node.left)) {
+        if (!(node.left.type === "UnaryExpression" && isExponentiation) && !astUtils.isMixedLogicalAndCoalesceExpressions(node.left, node) && (leftPrecedence > prec || leftPrecedence === prec && !isExponentiation) || isParenthesisedTwice(node.left)) {
           report(node.left);
         }
       }
 
       if (!shouldSkipRight && hasExcessParens(node.right)) {
-        if (rightPrecedence > prec || rightPrecedence === prec && isExponentiation || isParenthesisedTwice(node.right)) {
+        if (!astUtils.isMixedLogicalAndCoalesceExpressions(node.right, node) && (rightPrecedence > prec || rightPrecedence === prec && isExponentiation) || isParenthesisedTwice(node.right)) {
           report(node.right);
         }
       }
@@ -81609,7 +81834,7 @@ module.exports = {
       try {
         validator.validateFlags(flags);
         return null;
-      } catch (err) {
+      } catch (_unused) {
         return "Invalid flags supplied to RegExp constructor '".concat(flags, "'");
       }
     }
@@ -82361,7 +82586,7 @@ module.exports = {
       });
     }
     /**
-     * Checks for any ocurrence of a BlockStatement in a place where lists of statements can appear
+     * Checks for any occurrence of a BlockStatement in a place where lists of statements can appear
      * @param {ASTNode} node The node to check
      * @returns {boolean} True if the node is a lone block.
      */
@@ -82715,6 +82940,204 @@ module.exports = {
 
 "use strict";
 /**
+ * @fileoverview Rule to flag numbers that will lose significant figure precision at runtime
+ * @author Jacob Moore
+ */
+ //------------------------------------------------------------------------------
+// Rule Definition
+//------------------------------------------------------------------------------
+
+module.exports = {
+  meta: {
+    type: "problem",
+    docs: {
+      description: "disallow literal numbers that lose precision",
+      category: "Possible Errors",
+      recommended: false,
+      url: "https://eslint.org/docs/rules/no-loss-of-precision"
+    },
+    schema: [],
+    messages: {
+      noLossOfPrecision: "This number literal will lose precision at runtime."
+    }
+  },
+
+  create(context) {
+    /**
+     * Returns whether the node is number literal
+     * @param {Node} node the node literal being evaluated
+     * @returns {boolean} true if the node is a number literal
+     */
+    function isNumber(node) {
+      return typeof node.value === "number";
+    }
+    /**
+     * Checks whether the number is  base ten
+     * @param {ASTNode} node the node being evaluated
+     * @returns {boolean} true if the node is in base ten
+     */
+
+
+    function isBaseTen(node) {
+      const prefixes = ["0x", "0X", "0b", "0B", "0o", "0O"];
+      return prefixes.every(prefix => !node.raw.startsWith(prefix)) && !/^0[0-7]+$/u.test(node.raw);
+    }
+    /**
+     * Checks that the user-intended non-base ten number equals the actual number after is has been converted to the Number type
+     * @param {Node} node the node being evaluated
+     * @returns {boolean} true if they do not match
+     */
+
+
+    function notBaseTenLosesPrecision(node) {
+      const rawString = node.raw.toUpperCase();
+      let base = 0;
+
+      if (rawString.startsWith("0B")) {
+        base = 2;
+      } else if (rawString.startsWith("0X")) {
+        base = 16;
+      } else {
+        base = 8;
+      }
+
+      return !rawString.endsWith(node.value.toString(base).toUpperCase());
+    }
+    /**
+     * Adds a decimal point to the numeric string at index 1
+     * @param {string} stringNumber the numeric string without any decimal point
+     * @returns {string} the numeric string with a decimal point in the proper place
+     */
+
+
+    function addDecimalPointToNumber(stringNumber) {
+      return "".concat(stringNumber.slice(0, 1), ".").concat(stringNumber.slice(1));
+    }
+    /**
+     * Returns the number stripped of leading zeros
+     * @param {string} numberAsString the string representation of the number
+     * @returns {string} the stripped string
+     */
+
+
+    function removeLeadingZeros(numberAsString) {
+      return numberAsString.replace(/^0*/u, "");
+    }
+    /**
+     * Returns the number stripped of trailing zeros
+     * @param {string} numberAsString the string representation of the number
+     * @returns {string} the stripped string
+     */
+
+
+    function removeTrailingZeros(numberAsString) {
+      return numberAsString.replace(/0*$/u, "");
+    }
+    /**
+     * Converts an integer to to an object containing the the integer's coefficient and order of magnitude
+     * @param {string} stringInteger the string representation of the integer being converted
+     * @returns {Object} the object containing the the integer's coefficient and order of magnitude
+     */
+
+
+    function normalizeInteger(stringInteger) {
+      const significantDigits = removeTrailingZeros(removeLeadingZeros(stringInteger));
+      return {
+        magnitude: stringInteger.startsWith("0") ? stringInteger.length - 2 : stringInteger.length - 1,
+        coefficient: addDecimalPointToNumber(significantDigits)
+      };
+    }
+    /**
+     *
+     * Converts a float to to an object containing the the floats's coefficient and order of magnitude
+     * @param {string} stringFloat the string representation of the float being converted
+     * @returns {Object} the object containing the the integer's coefficient and order of magnitude
+     */
+
+
+    function normalizeFloat(stringFloat) {
+      const trimmedFloat = removeLeadingZeros(stringFloat);
+
+      if (trimmedFloat.startsWith(".")) {
+        const decimalDigits = trimmedFloat.split(".").pop();
+        const significantDigits = removeLeadingZeros(decimalDigits);
+        return {
+          magnitude: significantDigits.length - decimalDigits.length - 1,
+          coefficient: addDecimalPointToNumber(significantDigits)
+        };
+      }
+
+      return {
+        magnitude: trimmedFloat.indexOf(".") - 1,
+        coefficient: addDecimalPointToNumber(trimmedFloat.replace(".", ""))
+      };
+    }
+    /**
+     * Converts a base ten number to proper scientific notation
+     * @param {string} stringNumber the string representation of the base ten number to be converted
+     * @returns {string} the number converted to scientific notation
+     */
+
+
+    function convertNumberToScientificNotation(stringNumber) {
+      const splitNumber = stringNumber.replace("E", "e").split("e");
+      const originalCoefficient = splitNumber[0];
+      const normalizedNumber = stringNumber.includes(".") ? normalizeFloat(originalCoefficient) : normalizeInteger(originalCoefficient);
+      const normalizedCoefficient = normalizedNumber.coefficient;
+      const magnitude = splitNumber.length > 1 ? parseInt(splitNumber[1], 10) + normalizedNumber.magnitude : normalizedNumber.magnitude;
+      return "".concat(normalizedCoefficient, "e").concat(magnitude);
+    }
+    /**
+     * Checks that the user-intended base ten number equals the actual number after is has been converted to the Number type
+     * @param {Node} node the node being evaluated
+     * @returns {boolean} true if they do not match
+     */
+
+
+    function baseTenLosesPrecision(node) {
+      const normalizedRawNumber = convertNumberToScientificNotation(node.raw);
+      const requestedPrecision = normalizedRawNumber.split("e")[0].replace(".", "").length;
+
+      if (requestedPrecision > 100) {
+        return true;
+      }
+
+      const storedNumber = node.value.toPrecision(requestedPrecision);
+      const normalizedStoredNumber = convertNumberToScientificNotation(storedNumber);
+      return normalizedRawNumber !== normalizedStoredNumber;
+    }
+    /**
+     * Checks that the user-intended number equals the actual number after is has been converted to the Number type
+     * @param {Node} node the node being evaluated
+     * @returns {boolean} true if they do not match
+     */
+
+
+    function losesPrecision(node) {
+      return isBaseTen(node) ? baseTenLosesPrecision(node) : notBaseTenLosesPrecision(node);
+    }
+
+    return {
+      Literal(node) {
+        if (node.value && isNumber(node) && losesPrecision(node)) {
+          context.report({
+            messageId: "noLossOfPrecision",
+            node
+          });
+        }
+      }
+
+    };
+  }
+
+};
+
+/***/ }),
+/* 579 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/**
  * @fileoverview Rule to flag statements that use magic numbers (adapted from https://github.com/danielstjules/buddy.js)
  * @author Vincent Lemeunier
  */
@@ -82912,7 +83335,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 579 */
+/* 580 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -82938,7 +83361,7 @@ const {
   isEmojiModifier,
   isRegionalIndicatorSymbol,
   isSurrogatePair
-} = __webpack_require__(580); //------------------------------------------------------------------------------
+} = __webpack_require__(581); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -83052,7 +83475,7 @@ module.exports = {
 
       try {
         patternNode = parser.parsePattern(pattern, 0, pattern.length, flags.includes("u"));
-      } catch (e) {
+      } catch (_unused) {
         // Ignore regular expressions with syntax errors
         return;
       }
@@ -83116,7 +83539,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 580 */
+/* 581 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83126,14 +83549,14 @@ module.exports = {
 
 
 module.exports = {
-  isCombiningCharacter: __webpack_require__(581),
-  isEmojiModifier: __webpack_require__(582),
-  isRegionalIndicatorSymbol: __webpack_require__(583),
-  isSurrogatePair: __webpack_require__(584)
+  isCombiningCharacter: __webpack_require__(582),
+  isEmojiModifier: __webpack_require__(583),
+  isRegionalIndicatorSymbol: __webpack_require__(584),
+  isSurrogatePair: __webpack_require__(585)
 };
 
 /***/ }),
-/* 581 */
+/* 582 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83152,7 +83575,7 @@ module.exports = function isCombiningCharacter(codePoint) {
 };
 
 /***/ }),
-/* 582 */
+/* 583 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83171,7 +83594,7 @@ module.exports = function isEmojiModifier(code) {
 };
 
 /***/ }),
-/* 583 */
+/* 584 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83190,7 +83613,7 @@ module.exports = function isRegionalIndicatorSymbol(code) {
 };
 
 /***/ }),
-/* 584 */
+/* 585 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83210,7 +83633,7 @@ module.exports = function isSurrogatePair(lead, tail) {
 };
 
 /***/ }),
-/* 585 */
+/* 586 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83233,7 +83656,8 @@ const COMPARISON_OPERATORS = ["==", "!=", "===", "!==", ">", ">=", "<", "<="];
 const LOGICAL_OPERATORS = ["&&", "||"];
 const RELATIONAL_OPERATORS = ["in", "instanceof"];
 const TERNARY_OPERATOR = ["?:"];
-const ALL_OPERATORS = [].concat(ARITHMETIC_OPERATORS, BITWISE_OPERATORS, COMPARISON_OPERATORS, LOGICAL_OPERATORS, RELATIONAL_OPERATORS, TERNARY_OPERATOR);
+const COALESCE_OPERATOR = ["??"];
+const ALL_OPERATORS = [].concat(ARITHMETIC_OPERATORS, BITWISE_OPERATORS, COMPARISON_OPERATORS, LOGICAL_OPERATORS, RELATIONAL_OPERATORS, TERNARY_OPERATOR, COALESCE_OPERATOR);
 const DEFAULT_GROUPS = [ARITHMETIC_OPERATORS, BITWISE_OPERATORS, COMPARISON_OPERATORS, LOGICAL_OPERATORS, RELATIONAL_OPERATORS];
 const TARGET_NODE_TYPE = /^(?:Binary|Logical|Conditional)Expression$/u;
 /**
@@ -83427,7 +83851,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 586 */
+/* 587 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83442,7 +83866,7 @@ module.exports = {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/no-mixed-requires"],
+    replacedBy: [],
     type: "suggestion",
     docs: {
       description: "disallow `require` calls to be mixed with regular variable declarations",
@@ -83629,7 +84053,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 587 */
+/* 588 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83693,29 +84117,34 @@ module.exports = {
          * characters begin.
          */
 
-        let regex = /^(?=[\t ]*(\t | \t))/u;
+        let regex = /^(?=( +|\t+))\1(?:\t| )/u;
 
         if (smartTabs) {
           /*
            * At least one space followed by a tab
            * before non-tab/-space characters begin.
            */
-          regex = /^(?=[\t ]* \t)/u;
+          regex = /^(?=(\t*))\1(?=( +))\2\t/u;
         }
 
         lines.forEach((line, i) => {
           const match = regex.exec(line);
 
           if (match) {
-            const lineNumber = i + 1,
-                  column = match.index + 1,
-                  loc = {
-              line: lineNumber,
-              column
+            const lineNumber = i + 1;
+            const loc = {
+              start: {
+                line: lineNumber,
+                column: match[0].length - 2
+              },
+              end: {
+                line: lineNumber,
+                column: match[0].length
+              }
             };
 
             if (!ignoredCommentLines.has(lineNumber)) {
-              const containingNode = sourceCode.getNodeByRangeIndex(sourceCode.getIndexFromLoc(loc));
+              const containingNode = sourceCode.getNodeByRangeIndex(sourceCode.getIndexFromLoc(loc.start));
 
               if (!(containingNode && ["Literal", "TemplateElement"].includes(containingNode.type))) {
                 context.report({
@@ -83735,7 +84164,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 588 */
+/* 589 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83782,7 +84211,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 589 */
+/* 590 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83914,7 +84343,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 590 */
+/* 591 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -83976,7 +84405,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 591 */
+/* 592 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84129,7 +84558,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 592 */
+/* 593 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84223,7 +84652,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 593 */
+/* 594 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84323,7 +84752,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 594 */
+/* 595 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84370,7 +84799,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 595 */
+/* 596 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84414,7 +84843,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 596 */
+/* 597 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84457,7 +84886,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 597 */
+/* 598 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84485,33 +84914,35 @@ module.exports = {
   },
 
   create(context) {
-    //--------------------------------------------------------------------------
-    // Helpers
-    //--------------------------------------------------------------------------
-
-    /**
-     * Reports a node.
-     * @param {ASTNode} node The node to report
-     * @returns {void}
-     * @private
-     */
-    function report(node) {
-      context.report({
-        node,
-        messageId: "noFunctionConstructor"
-      });
-    }
-
     return {
-      "NewExpression[callee.name = 'Function']": report,
-      "CallExpression[callee.name = 'Function']": report
+      "Program:exit"() {
+        const globalScope = context.getScope();
+        const variable = globalScope.set.get("Function");
+
+        if (variable && variable.defs.length === 0) {
+          variable.references.forEach(ref => {
+            const node = ref.identifier;
+            const {
+              parent
+            } = node;
+
+            if (parent && (parent.type === "NewExpression" || parent.type === "CallExpression") && node === parent.callee) {
+              context.report({
+                node: parent,
+                messageId: "noFunctionConstructor"
+              });
+            }
+          });
+        }
+      }
+
     };
   }
 
 };
 
 /***/ }),
-/* 598 */
+/* 599 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84566,7 +84997,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 599 */
+/* 600 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84581,7 +85012,7 @@ module.exports = {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/no-new-require"],
+    replacedBy: [],
     type: "suggestion",
     docs: {
       description: "disallow `new` operators with calls to `require`",
@@ -84612,7 +85043,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 600 */
+/* 601 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84648,8 +85079,9 @@ module.exports = {
         if (variable && variable.defs.length === 0) {
           variable.references.forEach(ref => {
             const node = ref.identifier;
+            const parent = node.parent;
 
-            if (node.parent && node.parent.type === "NewExpression") {
+            if (parent && parent.type === "NewExpression" && parent.callee === node) {
               context.report({
                 node,
                 messageId: "noNewSymbol"
@@ -84665,7 +85097,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 601 */
+/* 602 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84714,7 +85146,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 602 */
+/* 603 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84809,7 +85241,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 603 */
+/* 604 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84853,7 +85285,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 604 */
+/* 605 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -84907,7 +85339,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 605 */
+/* 606 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85134,7 +85566,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 606 */
+/* 607 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85149,7 +85581,7 @@ module.exports = {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/no-path-concat"],
+    replacedBy: [],
     type: "suggestion",
     docs: {
       description: "disallow string concatenation with `__dirname` and `__filename`",
@@ -85187,7 +85619,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 607 */
+/* 608 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85288,7 +85720,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 608 */
+/* 609 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85303,7 +85735,7 @@ module.exports = {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/no-process-env"],
+    replacedBy: [],
     type: "suggestion",
     docs: {
       description: "disallow the use of `process.env`",
@@ -85337,7 +85769,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 609 */
+/* 610 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85352,7 +85784,7 @@ module.exports = {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/no-process-exit"],
+    replacedBy: [],
     type: "suggestion",
     docs: {
       description: "disallow the use of `process.exit()`",
@@ -85384,7 +85816,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 610 */
+/* 611 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85435,7 +85867,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 611 */
+/* 612 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85497,7 +85929,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 612 */
+/* 613 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85663,7 +86095,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 613 */
+/* 614 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85736,7 +86168,7 @@ module.exports = {
 
       try {
         regExpAST = regExpParser.parsePattern(pattern, 0, pattern.length, flags.includes("u"));
-      } catch (e) {
+      } catch (_unused) {
         // Ignore regular expressions with syntax errors
         return;
       }
@@ -85834,7 +86266,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 614 */
+/* 615 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -85896,6 +86328,12 @@ module.exports = {
     }
 
     return {
+      ExportAllDeclaration(node) {
+        if (node.exported) {
+          checkExportedName(node.exported);
+        }
+      },
+
       ExportNamedDeclaration(node) {
         const declaration = node.declaration;
 
@@ -85917,7 +86355,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 615 */
+/* 616 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -86037,7 +86475,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 616 */
+/* 617 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -86049,7 +86487,7 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
-const ignore = __webpack_require__(617);
+const ignore = __webpack_require__(618);
 
 const arrayOfStrings = {
   type: "array",
@@ -86305,7 +86743,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 617 */
+/* 618 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(process) {// A simple implementation of make-array
@@ -86621,7 +87059,7 @@ module.exports = options => new IgnoreBase(options);
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(378)))
 
 /***/ }),
-/* 618 */
+/* 619 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -86633,7 +87071,7 @@ module.exports = options => new IgnoreBase(options);
 // Rule Definition
 //------------------------------------------------------------------------------
 
-const ignore = __webpack_require__(617);
+const ignore = __webpack_require__(618);
 
 const arrayOfStrings = {
   type: "array",
@@ -86667,7 +87105,7 @@ const arrayOfStringsOrObjects = {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/no-restricted-require"],
+    replacedBy: [],
     type: "suggestion",
     docs: {
       description: "disallow specified modules when loaded by `require`",
@@ -86830,7 +87268,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 619 */
+/* 620 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -87016,7 +87454,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 620 */
+/* 621 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -87089,7 +87527,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 621 */
+/* 622 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -87165,7 +87603,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 622 */
+/* 623 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -87276,7 +87714,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 623 */
+/* 624 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -87328,7 +87766,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 624 */
+/* 625 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -87523,7 +87961,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 625 */
+/* 626 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -87584,7 +88022,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 626 */
+/* 627 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -87702,7 +88140,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 627 */
+/* 628 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -87908,7 +88346,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 628 */
+/* 629 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -88082,7 +88520,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 629 */
+/* 630 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -88144,7 +88582,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 630 */
+/* 631 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -88218,7 +88656,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 631 */
+/* 632 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -88267,7 +88705,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 632 */
+/* 633 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -88284,7 +88722,7 @@ module.exports = {
 module.exports = {
   meta: {
     deprecated: true,
-    replacedBy: ["node/no-sync"],
+    replacedBy: [],
     type: "suggestion",
     docs: {
       description: "disallow synchronous methods",
@@ -88326,7 +88764,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 633 */
+/* 634 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -88404,7 +88842,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 634 */
+/* 635 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -88449,7 +88887,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 635 */
+/* 636 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -88491,7 +88929,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 636 */
+/* 637 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -88779,7 +89217,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 637 */
+/* 638 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -88834,7 +89272,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 638 */
+/* 639 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -89009,7 +89447,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 639 */
+/* 640 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -89088,7 +89526,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 640 */
+/* 641 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -89165,7 +89603,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 641 */
+/* 642 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -89244,7 +89682,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 642 */
+/* 643 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -89470,7 +89908,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 643 */
+/* 644 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -89524,11 +89962,8 @@ module.exports = {
       if (openParen.loc.start.line !== nodeExpressionEnd.loc.end.line) {
         context.report({
           node,
-          loc: openParen.loc.start,
-          messageId,
-          data: {
-            char: openParen.value
-          }
+          loc: openParen.loc,
+          messageId
         });
       }
     } //--------------------------------------------------------------------------
@@ -89546,22 +89981,25 @@ module.exports = {
       },
 
       TaggedTemplateExpression(node) {
-        if (node.tag.loc.end.line === node.quasi.loc.start.line) {
-          return;
-        } // handle generics type parameters on template tags
+        const {
+          quasi
+        } = node; // handles common tags, parenthesized tags, and typescript's generic type arguments
 
+        const tokenBefore = sourceCode.getTokenBefore(quasi);
 
-        const tokenBefore = sourceCode.getTokenBefore(node.quasi);
-
-        if (tokenBefore.loc.end.line === node.quasi.loc.start.line) {
-          return;
+        if (tokenBefore.loc.end.line !== quasi.loc.start.line) {
+          context.report({
+            node,
+            loc: {
+              start: quasi.loc.start,
+              end: {
+                line: quasi.loc.start.line,
+                column: quasi.loc.start.column + 1
+              }
+            },
+            messageId: "taggedTemplate"
+          });
         }
-
-        context.report({
-          node,
-          loc: node.loc.start,
-          messageId: "taggedTemplate"
-        });
       },
 
       CallExpression(node) {
@@ -89587,7 +90025,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 644 */
+/* 645 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -89599,7 +90037,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const Traverser = __webpack_require__(645),
+const Traverser = __webpack_require__(646),
       astUtils = __webpack_require__(432); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
@@ -89942,7 +90380,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 645 */
+/* 646 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -90157,7 +90595,7 @@ class Traverser {
 module.exports = Traverser;
 
 /***/ }),
-/* 646 */
+/* 647 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -90299,7 +90737,7 @@ module.exports = {
             loc: node.consequent.loc.start,
             messageId: "unnecessaryConditionalAssignment",
             fix: fixer => {
-              const shouldParenthesizeAlternate = astUtils.getPrecedence(node.alternate) < OR_PRECEDENCE && !astUtils.isParenthesised(sourceCode, node.alternate);
+              const shouldParenthesizeAlternate = (astUtils.getPrecedence(node.alternate) < OR_PRECEDENCE || astUtils.isCoalesceExpression(node.alternate)) && !astUtils.isParenthesised(sourceCode, node.alternate);
               const alternateText = shouldParenthesizeAlternate ? "(".concat(sourceCode.getText(node.alternate), ")") : astUtils.getParenthesisedText(sourceCode, node.alternate);
               const testText = astUtils.getParenthesisedText(sourceCode, node.test);
               return fixer.replaceText(node, "".concat(testText, " || ").concat(alternateText));
@@ -90314,7 +90752,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 647 */
+/* 648 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -90539,7 +90977,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 648 */
+/* 649 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -90649,7 +91087,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 649 */
+/* 650 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -90775,7 +91213,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 650 */
+/* 651 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -90917,7 +91355,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 651 */
+/* 652 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -91034,7 +91472,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 652 */
+/* 653 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -91606,7 +92044,7 @@ module.exports = {
 
           if (unusedVar.defs.length > 0) {
             context.report({
-              node: unusedVar.identifiers[0],
+              node: unusedVar.references.length ? unusedVar.references[unusedVar.references.length - 1].identifier : unusedVar.identifiers[0],
               messageId: "unusedVar",
               data: unusedVar.references.some(ref => ref.isWrite()) ? getAssignedMessageData(unusedVar) : getDefinedMessageData(unusedVar)
             }); // If there are no regular declaration, report the first `/*globals*/` comment directive.
@@ -91628,7 +92066,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 653 */
+/* 654 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -91864,7 +92302,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 654 */
+/* 655 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -91967,7 +92405,7 @@ module.exports = {
 
       try {
         regExpAST = parser.parsePattern(pattern, 0, pattern.length, flags.includes("u"));
-      } catch (e) {
+      } catch (_unused) {
         // Ignore regular expressions with syntax errors
         return;
       }
@@ -92066,7 +92504,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 655 */
+/* 656 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -92154,7 +92592,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 656 */
+/* 657 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -92206,7 +92644,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 657 */
+/* 658 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -92310,7 +92748,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 658 */
+/* 659 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -92426,7 +92864,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 659 */
+/* 660 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -92587,7 +93025,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 660 */
+/* 661 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -92847,7 +93285,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 661 */
+/* 662 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -93015,7 +93453,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 662 */
+/* 663 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -93306,7 +93744,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 663 */
+/* 664 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -93631,7 +94069,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 664 */
+/* 665 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -93690,7 +94128,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 665 */
+/* 666 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -93852,7 +94290,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 666 */
+/* 667 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -93954,7 +94392,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 667 */
+/* 668 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -93996,7 +94434,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 668 */
+/* 669 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -94119,7 +94557,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 669 */
+/* 670 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -94413,7 +94851,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 670 */
+/* 671 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -94740,7 +95178,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 671 */
+/* 672 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -94835,7 +95273,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 672 */
+/* 673 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -95321,7 +95759,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 673 */
+/* 674 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -95886,7 +96324,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 674 */
+/* 675 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -95952,7 +96390,7 @@ module.exports = {
             context.report({
               node,
               messageId: "expectVarOnNewline",
-              loc: current.loc.start,
+              loc: current.loc,
               fix: fixer => fixer.insertTextBefore(current, "\n")
             });
           }
@@ -95973,7 +96411,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 675 */
+/* 676 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -96215,7 +96653,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 676 */
+/* 677 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -96447,7 +96885,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 677 */
+/* 678 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -96664,8 +97102,8 @@ module.exports = {
           context.report({
             node,
             loc: {
-              line: tokenBeforeFirst.loc.start.line,
-              column: tokenBeforeFirst.loc.start.column
+              start: tokenBeforeFirst.loc.start,
+              end: firstBlockToken.loc.start
             },
 
             fix(fixer) {
@@ -96680,8 +97118,8 @@ module.exports = {
           context.report({
             node,
             loc: {
-              line: tokenAfterLast.loc.end.line,
-              column: tokenAfterLast.loc.end.column - 1
+              end: tokenAfterLast.loc.start,
+              start: lastBlockToken.loc.end
             },
 
             fix(fixer) {
@@ -96696,8 +97134,8 @@ module.exports = {
           context.report({
             node,
             loc: {
-              line: tokenBeforeFirst.loc.start.line,
-              column: tokenBeforeFirst.loc.start.column
+              start: tokenBeforeFirst.loc.start,
+              end: firstBlockToken.loc.start
             },
 
             fix(fixer) {
@@ -96712,8 +97150,8 @@ module.exports = {
           context.report({
             node,
             loc: {
-              line: tokenAfterLast.loc.end.line,
-              column: tokenAfterLast.loc.end.column - 1
+              end: tokenAfterLast.loc.start,
+              start: lastBlockToken.loc.end
             },
             messageId: "neverPadBlock",
 
@@ -96764,7 +97202,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 678 */
+/* 679 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -97381,7 +97819,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 679 */
+/* 680 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -97692,7 +98130,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 680 */
+/* 681 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -98142,7 +98580,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 681 */
+/* 682 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -98409,7 +98847,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 682 */
+/* 683 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -98584,7 +99022,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 683 */
+/* 684 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -98640,7 +99078,7 @@ module.exports = {
 
       try {
         ast = parser.parsePattern(pattern, 0, pattern.length, uFlag);
-      } catch (_) {
+      } catch (_unused) {
         // ignore regex syntax errors
         return;
       }
@@ -98696,7 +99134,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 684 */
+/* 685 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -98828,7 +99266,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 685 */
+/* 686 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -99121,7 +99559,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 686 */
+/* 687 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -99237,7 +99675,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 687 */
+/* 688 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -99350,7 +99788,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 688 */
+/* 689 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -99476,7 +99914,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 689 */
+/* 690 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -99585,7 +100023,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 690 */
+/* 691 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -99671,7 +100109,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 691 */
+/* 692 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -99963,7 +100401,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 692 */
+/* 693 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -100109,7 +100547,7 @@ module.exports = {
 
         try {
           tokens = espree.tokenize(key.value);
-        } catch (e) {
+        } catch (_unused) {
           return;
         }
 
@@ -100202,7 +100640,7 @@ module.exports = {
 
             try {
               tokens = espree.tokenize(key.value);
-            } catch (e) {
+            } catch (_unused2) {
               necessaryQuotes = true;
               return;
             }
@@ -100278,7 +100716,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 693 */
+/* 694 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -100608,7 +101046,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 694 */
+/* 695 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -100783,7 +101221,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 695 */
+/* 696 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -101082,7 +101520,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 696 */
+/* 697 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -101196,7 +101634,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 697 */
+/* 698 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -101323,7 +101761,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 698 */
+/* 699 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -101404,7 +101842,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 699 */
+/* 700 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -101487,7 +101925,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 700 */
+/* 701 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -101570,10 +102008,7 @@ module.exports = {
       if (alwaysSpace && !hasWhitespace) {
         context.report({
           node,
-          loc: {
-            line: operator.loc.end.line,
-            column: operator.loc.end.column
-          },
+          loc: operator.loc,
           messageId: "expectedWhitespace",
           data: {
             type
@@ -101588,8 +102023,8 @@ module.exports = {
         context.report({
           node,
           loc: {
-            line: operator.loc.end.line,
-            column: operator.loc.end.column
+            start: operator.loc.end,
+            end: nextToken.loc.start
           },
           messageId: "unexpectedWhitespace",
           data: {
@@ -101618,7 +102053,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 701 */
+/* 702 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -101934,7 +102369,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 702 */
+/* 703 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -102047,6 +102482,18 @@ module.exports = {
       return nextToken && astUtils.isClosingBraceToken(nextToken) || astUtils.isClosingParenToken(nextToken);
     }
     /**
+     * Report location example :
+     *
+     * for unexpected space `before`
+     *
+     * var a = 'b'   ;
+     *            ^^^
+     *
+     * for unexpected space `after`
+     *
+     * var a = 'b';  c = 10;
+     *             ^^
+     *
      * Reports if the given token has invalid spacing.
      * @param {Token} token The semicolon token to check.
      * @param {ASTNode} node The corresponding node of the token.
@@ -102056,17 +102503,19 @@ module.exports = {
 
     function checkSemicolonSpacing(token, node) {
       if (astUtils.isSemicolonToken(token)) {
-        const location = token.loc.start;
-
         if (hasLeadingSpace(token)) {
           if (!requireSpaceBefore) {
+            const tokenBefore = sourceCode.getTokenBefore(token);
+            const loc = {
+              start: tokenBefore.loc.end,
+              end: token.loc.start
+            };
             context.report({
               node,
-              loc: location,
+              loc,
               messageId: "unexpectedWhitespaceBefore",
 
               fix(fixer) {
-                const tokenBefore = sourceCode.getTokenBefore(token);
                 return fixer.removeRange([tokenBefore.range[1], token.range[0]]);
               }
 
@@ -102074,9 +102523,10 @@ module.exports = {
           }
         } else {
           if (requireSpaceBefore) {
+            const loc = token.loc;
             context.report({
               node,
-              loc: location,
+              loc,
               messageId: "missingWhitespaceBefore",
 
               fix(fixer) {
@@ -102090,13 +102540,17 @@ module.exports = {
         if (!isFirstTokenInCurrentLine(token) && !isLastTokenInCurrentLine(token) && !isBeforeClosingParen(token)) {
           if (hasTrailingSpace(token)) {
             if (!requireSpaceAfter) {
+              const tokenAfter = sourceCode.getTokenAfter(token);
+              const loc = {
+                start: token.loc.end,
+                end: tokenAfter.loc.start
+              };
               context.report({
                 node,
-                loc: location,
+                loc,
                 messageId: "unexpectedWhitespaceAfter",
 
                 fix(fixer) {
-                  const tokenAfter = sourceCode.getTokenAfter(token);
                   return fixer.removeRange([token.range[1], tokenAfter.range[0]]);
                 }
 
@@ -102104,9 +102558,10 @@ module.exports = {
             }
           } else {
             if (requireSpaceAfter) {
+              const loc = token.loc;
               context.report({
                 node,
-                loc: location,
+                loc,
                 messageId: "missingWhitespaceAfter",
 
                 fix(fixer) {
@@ -102160,7 +102615,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 703 */
+/* 704 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -102312,7 +102767,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 704 */
+/* 705 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -102514,7 +102969,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 705 */
+/* 706 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -102527,7 +102982,7 @@ module.exports = {
 //------------------------------------------------------------------------------
 
 const astUtils = __webpack_require__(432),
-      naturalCompare = __webpack_require__(706); //------------------------------------------------------------------------------
+      naturalCompare = __webpack_require__(707); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -102702,7 +103157,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 706 */
+/* 707 */
 /***/ (function(module, exports) {
 
 /*
@@ -102757,7 +103212,7 @@ try {
 }
 
 /***/ }),
-/* 707 */
+/* 708 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -102846,7 +103301,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 708 */
+/* 709 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -103012,7 +103467,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 709 */
+/* 710 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -103163,7 +103618,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 710 */
+/* 711 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -103464,7 +103919,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 711 */
+/* 712 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -103635,7 +104090,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 712 */
+/* 713 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -103974,7 +104429,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 713 */
+/* 714 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -104354,7 +104809,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 714 */
+/* 715 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -104661,7 +105116,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 715 */
+/* 716 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -104809,7 +105264,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 716 */
+/* 717 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -104880,7 +105335,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 717 */
+/* 718 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -105026,7 +105481,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 718 */
+/* 719 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -105075,7 +105530,10 @@ module.exports = {
       if (never && hasWhitespace) {
         context.report({
           node,
-          loc: tagToken.loc.start,
+          loc: {
+            start: tagToken.loc.end,
+            end: literalToken.loc.start
+          },
           messageId: "unexpected",
 
           fix(fixer) {
@@ -105092,7 +105550,10 @@ module.exports = {
       } else if (!never && !hasWhitespace) {
         context.report({
           node,
-          loc: tagToken.loc.start,
+          loc: {
+            start: node.loc.start,
+            end: literalToken.loc.start
+          },
           messageId: "missing",
 
           fix(fixer) {
@@ -105111,7 +105572,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 719 */
+/* 720 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -105185,7 +105646,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 720 */
+/* 721 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -105330,7 +105791,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 721 */
+/* 722 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -105342,7 +105803,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const doctrine = __webpack_require__(722); //------------------------------------------------------------------------------
+const doctrine = __webpack_require__(723); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -105858,7 +106319,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 722 */
+/* 723 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -105872,8 +106333,8 @@ module.exports = {
 
   var typed, utility, jsdoc, esutils, hasOwnProperty;
   esutils = __webpack_require__(433);
-  typed = __webpack_require__(723);
-  utility = __webpack_require__(724);
+  typed = __webpack_require__(724);
+  utility = __webpack_require__(725);
 
   function sliceSource(source, index, last) {
     return source.slice(index, last);
@@ -106841,7 +107302,7 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 723 */
+/* 724 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -106856,7 +107317,7 @@ module.exports = {
 
   var Syntax, Token, source, length, index, previous, token, value, esutils, utility, rangeOffset, addRange;
   esutils = __webpack_require__(433);
-  utility = __webpack_require__(724);
+  utility = __webpack_require__(725);
   Syntax = {
     NullableLiteral: 'NullableLiteral',
     AllLiteral: 'AllLiteral',
@@ -108314,7 +108775,7 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 724 */
+/* 725 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
@@ -108325,7 +108786,7 @@ module.exports = {
   'use strict';
 
   var VERSION;
-  VERSION = __webpack_require__(725).version;
+  VERSION = __webpack_require__(726).version;
   exports.VERSION = VERSION;
 
   function DoctrineError(message) {
@@ -108353,13 +108814,13 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 725 */
+/* 726 */
 /***/ (function(module) {
 
 module.exports = JSON.parse("{\"_from\":\"doctrine@^3.0.0\",\"_id\":\"doctrine@3.0.0\",\"_inBundle\":false,\"_integrity\":\"sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w==\",\"_location\":\"/doctrine\",\"_phantomChildren\":{},\"_requested\":{\"type\":\"range\",\"registry\":true,\"raw\":\"doctrine@^3.0.0\",\"name\":\"doctrine\",\"escapedName\":\"doctrine\",\"rawSpec\":\"^3.0.0\",\"saveSpec\":null,\"fetchSpec\":\"^3.0.0\"},\"_requiredBy\":[\"/\",\"/eslint\"],\"_resolved\":\"https://registry.npmjs.org/doctrine/-/doctrine-3.0.0.tgz\",\"_shasum\":\"addebead72a6574db783639dc87a121773973961\",\"_spec\":\"doctrine@^3.0.0\",\"_where\":\"/Users/sebastian/Development/eslint\",\"bugs\":{\"url\":\"https://github.com/eslint/doctrine/issues\"},\"bundleDependencies\":false,\"dependencies\":{\"esutils\":\"^2.0.2\"},\"deprecated\":false,\"description\":\"JSDoc parser\",\"devDependencies\":{\"coveralls\":\"^3.0.1\",\"dateformat\":\"^1.0.11\",\"eslint\":\"^1.10.3\",\"eslint-release\":\"^1.0.0\",\"linefix\":\"^0.1.1\",\"mocha\":\"^3.4.2\",\"npm-license\":\"^0.3.1\",\"nyc\":\"^10.3.2\",\"semver\":\"^5.0.3\",\"shelljs\":\"^0.5.3\",\"shelljs-nodecli\":\"^0.1.1\",\"should\":\"^5.0.1\"},\"directories\":{\"lib\":\"./lib\"},\"engines\":{\"node\":\">=6.0.0\"},\"files\":[\"lib\"],\"homepage\":\"https://github.com/eslint/doctrine\",\"license\":\"Apache-2.0\",\"main\":\"lib/doctrine.js\",\"maintainers\":[{\"name\":\"Nicholas C. Zakas\",\"email\":\"nicholas+npm@nczconsulting.com\",\"url\":\"https://www.nczonline.net\"},{\"name\":\"Yusuke Suzuki\",\"email\":\"utatane.tea@gmail.com\",\"url\":\"https://github.com/Constellation\"}],\"name\":\"doctrine\",\"repository\":{\"type\":\"git\",\"url\":\"git+https://github.com/eslint/doctrine.git\"},\"scripts\":{\"coveralls\":\"nyc report --reporter=text-lcov | coveralls\",\"generate-alpharelease\":\"eslint-generate-prerelease alpha\",\"generate-betarelease\":\"eslint-generate-prerelease beta\",\"generate-rcrelease\":\"eslint-generate-prerelease rc\",\"generate-release\":\"eslint-generate-release\",\"lint\":\"eslint lib/\",\"pretest\":\"npm run lint\",\"publish-release\":\"eslint-publish-release\",\"test\":\"nyc mocha\"},\"version\":\"3.0.0\"}");
 
 /***/ }),
-/* 726 */
+/* 727 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -108446,7 +108907,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 727 */
+/* 728 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -108591,7 +109052,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 728 */
+/* 729 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -108773,7 +109234,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 729 */
+/* 730 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -108830,7 +109291,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 730 */
+/* 731 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -108974,7 +109435,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 731 */
+/* 732 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -109056,20 +109517,17 @@ function looksLikeLiteral(node) {
 /**
  * Attempts to derive a Literal node from nodes that are treated like literals.
  * @param {ASTNode} node Node to normalize.
- * @param {number} [defaultValue] The default value to be returned if the node
- *                                is not a Literal.
  * @returns {ASTNode} One of the following options.
  *  1. The original node if the node is already a Literal
  *  2. A normalized Literal node with the negative number as the value if the
  *     node represents a negative number literal.
  *  3. A normalized Literal node with the string as the value if the node is
  *     a Template Literal without expression.
- *  4. The Literal node which has the `defaultValue` argument if it exists.
- *  5. Otherwise `null`.
+ *  4. Otherwise `null`.
  */
 
 
-function getNormalizedLiteral(node, defaultValue) {
+function getNormalizedLiteral(node) {
   if (node.type === "Literal") {
     return node;
   }
@@ -109087,14 +109545,6 @@ function getNormalizedLiteral(node, defaultValue) {
       type: "Literal",
       value: node.quasis[0].value.cooked,
       raw: node.quasis[0].value.raw
-    };
-  }
-
-  if (defaultValue) {
-    return {
-      type: "Literal",
-      value: defaultValue,
-      raw: String(defaultValue)
     };
   }
 
@@ -109156,7 +109606,7 @@ module.exports = {
   meta: {
     type: "suggestion",
     docs: {
-      description: "require or disallow \"Yoda\" conditions",
+      description: 'require or disallow "Yoda" conditions',
       category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/yoda"
@@ -109209,8 +109659,24 @@ module.exports = {
        */
 
       function isBetweenTest() {
-        let leftLiteral, rightLiteral;
-        return node.operator === "&&" && (leftLiteral = getNormalizedLiteral(left.left)) && (rightLiteral = getNormalizedLiteral(right.right, Number.POSITIVE_INFINITY)) && leftLiteral.value <= rightLiteral.value && same(left.right, right.left);
+        if (node.operator === "&&" && same(left.right, right.left)) {
+          const leftLiteral = getNormalizedLiteral(left.left);
+          const rightLiteral = getNormalizedLiteral(right.right);
+
+          if (leftLiteral === null && rightLiteral === null) {
+            return false;
+          }
+
+          if (rightLiteral === null || leftLiteral === null) {
+            return true;
+          }
+
+          if (leftLiteral.value <= rightLiteral.value) {
+            return true;
+          }
+        }
+
+        return false;
       }
       /**
        * Determines whether node is of the form `x < 0 || 1 <= x`.
@@ -109219,8 +109685,24 @@ module.exports = {
 
 
       function isOutsideTest() {
-        let leftLiteral, rightLiteral;
-        return node.operator === "||" && (leftLiteral = getNormalizedLiteral(left.right, Number.NEGATIVE_INFINITY)) && (rightLiteral = getNormalizedLiteral(right.left)) && leftLiteral.value <= rightLiteral.value && same(left.left, right.right);
+        if (node.operator === "||" && same(left.left, right.right)) {
+          const leftLiteral = getNormalizedLiteral(left.right);
+          const rightLiteral = getNormalizedLiteral(right.left);
+
+          if (leftLiteral === null && rightLiteral === null) {
+            return false;
+          }
+
+          if (rightLiteral === null || leftLiteral === null) {
+            return true;
+          }
+
+          if (leftLiteral.value <= rightLiteral.value) {
+            return true;
+          }
+        }
+
+        return false;
       }
       /**
        * Determines whether node is wrapped in parentheses.
@@ -109297,7 +109779,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 732 */
+/* 733 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -109345,7 +109827,7 @@ module.exports = {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(378)))
 
 /***/ }),
-/* 733 */
+/* 734 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -109363,8 +109845,8 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-const Ajv = __webpack_require__(734),
-      metaSchema = __webpack_require__(780); //------------------------------------------------------------------------------
+const Ajv = __webpack_require__(735),
+      metaSchema = __webpack_require__(781); //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------
 
@@ -109385,21 +109867,21 @@ module.exports = (additionalOptions = {}) => {
 };
 
 /***/ }),
-/* 734 */
+/* 735 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var compileSchema = __webpack_require__(735),
-    resolve = __webpack_require__(736),
-    Cache = __webpack_require__(746),
-    SchemaObject = __webpack_require__(741),
-    stableStringify = __webpack_require__(744),
-    formats = __webpack_require__(747),
-    rules = __webpack_require__(748),
-    $dataMetaSchema = __webpack_require__(773),
-    util = __webpack_require__(739);
+var compileSchema = __webpack_require__(736),
+    resolve = __webpack_require__(737),
+    Cache = __webpack_require__(747),
+    SchemaObject = __webpack_require__(742),
+    stableStringify = __webpack_require__(745),
+    formats = __webpack_require__(748),
+    rules = __webpack_require__(749),
+    $dataMetaSchema = __webpack_require__(774),
+    util = __webpack_require__(740);
 
 module.exports = Ajv;
 Ajv.prototype.validate = validate;
@@ -109413,16 +109895,16 @@ Ajv.prototype.addFormat = addFormat;
 Ajv.prototype.errorsText = errorsText;
 Ajv.prototype._addSchema = _addSchema;
 Ajv.prototype._compile = _compile;
-Ajv.prototype.compileAsync = __webpack_require__(774);
+Ajv.prototype.compileAsync = __webpack_require__(775);
 
-var customKeyword = __webpack_require__(775);
+var customKeyword = __webpack_require__(776);
 
 Ajv.prototype.addKeyword = customKeyword.add;
 Ajv.prototype.getKeyword = customKeyword.get;
 Ajv.prototype.removeKeyword = customKeyword.remove;
 Ajv.prototype.validateKeyword = customKeyword.validate;
 
-var errorClasses = __webpack_require__(743);
+var errorClasses = __webpack_require__(744);
 
 Ajv.ValidationError = errorClasses.Validation;
 Ajv.MissingRefError = errorClasses.MissingRef;
@@ -109855,13 +110337,13 @@ function addDefaultMetaSchema(self) {
   var $dataSchema;
 
   if (self._opts.$data) {
-    $dataSchema = __webpack_require__(779);
+    $dataSchema = __webpack_require__(780);
     self.addMetaSchema($dataSchema, $dataSchema.$id, true);
   }
 
   if (self._opts.meta === false) return;
 
-  var metaSchema = __webpack_require__(778);
+  var metaSchema = __webpack_require__(779);
 
   if (self._opts.$data) metaSchema = $dataMetaSchema(metaSchema, META_SUPPORT_DATA);
   self.addMetaSchema(metaSchema, META_SCHEMA_ID, true);
@@ -109919,18 +110401,18 @@ function setLogger(self) {
 function noop() {}
 
 /***/ }),
-/* 735 */
+/* 736 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var resolve = __webpack_require__(736),
-    util = __webpack_require__(739),
-    errorClasses = __webpack_require__(743),
-    stableStringify = __webpack_require__(744);
+var resolve = __webpack_require__(737),
+    util = __webpack_require__(740),
+    errorClasses = __webpack_require__(744),
+    stableStringify = __webpack_require__(745);
 
-var validateGenerator = __webpack_require__(745);
+var validateGenerator = __webpack_require__(746);
 /**
  * Functions below are used inside compiled validations function
  */
@@ -109938,7 +110420,7 @@ var validateGenerator = __webpack_require__(745);
 
 var ucs2length = util.ucs2length;
 
-var equal = __webpack_require__(738); // this error is thrown by async schemas to return validation errors via exception
+var equal = __webpack_require__(739); // this error is thrown by async schemas to return validation errors via exception
 
 
 var ValidationError = errorClasses.Validation;
@@ -110300,17 +110782,17 @@ function vars(arr, statement) {
 }
 
 /***/ }),
-/* 736 */
+/* 737 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var URI = __webpack_require__(737),
-    equal = __webpack_require__(738),
-    util = __webpack_require__(739),
-    SchemaObject = __webpack_require__(741),
-    traverse = __webpack_require__(742);
+var URI = __webpack_require__(738),
+    equal = __webpack_require__(739),
+    util = __webpack_require__(740),
+    SchemaObject = __webpack_require__(742),
+    traverse = __webpack_require__(743);
 
 module.exports = resolve;
 resolve.normalizeId = normalizeId;
@@ -110588,7 +111070,7 @@ function resolveIds(schema) {
 }
 
 /***/ }),
-/* 737 */
+/* 738 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /** @license URI.js v4.2.1 (c) 2011 Gary Court. License: http://github.com/garycourt/uri-js */
@@ -112107,7 +112589,7 @@ function resolveIds(schema) {
 });
 
 /***/ }),
-/* 738 */
+/* 739 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -112151,7 +112633,7 @@ module.exports = function equal(a, b) {
 };
 
 /***/ }),
-/* 739 */
+/* 740 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -112165,8 +112647,8 @@ module.exports = {
   toHash: toHash,
   getProperty: getProperty,
   escapeQuotes: escapeQuotes,
-  equal: __webpack_require__(738),
-  ucs2length: __webpack_require__(740),
+  equal: __webpack_require__(739),
+  ucs2length: __webpack_require__(741),
   varOccurences: varOccurences,
   varReplace: varReplace,
   cleanUpCode: cleanUpCode,
@@ -112419,7 +112901,7 @@ function unescapeJsonPointer(str) {
 }
 
 /***/ }),
-/* 740 */
+/* 741 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -112447,13 +112929,13 @@ module.exports = function ucs2length(str) {
 };
 
 /***/ }),
-/* 741 */
+/* 742 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var util = __webpack_require__(739);
+var util = __webpack_require__(740);
 
 module.exports = SchemaObject;
 
@@ -112462,7 +112944,7 @@ function SchemaObject(obj) {
 }
 
 /***/ }),
-/* 742 */
+/* 743 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -112553,13 +113035,13 @@ function escapeJsonPtr(str) {
 }
 
 /***/ }),
-/* 743 */
+/* 744 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var resolve = __webpack_require__(736);
+var resolve = __webpack_require__(737);
 
 module.exports = {
   Validation: errorSubclass(ValidationError),
@@ -112589,7 +113071,7 @@ function errorSubclass(Subclass) {
 }
 
 /***/ }),
-/* 744 */
+/* 745 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -112665,7 +113147,7 @@ module.exports = function (data, opts) {
 };
 
 /***/ }),
-/* 745 */
+/* 746 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -113288,7 +113770,7 @@ module.exports = function generate_validate(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 746 */
+/* 747 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -113315,13 +113797,13 @@ Cache.prototype.clear = function Cache_clear() {
 };
 
 /***/ }),
-/* 747 */
+/* 748 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var util = __webpack_require__(739);
+var util = __webpack_require__(740);
 
 var DATE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
 var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -113450,14 +113932,14 @@ function regex(str) {
 }
 
 /***/ }),
-/* 748 */
+/* 749 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var ruleModules = __webpack_require__(749),
-    toHash = __webpack_require__(739).toHash;
+var ruleModules = __webpack_require__(750),
+    toHash = __webpack_require__(740).toHash;
 
 module.exports = function rules() {
   var RULES = [{
@@ -113520,45 +114002,45 @@ module.exports = function rules() {
 };
 
 /***/ }),
-/* 749 */
+/* 750 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
  //all requires must be explicit because browserify won't work with dynamic requires
 
 module.exports = {
-  '$ref': __webpack_require__(750),
-  allOf: __webpack_require__(751),
-  anyOf: __webpack_require__(752),
-  '$comment': __webpack_require__(753),
-  const: __webpack_require__(754),
-  contains: __webpack_require__(755),
-  dependencies: __webpack_require__(756),
-  'enum': __webpack_require__(757),
-  format: __webpack_require__(758),
-  'if': __webpack_require__(759),
-  items: __webpack_require__(760),
-  maximum: __webpack_require__(761),
-  minimum: __webpack_require__(761),
-  maxItems: __webpack_require__(762),
-  minItems: __webpack_require__(762),
-  maxLength: __webpack_require__(763),
-  minLength: __webpack_require__(763),
-  maxProperties: __webpack_require__(764),
-  minProperties: __webpack_require__(764),
-  multipleOf: __webpack_require__(765),
-  not: __webpack_require__(766),
-  oneOf: __webpack_require__(767),
-  pattern: __webpack_require__(768),
-  properties: __webpack_require__(769),
-  propertyNames: __webpack_require__(770),
-  required: __webpack_require__(771),
-  uniqueItems: __webpack_require__(772),
-  validate: __webpack_require__(745)
+  '$ref': __webpack_require__(751),
+  allOf: __webpack_require__(752),
+  anyOf: __webpack_require__(753),
+  '$comment': __webpack_require__(754),
+  const: __webpack_require__(755),
+  contains: __webpack_require__(756),
+  dependencies: __webpack_require__(757),
+  'enum': __webpack_require__(758),
+  format: __webpack_require__(759),
+  'if': __webpack_require__(760),
+  items: __webpack_require__(761),
+  maximum: __webpack_require__(762),
+  minimum: __webpack_require__(762),
+  maxItems: __webpack_require__(763),
+  minItems: __webpack_require__(763),
+  maxLength: __webpack_require__(764),
+  minLength: __webpack_require__(764),
+  maxProperties: __webpack_require__(765),
+  minProperties: __webpack_require__(765),
+  multipleOf: __webpack_require__(766),
+  not: __webpack_require__(767),
+  oneOf: __webpack_require__(768),
+  pattern: __webpack_require__(769),
+  properties: __webpack_require__(770),
+  propertyNames: __webpack_require__(771),
+  required: __webpack_require__(772),
+  uniqueItems: __webpack_require__(773),
+  validate: __webpack_require__(746)
 };
 
 /***/ }),
-/* 750 */
+/* 751 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -113717,7 +114199,7 @@ module.exports = function generate_ref(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 751 */
+/* 752 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -113774,7 +114256,7 @@ module.exports = function generate_allOf(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 752 */
+/* 753 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -113871,7 +114353,7 @@ module.exports = function generate_anyOf(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 753 */
+/* 754 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -113894,7 +114376,7 @@ module.exports = function generate_comment(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 754 */
+/* 755 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -113970,7 +114452,7 @@ module.exports = function generate_const(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 755 */
+/* 756 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -114074,7 +114556,7 @@ module.exports = function generate_contains(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 756 */
+/* 757 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -114299,7 +114781,7 @@ module.exports = function generate_dependencies(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 757 */
+/* 758 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -114390,7 +114872,7 @@ module.exports = function generate_enum(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 758 */
+/* 759 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -114591,7 +115073,7 @@ module.exports = function generate_format(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 759 */
+/* 760 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -114722,7 +115204,7 @@ module.exports = function generate_if(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 760 */
+/* 761 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -114899,7 +115381,7 @@ module.exports = function generate_items(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 761 */
+/* 762 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -115098,7 +115580,7 @@ module.exports = function generate__limit(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 762 */
+/* 763 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -115202,7 +115684,7 @@ module.exports = function generate__limitItems(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 763 */
+/* 764 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -115312,7 +115794,7 @@ module.exports = function generate__limitLength(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 764 */
+/* 765 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -115416,7 +115898,7 @@ module.exports = function generate__limitProperties(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 765 */
+/* 766 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -115521,7 +116003,7 @@ module.exports = function generate_multipleOf(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 766 */
+/* 767 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -115632,7 +116114,7 @@ module.exports = function generate_not(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 767 */
+/* 768 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -115729,7 +116211,7 @@ module.exports = function generate_oneOf(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 768 */
+/* 769 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -115831,7 +116313,7 @@ module.exports = function generate_pattern(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 769 */
+/* 770 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -116245,7 +116727,7 @@ module.exports = function generate_properties(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 770 */
+/* 771 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -116351,7 +116833,7 @@ module.exports = function generate_propertyNames(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 771 */
+/* 772 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -116717,7 +117199,7 @@ module.exports = function generate_required(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 772 */
+/* 773 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -116831,7 +117313,7 @@ module.exports = function generate_uniqueItems(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 773 */
+/* 774 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -116866,13 +117348,13 @@ module.exports = function (metaSchema, keywordsJsonPointers) {
 };
 
 /***/ }),
-/* 774 */
+/* 775 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var MissingRefError = __webpack_require__(743).MissingRef;
+var MissingRefError = __webpack_require__(744).MissingRef;
 
 module.exports = compileAsync;
 /**
@@ -116960,7 +117442,7 @@ function compileAsync(schema, meta, callback) {
 }
 
 /***/ }),
-/* 775 */
+/* 776 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -116968,9 +117450,9 @@ function compileAsync(schema, meta, callback) {
 
 var IDENTIFIER = /^[a-z_$][a-z0-9_$-]*$/i;
 
-var customRuleCode = __webpack_require__(776);
+var customRuleCode = __webpack_require__(777);
 
-var definitionSchema = __webpack_require__(777);
+var definitionSchema = __webpack_require__(778);
 
 module.exports = {
   add: addKeyword,
@@ -117113,7 +117595,7 @@ function validateKeyword(definition, throwError) {
 }
 
 /***/ }),
-/* 776 */
+/* 777 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -117396,13 +117878,13 @@ module.exports = function generate_custom(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 777 */
+/* 778 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var metaSchema = __webpack_require__(778);
+var metaSchema = __webpack_require__(779);
 
 module.exports = {
   $id: 'https://github.com/epoberezkin/ajv/blob/master/lib/definition_schema.js',
@@ -117460,36 +117942,36 @@ module.exports = {
 };
 
 /***/ }),
-/* 778 */
+/* 779 */
 /***/ (function(module) {
 
 module.exports = JSON.parse("{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"$id\":\"http://json-schema.org/draft-07/schema#\",\"title\":\"Core schema meta-schema\",\"definitions\":{\"schemaArray\":{\"type\":\"array\",\"minItems\":1,\"items\":{\"$ref\":\"#\"}},\"nonNegativeInteger\":{\"type\":\"integer\",\"minimum\":0},\"nonNegativeIntegerDefault0\":{\"allOf\":[{\"$ref\":\"#/definitions/nonNegativeInteger\"},{\"default\":0}]},\"simpleTypes\":{\"enum\":[\"array\",\"boolean\",\"integer\",\"null\",\"number\",\"object\",\"string\"]},\"stringArray\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"uniqueItems\":true,\"default\":[]}},\"type\":[\"object\",\"boolean\"],\"properties\":{\"$id\":{\"type\":\"string\",\"format\":\"uri-reference\"},\"$schema\":{\"type\":\"string\",\"format\":\"uri\"},\"$ref\":{\"type\":\"string\",\"format\":\"uri-reference\"},\"$comment\":{\"type\":\"string\"},\"title\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"default\":true,\"readOnly\":{\"type\":\"boolean\",\"default\":false},\"examples\":{\"type\":\"array\",\"items\":true},\"multipleOf\":{\"type\":\"number\",\"exclusiveMinimum\":0},\"maximum\":{\"type\":\"number\"},\"exclusiveMaximum\":{\"type\":\"number\"},\"minimum\":{\"type\":\"number\"},\"exclusiveMinimum\":{\"type\":\"number\"},\"maxLength\":{\"$ref\":\"#/definitions/nonNegativeInteger\"},\"minLength\":{\"$ref\":\"#/definitions/nonNegativeIntegerDefault0\"},\"pattern\":{\"type\":\"string\",\"format\":\"regex\"},\"additionalItems\":{\"$ref\":\"#\"},\"items\":{\"anyOf\":[{\"$ref\":\"#\"},{\"$ref\":\"#/definitions/schemaArray\"}],\"default\":true},\"maxItems\":{\"$ref\":\"#/definitions/nonNegativeInteger\"},\"minItems\":{\"$ref\":\"#/definitions/nonNegativeIntegerDefault0\"},\"uniqueItems\":{\"type\":\"boolean\",\"default\":false},\"contains\":{\"$ref\":\"#\"},\"maxProperties\":{\"$ref\":\"#/definitions/nonNegativeInteger\"},\"minProperties\":{\"$ref\":\"#/definitions/nonNegativeIntegerDefault0\"},\"required\":{\"$ref\":\"#/definitions/stringArray\"},\"additionalProperties\":{\"$ref\":\"#\"},\"definitions\":{\"type\":\"object\",\"additionalProperties\":{\"$ref\":\"#\"},\"default\":{}},\"properties\":{\"type\":\"object\",\"additionalProperties\":{\"$ref\":\"#\"},\"default\":{}},\"patternProperties\":{\"type\":\"object\",\"additionalProperties\":{\"$ref\":\"#\"},\"propertyNames\":{\"format\":\"regex\"},\"default\":{}},\"dependencies\":{\"type\":\"object\",\"additionalProperties\":{\"anyOf\":[{\"$ref\":\"#\"},{\"$ref\":\"#/definitions/stringArray\"}]}},\"propertyNames\":{\"$ref\":\"#\"},\"const\":true,\"enum\":{\"type\":\"array\",\"items\":true,\"minItems\":1,\"uniqueItems\":true},\"type\":{\"anyOf\":[{\"$ref\":\"#/definitions/simpleTypes\"},{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/simpleTypes\"},\"minItems\":1,\"uniqueItems\":true}]},\"format\":{\"type\":\"string\"},\"contentMediaType\":{\"type\":\"string\"},\"contentEncoding\":{\"type\":\"string\"},\"if\":{\"$ref\":\"#\"},\"then\":{\"$ref\":\"#\"},\"else\":{\"$ref\":\"#\"},\"allOf\":{\"$ref\":\"#/definitions/schemaArray\"},\"anyOf\":{\"$ref\":\"#/definitions/schemaArray\"},\"oneOf\":{\"$ref\":\"#/definitions/schemaArray\"},\"not\":{\"$ref\":\"#\"}},\"default\":true}");
 
 /***/ }),
-/* 779 */
+/* 780 */
 /***/ (function(module) {
 
 module.exports = JSON.parse("{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"$id\":\"https://raw.githubusercontent.com/epoberezkin/ajv/master/lib/refs/data.json#\",\"description\":\"Meta-schema for $data reference (JSON Schema extension proposal)\",\"type\":\"object\",\"required\":[\"$data\"],\"properties\":{\"$data\":{\"type\":\"string\",\"anyOf\":[{\"format\":\"relative-json-pointer\"},{\"format\":\"json-pointer\"}]}},\"additionalProperties\":false}");
 
 /***/ }),
-/* 780 */
+/* 781 */
 /***/ (function(module) {
 
 module.exports = JSON.parse("{\"id\":\"http://json-schema.org/draft-04/schema#\",\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"description\":\"Core schema meta-schema\",\"definitions\":{\"schemaArray\":{\"type\":\"array\",\"minItems\":1,\"items\":{\"$ref\":\"#\"}},\"positiveInteger\":{\"type\":\"integer\",\"minimum\":0},\"positiveIntegerDefault0\":{\"allOf\":[{\"$ref\":\"#/definitions/positiveInteger\"},{\"default\":0}]},\"simpleTypes\":{\"enum\":[\"array\",\"boolean\",\"integer\",\"null\",\"number\",\"object\",\"string\"]},\"stringArray\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"minItems\":1,\"uniqueItems\":true}},\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"$schema\":{\"type\":\"string\"},\"title\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"default\":{},\"multipleOf\":{\"type\":\"number\",\"minimum\":0,\"exclusiveMinimum\":true},\"maximum\":{\"type\":\"number\"},\"exclusiveMaximum\":{\"type\":\"boolean\",\"default\":false},\"minimum\":{\"type\":\"number\"},\"exclusiveMinimum\":{\"type\":\"boolean\",\"default\":false},\"maxLength\":{\"$ref\":\"#/definitions/positiveInteger\"},\"minLength\":{\"$ref\":\"#/definitions/positiveIntegerDefault0\"},\"pattern\":{\"type\":\"string\",\"format\":\"regex\"},\"additionalItems\":{\"anyOf\":[{\"type\":\"boolean\"},{\"$ref\":\"#\"}],\"default\":{}},\"items\":{\"anyOf\":[{\"$ref\":\"#\"},{\"$ref\":\"#/definitions/schemaArray\"}],\"default\":{}},\"maxItems\":{\"$ref\":\"#/definitions/positiveInteger\"},\"minItems\":{\"$ref\":\"#/definitions/positiveIntegerDefault0\"},\"uniqueItems\":{\"type\":\"boolean\",\"default\":false},\"maxProperties\":{\"$ref\":\"#/definitions/positiveInteger\"},\"minProperties\":{\"$ref\":\"#/definitions/positiveIntegerDefault0\"},\"required\":{\"$ref\":\"#/definitions/stringArray\"},\"additionalProperties\":{\"anyOf\":[{\"type\":\"boolean\"},{\"$ref\":\"#\"}],\"default\":{}},\"definitions\":{\"type\":\"object\",\"additionalProperties\":{\"$ref\":\"#\"},\"default\":{}},\"properties\":{\"type\":\"object\",\"additionalProperties\":{\"$ref\":\"#\"},\"default\":{}},\"patternProperties\":{\"type\":\"object\",\"additionalProperties\":{\"$ref\":\"#\"},\"default\":{}},\"dependencies\":{\"type\":\"object\",\"additionalProperties\":{\"anyOf\":[{\"$ref\":\"#\"},{\"$ref\":\"#/definitions/stringArray\"}]}},\"enum\":{\"type\":\"array\",\"minItems\":1,\"uniqueItems\":true},\"type\":{\"anyOf\":[{\"$ref\":\"#/definitions/simpleTypes\"},{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/simpleTypes\"},\"minItems\":1,\"uniqueItems\":true}]},\"format\":{\"type\":\"string\"},\"allOf\":{\"$ref\":\"#/definitions/schemaArray\"},\"anyOf\":{\"$ref\":\"#/definitions/schemaArray\"},\"oneOf\":{\"$ref\":\"#/definitions/schemaArray\"},\"not\":{\"$ref\":\"#\"}},\"dependencies\":{\"exclusiveMaximum\":[\"maximum\"],\"exclusiveMinimum\":[\"minimum\"]},\"default\":{}}");
 
 /***/ }),
-/* 781 */
+/* 782 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 module.exports = {
-  SourceCode: __webpack_require__(782)
+  SourceCode: __webpack_require__(783)
 };
 
 /***/ }),
-/* 782 */
+/* 783 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -117504,9 +117986,9 @@ module.exports = {
 const {
   isCommentToken
 } = __webpack_require__(555),
-      TokenStore = __webpack_require__(783),
+      TokenStore = __webpack_require__(784),
       astUtils = __webpack_require__(416),
-      Traverser = __webpack_require__(645),
+      Traverser = __webpack_require__(646),
       lodash = __webpack_require__(410); //------------------------------------------------------------------------------
 // Private
 //------------------------------------------------------------------------------
@@ -117790,6 +118272,7 @@ class SourceCode extends TokenStore {
    * @returns {Object} An object containing a leading and trailing array
    *      of comments indexed by their position.
    * @public
+   * @deprecated replaced by getCommentsBefore(), getCommentsAfter(), and getCommentsInside().
    */
 
 
@@ -118081,7 +118564,7 @@ class SourceCode extends TokenStore {
 module.exports = SourceCode;
 
 /***/ }),
-/* 783 */
+/* 784 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -118099,13 +118582,13 @@ const {
   isCommentToken
 } = __webpack_require__(555);
 
-const cursors = __webpack_require__(784);
+const cursors = __webpack_require__(785);
 
-const ForwardTokenCursor = __webpack_require__(792);
+const ForwardTokenCursor = __webpack_require__(793);
 
-const PaddedTokenCursor = __webpack_require__(795);
+const PaddedTokenCursor = __webpack_require__(796);
 
-const utils = __webpack_require__(787); //------------------------------------------------------------------------------
+const utils = __webpack_require__(788); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -118617,7 +119100,7 @@ module.exports = class TokenStore {
 };
 
 /***/ }),
-/* 784 */
+/* 785 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -118629,19 +119112,19 @@ module.exports = class TokenStore {
 // Requirements
 //------------------------------------------------------------------------------
 
-const BackwardTokenCommentCursor = __webpack_require__(785);
+const BackwardTokenCommentCursor = __webpack_require__(786);
 
-const BackwardTokenCursor = __webpack_require__(788);
+const BackwardTokenCursor = __webpack_require__(789);
 
-const FilterCursor = __webpack_require__(789);
+const FilterCursor = __webpack_require__(790);
 
-const ForwardTokenCommentCursor = __webpack_require__(791);
+const ForwardTokenCommentCursor = __webpack_require__(792);
 
-const ForwardTokenCursor = __webpack_require__(792);
+const ForwardTokenCursor = __webpack_require__(793);
 
-const LimitCursor = __webpack_require__(793);
+const LimitCursor = __webpack_require__(794);
 
-const SkipCursor = __webpack_require__(794); //------------------------------------------------------------------------------
+const SkipCursor = __webpack_require__(795); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -118719,7 +119202,7 @@ exports.forward = new CursorFactory(ForwardTokenCursor, ForwardTokenCommentCurso
 exports.backward = new CursorFactory(BackwardTokenCursor, BackwardTokenCommentCursor);
 
 /***/ }),
-/* 785 */
+/* 786 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -118731,9 +119214,9 @@ exports.backward = new CursorFactory(BackwardTokenCursor, BackwardTokenCommentCu
 // Requirements
 //------------------------------------------------------------------------------
 
-const Cursor = __webpack_require__(786);
+const Cursor = __webpack_require__(787);
 
-const utils = __webpack_require__(787); //------------------------------------------------------------------------------
+const utils = __webpack_require__(788); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -118782,7 +119265,7 @@ module.exports = class BackwardTokenCommentCursor extends Cursor {
 };
 
 /***/ }),
-/* 786 */
+/* 787 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -118868,7 +119351,7 @@ module.exports = class Cursor {
 };
 
 /***/ }),
-/* 787 */
+/* 788 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -118978,7 +119461,7 @@ exports.getLastIndex = function getLastIndex(tokens, indexMap, endLoc) {
 };
 
 /***/ }),
-/* 788 */
+/* 789 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -118990,9 +119473,9 @@ exports.getLastIndex = function getLastIndex(tokens, indexMap, endLoc) {
 // Requirements
 //------------------------------------------------------------------------------
 
-const Cursor = __webpack_require__(786);
+const Cursor = __webpack_require__(787);
 
-const utils = __webpack_require__(787); //------------------------------------------------------------------------------
+const utils = __webpack_require__(788); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -119044,7 +119527,7 @@ module.exports = class BackwardTokenCursor extends Cursor {
 };
 
 /***/ }),
-/* 789 */
+/* 790 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -119056,7 +119539,7 @@ module.exports = class BackwardTokenCursor extends Cursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const DecorativeCursor = __webpack_require__(790); //------------------------------------------------------------------------------
+const DecorativeCursor = __webpack_require__(791); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -119093,7 +119576,7 @@ module.exports = class FilterCursor extends DecorativeCursor {
 };
 
 /***/ }),
-/* 790 */
+/* 791 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -119105,7 +119588,7 @@ module.exports = class FilterCursor extends DecorativeCursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const Cursor = __webpack_require__(786); //------------------------------------------------------------------------------
+const Cursor = __webpack_require__(787); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -119135,7 +119618,7 @@ module.exports = class DecorativeCursor extends Cursor {
 };
 
 /***/ }),
-/* 791 */
+/* 792 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -119147,9 +119630,9 @@ module.exports = class DecorativeCursor extends Cursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const Cursor = __webpack_require__(786);
+const Cursor = __webpack_require__(787);
 
-const utils = __webpack_require__(787); //------------------------------------------------------------------------------
+const utils = __webpack_require__(788); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -119198,7 +119681,7 @@ module.exports = class ForwardTokenCommentCursor extends Cursor {
 };
 
 /***/ }),
-/* 792 */
+/* 793 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -119210,9 +119693,9 @@ module.exports = class ForwardTokenCommentCursor extends Cursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const Cursor = __webpack_require__(786);
+const Cursor = __webpack_require__(787);
 
-const utils = __webpack_require__(787); //------------------------------------------------------------------------------
+const utils = __webpack_require__(788); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -119270,7 +119753,7 @@ module.exports = class ForwardTokenCursor extends Cursor {
 };
 
 /***/ }),
-/* 793 */
+/* 794 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -119282,7 +119765,7 @@ module.exports = class ForwardTokenCursor extends Cursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const DecorativeCursor = __webpack_require__(790); //------------------------------------------------------------------------------
+const DecorativeCursor = __webpack_require__(791); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -119316,7 +119799,7 @@ module.exports = class LimitCursor extends DecorativeCursor {
 };
 
 /***/ }),
-/* 794 */
+/* 795 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -119328,7 +119811,7 @@ module.exports = class LimitCursor extends DecorativeCursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const DecorativeCursor = __webpack_require__(790); //------------------------------------------------------------------------------
+const DecorativeCursor = __webpack_require__(791); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -119365,7 +119848,7 @@ module.exports = class SkipCursor extends DecorativeCursor {
 };
 
 /***/ }),
-/* 795 */
+/* 796 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -119377,7 +119860,7 @@ module.exports = class SkipCursor extends DecorativeCursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const ForwardTokenCursor = __webpack_require__(792); //------------------------------------------------------------------------------
+const ForwardTokenCursor = __webpack_require__(793); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -119407,7 +119890,7 @@ module.exports = class PaddedTokenCursor extends ForwardTokenCursor {
 };
 
 /***/ }),
-/* 796 */
+/* 797 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -119423,10 +119906,10 @@ const assert = __webpack_require__(381),
       {
   breakableTypePattern
 } = __webpack_require__(416),
-      CodePath = __webpack_require__(797),
-      CodePathSegment = __webpack_require__(799),
-      IdGenerator = __webpack_require__(802),
-      debug = __webpack_require__(800); //------------------------------------------------------------------------------
+      CodePath = __webpack_require__(798),
+      CodePathSegment = __webpack_require__(800),
+      IdGenerator = __webpack_require__(803),
+      debug = __webpack_require__(801); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -119444,12 +119927,12 @@ function isCaseNode(node) {
  * Checks whether the given logical operator is taken into account for the code
  * path analysis.
  * @param {string} operator The operator found in the LogicalExpression node
- * @returns {boolean} `true` if the operator is "&&" or "||"
+ * @returns {boolean} `true` if the operator is "&&" or "||" or "??"
  */
 
 
 function isHandledLogicalOperator(operator) {
-  return operator === "&&" || operator === "||";
+  return operator === "&&" || operator === "||" || operator === "??";
 }
 /**
  * Gets the label if the parent node of a given node is a LabeledStatement.
@@ -120082,7 +120565,7 @@ class CodePathAnalyzer {
 module.exports = CodePathAnalyzer;
 
 /***/ }),
-/* 797 */
+/* 798 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -120094,9 +120577,9 @@ module.exports = CodePathAnalyzer;
 // Requirements
 //------------------------------------------------------------------------------
 
-const CodePathState = __webpack_require__(798);
+const CodePathState = __webpack_require__(799);
 
-const IdGenerator = __webpack_require__(802); //------------------------------------------------------------------------------
+const IdGenerator = __webpack_require__(803); //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------
 
@@ -120324,7 +120807,7 @@ class CodePath {
 module.exports = CodePath;
 
 /***/ }),
-/* 798 */
+/* 799 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -120336,8 +120819,8 @@ module.exports = CodePath;
 // Requirements
 //------------------------------------------------------------------------------
 
-const CodePathSegment = __webpack_require__(799),
-      ForkContext = __webpack_require__(801); //------------------------------------------------------------------------------
+const CodePathSegment = __webpack_require__(800),
+      ForkContext = __webpack_require__(802); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -120540,6 +121023,7 @@ function finalizeTestSegmentsOfFor(context, choiceContext, head) {
   if (!choiceContext.processed) {
     choiceContext.trueForkContext.add(head);
     choiceContext.falseForkContext.add(head);
+    choiceContext.qqForkContext.add(head);
   }
 
   if (context.test !== true) {
@@ -120687,6 +121171,7 @@ class CodePathState {
       isForkingAsResult,
       trueForkContext: ForkContext.newEmpty(this.forkContext),
       falseForkContext: ForkContext.newEmpty(this.forkContext),
+      qqForkContext: ForkContext.newEmpty(this.forkContext),
       processed: false
     };
   }
@@ -120705,6 +121190,7 @@ class CodePathState {
     switch (context.kind) {
       case "&&":
       case "||":
+      case "??":
         /*
          * If any result were not transferred from child contexts,
          * this sets the head segments to both cases.
@@ -120713,6 +121199,7 @@ class CodePathState {
         if (!context.processed) {
           context.trueForkContext.add(headSegments);
           context.falseForkContext.add(headSegments);
+          context.qqForkContext.add(headSegments);
         }
         /*
          * Transfers results to upper context if this context is in
@@ -120724,6 +121211,7 @@ class CodePathState {
           const parentContext = this.choiceContext;
           parentContext.trueForkContext.addAll(context.trueForkContext);
           parentContext.falseForkContext.addAll(context.falseForkContext);
+          parentContext.qqForkContext.addAll(context.qqForkContext);
           parentContext.processed = true;
           return context;
         }
@@ -120785,9 +121273,28 @@ class CodePathState {
        * This got segments already from the child choice context.
        * Creates the next path from own true/false fork context.
        */
-      const prevForkContext = context.kind === "&&" ? context.trueForkContext
-      /* kind === "||" */
-      : context.falseForkContext;
+      let prevForkContext;
+
+      switch (context.kind) {
+        case "&&":
+          // if true then go to the right-hand side.
+          prevForkContext = context.trueForkContext;
+          break;
+
+        case "||":
+          // if false then go to the right-hand side.
+          prevForkContext = context.falseForkContext;
+          break;
+
+        case "??":
+          // Both true/false can short-circuit, so needs the third path to go to the right-hand side. That's qqForkContext.
+          prevForkContext = context.qqForkContext;
+          break;
+
+        default:
+          throw new Error("unreachable");
+      }
+
       forkContext.replaceHead(prevForkContext.makeNext(0, -1));
       prevForkContext.clear();
       context.processed = false;
@@ -120797,12 +121304,25 @@ class CodePathState {
        * So addresses the head segments.
        * The head segments are the path of the left-hand operand.
        */
-      if (context.kind === "&&") {
-        // The path does short-circuit if false.
-        context.falseForkContext.add(forkContext.head);
-      } else {
-        // The path does short-circuit if true.
-        context.trueForkContext.add(forkContext.head);
+      switch (context.kind) {
+        case "&&":
+          // the false path can short-circuit.
+          context.falseForkContext.add(forkContext.head);
+          break;
+
+        case "||":
+          // the true path can short-circuit.
+          context.trueForkContext.add(forkContext.head);
+          break;
+
+        case "??":
+          // both can short-circuit.
+          context.trueForkContext.add(forkContext.head);
+          context.falseForkContext.add(forkContext.head);
+          break;
+
+        default:
+          throw new Error("unreachable");
       }
 
       forkContext.replaceHead(forkContext.makeNext(-1, -1));
@@ -120826,6 +121346,7 @@ class CodePathState {
     if (!context.processed) {
       context.trueForkContext.add(forkContext.head);
       context.falseForkContext.add(forkContext.head);
+      context.qqForkContext.add(forkContext.head);
     }
 
     context.processed = false; // Creates new path from the `true` case.
@@ -121678,7 +122199,7 @@ class CodePathState {
 module.exports = CodePathState;
 
 /***/ }),
-/* 799 */
+/* 800 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -121690,7 +122211,7 @@ module.exports = CodePathState;
 // Requirements
 //------------------------------------------------------------------------------
 
-const debug = __webpack_require__(800); //------------------------------------------------------------------------------
+const debug = __webpack_require__(801); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -121918,7 +122439,7 @@ class CodePathSegment {
 module.exports = CodePathSegment;
 
 /***/ }),
-/* 800 */
+/* 801 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -122123,7 +122644,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 801 */
+/* 802 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -122140,7 +122661,7 @@ module.exports = {
 //------------------------------------------------------------------------------
 
 const assert = __webpack_require__(381),
-      CodePathSegment = __webpack_require__(799); //------------------------------------------------------------------------------
+      CodePathSegment = __webpack_require__(800); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -122376,7 +122897,7 @@ class ForkContext {
 module.exports = ForkContext;
 
 /***/ }),
-/* 802 */
+/* 803 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -122428,7 +122949,7 @@ class IdGenerator {
 module.exports = IdGenerator;
 
 /***/ }),
-/* 803 */
+/* 804 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -122611,7 +123132,7 @@ module.exports = ({
 };
 
 /***/ }),
-/* 804 */
+/* 805 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -122625,7 +123146,7 @@ module.exports = ({
 // Requirements
 //------------------------------------------------------------------------------
 
-const levn = __webpack_require__(805),
+const levn = __webpack_require__(806),
       ConfigOps = __webpack_require__(417);
 
 const debug = __webpack_require__(422)("eslint:config-comment-parser"); //------------------------------------------------------------------------------
@@ -122689,7 +123210,7 @@ module.exports = class ConfigCommentParser {
           config: items
         };
       }
-    } catch (ex) {
+    } catch (_unused) {
       debug("Levn parsing failed; falling back to manual parsing."); // ignore to parse the string by a fallback.
     }
     /*
@@ -122747,15 +123268,15 @@ module.exports = class ConfigCommentParser {
 };
 
 /***/ }),
-/* 805 */
+/* 806 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
 (function () {
   var parseString, cast, parseType, VERSION, parsedTypeParse, parse;
-  parseString = __webpack_require__(806);
-  cast = __webpack_require__(813);
-  parseType = __webpack_require__(814).parseType;
+  parseString = __webpack_require__(807);
+  cast = __webpack_require__(814);
+  parseType = __webpack_require__(815).parseType;
   VERSION = '0.4.1';
 
   parsedTypeParse = function parsedTypeParse(parsedType, string, options) {
@@ -122777,13 +123298,13 @@ module.exports = class ConfigCommentParser {
 }).call(this);
 
 /***/ }),
-/* 806 */
+/* 807 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
 (function () {
   var reject, special, tokenRegex;
-  reject = __webpack_require__(807).reject;
+  reject = __webpack_require__(808).reject;
 
   function consumeOp(tokens, op) {
     if (tokens[0] === op) {
@@ -122924,7 +123445,7 @@ module.exports = class ConfigCommentParser {
 }).call(this);
 
 /***/ }),
-/* 807 */
+/* 808 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
@@ -122938,11 +123459,11 @@ var Func,
     replicate,
     prelude,
     toString$ = {}.toString;
-Func = __webpack_require__(808);
-List = __webpack_require__(809);
-Obj = __webpack_require__(810);
-Str = __webpack_require__(811);
-Num = __webpack_require__(812);
+Func = __webpack_require__(809);
+List = __webpack_require__(810);
+Obj = __webpack_require__(811);
+Str = __webpack_require__(812);
+Num = __webpack_require__(813);
 
 id = function id(x) {
   return x;
@@ -123121,7 +123642,7 @@ function curry$(f, bound) {
 }
 
 /***/ }),
-/* 808 */
+/* 809 */
 /***/ (function(module, exports) {
 
 // Generated by LiveScript 1.6.0
@@ -123214,7 +123735,7 @@ function curry$(f, bound) {
 }
 
 /***/ }),
-/* 809 */
+/* 810 */
 /***/ (function(module, exports) {
 
 // Generated by LiveScript 1.6.0
@@ -124244,7 +124765,7 @@ function not$(x) {
 }
 
 /***/ }),
-/* 810 */
+/* 811 */
 /***/ (function(module, exports) {
 
 // Generated by LiveScript 1.6.0
@@ -124464,7 +124985,7 @@ function curry$(f, bound) {
 }
 
 /***/ }),
-/* 811 */
+/* 812 */
 /***/ (function(module, exports) {
 
 // Generated by LiveScript 1.6.0
@@ -124575,7 +125096,7 @@ function curry$(f, bound) {
 }
 
 /***/ }),
-/* 812 */
+/* 813 */
 /***/ (function(module, exports) {
 
 // Generated by LiveScript 1.6.0
@@ -124724,7 +125245,7 @@ function curry$(f, bound) {
 }
 
 /***/ }),
-/* 813 */
+/* 814 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
@@ -124732,7 +125253,7 @@ function curry$(f, bound) {
   var parsedTypeCheck,
       types,
       toString$ = {}.toString;
-  parsedTypeCheck = __webpack_require__(814).parsedTypeCheck;
+  parsedTypeCheck = __webpack_require__(815).parsedTypeCheck;
   types = {
     '*': function _(value, options) {
       switch (toString$.call(value).slice(8, -1)) {
@@ -125135,15 +125656,15 @@ function curry$(f, bound) {
 }).call(this);
 
 /***/ }),
-/* 814 */
+/* 815 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
 (function () {
   var VERSION, parseType, parsedTypeCheck, typeCheck;
   VERSION = '0.4.0';
-  parseType = __webpack_require__(815);
-  parsedTypeCheck = __webpack_require__(816);
+  parseType = __webpack_require__(816);
+  parsedTypeCheck = __webpack_require__(817);
 
   typeCheck = function typeCheck(type, input, options) {
     return parsedTypeCheck(parseType(type), input, options);
@@ -125158,7 +125679,7 @@ function curry$(f, bound) {
 }).call(this);
 
 /***/ }),
-/* 815 */
+/* 816 */
 /***/ (function(module, exports) {
 
 // Generated by LiveScript 1.6.0
@@ -125411,7 +125932,7 @@ function curry$(f, bound) {
 }).call(this);
 
 /***/ }),
-/* 816 */
+/* 817 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
@@ -125423,7 +125944,7 @@ function curry$(f, bound) {
       types,
       defaultType,
       toString$ = {}.toString;
-  ref$ = __webpack_require__(807), any = ref$.any, all = ref$.all, isItNaN = ref$.isItNaN;
+  ref$ = __webpack_require__(808), any = ref$.any, all = ref$.all, isItNaN = ref$.isItNaN;
   types = {
     Number: {
       typeOf: 'Number',
@@ -125577,7 +126098,7 @@ function curry$(f, bound) {
 }).call(this);
 
 /***/ }),
-/* 817 */
+/* 818 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -125589,7 +126110,7 @@ function curry$(f, bound) {
 // Requirements
 //------------------------------------------------------------------------------
 
-const esquery = __webpack_require__(818);
+const esquery = __webpack_require__(819);
 
 const lodash = __webpack_require__(410); //------------------------------------------------------------------------------
 // Typedefs
@@ -125895,7 +126416,7 @@ class NodeEventGenerator {
 module.exports = NodeEventGenerator;
 
 /***/ }),
-/* 818 */
+/* 819 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {!function (e, t) {
@@ -127390,7 +127911,7 @@ module.exports = NodeEventGenerator;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(6)))
 
 /***/ }),
-/* 819 */
+/* 820 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -127410,9 +127931,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 const assert = __webpack_require__(381);
 
-const ruleFixer = __webpack_require__(820);
+const ruleFixer = __webpack_require__(821);
 
-const interpolate = __webpack_require__(821); //------------------------------------------------------------------------------
+const interpolate = __webpack_require__(822); //------------------------------------------------------------------------------
 // Typedefs
 //------------------------------------------------------------------------------
 
@@ -127610,7 +128131,7 @@ function mapSuggestions(descriptor, sourceCode, messages) {
 
   return descriptor.suggest.map(suggestInfo => {
     const computedDesc = suggestInfo.desc || messages[suggestInfo.messageId];
-    return _objectSpread({}, suggestInfo, {
+    return _objectSpread(_objectSpread({}, suggestInfo), {}, {
       desc: interpolate(computedDesc, suggestInfo.data),
       fix: normalizeFixes(suggestInfo, sourceCode)
     });
@@ -127760,7 +128281,7 @@ module.exports = function createReportTranslator(metadata) {
 };
 
 /***/ }),
-/* 820 */
+/* 821 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -127899,7 +128420,7 @@ const ruleFixer = Object.freeze({
 module.exports = ruleFixer;
 
 /***/ }),
-/* 821 */
+/* 822 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -127930,7 +128451,7 @@ module.exports = (text, data) => {
 };
 
 /***/ }),
-/* 822 */
+/* 823 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -127989,7 +128510,7 @@ class Rules {
 
   get(ruleId) {
     if (typeof this._rules[ruleId] === "string") {
-      this.define(ruleId, __webpack_require__(823)(this._rules[ruleId]));
+      this.define(ruleId, __webpack_require__(824)(this._rules[ruleId]));
     }
 
     if (this._rules[ruleId]) {
@@ -128016,7 +128537,7 @@ class Rules {
 module.exports = Rules;
 
 /***/ }),
-/* 823 */
+/* 824 */
 /***/ (function(module, exports) {
 
 function webpackEmptyContext(req) {
@@ -128027,10 +128548,10 @@ function webpackEmptyContext(req) {
 webpackEmptyContext.keys = function() { return []; };
 webpackEmptyContext.resolve = webpackEmptyContext;
 module.exports = webpackEmptyContext;
-webpackEmptyContext.id = 823;
+webpackEmptyContext.id = 824;
 
 /***/ }),
-/* 824 */
+/* 825 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -128088,7 +128609,7 @@ module.exports = () => {
 };
 
 /***/ }),
-/* 825 */
+/* 826 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -128243,7 +128764,7 @@ SourceCodeFixer.applyFixes = function (sourceText, messages, shouldFix) {
 module.exports = SourceCodeFixer;
 
 /***/ }),
-/* 826 */
+/* 827 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -128371,7 +128892,7 @@ module.exports = function () {
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(378)))
 
 /***/ }),
-/* 827 */
+/* 828 */
 /***/ (function(module) {
 
 module.exports = JSON.parse("{\"rules\":{\"generator-star\":[\"generator-star-spacing\"],\"global-strict\":[\"strict\"],\"no-arrow-condition\":[\"no-confusing-arrow\",\"no-constant-condition\"],\"no-comma-dangle\":[\"comma-dangle\"],\"no-empty-class\":[\"no-empty-character-class\"],\"no-empty-label\":[\"no-labels\"],\"no-extra-strict\":[\"strict\"],\"no-reserved-keys\":[\"quote-props\"],\"no-space-before-semi\":[\"semi-spacing\"],\"no-wrap-func\":[\"no-extra-parens\"],\"space-after-function-name\":[\"space-before-function-paren\"],\"space-after-keywords\":[\"keyword-spacing\"],\"space-before-function-parentheses\":[\"space-before-function-paren\"],\"space-before-keywords\":[\"keyword-spacing\"],\"space-in-brackets\":[\"object-curly-spacing\",\"array-bracket-spacing\",\"computed-property-spacing\"],\"space-return-throw-case\":[\"keyword-spacing\"],\"space-unary-word-ops\":[\"space-unary-ops\"],\"spaced-line-comment\":[\"spaced-comment\"]}}");
