@@ -1,1 +1,0 @@
-declare function defineModule<T>(name: string, factory: () => T): T;
