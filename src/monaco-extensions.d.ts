@@ -24,6 +24,24 @@ declare namespace monaco {
 			setZoomLevel(zoomLevel: number): void;
 		}
 
+		interface ILinkDetector extends monaco.editor.IEditorContribution {
+			/** CAUTION: Internal unofficial API */
+			openerService: IOpenerService;
+		}
+
+		interface IOpener {
+			/** CAUTION: Internal unofficial API */
+			open(resource: string | monaco.Uri | string, options?: any): Promise<boolean>;
+		}
+
+		interface IOpenerService {
+			/**
+			 * CAUTION: Internal unofficial API
+			 * Actually a LinkedList, but those also have a push/unshift method, so don't bother
+			 */
+			_openers: IOpener[];
+		}
+
 		interface IStandaloneCodeEditor {
 			/** CAUTION: Internal unofficial API */
 			_standaloneKeybindingService: {
