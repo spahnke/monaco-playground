@@ -42,11 +42,36 @@ declare namespace monaco {
 			_openers: IOpener[];
 		}
 
+		interface IResourceEditorInput {
+
+			/**
+			 * The resource URI of the resource to open.
+			 */
+			readonly resource: monaco.Uri;
+
+			/**
+	 		 * Optional options to use when opening the text input.
+	 		 */
+			options?: ITextEditorOptions;
+		}
+
 		interface IStandaloneCodeEditor {
+			/** CAUTION: Internal unofficial API */
+			_codeEditorService: {
+				openCodeEditor(input: IResourceEditorInput, source: ICodeEditor | null, sideBySide?: boolean): Promise<ICodeEditor | null>;
+			}
+
 			/** CAUTION: Internal unofficial API */
 			_standaloneKeybindingService: {
 				addDynamicKeybinding(commandId: string, _keybinding?: number, handler?: monaco.editor.ICommandHandler, when?: monaco.platform.IContextKeyExpr | undefined): monaco.IDisposable
 			}
+		}
+
+		interface ITextEditorOptions {
+			/**
+	 		 * Text editor selection.
+	 		 */
+			readonly selection?: monaco.IRange;
 		}
 	}
 

@@ -34,6 +34,18 @@ linq.execute('a x.id.toString() === "' + foo + '" asdf ');
 	};
 	const linkDetector = editor.editor.getContribution("editor.linkDetector") as monaco.editor.ILinkDetector;
 	linkDetector.openerService._openers.unshift(opener);
+
+	// example to intercept go to definition requests
+	const editorService = editor.editor._codeEditorService;
+	const openEditorBase = editorService.openCodeEditor.bind(editorService);
+	editorService.openCodeEditor = async (input: monaco.editor.IResourceEditorInput, source: monaco.editor.ICodeEditor) => {
+		const result = await openEditorBase(input, source);
+		if (result === null) {
+			console.log("Open definition here...", input);
+			console.log("Corresponding model: ", monaco.editor.getModel(input.resource));
+		}
+		return result; // always return the base result
+	};
 }
 
 main();
