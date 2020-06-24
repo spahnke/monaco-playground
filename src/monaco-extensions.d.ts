@@ -16,6 +16,7 @@ declare namespace monaco {
 	}
 
 	namespace editor {
+		/** CAUTION: Internal unofficial API */
 		interface IEditorZoom {
 			onDidChangeZoomLevel: monaco.IEvent<number>;
 			/** A number between -5 and 20; 0 being no zoom. */
@@ -24,11 +25,13 @@ declare namespace monaco {
 			setZoomLevel(zoomLevel: number): void;
 		}
 
+		/** CAUTION: Internal unofficial API */
 		interface ILinkDetector extends monaco.editor.IEditorContribution {
 			/** CAUTION: Internal unofficial API */
 			openerService: IOpenerService;
 		}
 
+		/** CAUTION: Internal unofficial API */
 		interface ILinkedList<T> {
 			/** Adds element to the end. Returns a function that removes the element again. */
 			push(element: T): () => void;
@@ -36,16 +39,19 @@ declare namespace monaco {
 			unshift(element: T): () => void;
 		}
 
+		/** CAUTION: Internal unofficial API */
 		interface IOpener {
 			/** CAUTION: Internal unofficial API */
 			open(resource: string | monaco.Uri | string, options?: any): Promise<boolean>;
 		}
 
+		/** CAUTION: Internal unofficial API */
 		interface IOpenerService {
 			/** CAUTION: Internal unofficial API */
 			_openers: ILinkedList<IOpener>;
 		}
 
+		/** CAUTION: Internal unofficial API */
 		interface IResourceEditorInput {
 
 			/**
@@ -71,6 +77,7 @@ declare namespace monaco {
 			}
 		}
 
+		/** CAUTION: Internal unofficial API */
 		interface ITextEditorOptions {
 			/**
 	 		 * Text editor selection.
@@ -80,6 +87,7 @@ declare namespace monaco {
 	}
 
 	namespace platform {
+		/** CAUTION: Internal unofficial API */
 		interface IContextKeyExpr {
 			equals(other: IContextKeyExpr): boolean;
 			serialize(): string;
@@ -87,6 +95,7 @@ declare namespace monaco {
 			negate(): IContextKeyExpr;
 		}
 
+		/** CAUTION: Internal unofficial API */
 		interface IContextKeyExprFactory {
 			has(key: string): IContextKeyExpr;
 			equals(key: string, value: any): IContextKeyExpr;
