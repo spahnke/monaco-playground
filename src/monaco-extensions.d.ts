@@ -29,17 +29,21 @@ declare namespace monaco {
 			openerService: IOpenerService;
 		}
 
+		interface ILinkedList<T> {
+			/** Adds element to the end. Returns a function that removes the element again. */
+			push(element: T): () => void;
+			/** Adds element to the beginning. Returns a function that removes the element again. */
+			unshift(element: T): () => void;
+		}
+
 		interface IOpener {
 			/** CAUTION: Internal unofficial API */
 			open(resource: string | monaco.Uri | string, options?: any): Promise<boolean>;
 		}
 
 		interface IOpenerService {
-			/**
-			 * CAUTION: Internal unofficial API
-			 * Actually a LinkedList, but those also have a push/unshift method, so don't bother
-			 */
-			_openers: IOpener[];
+			/** CAUTION: Internal unofficial API */
+			_openers: ILinkedList<IOpener>;
 		}
 
 		interface IResourceEditorInput {
