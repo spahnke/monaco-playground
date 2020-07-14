@@ -185,7 +185,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			source: "ESLint",
 			severity: this.transformSeverity(diagnostic),
 			code: this.transformCode(diagnostic),
-			tags: diagnostic.ruleId !== null && reportsUnnecessary.includes(diagnostic.ruleId) ? [monaco.MarkerTag.Unnecessary] : [] // preparation for https://github.com/microsoft/monaco-typescript/pull/47
+			tags: diagnostic.ruleId !== null && reportsUnnecessary.includes(diagnostic.ruleId) ? [monaco.MarkerTag.Unnecessary] : []
 		};
 	}
 
