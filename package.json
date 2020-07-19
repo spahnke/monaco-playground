@@ -22,6 +22,6 @@
 		"monaco-editor": "^0.20.0",
 		"rollup": "^2.22.0",
 		"tslib": "^2.0.0",
-		"typescript": "^3.9.7"
+		"typescript": "^4.0.0-beta"
 	}
 }
