@@ -29,10 +29,13 @@ export class CodeEditor {
 				other: false,
 				strings: true,
 			},
+			renderValidationDecorations: "on",
 			renderWhitespace: "selection",
 			showUnused: true,
 			suggest: {
-				hideStatusBar: false,
+				statusBar: {
+					visible: true
+				}
 			},
 			theme: "vs",
 		}), allowTopLevelReturn);
@@ -131,6 +134,7 @@ export class CodeEditor {
 	}
 
 	resetZoom() {
+		console.log(editorZoom);
 		this.editor.trigger("zoom", "editor.action.fontZoomReset", null);
 	}
 
@@ -222,7 +226,9 @@ export class CodeEditor {
 	}
 
 	private patchKeyBinding(id: string, newKeyBinding?: number, context?: string) {
-		this.editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`); // remove existing one; no official API yet
+		console.log(this.editor._standaloneKeybindingService);
+		// TODO how to remove an existing keybinding?
+		// this.editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`); // remove existing one; no official API yet
 		if (newKeyBinding) {
 			const action = this.editor.getAction(id);
 			const when = ContextKeyExpr.deserialize(context);

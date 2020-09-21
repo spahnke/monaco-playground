@@ -189,14 +189,14 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		};
 	}
 
-	private transformCode(diagnostic: Linter.LintMessage): string | { value: string; link: monaco.Uri; } | undefined {
+	private transformCode(diagnostic: Linter.LintMessage): string | { value: string; target: monaco.Uri; } | undefined {
 		if (!diagnostic.ruleId)
 			return "";
 		if (ownDiagnostics.includes(diagnostic.ruleId))
 			return diagnostic.ruleId;
 		return {
 			value: diagnostic.ruleId,
-			link: monaco.Uri.parse(`https://eslint.org/docs/rules/${diagnostic.ruleId}`)
+			target: monaco.Uri.parse(`https://eslint.org/docs/rules/${diagnostic.ruleId}`)
 		};
 	}
 
