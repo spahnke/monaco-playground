@@ -1,4 +1,4 @@
-﻿import { setDiagnosticOptions, setLibs } from "./languages/javascript/javascript-extensions.js";
+﻿import { setCompilerOptions, setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
 import { addLibrary, ILibrary, MonacoHelper, usuallyProducesCharacter } from "./monaco-helper.js";
 
 let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
@@ -160,7 +160,7 @@ export class CodeEditor {
 	}
 
 	enableJavaScriptBrowserCompletion() {
-		setLibs(["esnext", "dom"]);
+		setCompilerOptions(["esnext", "dom"]);
 	}
 
 	async getJavaScriptWorker(): Promise<any> {

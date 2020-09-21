@@ -5,7 +5,7 @@ import { JsonSnippetService } from "../json-snippet-service.js";
 
 export function registerJavascriptLanguageExtensions() {
 	monaco.languages.onLanguage("javascript", () => {
-		setLibs(["esnext"]);
+		setCompilerOptions(["esnext"]);
 		setDiagnosticOptions();
 
 		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("languages/javascript/snippets.json")));
@@ -14,8 +14,7 @@ export function registerJavascriptLanguageExtensions() {
 	});
 }
 
-export function setLibs(libs: string[]): void {
-	// compiler options
+export function setCompilerOptions(libs: string[]): void {
 	monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
 		target: monaco.languages.typescript.ScriptTarget.ESNext,
 		lib: libs,
@@ -27,7 +26,6 @@ export function setLibs(libs: string[]): void {
 }
 
 export function setDiagnosticOptions(codesToIgnore: number[] = []): void {
-	// validation settings
 	const options: monaco.languages.typescript.DiagnosticsOptions = {
 		noSyntaxValidation: false,
 		noSemanticValidation: localStorage.getItem("monaco-no-semantic") !== null,
