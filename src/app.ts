@@ -3,6 +3,20 @@
 async function main() {
 	const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
 
+	editor.addLibrary({
+		contents: `
+declare class Facts {
+	/**
+	 * Returns the next fact
+	 *
+	 * [Online documentation](http://www.google.de)
+	 */
+	static next(): string;
+}`,
+		language: "typescript",
+		filePath: "test.d.ts"
+	});
+
 	editor.setContents(`class Foo {
 	/**
 	 * The class Foo
