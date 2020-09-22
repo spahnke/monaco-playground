@@ -5,8 +5,8 @@ import { ruleId as noIdToStringRuleId } from "./worker/no-id-tostring-in-query.j
 
 type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
 
-const autoFixBlacklist = [noIdToStringRuleId];
-const ownDiagnostics = [noIdToStringRuleId];
+const rulesWithoutAutofixes = [noIdToStringRuleId];
+const rulesWithoutLinks = [noIdToStringRuleId];
 const reportsUnnecessary = ["no-unused-vars"];
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
@@ -98,7 +98,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 						resource: model.uri,
 					}],
 				},
-				isPreferred: !autoFixBlacklist.includes(ruleId),
+				isPreferred: !rulesWithoutAutofixes.includes(ruleId),
 				kind: "quickfix",
 			}
 		});
@@ -106,7 +106,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, markers: monaco.editor.IMarkerData[]): monaco.languages.CodeAction[] {
 		const ruleId = this.getRuleId(marker);
-		if (ruleId === undefined || !this.currentFixes.has(ruleId) || autoFixBlacklist.includes(ruleId))
+		if (ruleId === undefined || !this.currentFixes.has(ruleId) || rulesWithoutAutofixes.includes(ruleId))
 			return [];
 
 		const edits = this.currentFixes.get(ruleId)!;
@@ -192,7 +192,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private transformCode(diagnostic: Linter.LintMessage): string | { value: string; target: monaco.Uri; } | undefined {
 		if (!diagnostic.ruleId)
 			return "";
-		if (ownDiagnostics.includes(diagnostic.ruleId))
+		if (rulesWithoutLinks.includes(diagnostic.ruleId))
 			return diagnostic.ruleId;
 		return {
 			value: diagnostic.ruleId,
