@@ -214,15 +214,16 @@ export class CodeEditor {
 	}
 
 	private patchExistingKeyBindings() {
-		this.patchKeyBinding("editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter); // Default is Ctrl+.
-		this.patchKeyBinding("editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O); // Default is Ctrl+Shift+O
-		this.patchKeyBinding("editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R)); // Default is F2
+		this.patchKeyBinding("editor.action.quickFix", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_DOT, monaco.KeyMod.Alt | monaco.KeyCode.Enter);
+		this.patchKeyBinding("editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KEY_O, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O);
+		this.patchKeyBinding("editor.action.rename", monaco.KeyCode.F2, monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R));
 	}
 
-	private patchKeyBinding(id: string, newKeyBinding?: number, context?: string) {
-		console.log(this.editor._standaloneKeybindingService);
-		// TODO how to remove an existing keybinding?
-		// this.editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`); // remove existing one; no official API yet
+	private patchKeyBinding(id: string, oldKeyBinding: number, newKeyBinding: number, context?: string): void {
+		// remove existing one; no official API yet
+		// the '-' before the commandId removes the binding
+		// as of >=0.21.0 we need to supply the old keybinding and a dummy command handler to not get errors (probably a combination of the fixes for https://github.com/microsoft/monaco-editor/issues/1390 and https://github.com/microsoft/monaco-editor/issues/1857)
+		this.editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`, oldKeyBinding, () => { });
 		if (newKeyBinding) {
 			const action = this.editor.getAction(id);
 			const when = ContextKeyExpr.deserialize(context);
