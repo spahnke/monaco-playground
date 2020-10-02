@@ -26,7 +26,7 @@ export class MonacoHelper {
 
 	static async colorizeElement(element: HTMLElement): Promise<void> {
 		await MonacoHelper.loadEditor();
-		await monaco.editor.colorizeElement(element, {});
+		return monaco.editor.colorizeElement(element, {});
 	}
 
 	/**
