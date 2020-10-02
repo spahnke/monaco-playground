@@ -73,7 +73,7 @@ declare namespace monaco {
 
 			/** CAUTION: Internal unofficial API */
 			_standaloneKeybindingService: {
-				addDynamicKeybinding(commandId: string, _keybinding?: number, handler?: monaco.editor.ICommandHandler, when?: monaco.platform.IContextKeyExpr | undefined): monaco.IDisposable
+				addDynamicKeybinding(commandId: string, _keybinding: number | undefined, handler: monaco.editor.ICommandHandler, when?: monaco.platform.IContextKeyExpr | undefined): monaco.IDisposable
 			}
 		}
 
