@@ -163,12 +163,12 @@ export class CodeEditor {
 		setCompilerOptions(["esnext", "dom"]);
 	}
 
-	async getJavaScriptWorker(): Promise<any> {
+	async getJavaScriptWorker(): Promise<monaco.languages.typescript.TypeScriptWorker> {
 		const model = this.editor.getModel();
 		if (model === null || model.getModeId() !== "javascript")
 			throw new Error("Only available for JavaScript documents.")
 		const worker = await monaco.languages.typescript.getJavaScriptWorker();
-		return await worker(model.uri);
+		return worker(model.uri);
 	}
 
 	dispose() {
