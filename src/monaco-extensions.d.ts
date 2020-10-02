@@ -67,14 +67,35 @@ declare namespace monaco {
 
 		interface IStandaloneCodeEditor {
 			/** CAUTION: Internal unofficial API */
+			_actions: Record<string, {
+				id: string;
+				_precondition?: monaco.platform.IContextKeyExpr;
+			}>;
+
+			/** CAUTION: Internal unofficial API */
 			_codeEditorService: {
 				openCodeEditor(input: IResourceEditorInput, source: ICodeEditor | null, sideBySide?: boolean): Promise<ICodeEditor | null>;
-			}
+			};
 
 			/** CAUTION: Internal unofficial API */
 			_standaloneKeybindingService: {
-				addDynamicKeybinding(commandId: string, _keybinding: number | undefined, handler: monaco.editor.ICommandHandler, when?: monaco.platform.IContextKeyExpr | undefined): monaco.IDisposable
-			}
+				addDynamicKeybinding(commandId: string, _keybinding: number | undefined, handler: monaco.editor.ICommandHandler, when?: monaco.platform.IContextKeyExpr | undefined): monaco.IDisposable;
+				_getResolver(): {
+					_keybindings: IResolvedKeybindingItem[];
+				};
+			};
+		}
+
+		/** CAUTION: Internal unofficial API */
+		interface IResolvedKeybindingItem {
+			command: string;
+			resolvedKeybinding: IResolvedKeybinding;
+			when?: monaco.platform.IContextKeyExpr;
+		}
+
+		/** CAUTION: Internal unofficial API */
+		interface IResolvedKeybinding {
+			getAriaLabel(): string;
 		}
 
 		/** CAUTION: Internal unofficial API */

@@ -207,6 +207,7 @@ export class CodeEditor {
 	}
 
 	private patchKeyBindings() {
+		// console.log(JSON.stringify(MonacoHelper.getKeybindings(this.editor)));
 		this.patchKeyBinding("editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL); // no default
 		this.patchKeyBinding("editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS); // no default
 		this.patchKeyBinding("editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0); // no default
