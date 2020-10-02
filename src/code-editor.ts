@@ -42,7 +42,6 @@ export class CodeEditor {
 
 	private constructor(editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
 		this.editor = editor;
-		this.addCommands();
 		this.addReadonlyHandling();
 		this.patchExistingKeyBindings();
 		if (allowTopLevelReturn)
@@ -183,12 +182,6 @@ export class CodeEditor {
 		this.editor.getModel()?.dispose();
 	}
 
-	private addCommands() {
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL, () => this.zoomIn());
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS, () => this.zoomOut());
-		this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0, () => this.resetZoom());
-	}
-
 	private addReadonlyHandling() {
 		// needed because of https://github.com/microsoft/monaco-editor/issues/1873
 		this.createOrDestroyReadonlyHandler();
@@ -214,9 +207,12 @@ export class CodeEditor {
 	}
 
 	private patchExistingKeyBindings() {
-		this.patchKeyBinding("editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter); // Default is Ctrl+.
-		this.patchKeyBinding("editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O); // Default is Ctrl+Shift+O
-		this.patchKeyBinding("editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R)); // Default is F2
+		this.patchKeyBinding("editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL); // no default
+		this.patchKeyBinding("editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS); // no default
+		this.patchKeyBinding("editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0); // no default
+		this.patchKeyBinding("editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter); // default is Ctrl+.
+		this.patchKeyBinding("editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O); // default is Ctrl+Shift+O
+		this.patchKeyBinding("editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R)); // default is F2
 	}
 
 	private patchKeyBinding(id: string, newKeyBinding?: number, context?: string): void {
