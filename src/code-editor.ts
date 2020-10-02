@@ -43,7 +43,7 @@ export class CodeEditor {
 	private constructor(editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
 		this.editor = editor;
 		this.addReadonlyHandling();
-		this.patchExistingKeyBindings();
+		this.patchKeyBindings();
 		if (allowTopLevelReturn)
 			setDiagnosticOptions(allowTopLevelReturn ? [/*top-level return*/ 1108] : []);
 	}
@@ -206,7 +206,7 @@ export class CodeEditor {
 		}
 	}
 
-	private patchExistingKeyBindings() {
+	private patchKeyBindings() {
 		this.patchKeyBinding("editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL); // no default
 		this.patchKeyBinding("editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS); // no default
 		this.patchKeyBinding("editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0); // no default
