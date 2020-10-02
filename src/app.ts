@@ -38,7 +38,7 @@ linq.execute('a x.id.toString() === "' + foo + '" asdf ');
 `, "javascript");
 
 	// example to intercept links that are opened
-	const linkDetector = editor.editor.getContribution("editor.linkDetector") as monaco.editor.ILinkDetector;
+	const linkDetector = editor.editor.getContribution<monaco.editor.ILinkDetector>("editor.linkDetector");
 	linkDetector.openerService._openers.unshift({
 		async open(resource: string | monaco.Uri) {
 			if (typeof resource === "string")
