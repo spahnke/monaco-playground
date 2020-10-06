@@ -1,10 +1,10 @@
-import { setCompilerOptions, setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
+﻿import { setCompilerOptions, setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
 import { addLibrary, ILibrary, MonacoHelper, usuallyProducesCharacter } from "./monaco-helper.js";
 
 let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
 let editorZoom: monaco.editor.IEditorZoom;
 
-export class CodeEditor {
+export class CodeEditor implements monaco.IDisposable {
 	public editor: monaco.editor.IStandaloneCodeEditor;
 	private disposables: monaco.IDisposable[] = [];
 	private readonlyHandler: monaco.IDisposable | undefined;
