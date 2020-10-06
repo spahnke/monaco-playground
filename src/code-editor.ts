@@ -1,4 +1,4 @@
-﻿import { setCompilerOptions, setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
+import { setCompilerOptions, setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
 import { addLibrary, ILibrary, MonacoHelper, usuallyProducesCharacter } from "./monaco-helper.js";
 
 let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
@@ -49,7 +49,7 @@ export class CodeEditor {
 	}
 
 	setContents(content: string, language?: string, fileName?: string) {
-		this.disposeModel();
+		this.editor.getModel()?.dispose();
 		const uri = fileName !== undefined ? monaco.Uri.file(fileName) : undefined;
 		const model = monaco.editor.createModel(content, language, uri);
 		this.editor.setModel(model);
@@ -180,12 +180,8 @@ export class CodeEditor {
 		for (const disposable of this.disposables)
 			disposable.dispose();
 		this.readonlyHandler?.dispose();
-		this.disposeModel();
-		this.editor.dispose();
-	}
-
-	private disposeModel() {
 		this.editor.getModel()?.dispose();
+		this.editor.dispose();
 	}
 
 	private addReadonlyHandling() {
