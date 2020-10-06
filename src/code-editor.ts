@@ -214,6 +214,8 @@ export class CodeEditor {
 		this.patchKeyBinding("editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL); // no default
 		this.patchKeyBinding("editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS); // no default
 		this.patchKeyBinding("editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0); // no default
+		this.patchKeyBinding("editor.action.marker.nextInFiles"); // default F8 (jumps between files/models which is not desirable)
+		this.patchKeyBinding("editor.action.marker.prevInFiles"); // default Shift+F8 (jumps between files/models which is not desirable)
 		this.patchKeyBinding("editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter, "editorHasCodeActionsProvider && editorTextFocus && !editorReadonly"); // default is Ctrl+.
 		this.patchKeyBinding("editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O, "editorFocus && editorHasDocumentSymbolProvider"); // default is Ctrl+Shift+O
 		this.patchKeyBinding("editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R), "editorHasRenameProvider && editorTextFocus && !editorReadonly"); // default is F2
