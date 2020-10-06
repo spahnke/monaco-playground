@@ -159,7 +159,9 @@ export class CodeEditor {
 	}
 
 	enableJavaScriptBrowserCompletion() {
+		const oldLibs = monaco.languages.typescript.javascriptDefaults.getCompilerOptions().lib;
 		setCompilerOptions(["esnext", "dom"]);
+		this.disposables.push({ dispose() { setCompilerOptions(oldLibs); } });
 	}
 
 	async getJavaScriptWorker(): Promise<monaco.languages.typescript.TypeScriptWorker> {
