@@ -160,9 +160,12 @@ export class CodeEditor {
 	}
 
 	enableJavaScriptBrowserCompletion() {
-		const oldLibs = monaco.languages.typescript.javascriptDefaults.getCompilerOptions().lib ?? [];
-		setCompilerOptions(["esnext", "dom"]);
-		this.disposables.push({ dispose() { setCompilerOptions(oldLibs); } });
+		const oldLibs = monaco.languages.typescript.javascriptDefaults.getCompilerOptions().lib;
+		// if this is undefined we already have browser completion because we use the standard settings
+		if (oldLibs) {
+			setCompilerOptions([...oldLibs, "dom"]);
+			this.disposables.push({ dispose() { setCompilerOptions(oldLibs); } });
+		}
 	}
 
 	async getJavaScriptWorker(): Promise<monaco.languages.typescript.TypeScriptWorker> {
