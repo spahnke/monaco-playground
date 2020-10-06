@@ -22,6 +22,7 @@ export function setCompilerOptions(libs: string[]): void {
 		checkJs: true,
 		allowJs: true,
 		allowNonTsExtensions: true, // not documented in the typings but important to get syntax/semantic validation working
+		strict: localStorage.getItem("monaco-strict") !== null,
 	});
 }
 
