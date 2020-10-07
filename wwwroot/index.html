@@ -16,6 +16,30 @@
 			color: #fff !important;
 			font-weight: bold;
 		}
+
+		.monacoBreakpointMargin {
+			color: #e50000;
+		}
+
+		.monacoBreakpointMarginPreview {
+			opacity: 0.25 !important;
+		}
+
+		.monacoDebugLineMargin,
+		.monacoDebugLineAndBreakpointMargin {
+			color: #ffcc00;
+		}
+
+		.monacoDebugLineAndBreakpointMargin::after {
+			content: "\eb8a"; /* codicon-debug-stackframe-dot */
+			position: absolute;
+			color: #e50000;
+		}
+
+		.monacoDebugLine {
+			background: #ffcc00;
+			opacity: 0.5;
+		}
 	</style>
 </head>
 <body>

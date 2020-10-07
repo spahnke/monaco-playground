@@ -1,4 +1,5 @@
 ﻿import { CodeEditor } from "./code-editor.js";
+import { DebugContribution } from "./debug-contribution.js";
 
 async function main() {
 	const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
@@ -36,6 +37,9 @@ linq.execute(\`a x.id.toString() === "asdf" asdf \`);
 linq.execute(\`a x.id.toString() === "\${text}" asdf \`);
 linq.execute('a x.id.toString() === "' + foo + '" asdf ');
 `, "javascript");
+
+	const debug = new DebugContribution(editor.editor);
+	debug.simulateDebugging();
 
 	// example to intercept links that are opened
 	const linkDetector = editor.editor.getContribution<monaco.editor.ILinkDetector>("editor.linkDetector");
