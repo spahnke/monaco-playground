@@ -149,6 +149,29 @@ export function usuallyProducesCharacter(keyCode: monaco.KeyCode): boolean {
 	return false;
 }
 
+/** CAUTION: Internal unofficial API (see IEncodedLineTokens in monaco.d.ts) */
+enum StandardTokenType {
+	Other = 0,
+	Comment = 1,
+	String = 2,
+	RegEx = 4
+}
+
+/** CAUTION: Uses an internal unofficial API to determine if a line is a comment */
+export function isComment(model: monaco.editor.ITextModel, line: number): boolean {
+	const lineTokens = model.getLineTokens(line);
+	const tokenCount = lineTokens.getCount();
+	// a commented line either only has one token (the comment) or begins with whitespace followed by a comment, i.e. has at most 2 tokens
+	if (tokenCount === 1 && lineTokens.getStandardTokenType(0) === StandardTokenType.Comment)
+		return true;
+	if (tokenCount === 2 && lineTokens.getStandardTokenType(0) === StandardTokenType.Other && lineTokens.getStandardTokenType(1) === StandardTokenType.Comment) {
+		const firstTokenContent = lineTokens.getLineContent().slice(lineTokens.getStartOffset(0), lineTokens.getEndOffset(0));
+		if (firstTokenContent.trim() === "")
+			return true; // the first token is whitespace
+	}
+	return false;
+}
+
 class InMemorySnippetService implements ISnippetService {
 	constructor(private readonly templates: ITemplate[]) {
 	}

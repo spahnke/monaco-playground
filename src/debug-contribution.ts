@@ -1,3 +1,5 @@
+import { isComment } from "./monaco-helper";
+
 const breakPointMarginClassName = "codicon-debug-breakpoint monacoBreakpointMargin";
 const debugLineMarginClassName = "codicon-debug-stackframe monacoDebugLineMargin";
 const debugLineAndBreakpointMarginClassName = "codicon-debug-stackframe monacoDebugLineAndBreakpointMargin";
@@ -131,9 +133,16 @@ export class DebugContribution implements monaco.IDisposable {
 	}
 
 	private addBreakpoint(line: number): void {
-		const lineContent = this.editor.getModel()?.getLineContent(line);
-		if (!lineContent || !lineContent.trim() || lineContent.trim().startsWith("//"))
-			return; // do not set breakpoints on empty lines or comments
+		const model = this.editor.getModel();
+		if (!model)
+			return;
+
+		const lineContent = model.getLineContent(line);
+		if (!lineContent || !lineContent.trim())
+			return; // do not set breakpoints on empty lines
+
+		if (isComment(model, line))
+			return;
 
 		const decorationId = this.editor.deltaDecorations([], [
 			{

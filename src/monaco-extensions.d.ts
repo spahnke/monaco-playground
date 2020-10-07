@@ -86,6 +86,25 @@ declare namespace monaco {
 			};
 		}
 
+		interface ITextModel {
+			/** CAUTION: Internal unofficial API */
+			getLineTokens(line: number): ILineTokens;
+		}
+
+		/** CAUTION: Internal unofficial API */
+		interface ILineTokens {
+			/** CAUTION: Internal unofficial API */
+			getCount(): number;
+			/** CAUTION: Internal unofficial API */
+			getLineContent(): string;
+			/** CAUTION: Internal unofficial API */
+			getStartOffset(tokenIndex: number): number;
+			/** CAUTION: Internal unofficial API */
+			getEndOffset(tokenIndex: number): number;
+			/** CAUTION: Internal unofficial API (see IEncodedLineTokens in monaco.d.ts) */
+			getStandardTokenType(tokenIndex: number): number;
+		}
+
 		/** CAUTION: Internal unofficial API */
 		interface IResolvedKeybindingItem {
 			command: string;
