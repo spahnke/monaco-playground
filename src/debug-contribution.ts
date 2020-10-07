@@ -38,8 +38,8 @@ export class DebugContribution implements monaco.IDisposable {
 				this.displayCurrentlyDebuggedLine({
 					startLineNumber: currentLine,
 					endLineNumber: currentLine,
-					startColumn: model.getLineMinColumn(currentLine),
-					endColumn: model.getLineMaxColumn(currentLine)
+					startColumn: model.getLineFirstNonWhitespaceColumn(currentLine),
+					endColumn: model.getLineLastNonWhitespaceColumn(currentLine)
 				});
 
 				currentLine++;
