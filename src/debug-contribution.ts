@@ -18,10 +18,10 @@ export class DebugContribution implements monaco.IDisposable {
 		this.disposables.push(editor.addAction({
 			id: "toggle_breakpoint",
 			label: "Toggle Breakpoint",
+			keybindings: [monaco.KeyCode.F9],
 			contextMenuGroupId: "8_debug",
 			contextMenuOrder: 0,
 			run: () => this.toggleBreakpoint(),
-			keybindings: [monaco.KeyCode.F9]
 		}));
 	}
 
@@ -30,10 +30,11 @@ export class DebugContribution implements monaco.IDisposable {
 		this.disposables.push(this.editor.addAction({
 			id: "debug_step",
 			label: "Step",
+			keybindings: [monaco.KeyCode.F10],
 			contextMenuGroupId: "8_debug",
 			contextMenuOrder: 1,
-			run: () => {
-				const model = this.editor.getModel();
+			run: (editor) => {
+				const model = editor.getModel();
 				if (!model)
 					return;
 
@@ -48,18 +49,17 @@ export class DebugContribution implements monaco.IDisposable {
 				if (currentLine > model.getLineCount())
 					currentLine = 1;
 			},
-			keybindings: [monaco.KeyCode.F10]
 		}));
 		this.disposables.push(this.editor.addAction({
 			id: "debug_stop",
 			label: "Reset Debugger",
+			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F10],
 			contextMenuGroupId: "8_debug",
 			contextMenuOrder: 2,
 			run: () => {
 				this.removeDebugLine();
 				currentLine = 1;
 			},
-			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F10]
 		}));
 	}
 
