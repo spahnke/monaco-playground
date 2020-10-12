@@ -1,5 +1,5 @@
-import { CodeEditor } from "./code-editor";
-import { Disposable } from "./disposable";
+import { CodeEditor } from "./code-editor.js";
+import { Disposable } from "./disposable.js";
 
 const contextMenuGroupId = "7_playground";
 
