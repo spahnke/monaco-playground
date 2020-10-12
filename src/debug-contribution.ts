@@ -4,7 +4,11 @@ const breakPointMarginClassName = "codicon-debug-breakpoint monacoBreakpointMarg
 const debugLineMarginClassName = "codicon-debug-stackframe monacoDebugLineMargin";
 const debugLineAndBreakpointMarginClassName = "codicon-debug-stackframe monacoDebugLineAndBreakpointMargin";
 const debugLineClassName = "monacoDebugLine";
+const contextMenuGroupId = "8_debug";
 
+/**
+ * Adds debug UI capabilities to the editor.
+ */
 export class DebugContribution implements monaco.IDisposable {
 	private breakpointPreviewDecorations: string[] = [];
 	private breakpointDecorations: Map<string, monaco.editor.IModelDecoration> = new Map();
@@ -19,7 +23,7 @@ export class DebugContribution implements monaco.IDisposable {
 			id: "toggle_breakpoint",
 			label: "Toggle Breakpoint",
 			keybindings: [monaco.KeyCode.F9],
-			contextMenuGroupId: "8_debug",
+			contextMenuGroupId,
 			contextMenuOrder: 0,
 			run: () => this.toggleBreakpoint(),
 		}));
@@ -31,7 +35,7 @@ export class DebugContribution implements monaco.IDisposable {
 			id: "debug_step",
 			label: "Step",
 			keybindings: [monaco.KeyCode.F10],
-			contextMenuGroupId: "8_debug",
+			contextMenuGroupId,
 			contextMenuOrder: 1,
 			run: (editor) => {
 				const model = editor.getModel();
@@ -54,7 +58,7 @@ export class DebugContribution implements monaco.IDisposable {
 			id: "debug_stop",
 			label: "Reset Debugger",
 			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F10],
-			contextMenuGroupId: "8_debug",
+			contextMenuGroupId,
 			contextMenuOrder: 2,
 			run: () => {
 				this.removeDebugLine();
