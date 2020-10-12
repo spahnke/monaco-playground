@@ -1,8 +1,13 @@
 ﻿import { CodeEditor } from "./code-editor.js";
 import { DebugContribution } from "./debug-contribution.js";
+import { PlaygroundContribution } from "./playground-contribution.js";
 
 async function main() {
 	const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
+
+	const debug = new DebugContribution(editor.editor);
+	debug.simulateDebugging();
+	new PlaygroundContribution(editor); // has side effects
 
 	editor.addLibrary({
 		contents: `
@@ -37,32 +42,6 @@ linq.execute(\`a x.id.toString() === "asdf" asdf \`);
 linq.execute(\`a x.id.toString() === "\${text}" asdf \`);
 linq.execute('a x.id.toString() === "' + foo + '" asdf ');
 `, "javascript");
-
-	const debug = new DebugContribution(editor.editor);
-	debug.simulateDebugging();
-
-	// example to intercept links that are opened
-	const linkDetector = editor.editor.getContribution<monaco.editor.ILinkDetector>("editor.linkDetector");
-	linkDetector.openerService._openers.unshift({
-		async open(resource: string | monaco.Uri) {
-			if (typeof resource === "string")
-				resource = monaco.Uri.parse(resource);
-			console.log("Opening: ", resource);
-			return false; // was this resource handled?
-		}
-	});
-
-	// example to intercept go to definition requests
-	const editorService = editor.editor._codeEditorService;
-	const openEditorBase = editorService.openCodeEditor.bind(editorService);
-	editorService.openCodeEditor = async (input: monaco.editor.IResourceEditorInput, source: monaco.editor.ICodeEditor) => {
-		const result = await openEditorBase(input, source);
-		if (result === null) {
-			console.log("Open definition here...", input);
-			console.log("Corresponding model: ", monaco.editor.getModel(input.resource));
-		}
-		return result; // always return the base result
-	};
 }
 
 main();
