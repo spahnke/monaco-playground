@@ -1,3 +1,4 @@
+import { Disposable } from "./disposable";
 import { isComment } from "./monaco-helper";
 
 const breakPointMarginClassName = "codicon-debug-breakpoint monacoBreakpointMargin";
@@ -9,17 +10,17 @@ const contextMenuGroupId = "8_debug";
 /**
  * Adds debug UI capabilities to the editor.
  */
-export class DebugContribution implements monaco.IDisposable {
+export class DebugContribution extends Disposable {
 	private breakpointPreviewDecorations: string[] = [];
 	private breakpointDecorations: Map<string, monaco.editor.IModelDecoration> = new Map();
 	private currentDebugLineDecorations: string[] = [];
-	private disposables: monaco.IDisposable[] = [];
 
 	constructor(private editor: monaco.editor.IStandaloneCodeEditor) {
+		super();
 		this.enableGlyphMargin();
-		this.disposables.push(this.editor.onMouseMove(this.onMouseMove));
-		this.disposables.push(this.editor.onMouseDown(this.onMouseDown));
-		this.disposables.push(editor.addAction({
+		this.register(this.editor.onMouseMove(this.onMouseMove));
+		this.register(this.editor.onMouseDown(this.onMouseDown));
+		this.register(editor.addAction({
 			id: "toggle_breakpoint",
 			label: "Toggle Breakpoint",
 			keybindings: [monaco.KeyCode.F9],
@@ -31,7 +32,7 @@ export class DebugContribution implements monaco.IDisposable {
 
 	simulateDebugging() {
 		let currentLine = 1;
-		this.disposables.push(this.editor.addAction({
+		this.register(this.editor.addAction({
 			id: "debug_step",
 			label: "Step",
 			keybindings: [monaco.KeyCode.F10],
@@ -54,7 +55,7 @@ export class DebugContribution implements monaco.IDisposable {
 					currentLine = 1;
 			},
 		}));
-		this.disposables.push(this.editor.addAction({
+		this.register(this.editor.addAction({
 			id: "debug_stop",
 			label: "Reset Debugger",
 			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F10],
@@ -98,14 +99,13 @@ export class DebugContribution implements monaco.IDisposable {
 		this.hideBreakpointPreview();
 		for (const breakpoint of this.breakpointDecorations.values())
 			this.removeBreakpoint(breakpoint);
-		for (const disposable of this.disposables)
-			disposable.dispose();
+		super.dispose();
 	}
 
 	private enableGlyphMargin() {
 		const editor = this.editor;
 		const previousGlyphMarginSetting = editor.getOptions().get(monaco.editor.EditorOption.glyphMargin);
-		this.disposables.push({ dispose() { editor.updateOptions({ glyphMargin: previousGlyphMarginSetting }) } });
+		this.register({ dispose() { editor.updateOptions({ glyphMargin: previousGlyphMarginSetting }) } });
 		editor.updateOptions({ glyphMargin: true });
 	}
 

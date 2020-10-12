@@ -1,21 +1,21 @@
 import { CodeEditor } from "./code-editor";
+import { Disposable } from "./disposable";
 
 const contextMenuGroupId = "7_playground";
 
 /**
  * Adds typical test scenarios to the editor to aid exploring APIs.
  */
-export class PlaygroundContribution implements monaco.IDisposable {
-	private disposables: monaco.IDisposable[] = [];
-
+export class PlaygroundContribution extends Disposable {
 	constructor(private editor: CodeEditor) {
+		super();
 		this.addTestActions();
 		this.addLinkOpenInterceptor();
 		this.addOpenEditorInterceptor();
 	}
 
 	private addTestActions() {
-		this.disposables.push(this.editor.editor.addAction({
+		this.register(this.editor.editor.addAction({
 			id: "toggle_readonly",
 			label: "Toggle Readonly State",
 			keybindings: [monaco.KeyCode.F11],
@@ -23,7 +23,7 @@ export class PlaygroundContribution implements monaco.IDisposable {
 			run: () => this.editor.setReadonly(!this.editor.isReadonly())
 		}));
 
-		this.disposables.push(this.editor.editor.addAction({
+		this.register(this.editor.editor.addAction({
 			id: "dispose",
 			label: "Dispose All (refresh afterwards)",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D)],
@@ -61,10 +61,5 @@ export class PlaygroundContribution implements monaco.IDisposable {
 			}
 			return result; // always return the base result
 		};
-	}
-
-	dispose() {
-		for (const disposable of this.disposables)
-			disposable.dispose();
 	}
 }
