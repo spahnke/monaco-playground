@@ -5,10 +5,10 @@ import { PlaygroundContribution } from "./playground-contribution.js";
 async function main() {
 	const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
 
+	editor.register(new PlaygroundContribution(editor)); // has side effects
 	const debug = new DebugContribution(editor.editor);
 	debug.simulateDebugging();
 	editor.register(debug);
-	editor.register(new PlaygroundContribution(editor)); // has side effects
 
 	editor.addLibrary({
 		contents: `
