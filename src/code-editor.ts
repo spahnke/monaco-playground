@@ -1,12 +1,12 @@
-﻿import { setCompilerOptions, setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
+﻿import { Disposable } from "./disposable.js";
+import { setCompilerOptions, setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
 import { addLibrary, ILibrary, MonacoHelper, usuallyProducesCharacter } from "./monaco-helper.js";
 
 let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
 let editorZoom: monaco.editor.IEditorZoom;
 
-export class CodeEditor implements monaco.IDisposable {
+export class CodeEditor extends Disposable {
 	public editor: monaco.editor.IStandaloneCodeEditor;
-	private disposables: monaco.IDisposable[] = [];
 	private readonlyHandler: monaco.IDisposable | undefined;
 
 	static async create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
@@ -41,6 +41,7 @@ export class CodeEditor implements monaco.IDisposable {
 	}
 
 	private constructor(editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
+		super();
 		this.editor = editor;
 		this.addReadonlyHandling();
 		this.patchKeybindings();
@@ -156,7 +157,7 @@ export class CodeEditor implements monaco.IDisposable {
 	}
 
 	addLibrary(library: ILibrary) {
-		this.disposables.push(...addLibrary(library));
+		this.register(...addLibrary(library));
 	}
 
 	enableJavaScriptBrowserCompletion() {
@@ -164,7 +165,7 @@ export class CodeEditor implements monaco.IDisposable {
 		// if this is undefined we already have browser completion because we use the standard settings
 		if (oldLibs) {
 			setCompilerOptions([...oldLibs, "dom"]);
-			this.disposables.push({ dispose() { setCompilerOptions(oldLibs); } });
+			this.register({ dispose() { setCompilerOptions(oldLibs); } });
 		}
 	}
 
@@ -177,8 +178,7 @@ export class CodeEditor implements monaco.IDisposable {
 	}
 
 	dispose() {
-		for (const disposable of this.disposables)
-			disposable.dispose();
+		super.dispose();
 		this.readonlyHandler?.dispose();
 		this.editor.getModel()?.dispose();
 		this.editor.dispose();
@@ -187,7 +187,7 @@ export class CodeEditor implements monaco.IDisposable {
 	private addReadonlyHandling() {
 		// needed because of https://github.com/microsoft/monaco-editor/issues/1873
 		this.createOrDestroyReadonlyHandler();
-		this.disposables.push(this.editor.onDidChangeConfiguration(e => {
+		this.register(this.editor.onDidChangeConfiguration(e => {
 			if (e.hasChanged(monaco.editor.EditorOption.readOnly)) {
 				this.createOrDestroyReadonlyHandler();
 			}

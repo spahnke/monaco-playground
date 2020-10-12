@@ -7,7 +7,8 @@ async function main() {
 
 	const debug = new DebugContribution(editor.editor);
 	debug.simulateDebugging();
-	new PlaygroundContribution(editor); // has side effects
+	editor.register(debug);
+	editor.register(new PlaygroundContribution(editor)); // has side effects
 
 	editor.addLibrary({
 		contents: `
