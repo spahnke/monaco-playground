@@ -25,7 +25,7 @@ export class PlaygroundContribution extends Disposable {
 
 		this.register(this.editor.editor.addAction({
 			id: "dispose",
-			label: "Dispose All (refresh afterwards)",
+			label: "Dispose (refresh afterwards)",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D)],
 			contextMenuGroupId,
 			run: () => this.editor.dispose()
