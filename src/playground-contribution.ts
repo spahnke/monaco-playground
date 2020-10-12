@@ -18,7 +18,7 @@ export class PlaygroundContribution extends Disposable {
 		this.register(this.editor.editor.addAction({
 			id: "toggle_readonly",
 			label: "Toggle Readonly State",
-			keybindings: [monaco.KeyCode.F11],
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R)],
 			contextMenuGroupId,
 			run: () => this.editor.setReadonly(!this.editor.isReadonly())
 		}));
