@@ -11,6 +11,7 @@ export class PlaygroundContribution implements monaco.IDisposable {
 	constructor(private editor: CodeEditor) {
 		this.addTestActions();
 		this.addLinkOpenInterceptor();
+		this.addOpenEditorInterceptor();
 	}
 
 	private addTestActions() {
