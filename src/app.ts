@@ -18,7 +18,7 @@ declare class Facts {
 };
 
 async function main() {
-	const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
+	const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!/* , "javascript" */); // TODO has to work with explicit language
 
 	editor.register(new PlaygroundContribution(editor)); // has side effects
 	const debug = new DebugContribution(editor.editor);
@@ -38,6 +38,16 @@ async function main() {
 	}
 }
 
+// TODO asdf
+/*
+ * TODO qwer
+ TODO mnzxcv
+ */
+/**
+ * TODO etry
+ */
+const TODO = 1;
+1 * TODO;
 const text = 'asdf';
 const foo = new Foo();
 foo.bar = Facts.next();

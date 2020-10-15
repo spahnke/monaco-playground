@@ -172,6 +172,24 @@ export function isComment(model: monaco.editor.ITextModel, line: number): boolea
 	return false;
 }
 
+/** CAUTION: Uses an internal unofficial API to determine if the range is in a comment */
+export function isInComment(model: monaco.editor.ITextModel, range: monaco.IRange) {
+	if (monaco.Range.spansMultipleLines(range))
+		throw new Error("Ranges over multiple lines are not supported");
+
+	const line = range.startLineNumber;
+	const lineTokens = model.getLineTokens(line);
+	let tokenType = StandardTokenType.Other;
+	for (let i = 0; i < lineTokens.getCount(); i++) {
+		const tokenRange: monaco.IRange = { startLineNumber: line, startColumn: lineTokens.getStartOffset(i) + 1, endLineNumber: line, endColumn: lineTokens.getEndOffset(i) + 1 };
+		if (monaco.Range.containsRange(tokenRange, range)) {
+			tokenType = lineTokens.getStandardTokenType(i);
+			break;
+		}
+	}
+	return tokenType === StandardTokenType.Comment;
+}
+
 class InMemorySnippetService implements ISnippetService {
 	constructor(private readonly templates: ITemplate[]) {
 	}

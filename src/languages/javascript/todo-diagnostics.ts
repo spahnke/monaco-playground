@@ -1,8 +1,9 @@
+import { isInComment } from "../../monaco-helper.js";
 import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
 
 export class TodoDiagnostics extends DiagnosticsAdapter {
 
-	private currentDecorations: string[] = [];
+	private currentDecorations: Map<monaco.Uri, string[]> = new Map();
 
 	constructor() {
 		super("javascript", "todo");
@@ -14,11 +15,12 @@ export class TodoDiagnostics extends DiagnosticsAdapter {
 			return;
 
 		const decorations: monaco.editor.IModelDeltaDecoration[] = [];
-		const todos = model.findMatches("(?://|\\*)\\s*TODO\\b", false, true, true, null, true);
+		const todos = model.findMatches("\\bTODO\\b", false, true, true, null, true);
 		for (const todo of todos) {
-			// e.g. todo.matches === ["// TODO"] | ["* TODO"]
-			const offset = todo.matches![0].indexOf("TODO");
-			const range = todo.range.setStartPosition(todo.range.startLineNumber, todo.range.startColumn + offset);
+			if (!isInComment(model, todo.range))
+				continue;
+
+			const range = todo.range.setStartPosition(todo.range.startLineNumber, todo.range.startColumn);
 			decorations.push({
 				range,
 				options: {
@@ -33,6 +35,6 @@ export class TodoDiagnostics extends DiagnosticsAdapter {
 			})
 		}
 
-		this.currentDecorations = model.deltaDecorations(this.currentDecorations, decorations);
+		this.currentDecorations.set(resource, model.deltaDecorations(this.currentDecorations.get(resource) ?? [], decorations));
 	}
 }
