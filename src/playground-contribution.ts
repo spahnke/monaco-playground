@@ -37,12 +37,17 @@ export class PlaygroundContribution extends Disposable {
 	 */
 	private addLinkOpenInterceptor() {
 		const linkDetector = this.editor.editor.getContribution<monaco.editor.ILinkDetector>("editor.linkDetector");
-		linkDetector.openerService._openers.unshift({
+		const remove = linkDetector.openerService._openers.unshift({
 			async open(resource: string | monaco.Uri) {
 				if (typeof resource === "string")
 					resource = monaco.Uri.parse(resource);
 				console.log("Opening: ", resource);
 				return false; // was this resource handled?
+			}
+		});
+		this.register({
+			dispose() {
+				remove();
 			}
 		});
 	}
@@ -61,5 +66,10 @@ export class PlaygroundContribution extends Disposable {
 			}
 			return result; // always return the base result
 		};
+		this.register({
+			dispose() {
+				editorService.openCodeEditor = openEditorBase;
+			}
+		});
 	}
 }
