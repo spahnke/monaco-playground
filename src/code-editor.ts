@@ -165,7 +165,9 @@ export class CodeEditor extends Disposable {
 		// if this is undefined we already have browser completion because we use the standard settings
 		if (oldLibs) {
 			setCompilerOptions([...oldLibs, "dom"]);
-			this.register({ dispose() { setCompilerOptions(oldLibs); } });
+			this.register({
+				dispose() { setCompilerOptions(oldLibs); }
+			});
 		}
 	}
 

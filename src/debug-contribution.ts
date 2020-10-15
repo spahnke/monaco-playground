@@ -105,7 +105,11 @@ export class DebugContribution extends Disposable {
 	private enableGlyphMargin() {
 		const editor = this.editor;
 		const previousGlyphMarginSetting = editor.getOptions().get(monaco.editor.EditorOption.glyphMargin);
-		this.register({ dispose() { editor.updateOptions({ glyphMargin: previousGlyphMarginSetting }) } });
+		this.register({
+			dispose() {
+				editor.updateOptions({ glyphMargin: previousGlyphMarginSetting })
+			}
+		});
 		editor.updateOptions({ glyphMargin: true });
 	}
 
