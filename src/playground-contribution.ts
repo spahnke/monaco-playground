@@ -33,7 +33,7 @@ export class PlaygroundContribution extends Disposable {
 	}
 
 	/**
-	 * Example to intercept links that are opened.
+	 * Example to intercept links that are opened. Works per editor instance.
 	 */
 	private addLinkOpenInterceptor() {
 		const linkDetector = this.editor.editor.getContribution<monaco.editor.ILinkDetector>("editor.linkDetector");
@@ -53,7 +53,7 @@ export class PlaygroundContribution extends Disposable {
 	}
 
 	/**
-	 * Example to intercept go to definition requests.
+	 * Example to intercept go to definition requests. Works globally for all editor instances.
 	 */
 	private addOpenEditorInterceptor() {
 		const editorService = this.editor.editor._codeEditorService;
