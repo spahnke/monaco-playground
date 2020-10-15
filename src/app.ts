@@ -1,6 +1,21 @@
 ﻿import { CodeEditor } from "./code-editor.js";
 import { DebugContribution } from "./debug-contribution.js";
+import { ILibrary } from "./monaco-helper.js";
 import { PlaygroundContribution } from "./playground-contribution.js";
+
+const lib: ILibrary = {
+	contents: `
+declare class Facts {
+	/**
+	 * Returns the next fact
+	 *
+	 * [Online documentation](http://www.google.de)
+	 */
+	static next(): string;
+}`,
+	language: "typescript",
+	filePath: "test.d.ts"
+};
 
 async function main() {
 	const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
@@ -10,19 +25,7 @@ async function main() {
 	debug.simulateDebugging();
 	editor.register(debug);
 
-	editor.addLibrary({
-		contents: `
-declare class Facts {
-	/**
-	 * Returns the next fact
-	 *
-	 * [Online documentation](http://www.google.de)
-	 */
-	static next(): string;
-}`,
-		language: "typescript",
-		filePath: "test.d.ts"
-	});
+	editor.addLibrary(lib);
 
 	editor.setContents(`class Foo {
 	/**
