@@ -23,11 +23,6 @@ export class MonacoLoader {
 		return MonacoLoader.editorLoaded;
 	}
 
-	static async colorizeElement(element: HTMLElement): Promise<void> {
-		await MonacoLoader.loadEditor();
-		return monaco.editor.colorizeElement(element, {});
-	}
-
 	/**
 	 * CAUTION: Uses an internal API to get an object of the non-exported class ContextKeyExpr.
 	 */
