@@ -172,10 +172,15 @@ export function isComment(model: monaco.editor.ITextModel, line: number): boolea
 	return false;
 }
 
-/** CAUTION: Uses an internal unofficial API to determine if the range is in a comment */
-export function isInComment(model: monaco.editor.ITextModel, range: monaco.IRange) {
+/** CAUTION: Uses an internal unofficial API to determine if the range is in a comment. Tries to wait until tokenization is complete. */
+export async function isInComment(model: monaco.editor.ITextModel, range: monaco.IRange) {
 	if (monaco.Range.spansMultipleLines(range))
 		throw new Error("Ranges over multiple lines are not supported");
+
+	while (model._tokenization._tokenizationSupport === null) {
+		// tokenization of model not completed if _tokenizationSupport is null -> delay (this is a heuristic and may not be 100% accurate)
+		await delay(500);
+	}
 
 	const line = range.startLineNumber;
 	const lineTokens = model.getLineTokens(line);
@@ -188,6 +193,10 @@ export function isInComment(model: monaco.editor.ITextModel, range: monaco.IRang
 		}
 	}
 	return tokenType === StandardTokenType.Comment;
+}
+
+function delay(ms: number): Promise<void> {
+	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 class InMemorySnippetService implements ISnippetService {

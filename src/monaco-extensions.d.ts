@@ -89,6 +89,10 @@ declare namespace monaco {
 		interface ITextModel {
 			/** CAUTION: Internal unofficial API */
 			getLineTokens(line: number): ILineTokens;
+			/** CAUTION: Internal unofficial API */
+			_tokenization: {
+				_tokenizationSupport: object | null
+			}
 		}
 
 		/** CAUTION: Internal unofficial API */

@@ -17,7 +17,7 @@ export class TodoDiagnostics extends DiagnosticsAdapter {
 		const decorations: monaco.editor.IModelDeltaDecoration[] = [];
 		const todos = model.findMatches("\\bTODO\\b", false, true, true, null, true);
 		for (const todo of todos) {
-			if (!isInComment(model, todo.range))
+			if (!(await isInComment(model, todo.range)))
 				continue;
 
 			const range = todo.range.setStartPosition(todo.range.startLineNumber, todo.range.startColumn);
