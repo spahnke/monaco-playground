@@ -1,5 +1,6 @@
 import { CodeEditor } from "./code-editor.js";
 import { Disposable } from "./disposable.js";
+import { getKeybindings } from "./monaco-utils.js";
 
 const contextMenuGroupId = "7_playground";
 
@@ -29,6 +30,14 @@ export class PlaygroundContribution extends Disposable {
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D)],
 			contextMenuGroupId,
 			run: () => this.editor.dispose()
+		}));
+
+		this.register(this.editor.editor.addAction({
+			id: "dump_keybindings",
+			label: "Dump keybindings",
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_K)],
+			contextMenuGroupId,
+			run: () => console.log(JSON.stringify(getKeybindings(this.editor.editor)))
 		}));
 	}
 
