@@ -1,6 +1,7 @@
 ﻿import { Disposable } from "./disposable.js";
 import { setCompilerOptions, setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
-import { addLibrary, ILibrary, MonacoHelper, usuallyProducesCharacter } from "./monaco-helper.js";
+import { MonacoLoader } from "./monaco-loader.js";
+import { addLibrary, ILibrary, usuallyProducesCharacter } from "./monaco-utils.js";
 
 let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
 let editorZoom: monaco.editor.IEditorZoom;
@@ -10,9 +11,9 @@ export class CodeEditor extends Disposable {
 	private readonlyHandler: monaco.IDisposable | undefined;
 
 	static async create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
-		await MonacoHelper.loadEditor();
-		ContextKeyExpr = await MonacoHelper.ContextKeyExpr;
-		editorZoom = await MonacoHelper.editorZoom;
+		await MonacoLoader.loadEditor();
+		ContextKeyExpr = await MonacoLoader.ContextKeyExpr;
+		editorZoom = await MonacoLoader.editorZoom;
 		return new CodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
 			fixedOverflowWidgets: true,
@@ -211,7 +212,7 @@ export class CodeEditor extends Disposable {
 	}
 
 	private patchKeybindings() {
-		// console.log(JSON.stringify(MonacoHelper.getKeybindings(this.editor)));
+		// console.log(JSON.stringify(getKeybindings(this.editor)));
 		this.patchKeybinding("editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL); // no default
 		this.patchKeybinding("editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS); // no default
 		this.patchKeybinding("editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0); // no default

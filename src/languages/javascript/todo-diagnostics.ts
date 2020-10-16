@@ -1,4 +1,4 @@
-import { isInComment } from "../../monaco-helper.js";
+import { isInComment } from "../../monaco-utils.js";
 import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
 
 export class TodoDiagnostics extends DiagnosticsAdapter {

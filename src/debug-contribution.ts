@@ -1,5 +1,5 @@
 import { Disposable } from "./disposable.js";
-import { isComment } from "./monaco-helper.js";
+import { isComment } from "./monaco-utils.js";
 
 const breakPointMarginClassName = "codicon-debug-breakpoint monacoBreakpointMargin";
 const debugLineMarginClassName = "codicon-debug-stackframe monacoDebugLineMargin";
