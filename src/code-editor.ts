@@ -157,14 +157,6 @@ export class CodeEditor extends Disposable {
 		this.register(...addLibrary(library));
 	}
 
-	async getJavaScriptWorker(): Promise<monaco.languages.typescript.TypeScriptWorker> {
-		const model = this.editor.getModel();
-		if (model === null || model.getModeId() !== "javascript")
-			throw new Error("Only available for JavaScript documents.")
-		const worker = await monaco.languages.typescript.getJavaScriptWorker();
-		return worker(model.uri);
-	}
-
 	dispose() {
 		super.dispose();
 		this.readonlyHandler?.dispose();
