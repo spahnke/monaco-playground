@@ -16,7 +16,7 @@ export function registerJavascriptLanguageExtensions() {
 }
 
 function setCompilerOptions(libs: string[]): void {
-	monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+	const options: monaco.languages.typescript.CompilerOptions = {
 		target: monaco.languages.typescript.ScriptTarget.ESNext,
 		lib: libs,
 		alwaysStrict: true,
@@ -24,7 +24,9 @@ function setCompilerOptions(libs: string[]): void {
 		allowJs: true,
 		allowNonTsExtensions: true, // not documented in the typings but important to get syntax/semantic validation working
 		strict: localStorage.getItem("monaco-strict") !== null,
-	});
+	};
+	monaco.languages.typescript.typescriptDefaults.setCompilerOptions(options);
+	monaco.languages.typescript.javascriptDefaults.setCompilerOptions(options);
 }
 
 function setDiagnosticOptions(codesToIgnore?: number[]): void {
