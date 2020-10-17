@@ -1,11 +1,11 @@
-import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
-import { isInComment } from "../../common/monaco-utils.js";
+import { allLanguages, DiagnosticsAdapter } from "../common/diagnostics-adapter.js";
+import { isInComment } from "../common/monaco-utils.js";
 
-export class TodoDiagnostics extends DiagnosticsAdapter {
+export class TodoContribution extends DiagnosticsAdapter {
 	private currentDecorations: Map<monaco.Uri, string[]> | undefined;
 
 	constructor() {
-		super("javascript", "todo");
+		super(allLanguages, "todo");
 	}
 
 	protected async doValidate(resource: monaco.Uri): Promise<void> {

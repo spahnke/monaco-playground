@@ -2,7 +2,6 @@
 import { JsonSnippetService } from "../../common/json-snippet-service.js";
 import { SnippetCompletionProvider } from "../../common/snippet-completion-provider.js";
 import { EsLintDiagnostics } from "./eslint-diagnostics.js";
-import { TodoDiagnostics } from "./todo-diagnostics.js";
 
 export function registerJavascriptLanguageExtensions() {
 	monaco.languages.onLanguage("javascript", () => {
@@ -11,7 +10,6 @@ export function registerJavascriptLanguageExtensions() {
 
 		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("languages/javascript/snippets.json")));
 		monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("languages/javascript/eslintrc.json"));
-		new TodoDiagnostics(); // has side effects
 	});
 }
 

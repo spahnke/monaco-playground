@@ -1,6 +1,7 @@
 ﻿import { ILibrary } from "./common/monaco-utils.js";
 import { DebugContribution } from "./contrib/debug-contribution.js";
 import { PlaygroundContribution } from "./contrib/playground-contribution.js";
+import { TodoContribution } from "./contrib/todo-contribution.js";
 import { CodeEditor } from "./code-editor.js";
 
 const lib: ILibrary = {
@@ -20,6 +21,7 @@ declare class Facts {
 async function main() {
 	const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
 
+	editor.register(new TodoContribution()); // has side effects
 	editor.register(new PlaygroundContribution(editor)); // has side effects
 	const debug = new DebugContribution(editor.editor);
 	debug.simulateDebugging();
