@@ -2,11 +2,13 @@
  *  Adopted partly from https://github.com/microsoft/monaco-typescript/blob/master/src/languageFeatures.ts
  *--------------------------------------------------------------------------------------------*/
 
-export abstract class DiagnosticsAdapter {
-	protected readonly disposables: monaco.IDisposable[] = [];
+import { Disposable } from "./disposable.js";
+
+export abstract class DiagnosticsAdapter extends Disposable {
 	private readonly listeners = new Map<string, monaco.IDisposable>();
 
 	constructor(protected readonly languageId: string, protected readonly owner: string = languageId) {
+		super();
 		const onModelAdd = (model: monaco.editor.IModel): void => {
 			if (model.getModeId() !== languageId)
 				return;
@@ -36,24 +38,20 @@ export abstract class DiagnosticsAdapter {
 			}
 		};
 
-		this.disposables.push(monaco.editor.onDidCreateModel(onModelAdd));
-		this.disposables.push(monaco.editor.onWillDisposeModel(onModelRemoved));
-		this.disposables.push(monaco.editor.onDidChangeModelLanguage(event => {
+		this.register(monaco.editor.onDidCreateModel(onModelAdd));
+		this.register(monaco.editor.onWillDisposeModel(onModelRemoved));
+		this.register(monaco.editor.onDidChangeModelLanguage(event => {
 			onModelRemoved(event.model);
 			onModelAdd(event.model);
 		}));
 
-		this.disposables.push({
+		this.register({
 			dispose() {
 				monaco.editor.getModels().forEach(onModelRemoved);
 			}
 		});
 
 		monaco.editor.getModels().forEach(onModelAdd);
-	}
-
-	public dispose(): void {
-		this.disposables.forEach(d => d?.dispose());
 	}
 
 	protected abstract doValidate(resource: monaco.Uri): Promise<void>;

@@ -78,7 +78,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			label: "ESLint",
 			createData: { config: this.createEsLintCompatibleConfig() }
 		});
-		this.disposables.push(this.worker);
+		this.register(this.worker);
 		return this.worker.getProxy();
 	}
 
