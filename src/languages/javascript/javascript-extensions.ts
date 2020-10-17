@@ -1,8 +1,8 @@
-﻿import { EsLintDiagnostics } from "./eslint-diagnostics.js";
+﻿import { noop } from "../../common/disposable.js";
+import { JsonSnippetService } from "../../common/json-snippet-service.js";
+import { SnippetCompletionProvider } from "../../common/snippet-completion-provider.js";
+import { EsLintDiagnostics } from "./eslint-diagnostics.js";
 import { TodoDiagnostics } from "./todo-diagnostics.js";
-import { SnippetCompletionProvider } from "../snippet-completion-provider.js";
-import { JsonSnippetService } from "../json-snippet-service.js";
-import { noop } from "../../disposable.js";
 
 export function registerJavascriptLanguageExtensions() {
 	monaco.languages.onLanguage("javascript", () => {

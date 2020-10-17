@@ -1,6 +1,6 @@
-﻿import { Disposable } from "./disposable.js";
+﻿import { Disposable } from "./common/disposable.js";
+import { addLibrary, ILibrary, usuallyProducesCharacter } from "./common/monaco-utils.js";
 import { MonacoLoader } from "./monaco-loader.js";
-import { addLibrary, ILibrary, usuallyProducesCharacter } from "./monaco-utils.js";
 
 let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
 let editorZoom: monaco.editor.IEditorZoom;

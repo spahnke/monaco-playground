@@ -1,5 +1,5 @@
 ﻿import { Linter, Rule } from "eslint";
-import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
+import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 import { ruleId as noIdToStringRuleId } from "./worker/no-id-tostring-in-query.js";
 

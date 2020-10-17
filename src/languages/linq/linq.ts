@@ -1,10 +1,10 @@
-﻿import { LinqCompletionProvider } from "./linq-completion-provider.js";
+﻿import { JsonSnippetService } from "../../common/json-snippet-service.js";
+import { SnippetCompletionProvider } from "../../common/snippet-completion-provider.js";
+import { LinqCompletionProvider } from "./linq-completion-provider.js";
 import { LinqFormatter } from "./linq-formatter.js";
 import { LinqHoverProvider } from "./linq-hover-provider.js";
 import { languageConfig, languageId, monarchTokenProvider } from "./linq-language.js";
 import { LinqDiagnostics } from "./linq-diagnostics.js";
-import { SnippetCompletionProvider } from "../snippet-completion-provider.js";
-import { JsonSnippetService } from "../json-snippet-service.js";
 
 export function registerLinq() {
 	monaco.languages.register({ id: languageId });

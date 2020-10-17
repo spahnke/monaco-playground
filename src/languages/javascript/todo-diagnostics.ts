@@ -1,8 +1,7 @@
-import { isInComment } from "../../monaco-utils.js";
-import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
+import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
+import { isInComment } from "../../common/monaco-utils.js";
 
 export class TodoDiagnostics extends DiagnosticsAdapter {
-
 	private currentDecorations: Map<monaco.Uri, string[]> = new Map();
 
 	constructor() {

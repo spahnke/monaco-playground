@@ -1,8 +1,7 @@
-﻿import { DiagnosticsAdapter } from "../diagnostics-adapter.js";
+﻿import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { LinqCompletionProvider } from "./linq-completion-provider.js";
 
 export class LinqDiagnostics extends DiagnosticsAdapter {
-
 	private static tableAndViewNames: string[] | null = null;
 
 	protected async doValidate(resource: monaco.Uri): Promise<void> {

@@ -1,4 +1,4 @@
-import { ISnippetService, Snippet, SnippetCompletionProvider } from "./languages/snippet-completion-provider.js";
+import { ISnippetService, Snippet, SnippetCompletionProvider } from "./snippet-completion-provider.js";
 
 export interface ILibrary {
 	contents: string;
