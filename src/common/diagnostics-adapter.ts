@@ -4,13 +4,15 @@
 
 import { Disposable } from "./disposable.js";
 
+export const allLanguages = "all_languages";
+
 export abstract class DiagnosticsAdapter extends Disposable {
 	private readonly listeners = new Map<string, monaco.IDisposable>();
 
 	constructor(protected readonly languageId: string, protected readonly owner: string = languageId) {
 		super();
 		const onModelAdd = (model: monaco.editor.IModel): void => {
-			if (model.getModeId() !== languageId)
+			if (languageId !== allLanguages && model.getModeId() !== languageId)
 				return;
 
 			let handle: number;
