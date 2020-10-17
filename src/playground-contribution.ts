@@ -3,6 +3,20 @@ import { Disposable } from "./disposable.js";
 import { getKeybindings } from "./monaco-utils.js";
 
 const contextMenuGroupId = "7_playground";
+const linqTestCode = `linq.execute('a x.id.toString() === "asdf" asdf ');
+linq.execute(\`a x.id.toString() === "asdf" asdf \`);
+linq.execute(\`a x.id.toString() === "\${text}" asdf \`);
+linq.execute('a x.id.toString() === "' + foo + '" asdf ');`;
+const todoTestCode = `// TODO asdf
+/*
+ * TODO qwer
+ TODO mnzxcv
+ */
+/**
+ * TODO etry
+ */
+const TODO = 1;
+1 * TODO;`;
 
 /**
  * Adds typical test scenarios to the editor to aid exploring APIs.
@@ -45,16 +59,7 @@ export class PlaygroundContribution extends Disposable {
 			label: "Add TODO test code",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_T)],
 			contextMenuGroupId,
-			run: () => this.editor.appendLine(`// TODO asdf
-/*
- * TODO qwer
- TODO mnzxcv
- */
-/**
- * TODO etry
- */
-const TODO = 1;
-1 * TODO;`)
+			run: () => this.editor.appendLine(todoTestCode)
 		}));
 
 		this.register(this.editor.editor.addAction({
@@ -62,10 +67,7 @@ const TODO = 1;
 			label: "Add LINQ test code",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_L)],
 			contextMenuGroupId,
-			run: () => this.editor.appendLine(`linq.execute('a x.id.toString() === "asdf" asdf ');
-linq.execute(\`a x.id.toString() === "asdf" asdf \`);
-linq.execute(\`a x.id.toString() === "\${text}" asdf \`);
-linq.execute('a x.id.toString() === "' + foo + '" asdf ');`)
+			run: () => this.editor.appendLine(linqTestCode)
 		}));
 	}
 
