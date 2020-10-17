@@ -1,5 +1,6 @@
 import { CodeEditor } from "./code-editor.js";
 import { Disposable } from "./disposable.js";
+import { allowTopLevelReturn, enableJavaScriptBrowserCompletion } from "./languages/javascript/javascript-extensions.js";
 import { getKeybindings } from "./monaco-utils.js";
 
 const contextMenuGroupId = "7_playground";
@@ -68,6 +69,38 @@ export class PlaygroundContribution extends Disposable {
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_L)],
 			contextMenuGroupId,
 			run: () => this.editor.appendLine(linqTestCode)
+		}));
+
+		let topLevelReturn: monaco.IDisposable | undefined;
+		this.register(this.editor.editor.addAction({
+			id: "toggle_top_level_return",
+			label: "Toggle Top Level Return",
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R)],
+			contextMenuGroupId,
+			run: () => {
+				if (topLevelReturn) {
+					topLevelReturn.dispose();
+					topLevelReturn = undefined;
+				} else {
+					topLevelReturn = allowTopLevelReturn();
+				}
+			}
+		}));
+
+		let browserCompletion: monaco.IDisposable | undefined;
+		this.register(this.editor.editor.addAction({
+			id: "toggle_browser_completion",
+			label: "Toggle Browser Completion",
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_B)],
+			contextMenuGroupId,
+			run: () => {
+				if (browserCompletion) {
+					browserCompletion.dispose();
+					browserCompletion = undefined;
+				} else {
+					browserCompletion = enableJavaScriptBrowserCompletion();
+				}
+			}
 		}));
 	}
 

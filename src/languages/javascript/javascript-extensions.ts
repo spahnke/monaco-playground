@@ -2,6 +2,7 @@
 import { TodoDiagnostics } from "./todo-diagnostics.js";
 import { SnippetCompletionProvider } from "../snippet-completion-provider.js";
 import { JsonSnippetService } from "../json-snippet-service.js";
+import { noop } from "../../disposable.js";
 
 export function registerJavascriptLanguageExtensions() {
 	monaco.languages.onLanguage("javascript", () => {
@@ -14,7 +15,7 @@ export function registerJavascriptLanguageExtensions() {
 	});
 }
 
-export function setCompilerOptions(libs: string[]): void {
+function setCompilerOptions(libs: string[]): void {
 	monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
 		target: monaco.languages.typescript.ScriptTarget.ESNext,
 		lib: libs,
@@ -26,7 +27,7 @@ export function setCompilerOptions(libs: string[]): void {
 	});
 }
 
-export function setDiagnosticOptions(codesToIgnore: number[] = []): void {
+function setDiagnosticOptions(codesToIgnore?: number[]): void {
 	const options: monaco.languages.typescript.DiagnosticsOptions = {
 		noSyntaxValidation: false,
 		noSemanticValidation: localStorage.getItem("monaco-no-semantic") !== null,
@@ -35,4 +36,24 @@ export function setDiagnosticOptions(codesToIgnore: number[] = []): void {
 	};
 	monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(options);
 	monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions(options);
+}
+
+export function allowTopLevelReturn(): monaco.IDisposable {
+	const oldCodesToIgnore = monaco.languages.typescript.javascriptDefaults.getDiagnosticsOptions().diagnosticCodesToIgnore;
+	setDiagnosticOptions([/*top-level return*/ 1108]);
+	return {
+		dispose() { setDiagnosticOptions(oldCodesToIgnore); }
+	};
+}
+
+export function enableJavaScriptBrowserCompletion(): monaco.IDisposable {
+	const oldLibs = monaco.languages.typescript.javascriptDefaults.getCompilerOptions().lib;
+	// if this is undefined we already have browser completion because we use the standard settings
+	if (oldLibs) {
+		setCompilerOptions([...oldLibs, "dom"]);
+		return {
+			dispose() { setCompilerOptions(oldLibs); }
+		};
+	}
+	return noop;
 }

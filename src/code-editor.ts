@@ -1,5 +1,4 @@
 ﻿import { Disposable } from "./disposable.js";
-import { setCompilerOptions, setDiagnosticOptions } from "./languages/javascript/javascript-extensions.js";
 import { MonacoLoader } from "./monaco-loader.js";
 import { addLibrary, ILibrary, usuallyProducesCharacter } from "./monaco-utils.js";
 
@@ -9,7 +8,7 @@ let editorZoom: monaco.editor.IEditorZoom;
 export class CodeEditor extends Disposable {
 	private readonlyHandler: monaco.IDisposable | undefined;
 
-	static async create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
+	static async create(element: HTMLElement, language?: string): Promise<CodeEditor> {
 		await MonacoLoader.loadEditor();
 		ContextKeyExpr = await MonacoLoader.ContextKeyExpr;
 		editorZoom = await MonacoLoader.editorZoom;
@@ -37,16 +36,14 @@ export class CodeEditor extends Disposable {
 				}
 			},
 			theme: "vs",
-		}), allowTopLevelReturn);
+		}));
 	}
 
-	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
+	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor) {
 		super();
 		this.editor = editor;
 		this.addReadonlyHandling();
 		this.patchKeybindings();
-		if (allowTopLevelReturn)
-			setDiagnosticOptions(allowTopLevelReturn ? [/*top-level return*/ 1108] : []);
 	}
 
 	setContents(content: string, language?: string, fileName?: string) {
@@ -158,17 +155,6 @@ export class CodeEditor extends Disposable {
 
 	addLibrary(library: ILibrary) {
 		this.register(...addLibrary(library));
-	}
-
-	enableJavaScriptBrowserCompletion() {
-		const oldLibs = monaco.languages.typescript.javascriptDefaults.getCompilerOptions().lib;
-		// if this is undefined we already have browser completion because we use the standard settings
-		if (oldLibs) {
-			setCompilerOptions([...oldLibs, "dom"]);
-			this.register({
-				dispose() { setCompilerOptions(oldLibs); }
-			});
-		}
 	}
 
 	async getJavaScriptWorker(): Promise<monaco.languages.typescript.TypeScriptWorker> {
