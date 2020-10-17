@@ -1,7 +1,7 @@
-import { CodeEditor } from "./code-editor.js";
-import { Disposable } from "./common/disposable.js";
-import { getKeybindings } from "./common/monaco-utils.js";
-import { allowTopLevelReturn, enableJavaScriptBrowserCompletion } from "./languages/javascript/javascript-extensions.js";
+import { Disposable } from "../common/disposable.js";
+import { getKeybindings } from "../common/monaco-utils.js";
+import { allowTopLevelReturn, enableJavaScriptBrowserCompletion } from "../languages/javascript/javascript-extensions.js";
+import { CodeEditor } from "../code-editor.js";
 
 const contextMenuGroupId = "7_playground";
 const linqTestCode = `linq.execute('a x.id.toString() === "asdf" asdf ');

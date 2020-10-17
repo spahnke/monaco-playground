@@ -1,7 +1,7 @@
 ﻿import { ILibrary } from "./common/monaco-utils.js";
+import { DebugContribution } from "./contrib/debug-contribution.js";
+import { PlaygroundContribution } from "./contrib/playground-contribution.js";
 import { CodeEditor } from "./code-editor.js";
-import { DebugContribution } from "./debug-contribution.js";
-import { PlaygroundContribution } from "./playground-contribution.js";
 
 const lib: ILibrary = {
 	contents: `
