@@ -96,7 +96,10 @@ export function isComment(model: monaco.editor.ITextModel, line: number): boolea
 }
 
 /** CAUTION: Uses an internal unofficial API to determine if the range is in a comment. Tries to wait until tokenization is complete. */
-export async function isInComment(model: monaco.editor.ITextModel, range: monaco.IRange) {
+export async function isInComment(model: monaco.editor.ITextModel, range: monaco.IRange): Promise<boolean> {
+	if (model.getModeId() === "plaintext")
+		return false;
+
 	if (monaco.Range.spansMultipleLines(range))
 		throw new Error("Ranges over multiple lines are not supported");
 
