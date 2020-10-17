@@ -56,6 +56,17 @@ export class PlaygroundContribution extends Disposable {
 const TODO = 1;
 1 * TODO;`)
 		}));
+
+		this.register(this.editor.editor.addAction({
+			id: "linq_test_code",
+			label: "Add LINQ test code",
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_L)],
+			contextMenuGroupId,
+			run: () => this.editor.appendLine(`linq.execute('a x.id.toString() === "asdf" asdf ');
+linq.execute(\`a x.id.toString() === "asdf" asdf \`);
+linq.execute(\`a x.id.toString() === "\${text}" asdf \`);
+linq.execute('a x.id.toString() === "' + foo + '" asdf ');`)
+		}));
 	}
 
 	/**
