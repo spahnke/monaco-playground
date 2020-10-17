@@ -1,5 +1,3 @@
-export const noop: monaco.IDisposable = { dispose() { } };
-
 export class Disposable implements monaco.IDisposable {
 	private disposables: monaco.IDisposable[] = [];
 

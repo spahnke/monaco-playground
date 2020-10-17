@@ -1,5 +1,4 @@
-﻿import { noop } from "../../common/disposable.js";
-import { JsonSnippetService } from "../../common/json-snippet-service.js";
+﻿import { JsonSnippetService } from "../../common/json-snippet-service.js";
 import { SnippetCompletionProvider } from "../../common/snippet-completion-provider.js";
 import { EsLintDiagnostics } from "./eslint-diagnostics.js";
 
@@ -13,7 +12,7 @@ export function registerJavascriptLanguageExtensions() {
 	});
 }
 
-function setCompilerOptions(libs: string[]): void {
+function setCompilerOptions(libs?: string[]): void {
 	const options: monaco.languages.typescript.CompilerOptions = {
 		target: monaco.languages.typescript.ScriptTarget.ESNext,
 		lib: libs,
@@ -40,7 +39,7 @@ function setDiagnosticOptions(codesToIgnore?: number[]): void {
 
 export function allowTopLevelReturn(): monaco.IDisposable {
 	const oldCodesToIgnore = monaco.languages.typescript.javascriptDefaults.getDiagnosticsOptions().diagnosticCodesToIgnore;
-	setDiagnosticOptions([/*top-level return*/ 1108]);
+	setDiagnosticOptions([...oldCodesToIgnore ?? [], /*top-level return*/ 1108]);
 	return {
 		dispose() { setDiagnosticOptions(oldCodesToIgnore); }
 	};
@@ -48,14 +47,10 @@ export function allowTopLevelReturn(): monaco.IDisposable {
 
 export function enableJavaScriptBrowserCompletion(): monaco.IDisposable {
 	const oldLibs = monaco.languages.typescript.javascriptDefaults.getCompilerOptions().lib;
-	// if this is undefined we already have browser completion because we use the standard settings
-	if (oldLibs) {
-		setCompilerOptions([...oldLibs, "dom"]);
-		return {
-			dispose() { setCompilerOptions(oldLibs); }
-		};
-	}
-	return noop;
+	setCompilerOptions([...oldLibs ?? [], "dom"]);
+	return {
+		dispose() { setCompilerOptions(oldLibs); }
+	};
 }
 
 export async function getJavaScriptWorker(model: monaco.editor.ITextModel): Promise<monaco.languages.typescript.TypeScriptWorker | null> {
