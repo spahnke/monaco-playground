@@ -7,7 +7,6 @@ let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
 let editorZoom: monaco.editor.IEditorZoom;
 
 export class CodeEditor extends Disposable {
-	public editor: monaco.editor.IStandaloneCodeEditor;
 	private readonlyHandler: monaco.IDisposable | undefined;
 
 	static async create(element: HTMLElement, language?: string, allowTopLevelReturn: boolean = false): Promise<CodeEditor> {
@@ -41,7 +40,7 @@ export class CodeEditor extends Disposable {
 		}), allowTopLevelReturn);
 	}
 
-	private constructor(editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
+	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, allowTopLevelReturn: boolean = false) {
 		super();
 		this.editor = editor;
 		this.addReadonlyHandling();
