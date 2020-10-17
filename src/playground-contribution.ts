@@ -39,6 +39,23 @@ export class PlaygroundContribution extends Disposable {
 			contextMenuGroupId,
 			run: () => console.log(JSON.stringify(getKeybindings(this.editor.editor)))
 		}));
+
+		this.register(this.editor.editor.addAction({
+			id: "todo_test_code",
+			label: "Add TODO test code",
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_T)],
+			contextMenuGroupId,
+			run: () => this.editor.appendLine(`// TODO asdf
+/*
+ * TODO qwer
+ TODO mnzxcv
+ */
+/**
+ * TODO etry
+ */
+const TODO = 1;
+1 * TODO;`)
+		}));
 	}
 
 	/**

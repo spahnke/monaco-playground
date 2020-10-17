@@ -38,16 +38,6 @@ async function main() {
 	}
 }
 
-// TODO asdf
-/*
- * TODO qwer
- TODO mnzxcv
- */
-/**
- * TODO etry
- */
-const TODO = 1;
-1 * TODO;
 const text = 'asdf';
 const foo = new Foo();
 foo.bar = Facts.next();
