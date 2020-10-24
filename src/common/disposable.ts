@@ -1,17 +1,18 @@
 export class Disposable implements monaco.IDisposable {
-	private disposables: monaco.IDisposable[] = [];
+	private disposables = new Set<monaco.IDisposable>();
 
 	/**
-	 * Registers one ore more disposable objects that will be disposed when this instance is disposed
-	 * and returns the objects again.
+	 * Registers a disposable object that will be disposed when this instance is disposed
+	 * and returns the object again.
 	 */
-	register(...disposables: monaco.IDisposable[]): monaco.IDisposable[] {
-		this.disposables.push(...disposables);
-		return disposables;
+	register<T extends monaco.IDisposable>(disposable: T): T {
+		this.disposables.add(disposable);
+		return disposable;
 	}
 
 	dispose() {
 		for (const disposable of this.disposables)
-			disposable?.dispose(); // be defensive here and use ?.
+			disposable.dispose();
+		this.disposables.clear();
 	}
 }

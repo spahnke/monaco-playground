@@ -154,7 +154,8 @@ export class CodeEditor extends Disposable {
 	}
 
 	addLibrary(library: ILibrary) {
-		this.register(...addLibrary(library));
+		for (const disposable of addLibrary(library))
+			this.register(disposable);
 	}
 
 	dispose() {
