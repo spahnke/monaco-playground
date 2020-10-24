@@ -4,6 +4,7 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "build",
 			"type": "npm",
 			"script": "dev",
 			"isBackground": true,
@@ -11,8 +12,28 @@
 				"kind": "build",
 				"isDefault": true
 			},
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem"
+			},
 			"problemMatcher": {
-				"base": "$tsc-watch",
+				"source": "rollup",
+				"applyTo": "allDocuments",
+				"pattern":[
+					{
+						//(!) Plugin typescript: @rollup/plugin-typescript TS1005: ';' expected.
+						"regexp": "^\\(!\\).*TS(\\d+):\\s*(.*)$",
+						"code": 1,
+						"message": 2,
+					},
+					{
+						//src/code-editor.ts: (46:26)
+						"regexp": "^([^\\s].*):\\s*\\((\\d+):(\\d+)\\)$",
+						"file": 1,
+						"line": 2,
+						"column": 3
+					}
+				],
 				"background": {
 					"activeOnStart": true,
 					"beginsPattern": "^rollup",
@@ -25,8 +46,10 @@
 			"type": "npm",
 			"script": "serve",
 			"isBackground": true,
+			"presentation": {
+				"reveal": "silent"
+			},
 			"problemMatcher": {
-				"owner": "custom",
 				"pattern": {
 					"regexp": "_____________________"
 				},
