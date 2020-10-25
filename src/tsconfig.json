@@ -2,8 +2,10 @@
 	"compilerOptions": {
 		"module": "esnext",
 		"target": "es2020",
-		"strict": true,
 		"sourceMap": true,
-		"checkJs": false
+		"checkJs": false,
+		"strict": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitReturns": true,
 	}
 }
