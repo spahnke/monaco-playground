@@ -17,23 +17,10 @@
 				"revealProblems": "onProblem"
 			},
 			"problemMatcher": {
-				"source": "rollup",
-				"applyTo": "allDocuments",
-				"pattern":[
-					{
-						// (!) Plugin typescript: @rollup/plugin-typescript TS1005: ';' expected.
-						"regexp": "^\\(!\\).*TS(\\d+):\\s*(.*)$",
-						"code": 1,
-						"message": 2,
-					},
-					{
-						// src/code-editor.ts: (46:26)
-						"regexp": "^([^\\s].*):\\s*\\((\\d+):(\\d+)\\)$",
-						"file": 1,
-						"line": 2,
-						"column": 3
-					}
-				],
+				"pattern": {
+					// dummy regexp because it's mandatory but we only care about the background pattern
+					"regexp": ""
+				},
 				"background": {
 					"activeOnStart": true,
 					"beginsPattern": "^rollup",

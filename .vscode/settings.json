@@ -2,4 +2,5 @@
 	"typescript.format.semicolons": "insert",
 	"typescript.preferences.importModuleSpecifierEnding": "js",
 	"typescript.preferences.quoteStyle": "double",
+	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
 }
