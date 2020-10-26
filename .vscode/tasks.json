@@ -16,28 +16,77 @@
 				"reveal": "silent",
 				"revealProblems": "onProblem"
 			},
-			"problemMatcher": {
-				"source": "rollup",
-				"pattern": [
-					{
-						// [!] Error: 'import' and 'export' may only appear at the top level (Note that you need plugins to import files that are not JavaScript)
-						"regexp": "^\\[!\\]\\s*Error:\\s*(.*)$",
-						"message": 1
-					},
-					{
-						// src/contrib/todo-contribution.ts (3:14)
-						"regexp": "^([^\\s]*)\\s*\\((\\d+):(\\d+)\\)",
-						"file": 1,
-						"line": 2,
-						"column": 3
+			"problemMatcher": [
+				{
+					"source": "rollup",
+					"pattern": [
+						{
+							// [!] Error: 'import' and 'export' may only appear at the top level (Note that you need plugins to import files that are not JavaScript)
+							"regexp": "^\\[!\\]\\s*Error:\\s*(.*)$",
+							"message": 1
+						},
+						{
+							// src/contrib/todo-contribution.ts (3:14)
+							"regexp": "^([^\\s]*)\\s*\\((\\d+):(\\d+)\\)",
+							"file": 1,
+							"line": 2,
+							"column": 3
+						}
+					],
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "^rollup",
+						"endsPattern": "waiting for changes\\.\\.\\.$|^Error:"
 					}
-				],
-				"background": {
-					"activeOnStart": true,
-					"beginsPattern": "^rollup",
-					"endsPattern": "waiting for changes\\.\\.\\.$|^Error:"
-				}
-			}
+				},
+				{
+					"source": "rollup",
+					"severity": "warning",
+					"pattern": [
+						{
+							// (!) Circular dependency
+							"regexp": "^\\(!\\)\\s*(.*)$",
+							"message": 1
+						},
+						{
+							// src/languages/javascript/javascript-extensions.ts -> src/monaco-loader.ts -> src/languages/language-registry.ts -> src/languages/javascript/javascript-extensions.ts
+							"regexp": "^(([^\\s]*)(\\s*)->(\\s*).*)",
+							"message": 1,
+							"file": 2,
+							"line": 3,
+							"column": 4,
+						}
+					],
+					// needs to be repeated unfortunately, otherwise the problems are not cleared when they are solved
+					"background": {
+						"beginsPattern": "^rollup",
+						"endsPattern": "waiting for changes\\.\\.\\.$|^Error:"
+					}
+				},
+				{
+					"source": "rollup",
+					"severity": "warning",
+					"pattern": [
+						{
+							// (!) Plugin typescript: @rollup/plugin-typescript TS1005: ',' expected.
+							"regexp": "^\\(!\\)\\s*(.*)$",
+							"message": 1
+						},
+						{
+							// src/languages/javascript/javascript-extensions.ts: (21:3)
+							"regexp": "^([^\\s]*?):?\\s*\\((\\d+):(\\d+)\\)$",
+							"file": 1,
+							"line": 2,
+							"column": 3,
+						}
+					],
+					// needs to be repeated unfortunately, otherwise the problems are not cleared when they are solved
+					"background": {
+						"beginsPattern": "^rollup",
+						"endsPattern": "waiting for changes\\.\\.\\.$|^Error:"
+					}
+				},
+			]
 		},
 		{
 			"label": "serve",
