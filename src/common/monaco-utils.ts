@@ -14,7 +14,7 @@ export interface ITemplate {
 	sortText?: string;
 }
 
-export function addLibrary(library: ILibrary): monaco.IDisposable[] {
+export function addLibrary(library: ILibrary): monaco.IDisposable {
 	const disposables: monaco.IDisposable[] = [];
 
 	const uri = monaco.Uri.file(library.filePath);
@@ -32,7 +32,9 @@ export function addLibrary(library: ILibrary): monaco.IDisposable[] {
 		disposables.push(monaco.languages.typescript.typescriptDefaults.addExtraLib(content, uri.toString()));
 	}
 
-	return disposables;
+	return {
+		dispose: () => disposables.forEach(x => x.dispose())
+	};
 }
 
 export function addTemplates(language: string, templates: ITemplate[]): monaco.IDisposable {
