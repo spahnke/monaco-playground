@@ -1,5 +1,4 @@
-﻿import { ILibrary } from "./common/monaco-utils.js";
-import { DebugContribution } from "./contrib/debug-contribution.js";
+﻿import { DebugContribution } from "./contrib/debug-contribution.js";
 import { PlaygroundContribution } from "./contrib/playground-contribution.js";
 import { TodoContribution } from "./contrib/todo-contribution.js";
 import { CodeEditor } from "./code-editor.js";
