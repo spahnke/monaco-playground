@@ -18,6 +18,9 @@ export class CodeEditor extends Disposable {
 			fontSize: 13,
 			formatOnPaste: true,
 			formatOnType: true,
+			inlineHints: {
+				enabled: true,
+			},
 			language,
 			lightbulb: { enabled: true },
 			minimap: { enabled: true },
@@ -29,11 +32,10 @@ export class CodeEditor extends Disposable {
 			},
 			renderValidationDecorations: "on",
 			renderWhitespace: "selection",
+			showDeprecated: true,
 			showUnused: true,
 			suggest: {
-				statusBar: {
-					visible: true
-				}
+				showStatusBar: true,
 			},
 			theme: "vs",
 		}));
