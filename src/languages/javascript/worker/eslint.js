@@ -1,6 +1,6 @@
 (function webpackUniversalModuleDefinition(root, factory) {
-	root["eslint"] = factory();
-})(self, function () {
+  root["eslint"] = factory();
+})(self, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -1543,7 +1543,7 @@ var store = __webpack_require__(27);
 (module.exports = function (key, value) {
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
-  version: '3.8.2',
+  version: '3.8.3',
   mode: IS_PURE ? 'pure' : 'global',
   copyright: '© 2021 Denis Pushkarev (zloirock.ru)'
 });
@@ -4584,6 +4584,8 @@ module.exports = function (IteratorConstructor, NAME, next) {
 "use strict";
 
 
+var fails = __webpack_require__(9);
+
 var getPrototypeOf = __webpack_require__(80);
 
 var createNonEnumerableProperty = __webpack_require__(21);
@@ -4614,9 +4616,14 @@ if ([].keys) {
   }
 }
 
-if (IteratorPrototype == undefined) IteratorPrototype = {}; // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
+var NEW_ITERATOR_PROTOTYPE = IteratorPrototype == undefined || fails(function () {
+  var test = {}; // FF44- legacy iterators case
 
-if (!IS_PURE && !has(IteratorPrototype, ITERATOR)) {
+  return IteratorPrototype[ITERATOR].call(test) !== test;
+});
+if (NEW_ITERATOR_PROTOTYPE) IteratorPrototype = {}; // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
+
+if ((!IS_PURE || NEW_ITERATOR_PROTOTYPE) && !has(IteratorPrototype, ITERATOR)) {
   createNonEnumerableProperty(IteratorPrototype, ITERATOR, returnThis);
 }
 
@@ -49314,7 +49321,7 @@ module.exports = JSON.parse("{\"builtin\":{\"Array\":false,\"ArrayBuffer\":false
 /* 425 */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"name\":\"eslint\",\"version\":\"7.18.0\",\"author\":\"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>\",\"description\":\"An AST-based pattern checker for JavaScript.\",\"bin\":{\"eslint\":\"./bin/eslint.js\"},\"main\":\"./lib/api.js\",\"scripts\":{\"test\":\"node Makefile.js test\",\"test:cli\":\"mocha\",\"lint\":\"node Makefile.js lint\",\"fix\":\"node Makefile.js lint -- fix\",\"fuzz\":\"node Makefile.js fuzz\",\"generate-release\":\"node Makefile.js generateRelease\",\"generate-alpharelease\":\"node Makefile.js generatePrerelease -- alpha\",\"generate-betarelease\":\"node Makefile.js generatePrerelease -- beta\",\"generate-rcrelease\":\"node Makefile.js generatePrerelease -- rc\",\"publish-release\":\"node Makefile.js publishRelease\",\"docs\":\"node Makefile.js docs\",\"gensite\":\"node Makefile.js gensite\",\"webpack\":\"node Makefile.js webpack\",\"perf\":\"node Makefile.js perf\"},\"gitHooks\":{\"pre-commit\":\"lint-staged\"},\"lint-staged\":{\"*.js\":[\"eslint --fix\",\"git add\"],\"*.md\":\"markdownlint\"},\"files\":[\"LICENSE\",\"README.md\",\"bin\",\"conf\",\"lib\",\"messages\"],\"repository\":\"eslint/eslint\",\"funding\":\"https://opencollective.com/eslint\",\"homepage\":\"https://eslint.org\",\"bugs\":\"https://github.com/eslint/eslint/issues/\",\"dependencies\":{\"@babel/code-frame\":\"^7.0.0\",\"@eslint/eslintrc\":\"^0.3.0\",\"ajv\":\"^6.10.0\",\"chalk\":\"^4.0.0\",\"cross-spawn\":\"^7.0.2\",\"debug\":\"^4.0.1\",\"doctrine\":\"^3.0.0\",\"enquirer\":\"^2.3.5\",\"eslint-scope\":\"^5.1.1\",\"eslint-utils\":\"^2.1.0\",\"eslint-visitor-keys\":\"^2.0.0\",\"espree\":\"^7.3.1\",\"esquery\":\"^1.2.0\",\"esutils\":\"^2.0.2\",\"file-entry-cache\":\"^6.0.0\",\"functional-red-black-tree\":\"^1.0.1\",\"glob-parent\":\"^5.0.0\",\"globals\":\"^12.1.0\",\"ignore\":\"^4.0.6\",\"import-fresh\":\"^3.0.0\",\"imurmurhash\":\"^0.1.4\",\"is-glob\":\"^4.0.0\",\"js-yaml\":\"^3.13.1\",\"json-stable-stringify-without-jsonify\":\"^1.0.1\",\"levn\":\"^0.4.1\",\"lodash\":\"^4.17.20\",\"minimatch\":\"^3.0.4\",\"natural-compare\":\"^1.4.0\",\"optionator\":\"^0.9.1\",\"progress\":\"^2.0.0\",\"regexpp\":\"^3.1.0\",\"semver\":\"^7.2.1\",\"strip-ansi\":\"^6.0.0\",\"strip-json-comments\":\"^3.1.0\",\"table\":\"^6.0.4\",\"text-table\":\"^0.2.0\",\"v8-compile-cache\":\"^2.0.3\"},\"devDependencies\":{\"@babel/core\":\"^7.4.3\",\"@babel/preset-env\":\"^7.4.3\",\"acorn\":\"^7.2.0\",\"babel-loader\":\"^8.0.5\",\"chai\":\"^4.0.1\",\"cheerio\":\"^0.22.0\",\"common-tags\":\"^1.8.0\",\"core-js\":\"^3.1.3\",\"dateformat\":\"^3.0.3\",\"ejs\":\"^3.0.2\",\"escape-string-regexp\":\"^3.0.0\",\"eslint\":\"file:.\",\"eslint-config-eslint\":\"file:packages/eslint-config-eslint\",\"eslint-plugin-eslint-plugin\":\"^2.2.1\",\"eslint-plugin-internal-rules\":\"file:tools/internal-rules\",\"eslint-plugin-jsdoc\":\"^22.1.0\",\"eslint-plugin-node\":\"^11.1.0\",\"eslint-release\":\"^2.0.0\",\"eslump\":\"^2.0.0\",\"esprima\":\"^4.0.1\",\"fs-teardown\":\"^0.1.0\",\"glob\":\"^7.1.6\",\"jsdoc\":\"^3.5.5\",\"karma\":\"^4.0.1\",\"karma-chrome-launcher\":\"^3.1.0\",\"karma-mocha\":\"^1.3.0\",\"karma-mocha-reporter\":\"^2.2.3\",\"karma-webpack\":\"^4.0.0-rc.6\",\"lint-staged\":\"^10.1.2\",\"load-perf\":\"^0.2.0\",\"markdownlint\":\"^0.19.0\",\"markdownlint-cli\":\"^0.22.0\",\"memfs\":\"^3.0.1\",\"mocha\":\"^7.1.1\",\"mocha-junit-reporter\":\"^1.23.0\",\"npm-license\":\"^0.3.3\",\"nyc\":\"^15.0.1\",\"proxyquire\":\"^2.0.1\",\"puppeteer\":\"^4.0.0\",\"recast\":\"^0.19.0\",\"regenerator-runtime\":\"^0.13.2\",\"shelljs\":\"^0.8.2\",\"sinon\":\"^9.0.1\",\"temp\":\"^0.9.0\",\"webpack\":\"^4.35.0\",\"webpack-cli\":\"^3.3.5\",\"yorkie\":\"^2.0.0\"},\"keywords\":[\"ast\",\"lint\",\"javascript\",\"ecmascript\",\"espree\"],\"license\":\"MIT\",\"engines\":{\"node\":\"^10.12.0 || >=12.0.0\"}}");
+module.exports = JSON.parse("{\"name\":\"eslint\",\"version\":\"7.19.0\",\"author\":\"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>\",\"description\":\"An AST-based pattern checker for JavaScript.\",\"bin\":{\"eslint\":\"./bin/eslint.js\"},\"main\":\"./lib/api.js\",\"scripts\":{\"test\":\"node Makefile.js test\",\"test:cli\":\"mocha\",\"lint\":\"node Makefile.js lint\",\"fix\":\"node Makefile.js lint -- fix\",\"fuzz\":\"node Makefile.js fuzz\",\"generate-release\":\"node Makefile.js generateRelease\",\"generate-alpharelease\":\"node Makefile.js generatePrerelease -- alpha\",\"generate-betarelease\":\"node Makefile.js generatePrerelease -- beta\",\"generate-rcrelease\":\"node Makefile.js generatePrerelease -- rc\",\"publish-release\":\"node Makefile.js publishRelease\",\"docs\":\"node Makefile.js docs\",\"gensite\":\"node Makefile.js gensite\",\"webpack\":\"node Makefile.js webpack\",\"perf\":\"node Makefile.js perf\"},\"gitHooks\":{\"pre-commit\":\"lint-staged\"},\"lint-staged\":{\"*.js\":[\"eslint --fix\",\"git add\"],\"*.md\":\"markdownlint\"},\"files\":[\"LICENSE\",\"README.md\",\"bin\",\"conf\",\"lib\",\"messages\"],\"repository\":\"eslint/eslint\",\"funding\":\"https://opencollective.com/eslint\",\"homepage\":\"https://eslint.org\",\"bugs\":\"https://github.com/eslint/eslint/issues/\",\"dependencies\":{\"@babel/code-frame\":\"^7.0.0\",\"@eslint/eslintrc\":\"^0.3.0\",\"ajv\":\"^6.10.0\",\"chalk\":\"^4.0.0\",\"cross-spawn\":\"^7.0.2\",\"debug\":\"^4.0.1\",\"doctrine\":\"^3.0.0\",\"enquirer\":\"^2.3.5\",\"eslint-scope\":\"^5.1.1\",\"eslint-utils\":\"^2.1.0\",\"eslint-visitor-keys\":\"^2.0.0\",\"espree\":\"^7.3.1\",\"esquery\":\"^1.2.0\",\"esutils\":\"^2.0.2\",\"file-entry-cache\":\"^6.0.0\",\"functional-red-black-tree\":\"^1.0.1\",\"glob-parent\":\"^5.0.0\",\"globals\":\"^12.1.0\",\"ignore\":\"^4.0.6\",\"import-fresh\":\"^3.0.0\",\"imurmurhash\":\"^0.1.4\",\"is-glob\":\"^4.0.0\",\"js-yaml\":\"^3.13.1\",\"json-stable-stringify-without-jsonify\":\"^1.0.1\",\"levn\":\"^0.4.1\",\"lodash\":\"^4.17.20\",\"minimatch\":\"^3.0.4\",\"natural-compare\":\"^1.4.0\",\"optionator\":\"^0.9.1\",\"progress\":\"^2.0.0\",\"regexpp\":\"^3.1.0\",\"semver\":\"^7.2.1\",\"strip-ansi\":\"^6.0.0\",\"strip-json-comments\":\"^3.1.0\",\"table\":\"^6.0.4\",\"text-table\":\"^0.2.0\",\"v8-compile-cache\":\"^2.0.3\"},\"devDependencies\":{\"@babel/core\":\"^7.4.3\",\"@babel/preset-env\":\"^7.4.3\",\"acorn\":\"^7.2.0\",\"babel-loader\":\"^8.0.5\",\"chai\":\"^4.0.1\",\"cheerio\":\"^0.22.0\",\"common-tags\":\"^1.8.0\",\"core-js\":\"^3.1.3\",\"dateformat\":\"^3.0.3\",\"ejs\":\"^3.0.2\",\"escape-string-regexp\":\"^3.0.0\",\"eslint\":\"file:.\",\"eslint-config-eslint\":\"file:packages/eslint-config-eslint\",\"eslint-plugin-eslint-plugin\":\"^2.2.1\",\"eslint-plugin-internal-rules\":\"file:tools/internal-rules\",\"eslint-plugin-jsdoc\":\"^22.1.0\",\"eslint-plugin-node\":\"^11.1.0\",\"eslint-release\":\"^2.0.0\",\"eslump\":\"^2.0.0\",\"esprima\":\"^4.0.1\",\"fs-teardown\":\"^0.1.0\",\"glob\":\"^7.1.6\",\"jsdoc\":\"^3.5.5\",\"karma\":\"^4.0.1\",\"karma-chrome-launcher\":\"^3.1.0\",\"karma-mocha\":\"^1.3.0\",\"karma-mocha-reporter\":\"^2.2.3\",\"karma-webpack\":\"^4.0.0-rc.6\",\"lint-staged\":\"^10.1.2\",\"load-perf\":\"^0.2.0\",\"markdownlint\":\"^0.19.0\",\"markdownlint-cli\":\"^0.22.0\",\"memfs\":\"^3.0.1\",\"mocha\":\"^7.1.1\",\"mocha-junit-reporter\":\"^1.23.0\",\"npm-license\":\"^0.3.3\",\"nyc\":\"^15.0.1\",\"proxyquire\":\"^2.0.1\",\"puppeteer\":\"^4.0.0\",\"recast\":\"^0.19.0\",\"regenerator-runtime\":\"^0.13.2\",\"shelljs\":\"^0.8.2\",\"sinon\":\"^9.0.1\",\"temp\":\"^0.9.0\",\"webpack\":\"^4.35.0\",\"webpack-cli\":\"^3.3.5\",\"yorkie\":\"^2.0.0\"},\"keywords\":[\"ast\",\"lint\",\"javascript\",\"ecmascript\",\"espree\"],\"license\":\"MIT\",\"engines\":{\"node\":\"^10.12.0 || >=12.0.0\"}}");
 
 /***/ }),
 /* 426 */
@@ -51213,7 +51220,7 @@ function resolveIds(schema) {
 /* 435 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/** @license URI.js v4.4.0 (c) 2011 Gary Court. License: http://github.com/garycourt/uri-js */
+/** @license URI.js v4.4.1 (c) 2011 Gary Court. License: http://github.com/garycourt/uri-js */
 (function (global, factory) {
    true ? factory(exports) : undefined;
 })(this, function (exports) {
@@ -85043,7 +85050,7 @@ module.exports = {
           const firstAlternateToken = sourceCode.getTokenAfter(colonToken);
           offsets.setDesiredOffset(questionMarkToken, firstToken, 1);
           offsets.setDesiredOffset(colonToken, firstToken, 1);
-          offsets.setDesiredOffset(firstConsequentToken, firstToken, options.offsetTernaryExpressions ? 2 : 1);
+          offsets.setDesiredOffset(firstConsequentToken, firstToken, firstConsequentToken.type === "Punctuator" && options.offsetTernaryExpressions ? 2 : 1);
           /*
            * The alternate and the consequent should usually have the same indentation.
            * If they share part of a line, align the alternate against the first token of the consequent.
@@ -101137,37 +101144,41 @@ module.exports = {
       ExportDefaultDeclaration: node => checkExpressionOrExportStatement(node.declaration),
       ExpressionStatement: node => checkExpressionOrExportStatement(node.expression),
 
-      "ForInStatement, ForOfStatement"(node) {
-        if (node.left.type !== "VariableDeclarator") {
+      ForInStatement(node) {
+        if (node.left.type !== "VariableDeclaration") {
           const firstLeftToken = sourceCode.getFirstToken(node.left, astUtils.isNotOpeningParenToken);
 
-          if (firstLeftToken.value === "let" && (
-          /*
-           * If `let` is the only thing on the left side of the loop, it's the loop variable: `for ((let) of foo);`
-           * Removing it will cause a syntax error, because it will be parsed as the start of a VariableDeclarator.
-           */
-          firstLeftToken.range[1] === node.left.range[1] ||
-          /*
-          * If `let` is followed by a `[` token, it's a property access on the `let` value: `for ((let[foo]) of bar);`
-          * Removing it will cause the property access to be parsed as a destructuring declaration of `foo` instead.
-          */
-          astUtils.isOpeningBracketToken(sourceCode.getTokenAfter(firstLeftToken, astUtils.isNotClosingParenToken)))) {
+          if (firstLeftToken.value === "let" && astUtils.isOpeningBracketToken(sourceCode.getTokenAfter(firstLeftToken, astUtils.isNotClosingParenToken))) {
+            // ForInStatement#left expression cannot start with `let[`.
             tokensToIgnore.add(firstLeftToken);
           }
         }
 
-        if (node.type === "ForOfStatement") {
-          const hasExtraParens = node.right.type === "SequenceExpression" ? hasDoubleExcessParens(node.right) : hasExcessParens(node.right);
+        if (hasExcessParens(node.left)) {
+          report(node.left);
+        }
 
-          if (hasExtraParens) {
-            report(node.right);
-          }
-        } else if (hasExcessParens(node.right)) {
+        if (hasExcessParens(node.right)) {
           report(node.right);
+        }
+      },
+
+      ForOfStatement(node) {
+        if (node.left.type !== "VariableDeclaration") {
+          const firstLeftToken = sourceCode.getFirstToken(node.left, astUtils.isNotOpeningParenToken);
+
+          if (firstLeftToken.value === "let") {
+            // ForOfStatement#left expression cannot start with `let`.
+            tokensToIgnore.add(firstLeftToken);
+          }
         }
 
         if (hasExcessParens(node.left)) {
           report(node.left);
+        }
+
+        if (hasExcessParensWithPrecedence(node.right, PRECEDENCE_OF_ASSIGNMENT_EXPR)) {
+          report(node.right);
         }
       },
 
@@ -102949,6 +102960,29 @@ module.exports = {
       return node && node.type === "Literal" && typeof node.value === "string";
     }
     /**
+     * Gets flags of a regular expression created by the given `RegExp()` or `new RegExp()` call
+     * Examples:
+     *     new RegExp(".")         // => ""
+     *     new RegExp(".", "gu")   // => "gu"
+     *     new RegExp(".", flags)  // => null
+     * @param {ASTNode} node `CallExpression` or `NewExpression` node
+     * @returns {string|null} flags if they can be determined, `null` otherwise
+     * @private
+     */
+
+
+    function getFlags(node) {
+      if (node.arguments.length < 2) {
+        return "";
+      }
+
+      if (isString(node.arguments[1])) {
+        return node.arguments[1].value;
+      }
+
+      return null;
+    }
+    /**
      * Check syntax error in a given pattern.
      * @param {string} pattern The RegExp pattern to validate.
      * @param {boolean} uFlag The Unicode flag.
@@ -102987,14 +103021,14 @@ module.exports = {
         }
 
         const pattern = node.arguments[0].value;
-        let flags = isString(node.arguments[1]) ? node.arguments[1].value : "";
+        let flags = getFlags(node);
 
-        if (allowedFlags) {
+        if (flags && allowedFlags) {
           flags = flags.replace(allowedFlags, "");
-        } // If flags are unknown, check both are errored or not.
+        }
 
-
-        const message = validateRegExpFlags(flags) || (flags ? validateRegExpPattern(pattern, flags.indexOf("u") !== -1) : validateRegExpPattern(pattern, true) && validateRegExpPattern(pattern, false));
+        const message = flags && validateRegExpFlags(flags) || ( // If flags are unknown, report the regex only if its pattern is invalid both with and without the "u" flag
+        flags === null ? validateRegExpPattern(pattern, true) && validateRegExpPattern(pattern, false) : validateRegExpPattern(pattern, flags.includes("u")));
 
         if (message) {
           context.report({
@@ -109792,7 +109826,8 @@ module.exports = {
       additionalProperties: false
     }],
     messages: {
-      noShadow: "'{{name}}' is already declared in the upper scope."
+      noShadow: "'{{name}}' is already declared in the upper scope on line {{shadowedLine}} column {{shadowedColumn}}.",
+      noShadowGlobal: "'{{name}}' is already a global variable."
     }
   },
 
@@ -109857,6 +109892,31 @@ module.exports = {
       return def && def.name.range;
     }
     /**
+     * Get declared line and column of a variable.
+     * @param {eslint-scope.Variable} variable The variable to get.
+     * @returns {Object} The declared line and column of the variable.
+     */
+
+
+    function getDeclaredLocation(variable) {
+      const identifier = variable.identifiers[0];
+      let obj;
+
+      if (identifier) {
+        obj = {
+          global: false,
+          line: identifier.loc.start.line,
+          column: identifier.loc.start.column + 1
+        };
+      } else {
+        obj = {
+          global: true
+        };
+      }
+
+      return obj;
+    }
+    /**
      * Checks if a variable is in TDZ of scopeVar.
      * @param {Object} variable The variable to check.
      * @param {Object} scopeVar The variable of TDZ.
@@ -109892,10 +109952,21 @@ module.exports = {
         const shadowed = astUtils.getVariableByName(scope.upper, variable.name);
 
         if (shadowed && (shadowed.identifiers.length > 0 || options.builtinGlobals && "writeable" in shadowed) && !isOnInitializer(variable, shadowed) && !(options.hoist !== "all" && isInTdz(variable, shadowed))) {
+          const location = getDeclaredLocation(shadowed);
+          const messageId = location.global ? "noShadowGlobal" : "noShadow";
+          const data = {
+            name: variable.name
+          };
+
+          if (!location.global) {
+            data.shadowedLine = location.line;
+            data.shadowedColumn = location.column;
+          }
+
           context.report({
             node: variable.identifiers[0],
-            messageId: "noShadow",
-            data: variable
+            messageId,
+            data
           });
         }
       }
@@ -114958,8 +115029,13 @@ module.exports = {
  * @author Kai Cataldo
  */
  //------------------------------------------------------------------------------
+// Requirements
+//------------------------------------------------------------------------------
+
+const astUtils = __webpack_require__(531); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
 
 module.exports = {
   meta: {
@@ -115007,12 +115083,11 @@ module.exports = {
      * Reports error for unnecessarily renamed assignments
      * @param {ASTNode} node node to report
      * @param {ASTNode} initial node with initial name value
-     * @param {ASTNode} result node with new name value
      * @param {string} type the type of the offending node
      * @returns {void}
      */
 
-    function reportError(node, initial, result, type) {
+    function reportError(node, initial, type) {
       const name = initial.type === "Identifier" ? initial.name : initial.value;
       return context.report({
         node,
@@ -115023,12 +115098,18 @@ module.exports = {
         },
 
         fix(fixer) {
-          if (sourceCode.commentsExistBetween(initial, result)) {
+          const replacementNode = node.type === "Property" ? node.value : node.local;
+
+          if (sourceCode.getCommentsInside(node).length > sourceCode.getCommentsInside(replacementNode).length) {
+            return null;
+          } // Don't autofix code such as `({foo: (foo) = a} = obj);`, parens are not allowed in shorthand properties.
+
+
+          if (replacementNode.type === "AssignmentPattern" && astUtils.isParenthesised(sourceCode, replacementNode.left)) {
             return null;
           }
 
-          const replacementText = result.type === "AssignmentPattern" ? sourceCode.getText(result) : name;
-          return fixer.replaceTextRange([initial.range[0], result.range[1]], replacementText);
+          return fixer.replaceText(node, sourceCode.getText(replacementNode));
         }
 
       });
@@ -115046,20 +115127,11 @@ module.exports = {
       }
 
       for (const property of node.properties) {
-        /*
-         * TODO: Remove after babel-eslint removes ExperimentalRestProperty
-         * https://github.com/eslint/eslint/issues/12335
-         */
-        if (property.type === "ExperimentalRestProperty") {
-          continue;
-        }
         /**
          * Properties using shorthand syntax and rest elements can not be renamed.
          * If the property is computed, we have no idea if a rename is useless or not.
          */
-
-
-        if (property.shorthand || property.type === "RestElement" || property.computed) {
+        if (property.type !== "Property" || property.shorthand || property.computed) {
           continue;
         }
 
@@ -115067,7 +115139,7 @@ module.exports = {
         const renamedKey = property.value.type === "AssignmentPattern" ? property.value.left.name : property.value.name;
 
         if (key === renamedKey) {
-          reportError(property, property.key, property.value, "Destructuring assignment");
+          reportError(property, property.key, "Destructuring assignment");
         }
       }
     }
@@ -115084,7 +115156,7 @@ module.exports = {
       }
 
       if (node.imported.name === node.local.name && node.imported.range[0] !== node.local.range[0]) {
-        reportError(node, node.imported, node.local, "Import");
+        reportError(node, node.imported, "Import");
       }
     }
     /**
@@ -115100,7 +115172,7 @@ module.exports = {
       }
 
       if (node.local.name === node.exported.name && node.local.range[0] !== node.exported.range[0]) {
-        reportError(node, node.local, node.exported, "Export");
+        reportError(node, node.local, "Export");
       }
     } //--------------------------------------------------------------------------
     // Public
@@ -119881,7 +119953,11 @@ module.exports = {
  * @fileoverview A rule to suggest using of const declaration for variables that are never reassigned after declared.
  * @author Toru Nagashima
  */
+ //------------------------------------------------------------------------------
+// Requirements
+//------------------------------------------------------------------------------
 
+const FixTracker = __webpack_require__(644);
 
 const astUtils = __webpack_require__(531); //------------------------------------------------------------------------------
 // Helpers
@@ -120300,7 +120376,16 @@ module.exports = {
             node,
             messageId: "useConst",
             data: node,
-            fix: shouldFix ? fixer => fixer.replaceText(sourceCode.getFirstToken(varDeclParent, t => t.value === varDeclParent.kind), "const") : null
+            fix: shouldFix ? fixer => {
+              const letKeywordToken = sourceCode.getFirstToken(varDeclParent, t => t.value === varDeclParent.kind);
+              /**
+               * Extend the replacement range to the whole declaration,
+               * in order to prevent other fixes in the same pass
+               * https://github.com/eslint/eslint/issues/13899
+               */
+
+              return new FixTracker(fixer, sourceCode).retainRange(varDeclParent.range).replaceTextRange(letKeywordToken.range, "const");
+            } : null
           });
         });
       }
@@ -125926,7 +126011,9 @@ module.exports = {
 
       if (nonSpacedConsequentNode) {
         report(node, nonSpacedConsequentNode);
-      } else if (nonSpacedAlternateNode) {
+      }
+
+      if (nonSpacedAlternateNode) {
         report(node, nonSpacedAlternateNode);
       }
     }
