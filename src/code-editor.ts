@@ -52,6 +52,11 @@ export class CodeEditor extends Disposable {
 		this.editor.getModel()?.dispose();
 		const uri = fileName !== undefined ? monaco.Uri.file(fileName) : undefined;
 		const model = monaco.editor.createModel(content, language, uri);
+		model.updateOptions({
+			insertSpaces: false,
+			tabSize: 4,
+			trimAutoWhitespace: true
+		});
 		this.editor.setModel(model);
 	}
 
