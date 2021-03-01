@@ -157,6 +157,7 @@ export class DebugContribution extends Disposable {
 				range: new monaco.Range(line, 1, line, 1),
 				options: {
 					glyphMarginClassName: breakPointMarginClassName,
+					glyphMarginHoverMessage: { value: "Breakpoint", isTrusted: true },
 					stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
 				}
 			}
