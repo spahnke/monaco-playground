@@ -135,6 +135,9 @@ export class PlaygroundContribution extends Disposable {
 			if (result === null) {
 				console.log("Open definition here...", input);
 				console.log("Corresponding model: ", monaco.editor.getModel(input.resource));
+				const messageController = source.getContribution<monaco.editor.IMessageController>("editor.contrib.messageController");
+				const position = source.getPosition() ?? { lineNumber: 1, column: 1 };
+				messageController.showMessage(`Cannot open resource '${input.resource.path}'. If possible, try using a 'peek' action instead.`, position);
 			}
 			return result; // always return the base result
 		};
