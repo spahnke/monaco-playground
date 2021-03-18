@@ -114,12 +114,12 @@ export class DebugContribution extends Disposable {
 	}
 
 	private onMouseDown = (e: monaco.editor.IEditorMouseEvent) => {
-		if (e.event.leftButton && e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN && e.target.position)
+		if (e.event.leftButton && e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN && e.target.position && !e.target.detail?.isAfterLines)
 			this.toggleBreakpoint(e.target.position.lineNumber);
 	};
 
 	private onMouseMove = (e: monaco.editor.IEditorMouseEvent) => {
-		if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN && e.target.position)
+		if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN && e.target.position && !e.target.detail?.isAfterLines)
 			this.showBreakpointPreview(e.target.position.lineNumber);
 		else
 			this.hideBreakpointPreview();
