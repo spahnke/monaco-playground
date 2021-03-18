@@ -10,7 +10,7 @@
 		"prebuild": "npm run copyconfigs && npm run copymonaco",
 		"build": "rollup -c",
 		"dev": "npm run prebuild && rollup -c -w",
-		"serve": "http-server -c-1 -p 9000 wwwroot"
+		"serve": "serve -p 9000 wwwroot"
 	},
 	"keywords": [],
 	"author": "",
@@ -19,9 +19,9 @@
 		"@rollup/plugin-typescript": "^8.2.0",
 		"@types/eslint": "^7.2.7",
 		"@types/estree": "0.0.46",
-		"http-server": "^0.12.3",
 		"monaco-editor": "^0.23.0",
 		"rollup": "^2.41.2",
+		"serve": "^11.3.2",
 		"tslib": "^2.1.0",
 		"typescript": "^4.2.3"
 	}

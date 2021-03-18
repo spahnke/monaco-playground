@@ -102,8 +102,9 @@
 					"regexp": ""
 				},
 				"background": {
-					"beginsPattern": "^Starting up",
-					"endsPattern": "^Available on"
+					"activeOnStart": true,
+					"beginsPattern": "@@@@@@@@", // impossible pattern
+					"endsPattern": "Serving!"
 				}
 			}
 		}
