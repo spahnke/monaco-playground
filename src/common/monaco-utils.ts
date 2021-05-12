@@ -41,39 +41,6 @@ export function addTemplates(language: string, templates: ITemplate[]): monaco.I
 	return monaco.languages.registerCompletionItemProvider(language, new SnippetCompletionProvider(new InMemorySnippetService(templates)));
 }
 
-export function usuallyProducesCharacter(keyCode: monaco.KeyCode): boolean {
-	if (keyCode >= monaco.KeyCode.KEY_0 && keyCode <= monaco.KeyCode.KEY_9) {
-		return true;
-	}
-	if (keyCode >= monaco.KeyCode.NUMPAD_0 && keyCode <= monaco.KeyCode.NUMPAD_9) {
-		return true;
-	}
-	if (keyCode >= monaco.KeyCode.KEY_A && keyCode <= monaco.KeyCode.KEY_Z) {
-		return true;
-	}
-	switch (keyCode) {
-		// case monaco.KeyCode.Tab:
-		case monaco.KeyCode.Enter:
-		case monaco.KeyCode.Space:
-		case monaco.KeyCode.Delete:
-		case monaco.KeyCode.US_SEMICOLON:
-		case monaco.KeyCode.US_EQUAL:
-		case monaco.KeyCode.US_COMMA:
-		case monaco.KeyCode.US_MINUS:
-		case monaco.KeyCode.US_DOT:
-		case monaco.KeyCode.US_SLASH:
-		case monaco.KeyCode.US_BACKTICK:
-		case monaco.KeyCode.US_OPEN_SQUARE_BRACKET:
-		case monaco.KeyCode.US_BACKSLASH:
-		case monaco.KeyCode.US_CLOSE_SQUARE_BRACKET:
-		case monaco.KeyCode.US_QUOTE:
-		case monaco.KeyCode.OEM_8:
-		case monaco.KeyCode.OEM_102:
-			return true;
-	}
-	return false;
-}
-
 /** CAUTION: Internal unofficial API (see IEncodedLineTokens in monaco.d.ts) */
 enum StandardTokenType {
 	Other = 0,

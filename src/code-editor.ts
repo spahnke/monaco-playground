@@ -1,13 +1,11 @@
 ﻿import { Disposable } from "./common/disposable.js";
-import { addLibrary, ILibrary, usuallyProducesCharacter } from "./common/monaco-utils.js";
+import { addLibrary, ILibrary } from "./common/monaco-utils.js";
 import { MonacoLoader } from "./monaco-loader.js";
 
 let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
 let editorZoom: monaco.editor.IEditorZoom;
 
 export class CodeEditor extends Disposable {
-	private readonlyHandler: monaco.IDisposable | undefined;
-
 	static async create(element: HTMLElement, language?: string): Promise<CodeEditor> {
 		await MonacoLoader.loadEditor();
 		ContextKeyExpr = await MonacoLoader.ContextKeyExpr;
@@ -44,7 +42,6 @@ export class CodeEditor extends Disposable {
 	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor) {
 		super();
 		this.editor = editor;
-		this.addReadonlyHandling();
 		this.patchKeybindings();
 	}
 
@@ -166,33 +163,8 @@ export class CodeEditor extends Disposable {
 
 	dispose() {
 		super.dispose();
-		this.readonlyHandler?.dispose();
 		this.editor.getModel()?.dispose();
 		this.editor.dispose();
-	}
-
-	private addReadonlyHandling() {
-		// needed because of https://github.com/microsoft/monaco-editor/issues/1873
-		this.createOrDestroyReadonlyHandler();
-		this.register(this.editor.onDidChangeConfiguration(e => {
-			if (e.hasChanged(monaco.editor.EditorOption.readOnly)) {
-				this.createOrDestroyReadonlyHandler();
-			}
-		}));
-	}
-
-	private createOrDestroyReadonlyHandler() {
-		if (this.isReadonly()) {
-			this.readonlyHandler = this.editor.onKeyDown(e => {
-				if (!e.ctrlKey && !e.altKey && !e.metaKey) {
-					if (usuallyProducesCharacter(e.keyCode)) {
-						this.editor.trigger("", "type", { text: "nothing" });
-					}
-				}
-			});
-		} else {
-			this.readonlyHandler?.dispose();
-		}
 	}
 
 	private patchKeybindings() {
