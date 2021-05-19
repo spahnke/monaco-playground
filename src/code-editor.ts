@@ -138,12 +138,29 @@ export class CodeEditor extends Disposable {
 		this.editor.trigger("zoom", "editor.action.fontZoomReset", null);
 	}
 
-	format() {
+	format(): Promise<void> {
 		const selection = this.editor.getSelection();
 		if (selection === null || selection.isEmpty())
-			this.editor.trigger("format", "editor.action.formatDocument", null);
-		else
-			this.editor.trigger("format", "editor.action.formatSelection", null);
+			return this.editor.getAction("editor.action.formatDocument").run();
+		return this.editor.getAction("editor.action.formatSelection").run();
+	}
+
+	/**
+	 * Returns `true` as soon as a formatting provider is ready. If no formatting provider is registered within 2 seconds the method returns `false`.
+	 */
+	async waitOnFormattingProvider(): Promise<boolean> {
+		const action = this.editor.getAction("editor.action.formatDocument");
+		if (action.isSupported())
+			return true;
+
+		const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+		let remainingIterations = 20;
+		while (remainingIterations-- > 0) {
+			await sleep(100);
+			if (action.isSupported())
+				return true;
+		}
+		return false;
 	}
 
 	getCurrentWord(): string | undefined {
