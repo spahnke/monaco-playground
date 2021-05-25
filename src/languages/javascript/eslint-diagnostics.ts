@@ -157,7 +157,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	 * Creates a new config where all "info" and "hint" level severities are replaced by "warn".
 	 */
 	private createEsLintCompatibleConfig(): Linter.Config<Linter.RulesRecord> {
-		const compatConfig = JSON.parse(JSON.stringify(this.config)) ?? {};
+		const compatConfig = (JSON.parse(JSON.stringify(this.config)) ?? {}) as Linter.Config<Linter.RulesRecord>;
 		for (const ruleId in compatConfig.rules) {
 			const rule = compatConfig.rules[ruleId];
 			if (rule === undefined)
