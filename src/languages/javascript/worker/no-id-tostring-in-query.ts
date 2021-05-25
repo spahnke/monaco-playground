@@ -1,5 +1,5 @@
 import { Linter, Rule } from "eslint";
-import { CallExpression, Identifier, Literal, Node, SourceLocation, TemplateElement, VariableDeclarator } from "estree";
+import { CallExpression, Identifier, Literal, SourceLocation, TemplateElement, VariableDeclarator } from "estree";
 
 export const ruleId = "no-id-tostring-in-query";
 
@@ -10,34 +10,29 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 
 	create(context: Rule.RuleContext): Rule.RuleListener {
 		return {
-			Literal: (node: Node) => {
-				this.checkStringLiteral(context, node as Literal);
-			},
-			TemplateElement: (node: Node) => {
-				this.checkStringLiteral(context, node as TemplateElement);
-			},
-			Identifier: (node: Node) => {
-				const identifier = node as Identifier;
-				let parent: Node = (identifier as any).parent;
+			Literal: node => this.checkStringLiteral(context, node),
+			TemplateElement: node => this.checkStringLiteral(context, node),
+			Identifier: node => {
+				let parent = node.parent;
 				while (parent) {
 					if (parent.type === "CallExpression" && this.isQuery(parent)) {
-						this.reportVariable(context, identifier);
+						this.reportVariable(context, node);
 						return;
 					}
-					parent = (parent as any).parent;
+					parent = parent.parent;
 				}
 			}
 		};
 	}
 
-	private checkStringLiteral(context: Rule.RuleContext, literal: Literal | TemplateElement) {
-		let parent: Node = (literal as any).parent;
+	private checkStringLiteral(context: Rule.RuleContext, literal: (Literal | TemplateElement) & Rule.NodeParentExtension) {
+		let parent = literal.parent;
 		while (parent) {
 			if (parent.type === "CallExpression" && this.isQuery(parent)) {
 				this.reportStringLiteral(context, literal);
 				return;
 			}
-			parent = (parent as any).parent;
+			parent = parent.parent;
 		}
 	}
 
@@ -105,14 +100,9 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 			return undefined;
 
 		const definition = variable.defs[0];
-		if (!definition)
+		if (definition?.type !== "Variable")
 			return undefined;
-
-		const declarator = definition.node as Node;
-		if (declarator.type !== "VariableDeclarator")
-			return undefined;
-
-		return declarator;
+		return definition.node;
 	}
 
 	private getDiagnostic(node: Literal | TemplateElement, loc?: SourceLocation): Rule.ReportDescriptor {
