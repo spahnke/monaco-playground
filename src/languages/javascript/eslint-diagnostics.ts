@@ -102,7 +102,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				},
 				isPreferred: !rulesWithoutAutofixes.includes(ruleId),
 				kind: "quickfix",
-			}
+			};
 		});
 	}
 
@@ -120,7 +120,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 					return {
 						edit,
 						resource: model.uri
-					}
+					};
 				}),
 			},
 			isPreferred: false,
@@ -229,11 +229,11 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		if (diagnostic.ruleId === null)
 			return false;
 
-		const rule = this.config.rules[diagnostic.ruleId]
+		const rule = this.config.rules[diagnostic.ruleId];
 		if (rule === undefined)
 			return false;
 		if (Array.isArray(rule))
-			return (rule[0] as ExtendedRuleLevel) === severity
+			return (rule[0] as ExtendedRuleLevel) === severity;
 		return (rule as ExtendedRuleLevel) === severity;
 	}
 
