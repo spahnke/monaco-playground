@@ -28,12 +28,13 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			}
 
 			const markers = await this.getDiagnostics(resource);
-			if (!monaco.editor.getModel(resource)) {
+			const model = monaco.editor.getModel(resource);
+			if (!model) {
 				// model was disposed in the meantime
 				return;
 			}
 
-			monaco.editor.setModelMarkers(monaco.editor.getModel(resource)!, this.owner, markers);
+			monaco.editor.setModelMarkers(model, this.owner, markers);
 		} catch (e) {
 			console.error(e);
 		}
@@ -55,13 +56,14 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		if (lintDiagnostics.length === 1 && lintDiagnostics[0].fatal)
 			return [this.transformDiagnostic(lintDiagnostics[0])];
 
-		if (!monaco.editor.getModel(resource)) {
+		const model = monaco.editor.getModel(resource);
+		if (!model) {
 			// model was disposed in the meantime
 			return [];
 		}
 
 		this.currentFixes.clear();
-		return lintDiagnostics.map(x => this.createMarkerData(monaco.editor.getModel(resource)!, x));
+		return lintDiagnostics.map(x => this.createMarkerData(model, x));
 	}
 
 	private getEslintWorker(): Promise<EsLintWorker> {
