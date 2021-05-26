@@ -178,7 +178,7 @@ export class CodeEditor extends Disposable {
 		this.register(addLibrary(library));
 	}
 
-	dispose() {
+	override dispose() {
 		super.dispose();
 		this.editor.getModel()?.dispose();
 		this.editor.dispose();

@@ -94,7 +94,7 @@ export class DebugContribution extends Disposable {
 		this.currentDebugLineDecorations = [];
 	}
 
-	dispose() {
+	override dispose() {
 		this.removeDebugLine();
 		this.hideBreakpointPreview();
 		for (const breakpoint of this.breakpointDecorations.values())
