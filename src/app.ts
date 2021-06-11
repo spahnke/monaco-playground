@@ -34,11 +34,19 @@ declare class Facts {
 	constructor() {
 		this.bar = 42;
 	}
+
+	/**
+	 * @deprecated Use \`bar\` instead
+	 */
+	baz() {
+		return this.bar;
+	}
 }
 
 const text = 'asdf';
 const foo = new Foo();
 foo.bar = Facts.next();
+foo.baz();
 `, undefined, "script.js");
 }
 
