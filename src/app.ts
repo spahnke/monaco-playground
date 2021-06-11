@@ -41,12 +41,21 @@ declare class Facts {
 	baz() {
 		return this.bar;
 	}
+
+	/**
+	 * @param {Date} a Parameter test for \`qux\`
+	 * @returns Returns the passed parameter \`a\` again
+	 */
+	qux(a) {
+		return a;
+	}
 }
 
 const text = 'asdf';
 const foo = new Foo();
 foo.bar = Facts.next();
 foo.baz();
+foo.qux(new Date());
 `, undefined, "script.js");
 }
 
