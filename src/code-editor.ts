@@ -16,7 +16,7 @@ export class CodeEditor extends Disposable {
 			fontSize: 13,
 			formatOnPaste: true,
 			formatOnType: true,
-			inlineHints: {
+			inlayHints: {
 				enabled: true,
 			},
 			language,
@@ -33,6 +33,8 @@ export class CodeEditor extends Disposable {
 			showDeprecated: true,
 			showUnused: true,
 			suggest: {
+				preview: true,
+				showDeprecated: false,
 				showStatusBar: true,
 			},
 			theme: "vs",
