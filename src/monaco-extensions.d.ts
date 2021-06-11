@@ -133,6 +133,18 @@ declare namespace monaco {
 	 		 * Text editor selection.
 	 		 */
 			readonly selection?: monaco.IRange;
+
+			/**
+			 * A optional hint to signal in which context the editor opens.
+			 *
+			 * If configured to be `EditorOpenContext.USER`, this hint can be
+			 * used in various places to control the experience. For example,
+			 * if the editor to open fails with an error, a notification could
+			 * inform about this in a modal dialog. If the editor opened through
+			 * some background task, the notification would show in the background,
+			 * not as a modal dialog.
+			 */
+			readonly context?: number;
 		}
 	}
 

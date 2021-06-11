@@ -1,5 +1,5 @@
 import { Disposable } from "../common/disposable.js";
-import { getKeybindings } from "../common/monaco-utils.js";
+import { EditorOpenContext, getKeybindings } from "../common/monaco-utils.js";
 import { allowTopLevelReturn, enableJavaScriptBrowserCompletion } from "../languages/javascript/javascript-extensions.js";
 import { CodeEditor } from "../code-editor.js";
 
@@ -139,9 +139,17 @@ export class PlaygroundContribution extends Disposable {
 			if (result === null) {
 				console.log("Open definition here...", input);
 				console.log("Corresponding model: ", monaco.editor.getModel(input.resource));
-				const messageController = source.getContribution<monaco.editor.IMessageController>("editor.contrib.messageController");
-				const position = source.getPosition() ?? { lineNumber: 1, column: 1 };
-				messageController.showMessage(`Cannot open resource '${input.resource.path}'. If possible, try using a 'peek' action instead.`, position);
+				const peekDefinitionAction = source.getAction("editor.action.peekDefinition");
+				if (input.options?.context !== EditorOpenContext.USER && peekDefinitionAction?.isSupported()) {
+					// We get here if a go to definition action failed (i.e. it's a programmatic call that tried to open another model).
+					// In that case we try using a peek definition instead to reduce the number of cases where an error message is shown.
+					peekDefinitionAction.run();
+				} else {
+					// We get here in all other cases and show an error message (e.g. if a user clicks on a link inside a JS error message "x was also defined here").
+					const messageController = source.getContribution<monaco.editor.IMessageController>("editor.contrib.messageController");
+					const position = source.getPosition() ?? { lineNumber: 1, column: 1 };
+					messageController.showMessage(`Cannot open resource '${input.resource.path}'. If possible, try using a 'peek' action instead.`, position);
+				}
 			}
 			return result; // always return the base result
 		};
