@@ -5,6 +5,8 @@ import { ruleId as noIdToStringRuleId } from "./worker/no-id-tostring-in-query.j
 
 type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
 
+const markerSource = "ESLint";
+
 const rulesWithoutAutofixes = [noIdToStringRuleId];
 const rulesWithoutLinks = [noIdToStringRuleId];
 const reportsUnnecessary = ["no-unused-vars"];
@@ -18,7 +20,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private currentFixes: Map<string, monaco.languages.TextEdit[]> = new Map();
 
 	constructor(private configPath: string) {
-		super("javascript", "ESLint");
+		super("javascript", markerSource);
 	}
 
 	protected async doValidate(resource: monaco.Uri): Promise<void> {
@@ -150,6 +152,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private getRuleId(marker: monaco.editor.IMarkerData): string | undefined {
+		if (marker.source !== markerSource)
+			return undefined;
 		return typeof marker.code === "string" ? marker.code : marker.code?.value;
 	}
 
