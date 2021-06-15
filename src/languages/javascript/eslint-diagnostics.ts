@@ -125,7 +125,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 					};
 				}),
 			},
-			isPreferred: false,
+			isPreferred: true,
 			kind: "quickfix",
 		}];
 	}
