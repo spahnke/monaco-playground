@@ -20,9 +20,9 @@
 		"@types/eslint": "^7.2.13",
 		"@types/estree": "0.0.48",
 		"monaco-editor": "^0.25.1",
-		"rollup": "^2.52.0",
+		"rollup": "^2.52.1",
 		"serve": "^12.0.0",
 		"tslib": "^2.3.0",
-		"typescript": "^4.3.2"
+		"typescript": "^4.3.3"
 	}
 }
