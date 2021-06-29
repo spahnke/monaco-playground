@@ -34,7 +34,7 @@ export class CodeEditor extends Disposable {
 			showUnused: true,
 			suggest: {
 				preview: true,
-				showDeprecated: false,
+				showDeprecated: true,
 				showStatusBar: true,
 			},
 			theme: "vs",
