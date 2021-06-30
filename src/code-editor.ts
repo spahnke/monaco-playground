@@ -5,6 +5,38 @@ import { MonacoLoader } from "./monaco-loader.js";
 let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
 let editorZoom: monaco.editor.IEditorZoom;
 
+class LocalStorageEditorConfiguration implements monaco.IDisposable {
+	constructor(private readonly editor: monaco.editor.IEditor) {
+		window.addEventListener("storage", this.storageEventHandler);
+		this.updateConfiguration();
+	}
+
+	dispose() {
+		window.removeEventListener("storage", this.storageEventHandler);
+	}
+
+	private get localStorageKey() {
+		return "monaco-config";
+	}
+
+	private storageEventHandler = (e: StorageEvent) => {
+		if (e.key === this.localStorageKey)
+			this.updateConfiguration();
+	}
+
+	private updateConfiguration() {
+		const rawConfig = localStorage.getItem(this.localStorageKey);
+		if (rawConfig === null)
+			return;
+		try {
+			const config = JSON.parse(rawConfig) as monaco.editor.IEditorOptions;
+			this.editor.updateOptions(config);
+		} catch {
+			console.warn("[Monaco] Couldn't parse editor configuration");
+		}
+	}
+}
+
 export class CodeEditor extends Disposable {
 	static async create(element: HTMLElement, language?: string): Promise<CodeEditor> {
 		await MonacoLoader.loadEditor();
@@ -46,6 +78,7 @@ export class CodeEditor extends Disposable {
 	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor) {
 		super();
 		this.editor = editor;
+		this.register(new LocalStorageEditorConfiguration(editor));
 		this.patchKeybindings();
 	}
 
