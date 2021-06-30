@@ -1,5 +1,6 @@
 ﻿import { JsonSnippetService } from "../../common/json-snippet-service.js";
 import { SnippetCompletionProvider } from "../../common/snippet-completion-provider.js";
+import { eslintEnabled, semanticDiagnosticsEnabled, strictDiagnosticsEnabled, suggestionDiagnosticsEnabled } from "../../feature-flags.js";
 import { EsLintDiagnostics } from "./eslint-diagnostics.js";
 
 export function registerJavascriptLanguageExtensions() {
@@ -8,7 +9,8 @@ export function registerJavascriptLanguageExtensions() {
 		setDiagnosticOptions();
 
 		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("languages/javascript/snippets.json")));
-		monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("languages/javascript/eslintrc.json"));
+		if (eslintEnabled)
+			monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("languages/javascript/eslintrc.json"));
 	});
 }
 
@@ -20,7 +22,7 @@ function setCompilerOptions(libs?: string[]): void {
 		checkJs: true,
 		allowJs: true,
 		allowNonTsExtensions: true, // not documented in the typings but important to get syntax/semantic validation working
-		strict: localStorage.getItem("monaco-strict") !== null,
+		strict: strictDiagnosticsEnabled,
 	};
 	monaco.languages.typescript.typescriptDefaults.setCompilerOptions(options);
 	monaco.languages.typescript.javascriptDefaults.setCompilerOptions(options);
@@ -29,8 +31,8 @@ function setCompilerOptions(libs?: string[]): void {
 function setDiagnosticOptions(codesToIgnore?: number[]): void {
 	const options: monaco.languages.typescript.DiagnosticsOptions = {
 		noSyntaxValidation: false,
-		noSemanticValidation: localStorage.getItem("monaco-no-semantic") !== null,
-		noSuggestionDiagnostics: localStorage.getItem("monaco-no-suggestion") !== null,
+		noSemanticValidation: !semanticDiagnosticsEnabled,
+		noSuggestionDiagnostics: !suggestionDiagnosticsEnabled,
 		diagnosticCodesToIgnore: codesToIgnore
 	};
 	monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(options);
