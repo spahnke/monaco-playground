@@ -13,6 +13,8 @@ export class CodeEditor extends Disposable {
 		return new CodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
 			fixedOverflowWidgets: true,
+			fontFamily: "Consolas, Menlo, Monaco, 'Courier New', monospace",
+			fontLigatures: true,
 			fontSize: 13,
 			formatOnPaste: true,
 			formatOnType: true,
