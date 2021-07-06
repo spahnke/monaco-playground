@@ -1,0 +1,46 @@
+{
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"project": "src/tsconfig.json",
+		"sourceType": "module"
+	},
+	"plugins": [
+		"@typescript-eslint"
+	],
+	"rules": {
+		"curly": ["warn", "multi-or-nest", "consistent"],
+		"eqeqeq": "warn",
+		"no-caller": "warn",
+		"no-debugger": "warn",
+		"no-duplicate-case": "warn",
+		"no-duplicate-imports": "warn",
+		"no-eval": "warn",
+		"no-extra-semi": "warn",
+		"no-new-wrappers": "warn",
+		"no-sparse-arrays": "warn",
+		"no-throw-literal": "warn",
+		"no-unsafe-finally": "warn",
+		"no-unused-labels": "warn",
+		"no-var": "warn",
+		"prefer-const": "warn",
+		"quotes": [
+			"warn",
+			"double",
+			{
+				"allowTemplateLiterals": true,
+				"avoidEscape": true
+			}
+		],
+		"semi": "off",
+		"@typescript-eslint/semi": "warn",
+		"@typescript-eslint/naming-convention": [
+			"warn",
+			{
+				"selector": "typeLike",
+				"format": [
+					"PascalCase"
+				]
+			}
+		]
+	}
+}
