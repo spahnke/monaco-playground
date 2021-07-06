@@ -86,9 +86,8 @@ export class SnippetCompletionProvider implements monaco.languages.CompletionIte
 				// at a word
 				lineOffsets.push(word.startColumn - 1);
 				pos.column = word.endColumn + 1;
-				if (word.endColumn - 1 < linePrefixLow.length && !/\s/.test(linePrefixLow[word.endColumn - 1])) {
+				if (word.endColumn - 1 < linePrefixLow.length && !/\s/.test(linePrefixLow[word.endColumn - 1]))
 					lineOffsets.push(word.endColumn - 1);
-				}
 			}
 			else if (!/\s/.test(linePrefixLow[pos.column - 1])) {
 				// at a none-whitespace character
@@ -129,9 +128,8 @@ export class SnippetCompletionProvider implements monaco.languages.CompletionIte
 
 	private isPatternInWord(patternLow: string, patternPos: number, patternLen: number, wordLow: string, wordPos: number, wordLen: number): boolean {
 		while (patternPos < patternLen && wordPos < wordLen) {
-			if (patternLow[patternPos] === wordLow[wordPos]) {
+			if (patternLow[patternPos] === wordLow[wordPos])
 				patternPos += 1;
-			}
 			wordPos += 1;
 		}
 		return patternPos === patternLen; // pattern must be exhausted

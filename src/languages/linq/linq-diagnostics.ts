@@ -8,9 +8,8 @@ export class LinqDiagnostics extends DiagnosticsAdapter {
 		try {
 			const tableAndViewNames = await this.getTableAndViewNames();
 			const model = monaco.editor.getModel(resource);
-			if (!model) {
+			if (!model)
 				return;
-			}
 			monaco.editor.setModelMarkers(model, this.languageId, this.getDiagnostics(model, tableAndViewNames));
 		} catch (e) {
 			console.error(e);

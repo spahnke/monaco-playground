@@ -6,16 +6,14 @@ interface LinqInformation {
 }
 
 export function isTableOrViewIdentifier(document: monaco.editor.ITextModel, position: monaco.Position, context ?: monaco.languages.CompletionContext): boolean {
-	if (context && context.triggerCharacter === "@") {
+	if (context && context.triggerCharacter === "@")
 		return true;
-	}
 
 	if (position.column > 1) {
 		let startIndex = position.column - 1;
 		const currentWord = document.getWordAtPosition(position);
-		if (currentWord && currentWord.startColumn > 1) {
+		if (currentWord && currentWord.startColumn > 1)
 			startIndex = currentWord.startColumn - 1;
-		}
 		const lineContent = document.getLineContent(position.lineNumber);
 		return lineContent[startIndex - 1] === "@";
 	}
@@ -35,9 +33,8 @@ export class LinqCompletionProvider implements monaco.languages.CompletionItemPr
 	}
 
 	public static async getLinqInformation(): Promise<LinqInformation[]> {
-		if (LinqCompletionProvider.linqInformation === null) {
+		if (LinqCompletionProvider.linqInformation === null)
 			LinqCompletionProvider.linqInformation = [{ tableOrViewName: "User", isTable: true }, { tableOrViewName: "AccountView", isTable: false }];
-		}
 		return LinqCompletionProvider.linqInformation;
 	}
 
@@ -52,9 +49,8 @@ export class LinqCompletionProvider implements monaco.languages.CompletionItemPr
 			endColumn: word.endColumn
 		};
 
-		if (isTableOrViewIdentifier(model, position, context)) {
+		if (isTableOrViewIdentifier(model, position, context))
 			return this.getTablesAndViews(range);
-		}
 
 		return Promise.resolve(this.getKeywords(range));
 	}
