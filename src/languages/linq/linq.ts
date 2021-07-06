@@ -6,7 +6,7 @@ import { LinqHoverProvider } from "./linq-hover-provider.js";
 import { languageConfig, languageId, monarchTokenProvider } from "./linq-language.js";
 import { LinqDiagnostics } from "./linq-diagnostics.js";
 
-export function registerLinq() {
+export function registerLinq(): void {
 	monaco.languages.register({ id: languageId });
 	monaco.languages.onLanguage(languageId, () => {
 		monaco.languages.setLanguageConfiguration(languageId, languageConfig);

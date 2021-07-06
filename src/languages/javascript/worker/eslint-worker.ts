@@ -30,6 +30,6 @@ interface ICreateData {
 	config: Linter.Config<Linter.RulesRecord>;
 }
 
-export function create(context: monaco.worker.IWorkerContext, createData: ICreateData) {
+export function create(context: monaco.worker.IWorkerContext, createData: ICreateData): EsLintWorker {
 	return new EsLintWorker(context, createData.config);
 }

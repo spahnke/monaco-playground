@@ -106,11 +106,12 @@ export async function isInComment(model: monaco.editor.ITextModel, range: monaco
 	return tokenType === StandardTokenType.Comment;
 }
 
+type Keybinding = { command: string; keybinding?: string, when?: string; };
+
 /**
  * CAUTION: Uses an internal API to get a list of all keybindings sorted by command/action name.
  */
-export function getKeybindings(editor: monaco.editor.IStandaloneCodeEditor) {
-	type Keybinding = { command: string; keybinding?: string, when?: string };
+export function getKeybindings(editor: monaco.editor.IStandaloneCodeEditor): Keybinding[] {
 
 	const keybindings = editor._standaloneKeybindingService._getResolver()._keybindings.map(x => (<Keybinding>{
 		command: x.command,

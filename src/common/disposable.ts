@@ -10,7 +10,7 @@ export class Disposable implements monaco.IDisposable {
 		return disposable;
 	}
 
-	dispose() {
+	dispose(): void {
 		for (const disposable of this.disposables)
 			disposable.dispose();
 		this.disposables.clear();

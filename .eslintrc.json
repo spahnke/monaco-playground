@@ -35,8 +35,9 @@
 				"avoidEscape": true
 			}
 		],
-		"semi": "off",
-		"@typescript-eslint/semi": "warn",
+		"semi": "off", // off because we use the typescript-eslint variant
+
+		"@typescript-eslint/explicit-module-boundary-types": "warn",
 		"@typescript-eslint/naming-convention": [
 			"warn",
 			{
@@ -45,6 +46,7 @@
 					"PascalCase"
 				]
 			}
-		]
+		],
+		"@typescript-eslint/semi": "warn"
 	}
 }

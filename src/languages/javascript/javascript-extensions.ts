@@ -3,7 +3,7 @@ import { SnippetCompletionProvider } from "../../common/snippet-completion-provi
 import { eslintEnabled, semanticDiagnosticsEnabled, strictDiagnosticsEnabled, suggestionDiagnosticsEnabled } from "../../feature-flags.js";
 import { EsLintDiagnostics } from "./eslint-diagnostics.js";
 
-export function registerJavascriptLanguageExtensions() {
+export function registerJavascriptLanguageExtensions(): void {
 	monaco.languages.onLanguage("javascript", () => {
 		setCompilerOptions(["esnext"]);
 		setDiagnosticOptions();

@@ -4,7 +4,7 @@ import { CallExpression, Identifier, Literal, SourceLocation, TemplateElement, V
 export const ruleId = "no-id-tostring-in-query";
 
 export class NoIdToStringInQuery implements Rule.RuleModule {
-	static register(linter: Linter) {
+	static register(linter: Linter): void {
 		linter.defineRule(ruleId, new NoIdToStringInQuery());
 	}
 

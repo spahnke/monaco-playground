@@ -81,7 +81,7 @@ export class CodeEditor extends Disposable {
 		this.patchKeybindings();
 	}
 
-	setContents(content: string, language?: string, fileName?: string) {
+	setContents(content: string, language?: string, fileName?: string): void {
 		this.editor.getModel()?.dispose();
 		const uri = fileName !== undefined ? monaco.Uri.file(fileName) : undefined;
 		const model = monaco.editor.createModel(content, language, uri);
@@ -93,7 +93,7 @@ export class CodeEditor extends Disposable {
 		this.editor.setModel(model);
 	}
 
-	appendLine(line?: string) {
+	appendLine(line?: string): void {
 		const model = this.editor.getModel();
 		if (model === null)
 			return;
@@ -107,11 +107,11 @@ export class CodeEditor extends Disposable {
 		return this.editor.getValue();
 	}
 
-	focus() {
+	focus(): void {
 		this.editor.focus();
 	}
 
-	setReadonly(value: boolean) {
+	setReadonly(value: boolean): void {
 		this.editor.updateOptions({
 			readOnly: value,
 			lightbulb: { enabled: !value }, // because of https://github.com/microsoft/monaco-editor/issues/1596
@@ -129,7 +129,7 @@ export class CodeEditor extends Disposable {
 		return this.editor.getModel()?.getValueInRange(selection);
 	}
 
-	replaceSelectedText(newText: string) {
+	replaceSelectedText(newText: string): void {
 		const selection = this.editor.getSelection();
 		if (newText !== null && selection !== null)
 			this.editor.executeEdits("replace", [{ range: selection, text: newText }]);
@@ -140,7 +140,7 @@ export class CodeEditor extends Disposable {
 		return position?.lineNumber;
 	}
 
-	gotoLine(line: number) {
+	gotoLine(line: number): void {
 		this.editor.setPosition({ lineNumber: line, column: 1 });
 		this.editor.revealLineInCenterIfOutsideViewport(line);
 	}
@@ -152,7 +152,7 @@ export class CodeEditor extends Disposable {
 		return this.editor.getModel()?.getOffsetAt(position);
 	}
 
-	gotoOffset(offset: number) {
+	gotoOffset(offset: number): void {
 		const model = this.editor.getModel();
 		if (model === null)
 			return;
@@ -161,15 +161,15 @@ export class CodeEditor extends Disposable {
 		this.editor.revealPositionInCenterIfOutsideViewport(position);
 	}
 
-	zoomIn() {
+	zoomIn(): void {
 		this.editor.trigger("zoom", "editor.action.fontZoomIn", null);
 	}
 
-	zoomOut() {
+	zoomOut(): void {
 		this.editor.trigger("zoom", "editor.action.fontZoomOut", null);
 	}
 
-	resetZoom() {
+	resetZoom(): void {
 		console.log(editorZoom);
 		this.editor.trigger("zoom", "editor.action.fontZoomReset", null);
 	}
@@ -206,15 +206,15 @@ export class CodeEditor extends Disposable {
 		return this.editor.getModel()?.getWordAtPosition(position)?.word;
 	}
 
-	addChangeListener(listener: () => void) {
+	addChangeListener(listener: () => void): void {
 		this.editor.onDidChangeModelContent(e => listener());
 	}
 
-	addLibrary(library: ILibrary) {
+	addLibrary(library: ILibrary): void {
 		this.register(addLibrary(library));
 	}
 
-	override dispose() {
+	override dispose(): void {
 		super.dispose();
 		this.editor.getModel()?.dispose();
 		this.editor.dispose();

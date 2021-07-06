@@ -1,6 +1,6 @@
 ﻿export class LinqFormatter implements monaco.languages.DocumentFormattingEditProvider {
 
-	provideDocumentFormattingEdits(model: monaco.editor.ITextModel, options: monaco.languages.FormattingOptions, token: monaco.CancellationToken) {
+	provideDocumentFormattingEdits(model: monaco.editor.ITextModel, options: monaco.languages.FormattingOptions, token: monaco.CancellationToken): monaco.languages.TextEdit[] {
         const textEdit: monaco.languages.TextEdit = {
             range: model.getFullModelRange(),
             text: LinqFormatter.formatLinqExpression(model.getValue())
