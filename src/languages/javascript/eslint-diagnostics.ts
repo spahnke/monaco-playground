@@ -1,4 +1,4 @@
-﻿import { Linter, Rule } from "eslint";
+import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 import { ruleId as noIdToStringRuleId } from "./worker/no-id-tostring-in-query.js";
@@ -14,7 +14,7 @@ const markerSource = "ESLint";
 
 const rulesWithoutAutofixes = [noIdToStringRuleId]; // TODO can we get rid of this? -> maybe if we generate a suggestion in the LINQ rule instead of a fix
 const rulesWithoutLinks = [noIdToStringRuleId]; // TODO can we get rid of this, or make this more intuitive?
-const reportsUnnecessary = ["no-unused-vars"]; // TODO can we get rid of this special case?
+const reportsUnnecessary = ["no-unused-vars"];
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
@@ -216,18 +216,13 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private transformSeverity(diagnostic: Linter.LintMessage): monaco.MarkerSeverity {
-		// TODO can we get rid of this special case and just configure the rule as hint?
-		if (diagnostic.ruleId !== null && reportsUnnecessary.includes(diagnostic.ruleId))
-			return monaco.MarkerSeverity.Hint; // rules that reports unnecessary code (rendered with lower opacity) have to have a Hint level severity
 		if (diagnostic.severity === 2)
 			return monaco.MarkerSeverity.Error;
 		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "info"))
 			return monaco.MarkerSeverity.Info;
 		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "hint"))
 			return monaco.MarkerSeverity.Hint;
-		if (diagnostic.severity === 1)
 			return monaco.MarkerSeverity.Warning;
-		return monaco.MarkerSeverity.Hint;
 	}
 
 	/**
