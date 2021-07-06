@@ -83,7 +83,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		this.config = await fetch(this.configPath).then(r => r.json());
 		this.worker = monaco.editor.createWebWorker<EsLintWorker>({
 			moduleId: "/worker/eslint-worker",
-			label: "ESLint",
+			label: markerSource,
 			createData: { config: this.createEsLintCompatibleConfig() }
 		});
 		this.register(this.worker);
@@ -197,7 +197,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			startColumn: diagnostic.column,
 			endLineNumber: diagnostic.endLine ?? diagnostic.line,
 			endColumn: diagnostic.endColumn ?? diagnostic.column,
-			source: "ESLint",
+			source: markerSource,
 			severity: this.transformSeverity(diagnostic),
 			code: this.transformCode(diagnostic),
 			tags: diagnostic.ruleId !== null && reportsUnnecessary.includes(diagnostic.ruleId) ? [monaco.MarkerTag.Unnecessary] : []
