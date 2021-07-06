@@ -1,4 +1,4 @@
-import { Linter, Rule } from "eslint";
+﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 import { ruleId as noIdToStringRuleId } from "./worker/no-id-tostring-in-query.js";
@@ -222,23 +222,16 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			return monaco.MarkerSeverity.Info;
 		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "hint"))
 			return monaco.MarkerSeverity.Hint;
-			return monaco.MarkerSeverity.Warning;
+		return monaco.MarkerSeverity.Warning;
 	}
 
 	/**
 	 * Checks if a normally "warn" level diagnostic is really an "info" or "hint" level diagnostic.
 	 */
 	private isInfoOrHint(diagnostic: Linter.LintMessage, severity: "info" | "hint"): boolean {
-		if (this.config === undefined)
+		if (diagnostic.severity !== 1 || diagnostic.ruleId === null)
 			return false;
-		if (diagnostic.severity !== 1)
-			return false;
-		if (this.config.rules === undefined)
-			return false;
-		if (diagnostic.ruleId === null)
-			return false;
-
-		const rule = this.config.rules[diagnostic.ruleId];
+		const rule = this.config?.rules?.[diagnostic.ruleId];
 		if (rule === undefined)
 			return false;
 		if (Array.isArray(rule))
