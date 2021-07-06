@@ -72,7 +72,7 @@ export const monarchTokenProvider: TokenProvider = {
 	],
 
 	// we include these common regular expressions
-	symbols: /[=><!~?:&|+\-*\/\^%]+/,
+	symbols: /[=><!~?:&|+\-*/^%]+/,
 
 	// C# style strings
 	escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
@@ -88,13 +88,13 @@ export const monarchTokenProvider: TokenProvider = {
 					"@default": "identifier"
 				}
 			}],
-			[/[A-Z][\w\$]*/, "type.identifier"],  // to show class names nicely
+			[/[A-Z][\w$]*/, "type.identifier"],  // to show class names nicely
 
 			// whitespace
 			{ include: "@whitespace" },
 
 			// delimiters and operators
-			[/[{}()\[\]]/, "@brackets"],
+			[/[{}()[\]]/, "@brackets"],
 			[/[<>](?!@symbols)/, "@brackets"],
 			[/@symbols/, {
 				cases: {
@@ -107,7 +107,7 @@ export const monarchTokenProvider: TokenProvider = {
 			[/@[A-Z]\w*/, "type.identifier"],
 
 			// numbers
-			[/\d*\.\d+([eE][\-+]?\d+)?/, "number.float"],
+			[/\d*\.\d+([eE][-+]?\d+)?/, "number.float"],
 			[/0[xX][0-9a-fA-F]+/, "number.hex"],
 			[/\d+/, "number"],
 
@@ -125,10 +125,10 @@ export const monarchTokenProvider: TokenProvider = {
 		],
 
 		comment: [
-			[/[^\/*]+/, "comment"],
+			[/[^/*]+/, "comment"],
 			[/\/\*/, "comment", "@push"],    // nested comment
 			[/\*\//, "comment", "@pop"],
-			[/[\/*]/, "comment"]
+			[/[/*]/, "comment"]
 		],
 
 		string: [
