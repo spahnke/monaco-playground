@@ -22,7 +22,7 @@ class LocalStorageEditorConfiguration implements monaco.IDisposable {
 	private storageEventHandler = (e: StorageEvent) => {
 		if (e.key === this.localStorageKey)
 			this.updateConfiguration();
-	}
+	};
 
 	private updateConfiguration() {
 		const rawConfig = localStorage.getItem(this.localStorageKey);

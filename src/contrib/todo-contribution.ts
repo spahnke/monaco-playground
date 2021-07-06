@@ -34,7 +34,7 @@ export class TodoContribution extends DiagnosticsAdapter {
 					},
 					stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
 				}
-			})
+			});
 		}
 
 		this.currentDecorations.set(resource, model.deltaDecorations(this.currentDecorations.get(resource) ?? [], decorations));

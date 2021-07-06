@@ -68,7 +68,7 @@ export class LinqCompletionProvider implements monaco.languages.CompletionItemPr
 				insertText: x.tableOrViewName,
 				range,
 				documentation: getTableOrViewDocumentation(x),
-			}
+			};
 			return result;
 		});
 		return { suggestions };
@@ -81,7 +81,7 @@ export class LinqCompletionProvider implements monaco.languages.CompletionItemPr
 				kind: monaco.languages.CompletionItemKind.Keyword,
 				insertText: x,
 				range,
-			}
+			};
 			return result;
 		});
 		return { suggestions };
