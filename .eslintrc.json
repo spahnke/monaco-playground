@@ -17,6 +17,7 @@
 		"no-eval": "warn",
 		"no-extra-semi": "warn",
 		"no-invalid-regexp": "warn",
+		"no-irregular-whitespace": "warn",
 		"no-new-wrappers": "warn",
 		"no-sparse-arrays": "warn",
 		"no-throw-literal": "warn",
