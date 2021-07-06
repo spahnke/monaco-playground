@@ -110,7 +110,7 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 			message: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
 			node,
 			loc,
-			fix: fixer => this.applyFix(fixer, node, loc)
+			fix: fixer => this.applyFix(fixer, node, loc) // TODO use a suggestion instead
 		};
 	}
 

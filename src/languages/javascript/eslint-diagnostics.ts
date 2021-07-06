@@ -4,11 +4,16 @@ import { EsLintWorker } from "./worker/eslint-worker.js";
 import { ruleId as noIdToStringRuleId } from "./worker/no-id-tostring-in-query.js";
 
 type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
+type Fix = {
+	description: string;
+	textEdit: monaco.languages.TextEdit;
+	autoFixAvailable: boolean;
+};
 
 const markerSource = "ESLint";
 
-const rulesWithoutAutofixes = [noIdToStringRuleId];
-const rulesWithoutLinks = [noIdToStringRuleId];
+const rulesWithoutAutofixes = [noIdToStringRuleId]; // TODO can we get rid of this? -> maybe if we generate a suggestion in the LINQ rule instead of a fix
+const rulesWithoutLinks = [noIdToStringRuleId]; // TODO can we get rid of this, or make this more intuitive?
 const reportsUnnecessary = ["no-unused-vars"];
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
@@ -17,7 +22,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private config: Linter.Config<Linter.RulesRecord> | undefined;
 	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
 	private clientPromise: Promise<EsLintWorker> | undefined;
-	private currentFixes: Map<string, monaco.languages.TextEdit[]> = new Map();
+	private currentFixes: Map<string, Fix[]> = new Map();
 
 	constructor(private configPath: string) {
 		super("javascript", markerSource);
@@ -90,18 +95,18 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		if (ruleId === undefined || !this.currentFixes.has(ruleId))
 			return [];
 
-		const edits = this.currentFixes.get(ruleId)!.filter(edit => monaco.Range.areIntersectingOrTouching(range, edit.range));
-		return edits.map(edit => {
+		const fixes = this.currentFixes.get(ruleId)!.filter(fix => monaco.Range.areIntersectingOrTouching(range, fix.textEdit.range));
+		return fixes.map(fix => {
 			return {
-				title: `Fix '${marker.message}'`,
+				title: fix.description,
 				diagnostics: [marker],
 				edit: {
 					edits: [{
-						edit,
+						edit: fix.textEdit,
 						resource: model.uri,
 					}],
 				},
-				isPreferred: !rulesWithoutAutofixes.includes(ruleId),
+				isPreferred: fix.autoFixAvailable,
 				kind: "quickfix",
 			};
 		});
@@ -109,17 +114,20 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, markers: monaco.editor.IMarkerData[]): monaco.languages.CodeAction[] {
 		const ruleId = this.getRuleId(marker);
-		if (ruleId === undefined || !this.currentFixes.has(ruleId) || rulesWithoutAutofixes.includes(ruleId))
+		if (ruleId === undefined || !this.currentFixes.has(ruleId))
 			return [];
 
-		const edits = this.currentFixes.get(ruleId)!;
+		const fixes = this.currentFixes.get(ruleId)!.filter(fix => fix.autoFixAvailable);
+		if (fixes.length === 0)
+			return [];
+
 		return [{
 			title: `Fix all '${marker.message}'`,
 			diagnostics: markers.filter(x => x.code === ruleId),
 			edit: {
-				edits: edits.map(edit => {
+				edits: fixes.map(fix => {
 					return {
-						edit,
+						edit: fix.textEdit,
 						resource: model.uri
 					};
 				}),
@@ -176,7 +184,9 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private createMarkerData(model: monaco.editor.ITextModel, diagnostic: Linter.LintMessage): monaco.editor.IMarkerData {
 		const marker = this.transformDiagnostic(diagnostic);
 		if (diagnostic.fix)
-			this.registerFix(model, diagnostic.fix, marker);
+			this.registerFixOrSuggestion(model, diagnostic.fix, marker);
+		for (const suggestion of diagnostic.suggestions ?? [])
+			this.registerFixOrSuggestion(model, suggestion, marker);
 		return marker;
 	}
 
@@ -240,20 +250,40 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return (rule as ExtendedRuleLevel) === severity;
 	}
 
-	private registerFix(model: monaco.editor.ITextModel, fix: Rule.Fix, marker: monaco.editor.IMarkerData): void {
+	private registerFixOrSuggestion(model: monaco.editor.ITextModel, fixOrSuggestion: Rule.Fix | Linter.LintSuggestion, marker: monaco.editor.IMarkerData): void {
 		const ruleId = this.getRuleId(marker);
 		if (ruleId === undefined)
 			return;
 
-		const start = model.getPositionAt(fix.range[0]);
-		const end = model.getPositionAt(fix.range[1]);
-		const textEdit: monaco.languages.TextEdit = {
+		if (!this.currentFixes.has(ruleId))
+			this.currentFixes.set(ruleId, []);
+		this.currentFixes.get(ruleId)!.push(this.toFix(model, fixOrSuggestion, marker, ruleId));
+	}
+
+	private toFix(model: monaco.editor.ITextModel, fixOrSuggestion: Rule.Fix | Linter.LintSuggestion, marker: monaco.editor.IMarkerData, ruleId: string): Fix {
+		// const isSuggestion = "desc" in fixOrSuggestion; // TODO use this when TS 4.4 is released
+		if ("desc" in fixOrSuggestion) {
+			return {
+				description: fixOrSuggestion.desc,
+				textEdit: this.toTextEdit(model, fixOrSuggestion.fix),
+				autoFixAvailable: false,
+			};
+		} else {
+			return {
+				description: `Fix '${marker.message}'`,
+				textEdit: this.toTextEdit(model, fixOrSuggestion),
+				autoFixAvailable: !rulesWithoutAutofixes.includes(ruleId),
+			};
+		}
+	}
+
+	private toTextEdit(model: monaco.editor.ITextModel, fix: Rule.Fix): monaco.languages.TextEdit {
+		const [startOffset, endOffset] = fix.range;
+		const start = model.getPositionAt(startOffset);
+		const end = model.getPositionAt(endOffset);
+		return {
 			range: monaco.Range.fromPositions(start, end),
 			text: fix.text
 		};
-		if (!this.currentFixes.has(ruleId))
-			this.currentFixes.set(ruleId, [textEdit]);
-		else
-			this.currentFixes.get(ruleId)!.push(textEdit);
 	}
 }

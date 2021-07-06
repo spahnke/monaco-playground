@@ -51,6 +51,8 @@ declare class Facts {
 	}
 }
 
+"foob\\ar";
+
 const text = 'asdf';
 const foo = new Foo();
 foo.bar = Facts.next();

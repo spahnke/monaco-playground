@@ -10,6 +10,7 @@
 		"init-declarations": "info",
 		"no-id-tostring-in-query": "warn",
 		"no-unused-vars": "hint",
+		"no-useless-escape": "warn",
 		"no-var": "info",
 		"prefer-const": "info",
 		"quotes": [
