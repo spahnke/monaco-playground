@@ -204,7 +204,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		};
 	}
 
-	private transformCode(diagnostic: Linter.LintMessage): string | { value: string; target: monaco.Uri; } | undefined {
+	private transformCode(diagnostic: Linter.LintMessage): string | { value: string; target: monaco.Uri; } {
 		if (!diagnostic.ruleId)
 			return "";
 		if (rulesWithoutLinks.includes(diagnostic.ruleId))
