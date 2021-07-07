@@ -12,7 +12,6 @@ type Fix = {
 
 const markerSource = "ESLint";
 
-const rulesWithoutLinks = [noIdToStringRuleId]; // TODO can we get rid of this, or make this more intuitive?
 const reportsUnnecessary = ["no-unused-vars"];
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
@@ -22,6 +21,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
 	private clientPromise: Promise<EsLintWorker> | undefined;
 	private currentFixes: Map<string, Fix[]> = new Map();
+	private ruleToUrlMapping: Map<string, string> | undefined;
 
 	constructor(private configPath: string) {
 		super("javascript", markerSource);
@@ -68,6 +68,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		}
 
 		this.currentFixes.clear();
+		if (this.ruleToUrlMapping === undefined)
+			this.ruleToUrlMapping = await client.getRuleToUrlMapping();
 		return lintDiagnostics.map(x => this.createMarkerData(model, x));
 	}
 
@@ -206,11 +208,12 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private transformCode(diagnostic: Linter.LintMessage): string | { value: string; target: monaco.Uri; } {
 		if (!diagnostic.ruleId)
 			return "";
-		if (rulesWithoutLinks.includes(diagnostic.ruleId))
+		const url = this.ruleToUrlMapping?.get(diagnostic.ruleId);
+		if (!url)
 			return diagnostic.ruleId;
 		return {
 			value: diagnostic.ruleId,
-			target: monaco.Uri.parse(`https://eslint.org/docs/rules/${diagnostic.ruleId}`)
+			target: monaco.Uri.parse(url)
 		};
 	}
 

@@ -18,6 +18,16 @@ export class EsLintWorker {
 		NoIdToStringInQuery.register(this.linter);
 	}
 
+	async getRuleToUrlMapping(): Promise<Map<string, string>> {
+		const ruleToUrlMapping = new Map<string, string>();
+		for (const [ruleId, ruleData] of this.linter.getRules()) {
+			const url = ruleData.meta?.docs?.url;
+			if (url)
+				ruleToUrlMapping.set(ruleId, url);
+		}
+		return ruleToUrlMapping;
+	}
+
 	async lint(fileName: string): Promise<Linter.LintMessage[]> {
 		const model = this.context.getMirrorModels().find(m => m.uri.toString() === fileName);
 		if (model === undefined)
