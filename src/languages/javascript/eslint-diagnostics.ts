@@ -12,7 +12,6 @@ type Fix = {
 
 const markerSource = "ESLint";
 
-const rulesWithoutAutofixes = [noIdToStringRuleId]; // TODO can we get rid of this? -> maybe if we generate a suggestion in the LINQ rule instead of a fix
 const rulesWithoutLinks = [noIdToStringRuleId]; // TODO can we get rid of this, or make this more intuitive?
 const reportsUnnecessary = ["no-unused-vars"];
 
@@ -261,7 +260,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			return {
 				description: `Fix '${marker.message}'`,
 				textEdit: this.toTextEdit(model, fixOrSuggestion),
-				autoFixAvailable: !rulesWithoutAutofixes.includes(ruleId),
+				autoFixAvailable: true,
 			};
 		}
 	}
