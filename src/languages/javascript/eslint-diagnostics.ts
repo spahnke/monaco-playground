@@ -245,10 +245,10 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 		if (!this.currentFixes.has(ruleId))
 			this.currentFixes.set(ruleId, []);
-		this.currentFixes.get(ruleId)!.push(this.toFix(model, fixOrSuggestion, marker, ruleId));
+		this.currentFixes.get(ruleId)!.push(this.toFix(model, fixOrSuggestion, marker));
 	}
 
-	private toFix(model: monaco.editor.ITextModel, fixOrSuggestion: Rule.Fix | Linter.LintSuggestion, marker: monaco.editor.IMarkerData, ruleId: string): Fix {
+	private toFix(model: monaco.editor.ITextModel, fixOrSuggestion: Rule.Fix | Linter.LintSuggestion, marker: monaco.editor.IMarkerData): Fix {
 		// const isSuggestion = "desc" in fixOrSuggestion; // TODO use this when TS 4.4 is released
 		if ("desc" in fixOrSuggestion) {
 			return {
