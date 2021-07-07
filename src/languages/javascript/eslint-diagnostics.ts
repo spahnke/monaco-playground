@@ -12,8 +12,6 @@ type Fix = {
 
 const markerSource = "ESLint";
 
-const reportsUnnecessary = ["no-unused-vars"];
-
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
@@ -201,7 +199,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			source: markerSource,
 			severity: this.transformSeverity(diagnostic),
 			code: this.transformCode(diagnostic),
-			tags: diagnostic.ruleId !== null && reportsUnnecessary.includes(diagnostic.ruleId) ? [monaco.MarkerTag.Unnecessary] : []
+			tags: diagnostic.ruleId === "no-unused-vars" ? [monaco.MarkerTag.Unnecessary] : []
 		};
 	}
 
