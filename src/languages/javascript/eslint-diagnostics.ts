@@ -9,7 +9,7 @@ type Fix = {
 	autoFixAvailable: boolean;
 };
 
-const markerSource = "ESLint";
+const markerSource = "eslint";
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
