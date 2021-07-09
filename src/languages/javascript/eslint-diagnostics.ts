@@ -18,6 +18,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
 	private clientPromise: Promise<EsLintWorker> | undefined;
 	private currentFixes: Map<string, Fix[]> = new Map();
+	private currentDiagnostics: Linter.LintMessage[] = [];
 	private ruleToUrlMapping: Map<string, string> | undefined;
 
 	constructor(private configPath: string) {
@@ -43,6 +44,10 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeActionList {
+		this.currentFixes.clear();
+		for (const diagnostic of this.currentDiagnostics)
+			this.registerFixesAndSuggestions(model, diagnostic);
+
 		const codeActions: monaco.languages.CodeAction[] = [];
 		for (const marker of context.markers) {
 			const ruleId = this.getRuleId(marker);
@@ -61,23 +66,11 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		if (this.ruleToUrlMapping === undefined)
 			this.ruleToUrlMapping = await client.getRuleToUrlMapping();
 
-		const lintDiagnostics = await client.lint(resource.toString());
-		if (lintDiagnostics.length === 1 && lintDiagnostics[0].fatal)
-			return [this.toMarkerData(lintDiagnostics[0])];
+		this.currentDiagnostics = await client.lint(resource.toString());
+		if (this.currentDiagnostics.length === 1 && this.currentDiagnostics[0].fatal)
+			return [this.toMarkerData(this.currentDiagnostics[0])];
 
-		const model = monaco.editor.getModel(resource);
-		if (!model) {
-			// model was disposed in the meantime
-			return [];
-		}
-
-		this.currentFixes.clear();
-		const markers: monaco.editor.IMarkerData[] = [];
-		for (const diagnostic of lintDiagnostics) {
-			markers.push(this.toMarkerData(diagnostic));
-			this.registerFixesAndSuggestions(model, diagnostic);
-		}
-		return markers;
+		return this.currentDiagnostics.map(d => this.toMarkerData(d));
 	}
 
 	private getEslintWorker(): Promise<EsLintWorker> {
