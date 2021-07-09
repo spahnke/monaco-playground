@@ -1,4 +1,4 @@
-import { Linter, Rule } from "eslint";
+﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 
@@ -72,7 +72,12 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		}
 
 		this.currentFixes.clear();
-		return lintDiagnostics.map(x => this.createMarkerData(model, x));
+		const markers: monaco.editor.IMarkerData[] = [];
+		for (const diagnostic of lintDiagnostics) {
+			markers.push(this.toMarkerData(diagnostic));
+			this.registerFixesAndSuggestions(model, diagnostic);
+		}
+		return markers;
 	}
 
 	private getEslintWorker(): Promise<EsLintWorker> {
@@ -172,15 +177,6 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return compatConfig;
 	}
 
-	private createMarkerData(model: monaco.editor.ITextModel, diagnostic: Linter.LintMessage): monaco.editor.IMarkerData {
-		const marker = this.toMarkerData(diagnostic);
-		if (diagnostic.fix)
-			this.registerFixOrSuggestion(model, diagnostic.fix, marker);
-		for (const suggestion of diagnostic.suggestions ?? [])
-			this.registerFixOrSuggestion(model, suggestion, marker);
-		return marker;
-	}
-
 	private toMarkerData(diagnostic: Linter.LintMessage): monaco.editor.IMarkerData {
 		return {
 			message: diagnostic.message,
@@ -231,30 +227,31 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return (rule as ExtendedRuleLevel) === severity;
 	}
 
-	private registerFixOrSuggestion(model: monaco.editor.ITextModel, fixOrSuggestion: Rule.Fix | Linter.LintSuggestion, marker: monaco.editor.IMarkerData): void {
-		const ruleId = this.getRuleId(marker);
-		if (ruleId === undefined)
+	private registerFixesAndSuggestions(model: monaco.editor.ITextModel, diagnostic: Linter.LintMessage) {
+		if (!diagnostic.ruleId)
 			return;
 
-		if (!this.currentFixes.has(ruleId))
-			this.currentFixes.set(ruleId, []);
-		this.currentFixes.get(ruleId)!.push(this.toFix(model, fixOrSuggestion, marker));
-	}
+		let fixes = this.currentFixes.get(diagnostic.ruleId);
+		if (fixes === undefined) {
+			fixes = [];
+			this.currentFixes.set(diagnostic.ruleId, fixes);
+		}
 
-	private toFix(model: monaco.editor.ITextModel, fixOrSuggestion: Rule.Fix | Linter.LintSuggestion, marker: monaco.editor.IMarkerData): Fix {
-		// const isSuggestion = "desc" in fixOrSuggestion; // TODO use this when TS 4.4 is released
-		if ("desc" in fixOrSuggestion) {
-			return {
-				description: fixOrSuggestion.desc,
-				textEdit: this.toTextEdit(model, fixOrSuggestion.fix),
-				autoFixAvailable: false,
-			};
-		} else {
-			return {
-				description: `Fix '${marker.message}'`,
-				textEdit: this.toTextEdit(model, fixOrSuggestion),
+		if (diagnostic.fix) {
+			fixes.push({
+				description: `Fix '${diagnostic.message}'`,
+				textEdit: this.toTextEdit(model, diagnostic.fix),
 				autoFixAvailable: true,
-			};
+			});
+		}
+		if (diagnostic.suggestions) {
+			for (const suggestion of diagnostic.suggestions) {
+				fixes.push({
+					description: suggestion.desc,
+					textEdit: this.toTextEdit(model, suggestion.fix),
+					autoFixAvailable: false,
+				});
+			}
 		}
 	}
 
