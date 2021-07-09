@@ -59,6 +59,12 @@ foo.bar = Facts.next();
 foo.baz();
 foo.qux(new Date());
 `, undefined, "script.js");
+
+	editor.addLibrary({
+		contents: `const abc = 1;`,
+		filePath: "library.js",
+		language: "javascript"
+	});
 }
 
 main();
