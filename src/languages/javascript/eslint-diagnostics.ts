@@ -53,15 +53,15 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeActionList {
-		const currentFixes = this.computeCurrentFixes(model);
+		const fixes = this.computeFixes(model);
 		const codeActions: monaco.languages.CodeAction[] = [];
 		for (const marker of context.markers) {
 			const ruleId = this.getRuleId(marker);
 			if (ruleId === undefined)
 				continue;
-			const fixes = currentFixes.get(ruleId) ?? [];
-			codeActions.push(...this.getFixCodeActions(model, range, marker, fixes));
-			codeActions.push(...this.getFixAllCodeActions(model, range, marker, fixes.filter(fix => fix.autoFixAvailable)));
+			const ruleFixes = fixes.get(ruleId) ?? [];
+			codeActions.push(...this.getFixCodeActions(model, range, marker, ruleFixes));
+			codeActions.push(...this.getFixAllCodeActions(model, range, marker, ruleFixes.filter(fix => fix.autoFixAvailable)));
 			codeActions.push(...this.getDisableRuleCodeActions(model, range, marker, ruleId));
 		}
 		return { actions: codeActions, dispose: () => { } };
@@ -219,20 +219,20 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return (rule as ExtendedRuleLevel) === severity;
 	}
 
-	private computeCurrentFixes(model: monaco.editor.ITextModel): Map<string, Fix[]> {
-		const currentFixes: Map<string, Fix[]> = new Map();
+	private computeFixes(model: monaco.editor.ITextModel): Map<string, Fix[]> {
+		const fixes: Map<string, Fix[]> = new Map();
 		for (const diagnostic of this.diagnostics.get(model.uri)) {
 			if (!diagnostic.ruleId)
 				continue;
 
-			let fixes = currentFixes.get(diagnostic.ruleId);
-			if (fixes === undefined) {
-				fixes = [];
-				currentFixes.set(diagnostic.ruleId, fixes);
+			let ruleFixes = fixes.get(diagnostic.ruleId);
+			if (ruleFixes === undefined) {
+				ruleFixes = [];
+				fixes.set(diagnostic.ruleId, ruleFixes);
 			}
 
 			if (diagnostic.fix) {
-				fixes.push({
+				ruleFixes.push({
 					description: `Fix '${diagnostic.message}'`,
 					textEdit: this.toTextEdit(model, diagnostic.fix),
 					autoFixAvailable: true,
@@ -240,7 +240,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			}
 			if (diagnostic.suggestions) {
 				for (const suggestion of diagnostic.suggestions) {
-					fixes.push({
+					ruleFixes.push({
 						description: suggestion.desc,
 						textEdit: this.toTextEdit(model, suggestion.fix),
 						autoFixAvailable: false,
@@ -248,7 +248,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				}
 			}
 		}
-		return currentFixes;
+		return fixes;
 	}
 
 	private toTextEdit(model: monaco.editor.ITextModel, fix: Rule.Fix): monaco.languages.TextEdit {
