@@ -28,7 +28,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
 	private clientPromise: Promise<EsLintWorker> | undefined;
 	private ruleToUrlMapping: Map<string, string> | undefined;
-	private currentDiagnostics = new DiagnosticContainer();
+	private diagnostics = new DiagnosticContainer();
 
 	constructor(private configPath: string) {
 		super("javascript", "eslint");
@@ -46,7 +46,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				return;
 			}
 
-			monaco.editor.setModelMarkers(model, this.owner, this.currentDiagnostics.get(resource).map(d => this.toMarkerData(d)));
+			monaco.editor.setModelMarkers(model, this.owner, this.diagnostics.get(resource).map(d => this.toMarkerData(d)));
 		} catch (e) {
 			console.error(e);
 		}
@@ -71,7 +71,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		const client = await this.getEslintWorker();
 		if (this.ruleToUrlMapping === undefined)
 			this.ruleToUrlMapping = await client.getRuleToUrlMapping();
-		this.currentDiagnostics.set(resource, await client.lint(resource.toString()));
+		this.diagnostics.set(resource, await client.lint(resource.toString()));
 	}
 
 	private getEslintWorker(): Promise<EsLintWorker> {
@@ -221,7 +221,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	private computeCurrentFixes(model: monaco.editor.ITextModel): Map<string, Fix[]> {
 		const currentFixes: Map<string, Fix[]> = new Map();
-		for (const diagnostic of this.currentDiagnostics.get(model.uri)) {
+		for (const diagnostic of this.diagnostics.get(model.uri)) {
 			if (!diagnostic.ruleId)
 				continue;
 
