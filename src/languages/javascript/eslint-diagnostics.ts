@@ -45,9 +45,12 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeActionList {
 		const codeActions: monaco.languages.CodeAction[] = [];
 		for (const marker of context.markers) {
-			codeActions.push(...this.getFixCodeActions(model, range, marker));
-			codeActions.push(...this.getFixAllCodeActions(model, range, marker, context.markers));
-			codeActions.push(...this.getDisableRuleCodeActions(model, range, marker));
+			const ruleId = this.getRuleId(marker);
+			if (ruleId === undefined)
+				continue;
+			codeActions.push(...this.getFixCodeActions(model, range, ruleId, marker));
+			codeActions.push(...this.getFixAllCodeActions(model, range, ruleId, marker, context.markers));
+			codeActions.push(...this.getDisableRuleCodeActions(model, range, ruleId, marker));
 		}
 		return { actions: codeActions, dispose: () => { } };
 	}
@@ -90,12 +93,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return this.worker.getProxy();
 	}
 
-	private getFixCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData): monaco.languages.CodeAction[] {
-		const ruleId = this.getRuleId(marker);
-		if (ruleId === undefined || !this.currentFixes.has(ruleId))
-			return [];
-
-		const fixes = this.currentFixes.get(ruleId)!.filter(fix => monaco.Range.areIntersectingOrTouching(range, fix.textEdit.range));
+	private getFixCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, ruleId: string, marker: monaco.editor.IMarkerData): monaco.languages.CodeAction[] {
+		const fixes = this.currentFixes.get(ruleId)?.filter(fix => monaco.Range.areIntersectingOrTouching(range, fix.textEdit.range)) ?? [];
 		return fixes.map(fix => {
 			return {
 				title: fix.description,
@@ -112,12 +111,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		});
 	}
 
-	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, markers: monaco.editor.IMarkerData[]): monaco.languages.CodeAction[] {
-		const ruleId = this.getRuleId(marker);
-		if (ruleId === undefined || !this.currentFixes.has(ruleId))
-			return [];
-
-		const fixes = this.currentFixes.get(ruleId)!.filter(fix => fix.autoFixAvailable);
+	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, ruleId: string, marker: monaco.editor.IMarkerData, markers: monaco.editor.IMarkerData[]): monaco.languages.CodeAction[] {
+		const fixes = this.currentFixes.get(ruleId)?.filter(fix => fix.autoFixAvailable) ?? [];
 		if (fixes.length === 0)
 			return [];
 
@@ -137,11 +132,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		}];
 	}
 
-	private getDisableRuleCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData): monaco.languages.CodeAction[] {
-		const ruleId = this.getRuleId(marker);
-		if (!ruleId)
-			return [];
-
+	private getDisableRuleCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, ruleId: string, marker: monaco.editor.IMarkerData): monaco.languages.CodeAction[] {
 		return [
 			{
 				title: `Disable rule '${ruleId}'`,
