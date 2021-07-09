@@ -9,8 +9,6 @@ type Fix = {
 	autoFixAvailable: boolean;
 };
 
-const markerSource = "eslint";
-
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
@@ -22,7 +20,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private ruleToUrlMapping: Map<string, string> | undefined;
 
 	constructor(private configPath: string) {
-		super("javascript", markerSource);
+		super("javascript", "eslint");
 	}
 
 	protected async doValidate(resource: monaco.Uri): Promise<void> {
@@ -78,7 +76,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		this.config = await fetch(this.configPath).then(r => r.json());
 		this.worker = monaco.editor.createWebWorker<EsLintWorker>({
 			moduleId: "/worker/eslint-worker",
-			label: markerSource,
+			label: this.owner,
 			createData: { config: this.createEsLintCompatibleConfig() }
 		});
 		this.register(this.worker);
@@ -142,7 +140,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private getRuleId(marker: monaco.editor.IMarkerData): string | undefined {
-		if (marker.source !== markerSource)
+		if (marker.source !== this.owner)
 			return undefined;
 		return typeof marker.code === "string" ? marker.code : marker.code?.value;
 	}
@@ -171,7 +169,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			startColumn: diagnostic.column,
 			endLineNumber: diagnostic.endLine ?? diagnostic.line,
 			endColumn: diagnostic.endColumn ?? diagnostic.column,
-			source: markerSource,
+			source: this.owner,
 			severity: this.toSeverity(diagnostic),
 			code: this.toCode(diagnostic),
 			tags: diagnostic.ruleId === "no-unused-vars" ? [monaco.MarkerTag.Unnecessary] : []
