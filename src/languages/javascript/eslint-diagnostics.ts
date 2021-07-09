@@ -15,9 +15,9 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private config: Linter.Config<Linter.RulesRecord> | undefined;
 	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
 	private clientPromise: Promise<EsLintWorker> | undefined;
-	private currentFixes: Map<string, Fix[]> = new Map();
-	private currentDiagnostics: Linter.LintMessage[] = [];
 	private ruleToUrlMapping: Map<string, string> | undefined;
+	private currentDiagnostics: Linter.LintMessage[] = [];
+	private currentFixes: Map<string, Fix[]> = new Map();
 
 	constructor(private configPath: string) {
 		super("javascript", "eslint");
