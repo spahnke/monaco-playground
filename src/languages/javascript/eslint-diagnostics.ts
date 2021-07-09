@@ -60,8 +60,12 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			if (ruleId === undefined)
 				continue;
 			const ruleFixes = fixes.get(ruleId) ?? [];
+			const fixAllMarkers = context.markers.filter(m => {
+				const code = typeof m.code === "string" ? m.code : m.code?.value;
+				return code === ruleId;
+			});
 			codeActions.push(...this.getFixCodeActions(model, range, marker, ruleFixes));
-			codeActions.push(...this.getFixAllCodeActions(model, range, marker, ruleFixes.filter(fix => fix.autoFixAvailable)));
+			codeActions.push(...this.getFixAllCodeActions(model, range, fixAllMarkers, marker.message, ruleFixes.filter(fix => fix.autoFixAvailable)));
 			codeActions.push(...this.getDisableRuleCodeActions(model, range, marker, ruleId));
 		}
 		return { actions: codeActions, dispose: () => { } };
@@ -109,13 +113,13 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		});
 	}
 
-	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, fixes: Fix[]): monaco.languages.CodeAction[] {
+	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, markers: monaco.editor.IMarkerData[], markerMessage: string, fixes: Fix[]): monaco.languages.CodeAction[] {
 		if (fixes.length === 0)
 			return [];
 
 		return [{
-			title: `Fix all '${marker.message}'`,
-			// diagnostics: markers.filter(x => x.code === ruleId), // TODO this doesn't take into account that code could be an object
+			title: `Fix all '${markerMessage}'`,
+			diagnostics: markers,
 			edit: {
 				edits: fixes.map(fix => {
 					return {
