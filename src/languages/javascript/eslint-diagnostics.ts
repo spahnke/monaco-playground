@@ -9,6 +9,18 @@ type Fix = {
 	autoFixAvailable: boolean;
 };
 
+class DiagnosticContainer {
+	private diagnostics: Map<string, Linter.LintMessage[]> = new Map();
+
+	get(resource: monaco.Uri): Linter.LintMessage[] {
+		return this.diagnostics.get(resource.toString()) ?? [];
+	}
+
+	set(resource: monaco.Uri, diagnostics: Linter.LintMessage[]): void {
+		this.diagnostics.set(resource.toString(), diagnostics);
+	}
+}
+
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
@@ -16,7 +28,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
 	private clientPromise: Promise<EsLintWorker> | undefined;
 	private ruleToUrlMapping: Map<string, string> | undefined;
-	private currentDiagnostics: Linter.LintMessage[] = [];
+	private currentDiagnostics = new DiagnosticContainer();
 	private currentFixes: Map<string, Fix[]> = new Map();
 
 	constructor(private configPath: string) {
@@ -35,7 +47,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				return;
 			}
 
-			monaco.editor.setModelMarkers(model, this.owner, this.currentDiagnostics.map(d => this.toMarkerData(d)));
+			monaco.editor.setModelMarkers(model, this.owner, this.currentDiagnostics.get(resource).map(d => this.toMarkerData(d)));
 		} catch (e) {
 			console.error(e);
 		}
@@ -43,7 +55,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeActionList {
 		this.currentFixes.clear();
-		for (const diagnostic of this.currentDiagnostics)
+		for (const diagnostic of this.currentDiagnostics.get(model.uri))
 			this.registerFixesAndSuggestions(model, diagnostic);
 
 		const codeActions: monaco.languages.CodeAction[] = [];
@@ -62,7 +74,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		const client = await this.getEslintWorker();
 		if (this.ruleToUrlMapping === undefined)
 			this.ruleToUrlMapping = await client.getRuleToUrlMapping();
-		this.currentDiagnostics = await client.lint(resource.toString());
+		this.currentDiagnostics.set(resource, await client.lint(resource.toString()));
 	}
 
 	private getEslintWorker(): Promise<EsLintWorker> {
