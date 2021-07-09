@@ -1,4 +1,4 @@
-import { Linter, Rule } from "eslint";
+﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 
@@ -59,8 +59,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			const ruleId = this.getRuleId(marker);
 			if (ruleId === undefined)
 				continue;
-			codeActions.push(...this.getFixCodeActions(model, range, ruleId, marker, currentFixes));
-			codeActions.push(...this.getFixAllCodeActions(model, range, ruleId, marker, context.markers, currentFixes));
+			codeActions.push(...this.getFixCodeActions(model, range, marker, currentFixes.get(ruleId) ?? []));
+			codeActions.push(...this.getFixAllCodeActions(model, range, marker, currentFixes.get(ruleId)?.filter(fix => fix.autoFixAvailable) ?? []));
 			codeActions.push(...this.getDisableRuleCodeActions(model, range, ruleId, marker));
 		}
 		return { actions: codeActions, dispose: () => { } };
@@ -91,9 +91,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return this.worker.getProxy();
 	}
 
-	private getFixCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, ruleId: string, marker: monaco.editor.IMarkerData, currentFixes: Map<string, Fix[]>): monaco.languages.CodeAction[] {
-		const fixes = currentFixes.get(ruleId)?.filter(fix => monaco.Range.areIntersectingOrTouching(range, fix.textEdit.range)) ?? [];
-		return fixes.map(fix => {
+	private getFixCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, fixes: Fix[]): monaco.languages.CodeAction[] {
+		return fixes.filter(fix => monaco.Range.areIntersectingOrTouching(range, fix.textEdit.range)).map(fix => {
 			return {
 				title: fix.description,
 				diagnostics: [marker],
@@ -109,8 +108,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		});
 	}
 
-	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, ruleId: string, marker: monaco.editor.IMarkerData, markers: monaco.editor.IMarkerData[], currentFixes: Map<string, Fix[]>): monaco.languages.CodeAction[] {
-		const fixes = currentFixes.get(ruleId)?.filter(fix => fix.autoFixAvailable) ?? [];
+	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, fixes: Fix[]): monaco.languages.CodeAction[] {
 		if (fixes.length === 0)
 			return [];
 
