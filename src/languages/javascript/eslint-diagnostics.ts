@@ -1,4 +1,4 @@
-﻿import { Linter, Rule } from "eslint";
+import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 
@@ -116,7 +116,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 		return [{
 			title: `Fix all '${marker.message}'`,
-			diagnostics: markers.filter(x => x.code === ruleId), // TODO this doesn't take into account that code could be an object
+			// diagnostics: markers.filter(x => x.code === ruleId), // TODO this doesn't take into account that code could be an object
 			edit: {
 				edits: fixes.map(fix => {
 					return {
