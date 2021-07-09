@@ -56,7 +56,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		const client = await this.getEslintWorker();
 		const lintDiagnostics = await client.lint(resource.toString());
 		if (lintDiagnostics.length === 1 && lintDiagnostics[0].fatal)
-			return [this.transformDiagnostic(lintDiagnostics[0])];
+			return [this.toMarkerData(lintDiagnostics[0])];
 
 		const model = monaco.editor.getModel(resource);
 		if (!model) {
@@ -180,7 +180,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private createMarkerData(model: monaco.editor.ITextModel, diagnostic: Linter.LintMessage): monaco.editor.IMarkerData {
-		const marker = this.transformDiagnostic(diagnostic);
+		const marker = this.toMarkerData(diagnostic);
 		if (diagnostic.fix)
 			this.registerFixOrSuggestion(model, diagnostic.fix, marker);
 		for (const suggestion of diagnostic.suggestions ?? [])
@@ -188,7 +188,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return marker;
 	}
 
-	private transformDiagnostic(diagnostic: Linter.LintMessage): monaco.editor.IMarkerData {
+	private toMarkerData(diagnostic: Linter.LintMessage): monaco.editor.IMarkerData {
 		return {
 			message: diagnostic.message,
 			startLineNumber: diagnostic.line,
@@ -196,13 +196,13 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			endLineNumber: diagnostic.endLine ?? diagnostic.line,
 			endColumn: diagnostic.endColumn ?? diagnostic.column,
 			source: markerSource,
-			severity: this.transformSeverity(diagnostic),
-			code: this.transformCode(diagnostic),
+			severity: this.toSeverity(diagnostic),
+			code: this.toCode(diagnostic),
 			tags: diagnostic.ruleId === "no-unused-vars" ? [monaco.MarkerTag.Unnecessary] : []
 		};
 	}
 
-	private transformCode(diagnostic: Linter.LintMessage): string | { value: string; target: monaco.Uri; } {
+	private toCode(diagnostic: Linter.LintMessage): string | { value: string; target: monaco.Uri; } {
 		if (!diagnostic.ruleId)
 			return "";
 		const url = this.ruleToUrlMapping?.get(diagnostic.ruleId);
@@ -214,7 +214,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		};
 	}
 
-	private transformSeverity(diagnostic: Linter.LintMessage): monaco.MarkerSeverity {
+	private toSeverity(diagnostic: Linter.LintMessage): monaco.MarkerSeverity {
 		if (diagnostic.severity === 2)
 			return monaco.MarkerSeverity.Error;
 		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "info"))
