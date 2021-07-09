@@ -30,14 +30,14 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			if (!monaco.editor.getModel(resource))
 				return;
 
-			const markers = await this.getDiagnostics(resource);
+			await this.computeDiagnostics(resource);
 			const model = monaco.editor.getModel(resource);
 			if (!model) {
 				// model was disposed in the meantime
 				return;
 			}
 
-			monaco.editor.setModelMarkers(model, this.owner, markers);
+			monaco.editor.setModelMarkers(model, this.owner, this.currentDiagnostics.map(d => this.toMarkerData(d)));
 		} catch (e) {
 			console.error(e);
 		}
@@ -60,17 +60,11 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return { actions: codeActions, dispose: () => { } };
 	}
 
-	private async getDiagnostics(resource: monaco.Uri): Promise<monaco.editor.IMarkerData[]> {
+	private async computeDiagnostics(resource: monaco.Uri): Promise<void> {
 		const client = await this.getEslintWorker();
-
 		if (this.ruleToUrlMapping === undefined)
 			this.ruleToUrlMapping = await client.getRuleToUrlMapping();
-
 		this.currentDiagnostics = await client.lint(resource.toString());
-		if (this.currentDiagnostics.length === 1 && this.currentDiagnostics[0].fatal)
-			return [this.toMarkerData(this.currentDiagnostics[0])];
-
-		return this.currentDiagnostics.map(d => this.toMarkerData(d));
 	}
 
 	private getEslintWorker(): Promise<EsLintWorker> {
