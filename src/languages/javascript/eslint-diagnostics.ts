@@ -59,9 +59,10 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			const ruleId = this.getRuleId(marker);
 			if (ruleId === undefined)
 				continue;
-			codeActions.push(...this.getFixCodeActions(model, range, marker, currentFixes.get(ruleId) ?? []));
-			codeActions.push(...this.getFixAllCodeActions(model, range, marker, currentFixes.get(ruleId)?.filter(fix => fix.autoFixAvailable) ?? []));
-			codeActions.push(...this.getDisableRuleCodeActions(model, range, ruleId, marker));
+			const fixes = currentFixes.get(ruleId) ?? [];
+			codeActions.push(...this.getFixCodeActions(model, range, marker, fixes));
+			codeActions.push(...this.getFixAllCodeActions(model, range, marker, fixes.filter(fix => fix.autoFixAvailable)));
+			codeActions.push(...this.getDisableRuleCodeActions(model, range, marker, ruleId));
 		}
 		return { actions: codeActions, dispose: () => { } };
 	}
@@ -128,7 +129,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		}];
 	}
 
-	private getDisableRuleCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, ruleId: string, marker: monaco.editor.IMarkerData): monaco.languages.CodeAction[] {
+	private getDisableRuleCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, ruleId: string): monaco.languages.CodeAction[] {
 		return [
 			{
 				title: `Disable rule '${ruleId}'`,
