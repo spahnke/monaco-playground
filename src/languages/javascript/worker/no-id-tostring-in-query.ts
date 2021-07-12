@@ -53,7 +53,7 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 	}
 
 	private reportStringLiteral(context: Rule.RuleContext, literal: Literal | TemplateElement) {
-		const value = typeof literal.value === "object" ? (literal as TemplateElement).value.cooked : literal.value;
+		const value = literal.type === "Literal" ? literal.value : literal.value.cooked;
 		if (typeof value !== "string")
 			return;
 
@@ -85,7 +85,7 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 			end: { ...literal.loc.end },
 		};
 
-		const offset = literal.type === "Literal" ? match.index + 1 : match.index; // literal starts with `"` so we need to add 1
+		const offset = match.index + 1;
 		const columnStart = location.start.column + offset;
 		location.start.column = columnStart;
 		location.end.column = columnStart + match[0].length;
@@ -123,19 +123,14 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		if (!loc)
 			return null;
 
-		const literalString = node.type === "Literal" ? node.raw : node.value.raw;
-		if (!literalString)
+		const literalString = node.type === "Literal" ? node.value : node.value.cooked;
+		if (typeof literalString !== "string")
 			return null;
 
-		// console.log("");
-		// console.log(literalString);
-		// console.log(node, loc);
-
-		const text = literalString.substring(loc.start.column - node.loc!.start.column);
-		// console.log(text);
+		const text = literalString.substring(loc.start.column - node.loc!.start.column - 1);
 		const regex = /(id)\.toString\(\)(\s*===?\s*)(".*?")/i;
 		const newText = text.replace(regex, "$1$2new Guid($3)");
-		// console.log(newText);
+		console.log(literalString, text, newText, node, loc);
 
 		if (text === newText)
 			return null;
@@ -143,7 +138,6 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		let newNodeText = literalString.replace(text, newText);
 		if (node.type === "TemplateElement")
 			newNodeText = "`" + newNodeText + "`";
-		// console.log(newNodeText);
 
 		return fixer.replaceText(node, newNodeText);
 	}
