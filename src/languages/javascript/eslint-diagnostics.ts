@@ -79,9 +79,11 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 			const ruleFixes = fixes.get(ruleId) ?? [];
 			codeActions.push(...this.getFixCodeActions(model, range, marker, ruleFixes));
-			codeActions.push(...this.getFixAllCodeActions(model, range, context.markers.filter(m => this.getRuleId(m) === ruleId), marker.message, ruleFixes.filter(fix => fix.autoFixAvailable)));
+			codeActions.push(...this.getFixAllCodeActions(model, range, marker, context.markers.filter(m => this.getRuleId(m) === ruleId), ruleFixes.filter(fix => fix.autoFixAvailable)));
 			codeActions.push(...this.getDisableRuleCodeActions(model, range, marker, ruleId));
 		}
+		const allAutoFixes = [...fixes.values()].flat().filter(fix => fix.autoFixAvailable);
+		codeActions.push(...this.getFixAllAutoFixableCodeActions(model, allAutoFixes));
 		return { actions: codeActions, dispose: () => { } };
 	}
 
@@ -112,7 +114,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 			if (diagnostic.fix) {
 				ruleFixes.push({
-					description: `Fix '${diagnostic.message}'`,
+					description: `Fix this '${diagnostic.message}' problem`,
 					textEdit: this.toTextEdit(model, diagnostic.fix),
 					autoFixAvailable: true,
 				});
@@ -147,12 +149,12 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		});
 	}
 
-	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, markers: monaco.editor.IMarkerData[], markerMessage: string, fixes: Fix[]): monaco.languages.CodeAction[] {
+	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, markers: monaco.editor.IMarkerData[], fixes: Fix[]): monaco.languages.CodeAction[] {
 		if (fixes.length === 0)
 			return [];
 
 		return [{
-			title: `Fix all '${markerMessage}'`,
+			title: `Fix all '${marker.message}' problems`,
 			diagnostics: markers,
 			edit: {
 				edits: fixes.map(fix => {
@@ -195,6 +197,33 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				},
 				isPreferred: false,
 				kind: "quickfix",
+			}
+		];
+	}
+
+	private getFixAllAutoFixableCodeActions(model: monaco.editor.ITextModel, fixes: Fix[]): monaco.languages.CodeAction[] {
+		if (fixes.length === 0)
+			return [];
+
+		const edit: monaco.languages.WorkspaceEdit = {
+			edits: fixes.map(fix => {
+				return {
+					edit: fix.textEdit,
+					resource: model.uri
+				};
+			})
+		};
+
+		return [
+			{
+				title: "Fix all auto-fixable problems",
+				kind: "quickfix",
+				edit
+			},
+			{
+				title: "Fix all ESLint auto-fixable problems",
+				kind: "source.fixAll.eslint",
+				edit
 			}
 		];
 	}
