@@ -1,4 +1,4 @@
-﻿import { Linter, Rule } from "eslint";
+import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 
@@ -160,7 +160,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		const indentation = /^(?<whitespace>[ \t]*)/.exec(lineText)?.groups?.["whitespace"] ?? "";
 		return [
 			{
-				title: `Disable rule '${ruleId}' on next line`,
+				title: `Disable rule '${ruleId}' on this line`,
 				diagnostics: [marker],
 				edit: {
 					edits: [{
