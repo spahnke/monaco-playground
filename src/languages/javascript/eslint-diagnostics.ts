@@ -78,12 +78,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				continue;
 
 			const ruleFixes = fixes.get(ruleId) ?? [];
-			const fixAllMarkers = context.markers.filter(m => {
-				const code = typeof m.code === "string" ? m.code : m.code?.value;
-				return code === ruleId;
-			});
 			codeActions.push(...this.getFixCodeActions(model, range, marker, ruleFixes));
-			codeActions.push(...this.getFixAllCodeActions(model, range, fixAllMarkers, marker.message, ruleFixes.filter(fix => fix.autoFixAvailable)));
+			codeActions.push(...this.getFixAllCodeActions(model, range, context.markers.filter(m => this.getRuleId(m) === ruleId), marker.message, ruleFixes.filter(fix => fix.autoFixAvailable)));
 			codeActions.push(...this.getDisableRuleCodeActions(model, range, marker, ruleId));
 		}
 		return { actions: codeActions, dispose: () => { } };
