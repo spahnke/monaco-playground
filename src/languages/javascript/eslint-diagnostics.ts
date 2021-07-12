@@ -183,7 +183,6 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 						resource: model.uri,
 					}],
 				},
-				isPreferred: false,
 				kind: "quickfix",
 			},
 			{
@@ -195,7 +194,6 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 						resource: model.uri,
 					}],
 				},
-				isPreferred: false,
 				kind: "quickfix",
 			}
 		];
