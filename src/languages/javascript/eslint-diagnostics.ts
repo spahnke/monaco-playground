@@ -134,7 +134,22 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private getDisableRuleCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, ruleId: string): monaco.languages.CodeAction[] {
+		const line = Math.max(1, range.startLineNumber);
+		const lineText = model.getLineContent(line);
+		const indentation = /^(?<whitespace>[ \t]*)/.exec(lineText)?.groups?.["whitespace"] ?? "";
 		return [
+			{
+				title: `Disable rule '${ruleId}' on next line`,
+				diagnostics: [marker],
+				edit: {
+					edits: [{
+						edit: { range: new monaco.Range(line, 1, line, 1), text: `${indentation}/* eslint-disable-next-line ${ruleId} */${model.getEOL()}` },
+						resource: model.uri,
+					}],
+				},
+				isPreferred: false,
+				kind: "quickfix",
+			},
 			{
 				title: `Disable rule '${ruleId}'`,
 				diagnostics: [marker],
