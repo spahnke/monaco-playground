@@ -53,7 +53,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeActionList {
-		const fixes = this.computeFixes(model);
+		const fixes = this.computeFixes(model, token);
 		const codeActions: monaco.languages.CodeAction[] = [];
 		for (const marker of context.markers) {
 			if (token.isCancellationRequested)
@@ -82,9 +82,12 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		this.diagnostics.set(resource, await eslint.lint(resource.toString()));
 	}
 
-	private computeFixes(model: monaco.editor.ITextModel): Map<string, Fix[]> {
+	private computeFixes(model: monaco.editor.ITextModel, token: monaco.CancellationToken): Map<string, Fix[]> {
 		const fixes: Map<string, Fix[]> = new Map();
 		for (const diagnostic of this.diagnostics.get(model.uri)) {
+			if (token.isCancellationRequested)
+				break;
+
 			if (!diagnostic.ruleId)
 				continue;
 
