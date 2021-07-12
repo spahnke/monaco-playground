@@ -56,9 +56,13 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		const fixes = this.computeFixes(model);
 		const codeActions: monaco.languages.CodeAction[] = [];
 		for (const marker of context.markers) {
+			if (token.isCancellationRequested)
+				break;
+
 			const ruleId = this.getRuleId(marker);
 			if (ruleId === undefined)
 				continue;
+
 			const ruleFixes = fixes.get(ruleId) ?? [];
 			const fixAllMarkers = context.markers.filter(m => {
 				const code = typeof m.code === "string" ? m.code : m.code?.value;
