@@ -1,5 +1,5 @@
 import { Linter, Rule } from "eslint";
-import { CallExpression, Identifier, Literal, SourceLocation, TemplateElement, VariableDeclarator } from "estree";
+import { CallExpression, Identifier, Literal, SourceLocation, TemplateLiteral, VariableDeclarator } from "estree";
 
 export const ruleId = "no-id-tostring-in-query";
 
@@ -10,8 +10,8 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 
 	create(context: Rule.RuleContext): Rule.RuleListener {
 		return {
-			Literal: node => this.checkStringLiteral(context, node),
-			TemplateElement: node => this.checkStringLiteral(context, node),
+			Literal: node => this.checkStringOrTemplateLiteral(context, node),
+			TemplateLiteral: node => this.checkStringOrTemplateLiteral(context, node),
 			Identifier: node => {
 				let parent = node.parent;
 				while (parent) {
@@ -25,11 +25,11 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		};
 	}
 
-	private checkStringLiteral(context: Rule.RuleContext, literal: (Literal | TemplateElement) & Rule.NodeParentExtension) {
+	private checkStringOrTemplateLiteral(context: Rule.RuleContext, literal: (Literal | TemplateLiteral) & Rule.NodeParentExtension) {
 		let parent = literal.parent;
 		while (parent) {
 			if (parent.type === "CallExpression" && this.isQuery(parent)) {
-				this.reportStringLiteral(context, literal);
+				this.reportStringOrTemplateLiteral(context, literal);
 				return;
 			}
 			parent = parent.parent;
@@ -52,15 +52,12 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		return true;
 	}
 
-	private reportStringLiteral(context: Rule.RuleContext, literal: Literal | TemplateElement) {
-		const value = literal.type === "Literal" ? literal.value : literal.value.cooked;
-		if (typeof value !== "string")
-			return;
-
-		const regex = /id\.toString\(\)/gi;
+	private reportStringOrTemplateLiteral(context: Rule.RuleContext, literal: Literal | TemplateLiteral) {
+		const value = context.getSourceCode().getText(literal);
+		const regex = /id\.toString\(\)\s*[!=]==?\s*"([^"]*?")?/gi;
 		let match = regex.exec(value);
 		while (match !== null) {
-			context.report(this.getDiagnostic(literal, this.computeLocationInsideLiteral(literal, match)));
+			context.report(this.getDiagnostic(context, literal, this.computeLocationInsideLiteral(literal, match)));
 			match = regex.exec(value);
 		}
 	}
@@ -71,12 +68,12 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 			return;
 
 		if (declarator.init.type === "Literal")
-			this.reportStringLiteral(context, declarator.init);
+			this.reportStringOrTemplateLiteral(context, declarator.init);
 		else if (declarator.init.type === "Identifier")
 			this.reportVariable(context, declarator.init);
 	}
 
-	private computeLocationInsideLiteral(literal: Literal | TemplateElement, match: RegExpExecArray): SourceLocation | undefined {
+	private computeLocationInsideLiteral(literal: Literal | TemplateLiteral, match: RegExpExecArray): SourceLocation | undefined {
 		if (!literal.loc)
 			return undefined;
 
@@ -85,7 +82,7 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 			end: { ...literal.loc.end },
 		};
 
-		const offset = match.index + 1;
+		const offset = match.index;
 		const columnStart = location.start.column + offset;
 		location.start.column = columnStart;
 		location.end.column = columnStart + match[0].length;
@@ -105,7 +102,7 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		return definition.node;
 	}
 
-	private getDiagnostic(node: Literal | TemplateElement, loc?: SourceLocation): Rule.ReportDescriptor {
+	private getDiagnostic(context: Rule.RuleContext, node: Literal | TemplateLiteral, loc?: SourceLocation): Rule.ReportDescriptor {
 		return {
 			message: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
 			node,
@@ -113,32 +110,33 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 			suggest: [
 				{
 					desc: "Convert `string` to `Guid` instead",
-					fix: fixer => this.applyFix(fixer, node, loc)
+					fix: fixer => this.applyFix(fixer, context, node, loc)
 				}
 			]
 		};
 	}
 
-	private applyFix(fixer: Rule.RuleFixer, node: Literal | TemplateElement, loc?: SourceLocation): Rule.Fix | null {
-		if (!loc)
-			return null;
+	private applyFix(fixer: Rule.RuleFixer, context: Rule.RuleContext, node: Literal | TemplateLiteral, loc?: SourceLocation): Rule.Fix | null {
+		return null;
+		// if (!loc)
+		// 	return null;
 
-		const literalString = node.type === "Literal" ? node.value : node.value.cooked;
-		if (typeof literalString !== "string")
-			return null;
+		// const literalString = node.type === "Literal" ? node.value : node.value.cooked;
+		// if (typeof literalString !== "string")
+		// 	return null;
 
-		const text = literalString.substring(loc.start.column - node.loc!.start.column - 1);
-		const regex = /(id)\.toString\(\)(\s*===?\s*)(".*?")/i;
-		const newText = text.replace(regex, "$1$2new Guid($3)");
-		console.log(literalString, text, newText, node, loc);
+		// const text = literalString.substring(loc.start.column - node.loc!.start.column - 1);
+		// const regex = /(id)\.toString\(\)(\s*===?\s*)(".*?")/i;
+		// const newText = text.replace(regex, "$1$2new Guid($3)");
+		// // console.log(literalString, text, newText, node, loc);
 
-		if (text === newText)
-			return null;
+		// if (text === newText)
+		// 	return null;
 
-		let newNodeText = literalString.replace(text, newText);
-		if (node.type === "TemplateElement")
-			newNodeText = "`" + newNodeText + "`";
+		// let newNodeText = literalString.replace(text, newText);
+		// if (node.type === "TemplateElement")
+		// 	newNodeText = "`" + newNodeText + "`";
 
-		return fixer.replaceText(node, newNodeText);
+		// return fixer.replaceText(node, newNodeText);
 	}
 }
