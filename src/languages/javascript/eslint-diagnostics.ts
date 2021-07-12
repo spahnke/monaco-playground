@@ -25,8 +25,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
 	private config: Linter.Config<Linter.RulesRecord> | undefined;
-	private worker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
-	private clientPromise: Promise<EsLintWorker> | undefined;
+	private webWorker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
+	private eslintWorker: Promise<EsLintWorker> | undefined;
 	private ruleToUrlMapping: Map<string, string> | undefined;
 	private diagnostics = new DiagnosticContainer();
 
@@ -76,28 +76,42 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private async computeDiagnostics(resource: monaco.Uri): Promise<void> {
-		const client = await this.getEslintWorker();
+		const eslint = await this.getEslintWorker();
 		if (this.ruleToUrlMapping === undefined)
-			this.ruleToUrlMapping = await client.getRuleToUrlMapping();
-		this.diagnostics.set(resource, await client.lint(resource.toString()));
+			this.ruleToUrlMapping = await eslint.getRuleToUrlMapping();
+		this.diagnostics.set(resource, await eslint.lint(resource.toString()));
 	}
 
-	private getEslintWorker(): Promise<EsLintWorker> {
-		if (this.clientPromise === undefined)
-			this.clientPromise = this.createEslintWorker(); // don't await here, otherwise race conditions can occur!
-		// always sync models
-		return this.clientPromise.then(() => this.worker!.withSyncedResources(monaco.editor.getModels().filter(m => m.getModeId() === this.languageId).map(m => m.uri)));
-	}
+	private computeFixes(model: monaco.editor.ITextModel): Map<string, Fix[]> {
+		const fixes: Map<string, Fix[]> = new Map();
+		for (const diagnostic of this.diagnostics.get(model.uri)) {
+			if (!diagnostic.ruleId)
+				continue;
 
-	private async createEslintWorker(): Promise<EsLintWorker> {
-		this.config = await fetch(this.configPath).then(r => r.json());
-		this.worker = monaco.editor.createWebWorker<EsLintWorker>({
-			moduleId: "/worker/eslint-worker",
-			label: this.owner,
-			createData: { config: this.createEsLintCompatibleConfig() }
-		});
-		this.register(this.worker);
-		return this.worker.getProxy();
+			let ruleFixes = fixes.get(diagnostic.ruleId);
+			if (ruleFixes === undefined) {
+				ruleFixes = [];
+				fixes.set(diagnostic.ruleId, ruleFixes);
+			}
+
+			if (diagnostic.fix) {
+				ruleFixes.push({
+					description: `Fix '${diagnostic.message}'`,
+					textEdit: this.toTextEdit(model, diagnostic.fix),
+					autoFixAvailable: true,
+				});
+			}
+			if (diagnostic.suggestions) {
+				for (const suggestion of diagnostic.suggestions) {
+					ruleFixes.push({
+						description: suggestion.desc,
+						textEdit: this.toTextEdit(model, suggestion.fix),
+						autoFixAvailable: false,
+					});
+				}
+			}
+		}
+		return fixes;
 	}
 
 	private getFixCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, fixes: Fix[]): monaco.languages.CodeAction[] {
@@ -169,10 +183,22 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		];
 	}
 
-	private getRuleId(marker: monaco.editor.IMarkerData): string | undefined {
-		if (marker.source !== this.owner)
-			return undefined;
-		return typeof marker.code === "string" ? marker.code : marker.code?.value;
+	private async createEslintWorker(): Promise<EsLintWorker> {
+		this.config = await fetch(this.configPath).then(r => r.json());
+		this.webWorker = monaco.editor.createWebWorker<EsLintWorker>({
+			moduleId: "/worker/eslint-worker",
+			label: this.owner,
+			createData: { config: this.createEsLintCompatibleConfig() }
+		});
+		this.register(this.webWorker);
+		return this.webWorker.getProxy();
+	}
+
+	private getEslintWorker(): Promise<EsLintWorker> {
+		if (this.eslintWorker === undefined)
+			this.eslintWorker = this.createEslintWorker(); // don't await here, otherwise race conditions can occur!
+		// always sync models
+		return this.eslintWorker.then(() => this.webWorker!.withSyncedResources(monaco.editor.getModels().filter(m => m.getModeId() === this.languageId).map(m => m.uri)));
 	}
 
 	/**
@@ -192,42 +218,6 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return compatConfig;
 	}
 
-	private toMarkerData(diagnostic: Linter.LintMessage): monaco.editor.IMarkerData {
-		return {
-			message: diagnostic.message,
-			startLineNumber: diagnostic.line,
-			startColumn: diagnostic.column,
-			endLineNumber: diagnostic.endLine ?? diagnostic.line,
-			endColumn: diagnostic.endColumn ?? diagnostic.column,
-			source: this.owner,
-			severity: this.toSeverity(diagnostic),
-			code: this.toCode(diagnostic),
-			tags: diagnostic.ruleId === "no-unused-vars" ? [monaco.MarkerTag.Unnecessary] : []
-		};
-	}
-
-	private toCode(diagnostic: Linter.LintMessage): string | { value: string; target: monaco.Uri; } {
-		if (!diagnostic.ruleId)
-			return "";
-		const url = this.ruleToUrlMapping?.get(diagnostic.ruleId);
-		if (!url)
-			return diagnostic.ruleId;
-		return {
-			value: diagnostic.ruleId,
-			target: monaco.Uri.parse(url)
-		};
-	}
-
-	private toSeverity(diagnostic: Linter.LintMessage): monaco.MarkerSeverity {
-		if (diagnostic.severity === 2)
-			return monaco.MarkerSeverity.Error;
-		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "info"))
-			return monaco.MarkerSeverity.Info;
-		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "hint"))
-			return monaco.MarkerSeverity.Hint;
-		return monaco.MarkerSeverity.Warning;
-	}
-
 	/**
 	 * Checks if a normally "warn" level diagnostic is really an "info" or "hint" level diagnostic.
 	 */
@@ -242,36 +232,46 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return (rule as ExtendedRuleLevel) === severity;
 	}
 
-	private computeFixes(model: monaco.editor.ITextModel): Map<string, Fix[]> {
-		const fixes: Map<string, Fix[]> = new Map();
-		for (const diagnostic of this.diagnostics.get(model.uri)) {
-			if (!diagnostic.ruleId)
-				continue;
+	private getRuleId(marker: monaco.editor.IMarkerData): string | undefined {
+		if (marker.source !== this.owner)
+			return undefined;
+		return typeof marker.code === "string" ? marker.code : marker.code?.value;
+	}
 
-			let ruleFixes = fixes.get(diagnostic.ruleId);
-			if (ruleFixes === undefined) {
-				ruleFixes = [];
-				fixes.set(diagnostic.ruleId, ruleFixes);
-			}
+	private toMarkerData(diagnostic: Linter.LintMessage): monaco.editor.IMarkerData {
+		return {
+			message: diagnostic.message,
+			startLineNumber: diagnostic.line,
+			startColumn: diagnostic.column,
+			endLineNumber: diagnostic.endLine ?? diagnostic.line,
+			endColumn: diagnostic.endColumn ?? diagnostic.column,
+			source: this.owner,
+			severity: this.toSeverity(diagnostic),
+			code: this.toCode(diagnostic),
+			tags: diagnostic.ruleId === "no-unused-vars" ? [monaco.MarkerTag.Unnecessary] : []
+		};
+	}
 
-			if (diagnostic.fix) {
-				ruleFixes.push({
-					description: `Fix '${diagnostic.message}'`,
-					textEdit: this.toTextEdit(model, diagnostic.fix),
-					autoFixAvailable: true,
-				});
-			}
-			if (diagnostic.suggestions) {
-				for (const suggestion of diagnostic.suggestions) {
-					ruleFixes.push({
-						description: suggestion.desc,
-						textEdit: this.toTextEdit(model, suggestion.fix),
-						autoFixAvailable: false,
-					});
-				}
-			}
-		}
-		return fixes;
+	private toSeverity(diagnostic: Linter.LintMessage): monaco.MarkerSeverity {
+		if (diagnostic.severity === 2)
+			return monaco.MarkerSeverity.Error;
+		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "info"))
+			return monaco.MarkerSeverity.Info;
+		if (diagnostic.severity === 1 && this.isInfoOrHint(diagnostic, "hint"))
+			return monaco.MarkerSeverity.Hint;
+		return monaco.MarkerSeverity.Warning;
+	}
+
+	private toCode(diagnostic: Linter.LintMessage): string | { value: string; target: monaco.Uri; } {
+		if (!diagnostic.ruleId)
+			return "";
+		const url = this.ruleToUrlMapping?.get(diagnostic.ruleId);
+		if (!url)
+			return diagnostic.ruleId;
+		return {
+			value: diagnostic.ruleId,
+			target: monaco.Uri.parse(url)
+		};
 	}
 
 	private toTextEdit(model: monaco.editor.ITextModel, fix: Rule.Fix): monaco.languages.TextEdit {
