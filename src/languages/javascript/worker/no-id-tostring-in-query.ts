@@ -8,6 +8,9 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		linter.defineRule(ruleId, new NoIdToStringInQuery());
 	}
 
+	private readonly reportPattern = /id\.toString\(\)\s*[!=]==?\s*"(?:[^"]*?")?/gi;
+	private readonly fixPattern = /(id)\.toString\(\)(\s*[!=]==?\s*)("[^"]*?")/i;
+
 	create(context: Rule.RuleContext): Rule.RuleListener {
 		return {
 			Literal: node => this.checkStringOrTemplateLiteral(context, node),
@@ -54,11 +57,10 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 
 	private reportStringOrTemplateLiteral(context: Rule.RuleContext, literal: Literal | TemplateLiteral) {
 		const value = context.getSourceCode().getText(literal);
-		const regex = /id\.toString\(\)\s*[!=]==?\s*"([^"]*?")?/gi;
-		let match = regex.exec(value);
+		let match = this.reportPattern.exec(value);
 		while (match !== null) {
 			context.report(this.getDiagnostic(context, literal, this.computeLocationInsideLiteral(literal, match)));
-			match = regex.exec(value);
+			match = this.reportPattern.exec(value);
 		}
 	}
 
@@ -127,9 +129,8 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		const endOffset = loc.end.column - node.loc.start.column;
 		const replaceRange: AST.Range = [rangeStart + startOffset, rangeStart + endOffset];
 
-		const regex = /(id)\.toString\(\)(\s*[!=]==?\s*)("[^"]*?")/i;
 		const textToReplace = literalText.substring(startOffset, endOffset);
-		const replaceText = textToReplace.replace(regex, "$1$2new Guid($3)");
+		const replaceText = textToReplace.replace(this.fixPattern, "$1$2new Guid($3)");
 		// console.group();
 		// console.log(node);
 		// console.log(loc);
