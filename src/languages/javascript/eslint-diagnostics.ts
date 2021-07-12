@@ -1,4 +1,4 @@
-import { Linter, Rule } from "eslint";
+﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { EsLintWorker } from "./worker/eslint-worker.js";
 
@@ -11,13 +11,27 @@ type Fix = {
 
 class DiagnosticContainer {
 	private diagnostics: Map<string, Linter.LintMessage[]> = new Map();
+	private fixes: Map<string, Map<string, Fix[]>> = new Map();
 
+	/** Returns the diagnostic messages for the model specified by `resource`. */
 	get(resource: monaco.Uri): Linter.LintMessage[] {
 		return this.diagnostics.get(resource.toString()) ?? [];
 	}
 
+	/** Returns a mapping of ruleId -> fixes for the model specified by `resource`. */
+	getFixes(resource: monaco.Uri): Map<string, Fix[]> {
+		let fixes = this.fixes.get(resource.toString());
+		if (fixes === undefined) {
+			fixes = new Map();
+			this.fixes.set(resource.toString(), fixes);
+		}
+		return fixes;
+	}
+
+	/** Sets the diagnostics and clears previous fixes for the model specified by `resource`. */
 	set(resource: monaco.Uri, diagnostics: Linter.LintMessage[]): void {
 		this.diagnostics.set(resource.toString(), diagnostics);
+		this.fixes.get(resource.toString())?.clear();
 	}
 }
 
@@ -83,7 +97,10 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private computeFixes(model: monaco.editor.ITextModel, token: monaco.CancellationToken): Map<string, Fix[]> {
-		const fixes: Map<string, Fix[]> = new Map();
+		const fixes = this.diagnostics.getFixes(model.uri);
+		if (fixes.size > 0)
+			return fixes;
+
 		for (const diagnostic of this.diagnostics.get(model.uri)) {
 			if (token.isCancellationRequested)
 				break;
