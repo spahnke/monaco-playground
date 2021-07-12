@@ -1,4 +1,4 @@
-import { Linter, Rule } from "eslint";
+import { AST, Linter, Rule } from "eslint";
 import { CallExpression, Identifier, Literal, SourceLocation, TemplateLiteral, VariableDeclarator } from "estree";
 
 export const ruleId = "no-id-tostring-in-query";
@@ -117,23 +117,31 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 	}
 
 	private applyFix(fixer: Rule.RuleFixer, context: Rule.RuleContext, node: Literal | TemplateLiteral, loc?: SourceLocation): Rule.Fix | null {
-		if (!loc)
+		if (!node.loc || !node.range || !loc)
 			return null;
 
 		const literalText = context.getSourceCode().getText(node);
-		const text = literalText.substring(loc.start.column - node.loc!.start.column, loc.end.column - node.loc!.start.column);
+
+		const [rangeStart] = node.range;
+		const startOffset = loc.start.column - node.loc.start.column;
+		const endOffset = loc.end.column - node.loc.start.column;
+		const replaceRange: AST.Range = [rangeStart + startOffset, rangeStart + endOffset];
+
 		const regex = /(id)\.toString\(\)(\s*[!=]==?\s*)("[^"]*?")/i;
-		const newText = text.replace(regex, "$1$2new Guid($3)");
+		const textToReplace = literalText.substring(startOffset, endOffset);
+		const replaceText = textToReplace.replace(regex, "$1$2new Guid($3)");
 		// console.group();
+		// console.log(node);
+		// console.log(loc);
+		// console.log(replaceRange);
 		// console.log(literalText);
-		// console.log(text);
-		// console.log(newText);
+		// console.log(textToReplace);
+		// console.log(replaceText);
 		// console.groupEnd();
 
-		if (text === newText)
+		if (textToReplace === replaceText)
 			return null;
 
-		const newNodeText = literalText.replace(text, newText);
-		return fixer.replaceText(node, newNodeText);
+		return fixer.replaceTextRange(replaceRange, replaceText);
 	}
 }
