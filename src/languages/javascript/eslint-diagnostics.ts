@@ -67,8 +67,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	provideCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, context: monaco.languages.CodeActionContext, token: monaco.CancellationToken): monaco.languages.CodeActionList {
-		const fixes = this.computeFixes(model, token);
 		const codeActions: monaco.languages.CodeAction[] = [];
+		const fixes = this.computeFixes(model, token);
 		for (const marker of context.markers) {
 			if (token.isCancellationRequested)
 				break;
