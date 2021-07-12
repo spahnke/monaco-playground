@@ -117,26 +117,23 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 	}
 
 	private applyFix(fixer: Rule.RuleFixer, context: Rule.RuleContext, node: Literal | TemplateLiteral, loc?: SourceLocation): Rule.Fix | null {
-		return null;
-		// if (!loc)
-		// 	return null;
+		if (!loc)
+			return null;
 
-		// const literalString = node.type === "Literal" ? node.value : node.value.cooked;
-		// if (typeof literalString !== "string")
-		// 	return null;
+		const literalText = context.getSourceCode().getText(node);
+		const text = literalText.substring(loc.start.column - node.loc!.start.column, loc.end.column - node.loc!.start.column);
+		const regex = /(id)\.toString\(\)(\s*[!=]==?\s*)("[^"]*?")/i;
+		const newText = text.replace(regex, "$1$2new Guid($3)");
+		// console.group();
+		// console.log(literalText);
+		// console.log(text);
+		// console.log(newText);
+		// console.groupEnd();
 
-		// const text = literalString.substring(loc.start.column - node.loc!.start.column - 1);
-		// const regex = /(id)\.toString\(\)(\s*===?\s*)(".*?")/i;
-		// const newText = text.replace(regex, "$1$2new Guid($3)");
-		// // console.log(literalString, text, newText, node, loc);
+		if (text === newText)
+			return null;
 
-		// if (text === newText)
-		// 	return null;
-
-		// let newNodeText = literalString.replace(text, newText);
-		// if (node.type === "TemplateElement")
-		// 	newNodeText = "`" + newNodeText + "`";
-
-		// return fixer.replaceText(node, newNodeText);
+		const newNodeText = literalText.replace(text, newText);
+		return fixer.replaceText(node, newNodeText);
 	}
 }
