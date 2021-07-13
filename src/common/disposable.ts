@@ -10,11 +10,6 @@ export class Disposable implements monaco.IDisposable {
 		return disposable;
 	}
 
-	registerAll(...disposables: monaco.IDisposable[]): void {
-		for (const disposable of disposables)
-			this.disposables.add(disposable);
-	}
-
 	dispose(): void {
 		for (const disposable of this.disposables)
 			disposable.dispose();

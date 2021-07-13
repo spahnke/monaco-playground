@@ -73,7 +73,7 @@ export class CodeEditor extends Disposable {
 		super();
 		this.editor = editor;
 		this.register(new LocalStorageEditorConfiguration(editor));
-		this.registerAll(...patchKeybindings(this.editor, contextKeyFactory));
+		this.register(patchKeybindings(this.editor, contextKeyFactory));
 	}
 
 	setContents(content: string, language?: string, fileName?: string): void {
