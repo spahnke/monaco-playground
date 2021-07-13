@@ -4,14 +4,14 @@ import { allowTopLevelReturn, enableJavaScriptBrowserCompletion } from "../langu
 import { CodeEditor } from "../code-editor.js";
 
 const contextMenuGroupId = "7_playground";
-const linqTestCode = `const query = 'a x.id.toString() === "asdf" asdf ';
+const linqTestCode = `const query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
 const query2 = query;
 linq.execute('a x.id.toString() === "asdf" asdf ');
 linq.execute(\`a x.id.toString() === "asdf" asdf\`);
-linq.execute(\`a x.id.toString() === "\${text}" asdf \`);
-linq.execute('a x.id.toString() === "' + foo + '" asdf ');
+linq.execute(\`a x.id.toString() === "\${text}" asdf\`);
+linq.execute(foo + 'a x.id.toString() === "' + foo + '" asdf ' + \`a x.id.toString() !== "\${text}" asdf \` + foo);
 linq.execute(query);
-// linq.execute(query2);`;
+linq.execute(query2);`;
 const todoTestCode = `// TODO asdf
 /*
  * TODO qwer
