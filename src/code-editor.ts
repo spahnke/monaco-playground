@@ -1,5 +1,5 @@
 ﻿import { Disposable } from "./common/disposable.js";
-import { addLibrary, ILibrary } from "./common/monaco-utils.js";
+import { addLibrary, ILibrary, patchKeybinding } from "./common/monaco-utils.js";
 import { MonacoLoader } from "./monaco-loader.js";
 
 let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
@@ -78,7 +78,7 @@ export class CodeEditor extends Disposable {
 		super();
 		this.editor = editor;
 		this.register(new LocalStorageEditorConfiguration(editor));
-		this.patchKeybindings();
+		this.patchKeybindings(this.editor);
 	}
 
 	setContents(content: string, language?: string, fileName?: string): void {
@@ -220,26 +220,14 @@ export class CodeEditor extends Disposable {
 		this.editor.dispose();
 	}
 
-	private patchKeybindings() {
-		this.patchKeybinding("editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL); // no default
-		this.patchKeybinding("editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS); // no default
-		this.patchKeybinding("editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0); // no default
-		this.patchKeybinding("editor.action.marker.nextInFiles"); // default F8 (jumps between files/models which is not desirable)
-		this.patchKeybinding("editor.action.marker.prevInFiles"); // default Shift+F8 (jumps between files/models which is not desirable)
-		this.patchKeybinding("editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter, "editorHasCodeActionsProvider && editorTextFocus && !editorReadonly"); // default is Ctrl+.
-		this.patchKeybinding("editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O, "editorFocus && editorHasDocumentSymbolProvider"); // default is Ctrl+Shift+O
-		this.patchKeybinding("editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R), "editorHasRenameProvider && editorTextFocus && !editorReadonly"); // default is F2
-	}
-
-	private patchKeybinding(id: string, newKeyBinding?: number, context?: string): void {
-		// remove existing one; no official API yet
-		// the '-' before the commandId removes the binding
-		// as of >=0.21.0 we need to supply a dummy command handler to not get errors (because of the fix for https://github.com/microsoft/monaco-editor/issues/1857)
-		this.editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`, undefined, () => { });
-		if (newKeyBinding) {
-			const action = this.editor.getAction(id);
-			const when = ContextKeyExpr.deserialize(context);
-			this.editor._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
-		}
+	private patchKeybindings(editor: monaco.editor.IStandaloneCodeEditor) {
+		patchKeybinding(editor, "editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL); // no default
+		patchKeybinding(editor, "editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS); // no default
+		patchKeybinding(editor, "editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0); // no default
+		patchKeybinding(editor, "editor.action.marker.nextInFiles"); // default F8 (jumps between files/models which is not desirable)
+		patchKeybinding(editor, "editor.action.marker.prevInFiles"); // default Shift+F8 (jumps between files/models which is not desirable)
+		patchKeybinding(editor, "editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter, ContextKeyExpr.deserialize("editorHasCodeActionsProvider && editorTextFocus && !editorReadonly")); // default is Ctrl+.
+		patchKeybinding(editor, "editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O, ContextKeyExpr.deserialize("editorFocus && editorHasDocumentSymbolProvider")); // default is Ctrl+Shift+O
+		patchKeybinding(editor, "editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R), ContextKeyExpr.deserialize("editorHasRenameProvider && editorTextFocus && !editorReadonly")); // default is F2
 	}
 }

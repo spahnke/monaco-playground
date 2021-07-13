@@ -132,6 +132,20 @@ export function getKeybindings(editor: monaco.editor.IStandaloneCodeEditor): Key
 	return keybindings.sort((a, z) => a.command.localeCompare(z.command));
 }
 
+/**
+ * CAUTION: Uses an internal API.
+ */
+export function patchKeybinding(editor: monaco.editor.IStandaloneCodeEditor, id: string, newKeyBinding?: number, when?: monaco.platform.IContextKeyExpr): void {
+	// remove existing one; no official API yet
+	// the '-' before the commandId removes the binding
+	// as of >=0.21.0 we need to supply a dummy command handler to not get errors (because of the fix for https://github.com/microsoft/monaco-editor/issues/1857)
+	editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`, undefined, () => { });
+	if (newKeyBinding) {
+		const action = editor.getAction(id);
+		editor._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
+	}
+}
+
 function delay(ms: number): Promise<void> {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
