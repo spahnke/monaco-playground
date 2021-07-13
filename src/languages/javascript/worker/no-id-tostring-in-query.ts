@@ -137,8 +137,8 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		});
 	}
 
-	private applyFix(fixer: Rule.RuleFixer, context: Rule.RuleContext, node: Literal | TemplateLiteral, loc?: SourceLocation): Rule.Fix | null {
-		if (!node.loc || !node.range || !loc)
+	private applyFix(fixer: Rule.RuleFixer, context: Rule.RuleContext, node: Literal | TemplateLiteral, loc: SourceLocation): Rule.Fix | null {
+		if (!node.loc || !node.range)
 			return null;
 
 		const literalText = context.getSourceCode().getText(node);
