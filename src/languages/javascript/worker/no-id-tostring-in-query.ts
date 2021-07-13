@@ -8,10 +8,10 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 
 	private readonly reportPattern = /id\.toString\(\)\s*[!=]==?\s*"(?:[^"]*?")?/gi;
 	private readonly fixPattern = /(id)\.toString\(\)(\s*[!=]==?\s*)("[^"]*?")/i;
-	private reportedNodes: WeakSet<Literal | TemplateLiteral> = new WeakSet();
+	private reportedLocations: Set<string> = new Set();
 
 	create(context: Rule.RuleContext): Rule.RuleListener {
-		this.reportedNodes = new WeakSet();
+		this.reportedLocations = new Set();
 		return {
 			Literal: node => this.checkStringOrTemplateLiteral(context, node),
 			TemplateLiteral: node => this.checkStringOrTemplateLiteral(context, node),
@@ -116,9 +116,14 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 	}
 
 	private report(context: Rule.RuleContext, node: Literal | TemplateLiteral, loc?: SourceLocation): void {
-		if (this.reportedNodes.has(node))
+		if (!loc)
 			return;
-		this.reportedNodes.add(node);
+
+		const locationKey = `${loc.start.line}-${loc.start.column}-${loc.end.line}-${loc.end.column}`;
+		if (this.reportedLocations.has(locationKey))
+			return;
+
+		this.reportedLocations.add(locationKey);
 		context.report({
 			message: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
 			node,
