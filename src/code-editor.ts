@@ -2,9 +2,6 @@
 import { addLibrary, ILibrary, patchKeybindings } from "./common/monaco-utils.js";
 import { MonacoLoader } from "./monaco-loader.js";
 
-let contextKeyFactory: monaco.platform.IContextKeyExprFactory;
-let editorZoom: monaco.editor.IEditorZoom;
-
 class LocalStorageEditorConfiguration implements monaco.IDisposable {
 	constructor(private readonly editor: monaco.editor.IEditor) {
 		window.addEventListener("storage", this.storageEventHandler);
@@ -40,8 +37,6 @@ class LocalStorageEditorConfiguration implements monaco.IDisposable {
 export class CodeEditor extends Disposable {
 	static async create(element: HTMLElement, language?: string): Promise<CodeEditor> {
 		await MonacoLoader.loadEditor();
-		contextKeyFactory = await MonacoLoader.ContextKeyExpr;
-		editorZoom = await MonacoLoader.editorZoom;
 		return new CodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
 			fixedOverflowWidgets: true,
@@ -71,10 +66,10 @@ export class CodeEditor extends Disposable {
 				showStatusBar: true,
 			},
 			theme: "vs",
-		}));
+		}), await MonacoLoader.editorZoom, await MonacoLoader.ContextKeyExpr);
 	}
 
-	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor) {
+	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, private readonly editorZoom: monaco.editor.IEditorZoom, contextKeyFactory: monaco.platform.IContextKeyExprFactory) {
 		super();
 		this.editor = editor;
 		this.register(new LocalStorageEditorConfiguration(editor));
@@ -170,7 +165,7 @@ export class CodeEditor extends Disposable {
 	}
 
 	resetZoom(): void {
-		console.log(editorZoom);
+		console.log(this.editorZoom);
 		this.editor.trigger("zoom", "editor.action.fontZoomReset", null);
 	}
 
