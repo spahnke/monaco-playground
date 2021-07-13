@@ -1,5 +1,5 @@
 import { AST, Linter, Rule } from "eslint";
-import { CallExpression, Identifier, Literal, SourceLocation, TemplateLiteral, VariableDeclarator } from "estree";
+import { CallExpression, Expression, Identifier, Literal, SourceLocation, TemplateLiteral, VariableDeclarator } from "estree";
 
 export class NoIdToStringInQuery implements Rule.RuleModule {
 	static register(linter: Linter): void {
@@ -8,8 +8,10 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 
 	private readonly reportPattern = /id\.toString\(\)\s*[!=]==?\s*"(?:[^"]*?")?/gi;
 	private readonly fixPattern = /(id)\.toString\(\)(\s*[!=]==?\s*)("[^"]*?")/i;
+	private reportedNodes: WeakSet<Literal | TemplateLiteral> = new WeakSet();
 
 	create(context: Rule.RuleContext): Rule.RuleListener {
+		this.reportedNodes = new WeakSet();
 		return {
 			Literal: node => this.checkStringOrTemplateLiteral(context, node),
 			TemplateLiteral: node => this.checkStringOrTemplateLiteral(context, node),
@@ -57,7 +59,7 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		const value = context.getSourceCode().getText(literal);
 		let match = this.reportPattern.exec(value);
 		while (match !== null) {
-			context.report(this.getDiagnostic(context, literal, this.computeLocationInsideLiteral(literal, match)));
+			this.report(context, literal, this.computeLocationInsideLiteral(literal, match));
 			match = this.reportPattern.exec(value);
 		}
 	}
@@ -68,14 +70,20 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		if (!init)
 			return;
 
-		// if we have a binary expression (e.g. a concatenated string) check the left most operand
-		while (init.type === "BinaryExpression")
+		// if it's a binary expression (i.e. string concatenation) we collect all sub expressions and check against them
+		const expressionsToCheck: Expression[] = [];
+		while (init.type === "BinaryExpression") {
+			expressionsToCheck.unshift(init.right);
 			init = init.left;
+		}
+		expressionsToCheck.unshift(init);
 
-		if (init.type === "Literal" || init.type === "TemplateLiteral")
-			this.reportStringOrTemplateLiteral(context, init);
-		else if (init.type === "Identifier")
-			this.reportVariable(context, init);
+		for (const expression of expressionsToCheck) {
+			if (expression.type === "Literal" || expression.type === "TemplateLiteral")
+				this.reportStringOrTemplateLiteral(context, expression);
+			else if (expression.type === "Identifier")
+				this.reportVariable(context, expression);
+		}
 	}
 
 	private computeLocationInsideLiteral(literal: Literal | TemplateLiteral, match: RegExpExecArray): SourceLocation | undefined {
@@ -107,8 +115,11 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		return definition.node;
 	}
 
-	private getDiagnostic(context: Rule.RuleContext, node: Literal | TemplateLiteral, loc?: SourceLocation): Rule.ReportDescriptor {
-		return {
+	private report(context: Rule.RuleContext, node: Literal | TemplateLiteral, loc?: SourceLocation): void {
+		if (this.reportedNodes.has(node))
+			return;
+		this.reportedNodes.add(node);
+		context.report({
 			message: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
 			node,
 			loc,
@@ -118,7 +129,7 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 					fix: fixer => this.applyFix(fixer, context, node, loc)
 				}
 			]
-		};
+		});
 	}
 
 	private applyFix(fixer: Rule.RuleFixer, context: Rule.RuleContext, node: Literal | TemplateLiteral, loc?: SourceLocation): Rule.Fix | null {
