@@ -7,7 +7,11 @@ import { languageConfig, languageId, monarchTokenProvider } from "./linq-languag
 import { LinqDiagnostics } from "./linq-diagnostics.js";
 
 export function registerLinq(): void {
-	monaco.languages.register({ id: languageId });
+	monaco.languages.register({
+		id: languageId,
+		extensions: [".linq"],
+		aliases: ["LINQ", "linq"],
+	});
 	monaco.languages.onLanguage(languageId, () => {
 		monaco.languages.setLanguageConfiguration(languageId, languageConfig);
 		monaco.languages.setMonarchTokensProvider(languageId, monarchTokenProvider);
