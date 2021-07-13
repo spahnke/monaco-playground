@@ -146,6 +146,21 @@ export function patchKeybinding(editor: monaco.editor.IStandaloneCodeEditor, id:
 	}
 }
 
+/**
+ * CAUTION: Uses an internal API to patch existing keybindings (i.e. remove problematic ones, and add/change default ones).
+ */
+export function patchKeybindings(editor: monaco.editor.IStandaloneCodeEditor, contextKeyFactory: monaco.platform.IContextKeyExprFactory): void {
+	patchKeybinding(editor, "editor.action.addSelectionToNextFindMatch", monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.US_DOT, contextKeyFactory.deserialize("editorFocus")); // default is Ctrl+D
+	patchKeybinding(editor, "editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL); // no default
+	patchKeybinding(editor, "editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS); // no default
+	patchKeybinding(editor, "editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0); // no default
+	patchKeybinding(editor, "editor.action.marker.nextInFiles"); // default F8 (jumps between files/models which is not desirable)
+	patchKeybinding(editor, "editor.action.marker.prevInFiles"); // default Shift+F8 (jumps between files/models which is not desirable)
+	patchKeybinding(editor, "editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter, contextKeyFactory.deserialize("editorHasCodeActionsProvider && editorTextFocus && !editorReadonly")); // default is Ctrl+.
+	patchKeybinding(editor, "editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O, contextKeyFactory.deserialize("editorFocus && editorHasDocumentSymbolProvider")); // default is Ctrl+Shift+O
+	patchKeybinding(editor, "editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R), contextKeyFactory.deserialize("editorHasRenameProvider && editorTextFocus && !editorReadonly")); // default is F2
+}
+
 function delay(ms: number): Promise<void> {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }

@@ -1,8 +1,8 @@
 ﻿import { Disposable } from "./common/disposable.js";
-import { addLibrary, ILibrary, patchKeybinding } from "./common/monaco-utils.js";
+import { addLibrary, ILibrary, patchKeybindings } from "./common/monaco-utils.js";
 import { MonacoLoader } from "./monaco-loader.js";
 
-let ContextKeyExpr: monaco.platform.IContextKeyExprFactory;
+let contextKeyFactory: monaco.platform.IContextKeyExprFactory;
 let editorZoom: monaco.editor.IEditorZoom;
 
 class LocalStorageEditorConfiguration implements monaco.IDisposable {
@@ -40,7 +40,7 @@ class LocalStorageEditorConfiguration implements monaco.IDisposable {
 export class CodeEditor extends Disposable {
 	static async create(element: HTMLElement, language?: string): Promise<CodeEditor> {
 		await MonacoLoader.loadEditor();
-		ContextKeyExpr = await MonacoLoader.ContextKeyExpr;
+		contextKeyFactory = await MonacoLoader.ContextKeyExpr;
 		editorZoom = await MonacoLoader.editorZoom;
 		return new CodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
@@ -78,7 +78,7 @@ export class CodeEditor extends Disposable {
 		super();
 		this.editor = editor;
 		this.register(new LocalStorageEditorConfiguration(editor));
-		this.patchKeybindings(this.editor);
+		patchKeybindings(this.editor, contextKeyFactory);
 	}
 
 	setContents(content: string, language?: string, fileName?: string): void {
@@ -218,16 +218,5 @@ export class CodeEditor extends Disposable {
 		super.dispose();
 		this.editor.getModel()?.dispose();
 		this.editor.dispose();
-	}
-
-	private patchKeybindings(editor: monaco.editor.IStandaloneCodeEditor) {
-		patchKeybinding(editor, "editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL); // no default
-		patchKeybinding(editor, "editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS); // no default
-		patchKeybinding(editor, "editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0); // no default
-		patchKeybinding(editor, "editor.action.marker.nextInFiles"); // default F8 (jumps between files/models which is not desirable)
-		patchKeybinding(editor, "editor.action.marker.prevInFiles"); // default Shift+F8 (jumps between files/models which is not desirable)
-		patchKeybinding(editor, "editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter, ContextKeyExpr.deserialize("editorHasCodeActionsProvider && editorTextFocus && !editorReadonly")); // default is Ctrl+.
-		patchKeybinding(editor, "editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O, ContextKeyExpr.deserialize("editorFocus && editorHasDocumentSymbolProvider")); // default is Ctrl+Shift+O
-		patchKeybinding(editor, "editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R), ContextKeyExpr.deserialize("editorHasRenameProvider && editorTextFocus && !editorReadonly")); // default is F2
 	}
 }
