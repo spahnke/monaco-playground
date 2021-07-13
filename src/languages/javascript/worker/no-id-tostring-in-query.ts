@@ -64,13 +64,18 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 
 	private reportVariable(context: Rule.RuleContext, identifier: Identifier) {
 		const declarator = this.getVariableDeclarator(context, identifier);
-		if (!declarator || !declarator.init)
+		let init = declarator?.init;
+		if (!init)
 			return;
 
-		if (declarator.init.type === "Literal")
-			this.reportStringOrTemplateLiteral(context, declarator.init);
-		else if (declarator.init.type === "Identifier")
-			this.reportVariable(context, declarator.init);
+		// if we have a binary expression (e.g. a concatenated string) check the left most operand
+		while (init.type === "BinaryExpression")
+			init = init.left;
+
+		if (init.type === "Literal" || init.type === "TemplateLiteral")
+			this.reportStringOrTemplateLiteral(context, init);
+		else if (init.type === "Identifier")
+			this.reportVariable(context, init);
 	}
 
 	private computeLocationInsideLiteral(literal: Literal | TemplateLiteral, match: RegExpExecArray): SourceLocation | undefined {
