@@ -135,30 +135,34 @@ export function getKeybindings(editor: monaco.editor.IStandaloneCodeEditor): Key
 /**
  * CAUTION: Uses an internal API.
  */
-export function patchKeybinding(editor: monaco.editor.IStandaloneCodeEditor, id: string, newKeyBinding?: number, when?: monaco.platform.IContextKeyExpr): void {
+export function patchKeybinding(editor: monaco.editor.IStandaloneCodeEditor, id: string, newKeyBinding?: number, when?: monaco.platform.IContextKeyExpr): monaco.IDisposable[] {
+	const disposables: monaco.IDisposable[] = [];
 	// remove existing one; no official API yet
 	// the '-' before the commandId removes the binding
 	// as of >=0.21.0 we need to supply a dummy command handler to not get errors (because of the fix for https://github.com/microsoft/monaco-editor/issues/1857)
-	editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`, undefined, () => { });
+	disposables.unshift(editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`, undefined, () => { }));
 	if (newKeyBinding) {
 		const action = editor.getAction(id);
-		editor._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
+		disposables.unshift(editor._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when));
 	}
+	return disposables;
 }
 
 /**
  * CAUTION: Uses an internal API to patch existing keybindings (i.e. remove problematic ones, and add/change default ones).
  */
-export function patchKeybindings(editor: monaco.editor.IStandaloneCodeEditor, contextKeyFactory: monaco.platform.IContextKeyExprFactory): void {
-	patchKeybinding(editor, "editor.action.addSelectionToNextFindMatch", monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.US_DOT, contextKeyFactory.deserialize("editorFocus")); // default is Ctrl+D
-	patchKeybinding(editor, "editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL); // no default
-	patchKeybinding(editor, "editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS); // no default
-	patchKeybinding(editor, "editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0); // no default
-	patchKeybinding(editor, "editor.action.marker.nextInFiles"); // default F8 (jumps between files/models which is not desirable)
-	patchKeybinding(editor, "editor.action.marker.prevInFiles"); // default Shift+F8 (jumps between files/models which is not desirable)
-	patchKeybinding(editor, "editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter, contextKeyFactory.deserialize("editorHasCodeActionsProvider && editorTextFocus && !editorReadonly")); // default is Ctrl+.
-	patchKeybinding(editor, "editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O, contextKeyFactory.deserialize("editorFocus && editorHasDocumentSymbolProvider")); // default is Ctrl+Shift+O
-	patchKeybinding(editor, "editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R), contextKeyFactory.deserialize("editorHasRenameProvider && editorTextFocus && !editorReadonly")); // default is F2
+export function patchKeybindings(editor: monaco.editor.IStandaloneCodeEditor, contextKeyFactory: monaco.platform.IContextKeyExprFactory): monaco.IDisposable[] {
+	const disposables: monaco.IDisposable[] = [];
+	disposables.push(...patchKeybinding(editor, "editor.action.addSelectionToNextFindMatch", monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.US_DOT, contextKeyFactory.deserialize("editorFocus"))); // default is Ctrl+D
+	disposables.push(...patchKeybinding(editor, "editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL)); // no default
+	disposables.push(...patchKeybinding(editor, "editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS)); // no default
+	disposables.push(...patchKeybinding(editor, "editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0)); // no default
+	disposables.push(...patchKeybinding(editor, "editor.action.marker.nextInFiles")); // default F8 (jumps between files/models which is not desirable)
+	disposables.push(...patchKeybinding(editor, "editor.action.marker.prevInFiles")); // default Shift+F8 (jumps between files/models which is not desirable)
+	disposables.push(...patchKeybinding(editor, "editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter, contextKeyFactory.deserialize("editorHasCodeActionsProvider && editorTextFocus && !editorReadonly"))); // default is Ctrl+.
+	disposables.push(...patchKeybinding(editor, "editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O, contextKeyFactory.deserialize("editorFocus && editorHasDocumentSymbolProvider"))); // default is Ctrl+Shift+O
+	disposables.push(...patchKeybinding(editor, "editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R), contextKeyFactory.deserialize("editorHasRenameProvider && editorTextFocus && !editorReadonly"))); // default is F2
+	return disposables;
 }
 
 function delay(ms: number): Promise<void> {
