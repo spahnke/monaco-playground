@@ -1,20 +1,34 @@
 ﻿import { registerLanguages } from "./languages/language-registry.js";
 
+declare const require: IRequire;
+
+interface IRequire {
+	(dependencies: string[], callback: (...resolvedDependecies: any[]) => void): void;
+	config(value: IRequireConfig): void;
+}
+
+interface IRequireConfig {
+	paths?: Record<string, string>;
+	"vs/nls"?: {
+		availableLanguages: Record<string, string>;
+	};
+}
+
 export class MonacoLoader {
 	private static editorLoaded: Promise<void> | null = null;
 
 	static loadEditor(): Promise<void> {
 		if (MonacoLoader.editorLoaded === null) {
 			MonacoLoader.editorLoaded = new Promise<void>(resolve => {
-				window.require.config({ paths: { vs: "lib/monaco/dev/vs" } });
-				// window.require.config({
+				require.config({ paths: { vs: "lib/monaco/dev/vs" } });
+				// require.config({
 				// 	"vs/nls": {
 				// 		availableLanguages: {
 				// 			"*": "de"
 				// 		}
 				// 	}
 				// });
-				window.require(["vs/editor/editor.main"], async () => {
+				require(["vs/editor/editor.main"], async () => {
 					registerLanguages();
 					resolve();
 				});
@@ -28,7 +42,7 @@ export class MonacoLoader {
 	 */
 	static get ContextKeyExpr(): Promise<monaco.platform.IContextKeyExprFactory> {
 		return new Promise(resolve => {
-			window.require(["vs/platform/contextkey/common/contextkey"], (x: { ContextKeyExpr: monaco.platform.IContextKeyExprFactory }) => {
+			require(["vs/platform/contextkey/common/contextkey"], (x: { ContextKeyExpr: monaco.platform.IContextKeyExprFactory }) => {
 				resolve(x.ContextKeyExpr);
 			});
 		});
@@ -39,7 +53,7 @@ export class MonacoLoader {
 	 */
 	static get editorZoom(): Promise<monaco.editor.IEditorZoom> {
 		return new Promise(resolve => {
-			window.require(["vs/editor/common/config/editorZoom"], (x: { EditorZoom: monaco.editor.IEditorZoom }) => {
+			require(["vs/editor/common/config/editorZoom"], (x: { EditorZoom: monaco.editor.IEditorZoom }) => {
 				resolve(x.EditorZoom);
 			});
 		});

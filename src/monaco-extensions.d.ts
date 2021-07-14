@@ -1,20 +1,4 @@
-interface Window {
-	require: monaco.IRequire;
-}
-
 declare namespace monaco {
-	interface IRequire {
-		(dependencies: string[], callback: (...resolvedDependecies: any[]) => void): void;
-		config(value: IRequireConfig): void;
-	}
-
-	interface IRequireConfig {
-		paths?: Record<string, string>;
-		"vs/nls"?: {
-			availableLanguages: Record<string, string>
-		}
-	}
-
 	namespace editor {
 		/** CAUTION: Internal unofficial API */
 		interface IEditorZoom {
