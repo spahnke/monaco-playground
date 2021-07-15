@@ -11,6 +11,18 @@ async function main() {
 	const debug = editor.register(new DebugContribution(editor.editor));
 	debug.simulateDebugging();
 
+	monaco.languages.registerInlayHintsProvider("javascript", {
+		async provideInlayHints(model: monaco.editor.ITextModel, range: monaco.Range, token: monaco.CancellationToken): Promise<monaco.languages.InlayHint[]> {
+			return [
+				{
+					kind: monaco.languages.InlayHintKind.Other,
+					position: { lineNumber: 27, column: 1 },
+					text: "testing"
+				}
+			];
+		}
+	});
+
 	editor.addLibrary({
 		contents: `
 declare class Facts {
