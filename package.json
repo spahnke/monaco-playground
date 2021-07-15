@@ -4,7 +4,7 @@
 	"description": "",
 	"type": "module",
 	"scripts": {
-		"clean": "rm -rf wwwroot/dist wwwroot/languages wwwroot/lib wwwroot/worker",
+		"clean": "node scripts/clean.js",
 		"build": "rollup -c",
 		"dev": "rollup -c -w",
 		"serve": "serve -p 9000 wwwroot"
