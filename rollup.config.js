@@ -22,6 +22,7 @@ export default [
 				targets: [
 					{ src: "node_modules/monaco-editor/", dest: "wwwroot/lib/" },
 					{ src: "src/languages/**/*.json", dest: "wwwroot/" },
+					{ src: "src/index.html", dest: "wwwroot/" },
 				],
 			}),
 			...commonPlugins,

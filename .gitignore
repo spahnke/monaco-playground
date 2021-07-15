@@ -1,5 +1,2 @@
 node_modules/
-wwwroot/dist/
-wwwroot/languages/
-wwwroot/lib/
-wwwroot/worker/
+wwwroot/
