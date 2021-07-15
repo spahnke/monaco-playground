@@ -59,11 +59,9 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 
 	private reportStringOrTemplateLiteral(context: Rule.RuleContext, literal: Literal | TemplateLiteral) {
 		const value = context.getSourceCode().getText(literal);
-		let match = this.reportPattern.exec(value);
-		while (match !== null) {
+		const matches = value.matchAll(this.reportPattern);
+		for (const match of matches)
 			this.report(context, literal, this.computeLocationInsideLiteral(literal, match));
-			match = this.reportPattern.exec(value);
-		}
 	}
 
 	private reportVariable(context: Rule.RuleContext, identifier: Identifier) {
@@ -73,7 +71,7 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		this.checkExpression(context, declarator.init);
 	}
 
-	private computeLocationInsideLiteral(literal: Literal | TemplateLiteral, match: RegExpExecArray): SourceLocation | undefined {
+	private computeLocationInsideLiteral(literal: Literal | TemplateLiteral, match: RegExpMatchArray): SourceLocation | undefined {
 		if (!literal.loc)
 			return undefined;
 
@@ -82,7 +80,7 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 			end: { ...literal.loc.end },
 		};
 
-		const offset = match.index;
+		const offset = match.index ?? 0;
 		const columnStart = location.start.column + offset;
 		location.start.column = columnStart;
 		location.end.column = columnStart + match[0].length;
