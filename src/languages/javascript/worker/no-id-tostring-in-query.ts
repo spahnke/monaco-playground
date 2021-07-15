@@ -13,30 +13,15 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 	create(context: Rule.RuleContext): Rule.RuleListener {
 		this.reportedLocations = new Set();
 		return {
-			Literal: node => this.checkStringOrTemplateLiteral(context, node),
-			TemplateLiteral: node => this.checkStringOrTemplateLiteral(context, node),
-			Identifier: node => {
-				let parent = node.parent;
-				while (parent) {
-					if (parent.type === "CallExpression" && this.isQuery(parent)) {
-						this.reportVariable(context, node);
-						return;
-					}
-					parent = parent.parent;
-				}
+			CallExpression: node => {
+				if (!this.isQuery(node))
+					return;
+				const queryExpression = node.arguments[0];
+				if (queryExpression.type === "SpreadElement")
+					return;
+				this.checkExpression(context, queryExpression);
 			}
 		};
-	}
-
-	private checkStringOrTemplateLiteral(context: Rule.RuleContext, literal: (Literal | TemplateLiteral) & Rule.NodeParentExtension) {
-		let parent = literal.parent;
-		while (parent) {
-			if (parent.type === "CallExpression" && this.isQuery(parent)) {
-				this.reportStringOrTemplateLiteral(context, literal);
-				return;
-			}
-			parent = parent.parent;
-		}
 	}
 
 	private isQuery(callExpression: CallExpression): boolean {
@@ -55,6 +40,23 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 		return true;
 	}
 
+	private checkExpression(context: Rule.RuleContext, expression: Expression) {
+		// if it's a binary expression (i.e. string concatenation) we collect all sub expressions and check against them
+		const expressionsToCheck: Expression[] = [];
+		while (expression.type === "BinaryExpression") {
+			expressionsToCheck.unshift(expression.right);
+			expression = expression.left;
+		}
+		expressionsToCheck.unshift(expression);
+
+		for (const expression of expressionsToCheck) {
+			if (expression.type === "Literal" || expression.type === "TemplateLiteral")
+				this.reportStringOrTemplateLiteral(context, expression);
+			else if (expression.type === "Identifier")
+				this.reportVariable(context, expression);
+		}
+	}
+
 	private reportStringOrTemplateLiteral(context: Rule.RuleContext, literal: Literal | TemplateLiteral) {
 		const value = context.getSourceCode().getText(literal);
 		let match = this.reportPattern.exec(value);
@@ -66,24 +68,9 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 
 	private reportVariable(context: Rule.RuleContext, identifier: Identifier) {
 		const declarator = this.getVariableDeclarator(context, identifier);
-		let init = declarator?.init;
-		if (!init)
+		if (!declarator?.init)
 			return;
-
-		// if it's a binary expression (i.e. string concatenation) we collect all sub expressions and check against them
-		const expressionsToCheck: Expression[] = [];
-		while (init.type === "BinaryExpression") {
-			expressionsToCheck.unshift(init.right);
-			init = init.left;
-		}
-		expressionsToCheck.unshift(init);
-
-		for (const expression of expressionsToCheck) {
-			if (expression.type === "Literal" || expression.type === "TemplateLiteral")
-				this.reportStringOrTemplateLiteral(context, expression);
-			else if (expression.type === "Identifier")
-				this.reportVariable(context, expression);
-		}
+		this.checkExpression(context, declarator.init);
 	}
 
 	private computeLocationInsideLiteral(literal: Literal | TemplateLiteral, match: RegExpExecArray): SourceLocation | undefined {
