@@ -1,6 +1,7 @@
+import copy from "rollup-plugin-copy";
 import typescript from "@rollup/plugin-typescript";
 
-const plugins = [
+const commonPlugins = [
 	typescript({
 		tsconfig: "src/tsconfig.json",
 	}),
@@ -14,7 +15,17 @@ export default [
 			format: "es",
 			sourcemap: true,
 		},
-		plugins
+		plugins: [
+			copy({
+				copyOnce: true,
+				flatten: false,
+				targets: [
+					{ src: "node_modules/monaco-editor/", dest: "wwwroot/lib/" },
+					{ src: "src/languages/**/*.json", dest: "wwwroot/" },
+				],
+			}),
+			...commonPlugins,
+		]
 	},
 	{
 		input: "src/languages/javascript/worker/eslint-worker.ts",
@@ -23,6 +34,6 @@ export default [
 			format: "amd",
 			sourcemap: true,
 		},
-		plugins
+		plugins: commonPlugins
 	}
 ]

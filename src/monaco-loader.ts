@@ -20,7 +20,7 @@ export class MonacoLoader {
 	static loadEditor(): Promise<void> {
 		if (MonacoLoader.editorLoaded === null) {
 			MonacoLoader.editorLoaded = new Promise<void>(resolve => {
-				require.config({ paths: { vs: "lib/monaco/dev/vs" } });
+				require.config({ paths: { vs: "lib/monaco-editor/dev/vs" } });
 				// require.config({
 				// 	"vs/nls": {
 				// 		availableLanguages: {

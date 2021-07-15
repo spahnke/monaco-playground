@@ -5,11 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"clean": "rm -rf wwwroot/dist wwwroot/languages wwwroot/lib wwwroot/worker",
-		"copyconfigs": "cd src && rsync -R languages/**/*.json ../wwwroot && cd -",
-		"copymonaco": "mkdir -p wwwroot/lib && rsync -a node_modules/monaco-editor/ wwwroot/lib/monaco",
-		"prebuild": "npm run copyconfigs && npm run copymonaco",
 		"build": "rollup -c",
-		"dev": "npm run prebuild && rollup -c -w",
+		"dev": "rollup -c -w",
 		"serve": "serve -p 9000 wwwroot"
 	},
 	"keywords": [],
@@ -24,6 +21,7 @@
 		"eslint": "^7.30.0",
 		"monaco-editor": "^0.25.2",
 		"rollup": "^2.53.1",
+		"rollup-plugin-copy": "^3.4.0",
 		"serve": "^12.0.0",
 		"tslib": "^2.3.0",
 		"typescript": "^4.3.5"
