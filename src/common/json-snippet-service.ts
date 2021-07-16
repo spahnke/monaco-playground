@@ -4,6 +4,7 @@ interface JsonSerializedSnippet {
 	body: string | string[];
 	description: string;
 	prefix: string;
+	sortText?: string;
 }
 
 export class JsonSnippetService implements ISnippetService {
@@ -24,7 +25,7 @@ export class JsonSnippetService implements ISnippetService {
 	}
 
 	private parseSnippet(name: string, serializedSnippet: JsonSerializedSnippet): Snippet {
-		const { body, description, prefix } = serializedSnippet;
-		return new Snippet(name, prefix, body, description);
+		const { body, description, prefix, sortText } = serializedSnippet;
+		return new Snippet(name, prefix, body, description, undefined, undefined, sortText);
 	}
 }

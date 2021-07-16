@@ -1,6 +1,7 @@
 {
 	"query": {
 		"prefix": "query",
+		"sortText": "0_query",
 		"body": [
 			"from x in @$1",
 			"$0",
