@@ -106,6 +106,32 @@ export class PlaygroundContribution extends Disposable {
 				}
 			}
 		}));
+
+		let inlayHintProvider: monaco.IDisposable | undefined;
+		this.register(this.editor.editor.addAction({
+			id: "toggle_inlay_hint_example",
+			label: "Toggle Inlay Hint Example",
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_I)],
+			contextMenuGroupId,
+			run: editor => {
+				if (inlayHintProvider) {
+					inlayHintProvider.dispose();
+					inlayHintProvider = undefined;
+				} else {
+					inlayHintProvider = monaco.languages.registerInlayHintsProvider("javascript", {
+						async provideInlayHints(model: monaco.editor.ITextModel, range: monaco.Range, token: monaco.CancellationToken): Promise<monaco.languages.InlayHint[]> {
+							return [
+								{
+									kind: monaco.languages.InlayHintKind.Other,
+									position: editor.getPosition() ?? { lineNumber: 1, column: 1 },
+									text: "testing"
+								}
+							];
+						}
+					});
+				}
+			}
+		}));
 	}
 
 	/**
