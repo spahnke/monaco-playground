@@ -28,34 +28,16 @@ export class MonacoLoader {
 				// 		}
 				// 	}
 				// });
-				require(["vs/editor/editor.main"], async () => {
-					registerLanguages();
-					resolve();
+				require(["vs/editor/editor.main"], () => {
+					require(["vs/editor/common/config/editorZoom", "vs/platform/contextkey/common/contextkey"], (editorZoom: { EditorZoom: monaco.editor.IEditorZoom; }, contextKey: { ContextKeyExpr: monaco.platform.IContextKeyExprFactory; }) => {
+						monaco.editor.EditorZoom = editorZoom.EditorZoom;
+						monaco.ContextKeyExpr = contextKey.ContextKeyExpr;
+						registerLanguages();
+						resolve();
+					});
 				});
 			});
 		}
 		return MonacoLoader.editorLoaded;
-	}
-
-	/**
-	 * CAUTION: Uses an internal API to get an object of the non-exported class ContextKeyExpr.
-	 */
-	static get ContextKeyExpr(): Promise<monaco.platform.IContextKeyExprFactory> {
-		return new Promise(resolve => {
-			require(["vs/platform/contextkey/common/contextkey"], (x: { ContextKeyExpr: monaco.platform.IContextKeyExprFactory }) => {
-				resolve(x.ContextKeyExpr);
-			});
-		});
-	}
-
-	/**
-	 * CAUTION: Uses an internal API to get an instance of the non-exported class EditorZoom as `editor.getConfiguration().fontInfo.zoomLevel` always returns the initial zoom level.
-	 */
-	static get editorZoom(): Promise<monaco.editor.IEditorZoom> {
-		return new Promise(resolve => {
-			require(["vs/editor/common/config/editorZoom"], (x: { EditorZoom: monaco.editor.IEditorZoom }) => {
-				resolve(x.EditorZoom);
-			});
-		});
 	}
 }

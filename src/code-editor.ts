@@ -66,14 +66,14 @@ export class CodeEditor extends Disposable {
 				showStatusBar: true,
 			},
 			theme: "vs",
-		}), await MonacoLoader.editorZoom, await MonacoLoader.ContextKeyExpr);
+		}));
 	}
 
-	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, private readonly editorZoom: monaco.editor.IEditorZoom, contextKeyFactory: monaco.platform.IContextKeyExprFactory) {
+	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor) {
 		super();
 		this.editor = editor;
 		this.register(new LocalStorageEditorConfiguration(editor));
-		this.register(patchKeybindings(this.editor, contextKeyFactory));
+		this.register(patchKeybindings(this.editor));
 	}
 
 	setContents(content: string, language?: string, fileName?: string): void {
@@ -165,7 +165,7 @@ export class CodeEditor extends Disposable {
 	}
 
 	resetZoom(): void {
-		console.log(this.editorZoom);
+		console.log(monaco.editor.EditorZoom);
 		this.editor.trigger("zoom", "editor.action.fontZoomReset", null);
 	}
 

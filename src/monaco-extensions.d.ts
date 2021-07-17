@@ -130,6 +130,9 @@ declare namespace monaco {
 			 */
 			readonly context?: number;
 		}
+
+		/** CAUTION: Unofficial patched API */
+		export let EditorZoom: IEditorZoom;
 	}
 
 	namespace platform {
@@ -153,4 +156,7 @@ declare namespace monaco {
 			deserialize(serialized: string | null | undefined, strict?: boolean): IContextKeyExpr | undefined;
 		}
 	}
+
+	/** CAUTION: Unofficial patched API */
+	export let ContextKeyExpr: platform.IContextKeyExprFactory;
 }
