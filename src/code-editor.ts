@@ -1,6 +1,6 @@
 ﻿import { Disposable } from "./common/disposable.js";
 import { addLibrary, ILibrary, patchKeybindings } from "./common/monaco-utils.js";
-import { MonacoLoader } from "./monaco-loader.js";
+import { loadMonaco } from "./monaco-loader.js";
 
 class LocalStorageEditorConfiguration implements monaco.IDisposable {
 	constructor(private readonly editor: monaco.editor.IEditor) {
@@ -36,7 +36,7 @@ class LocalStorageEditorConfiguration implements monaco.IDisposable {
 
 export class CodeEditor extends Disposable {
 	static async create(element: HTMLElement, language?: string): Promise<CodeEditor> {
-		await MonacoLoader.loadEditor();
+		await loadMonaco();
 		return new CodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
 			fixedOverflowWidgets: true,
