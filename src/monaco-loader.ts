@@ -14,11 +14,11 @@ interface IRequireConfig {
 	};
 }
 
-let editorLoaded: Promise<void> | null = null;
+let monacoLoaded: Promise<void> | null = null;
 
 export function loadMonaco(): Promise<void> {
-	if (editorLoaded === null) {
-		editorLoaded = new Promise<void>(resolve => {
+	if (monacoLoaded === null) {
+		monacoLoaded = new Promise<void>(resolve => {
 			require.config({ paths: { vs: "lib/monaco-editor/dev/vs" } });
 			// require.config({
 			// 	"vs/nls": {
@@ -37,5 +37,5 @@ export function loadMonaco(): Promise<void> {
 			});
 		});
 	}
-	return editorLoaded;
+	return monacoLoaded;
 }
