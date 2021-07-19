@@ -56,6 +56,23 @@ export const enum EditorOpenContext {
 	USER
 }
 
+let languageIdToDisplayNameMap: Map<string, string> | undefined;
+
+/**
+ * Returns the display name of a given Monaco `languageId`.
+ */
+export function getLanguageDisplayName(languageId: string): string {
+	if (languageIdToDisplayNameMap === undefined) {
+		languageIdToDisplayNameMap = new Map();
+		for (const language of monaco.languages.getLanguages()) {
+			// by Monaco convention, the first alias of a language is the display language
+			const displayLanguage = language.aliases?.[0] ?? language.id;
+			languageIdToDisplayNameMap.set(language.id, displayLanguage);
+		}
+	}
+	return languageIdToDisplayNameMap.get(languageId) ?? languageId;
+}
+
 /** CAUTION: Internal unofficial API (see IEncodedLineTokens in monaco.d.ts) */
 enum StandardTokenType {
 	Other = 0,
