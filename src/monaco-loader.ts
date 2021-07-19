@@ -14,10 +14,10 @@ interface IRequireConfig {
 	};
 }
 
-let monacoLoaded: Promise<void> | null = null;
+let monacoLoaded: Promise<void> | undefined;
 
 export function loadMonaco(): Promise<void> {
-	if (monacoLoaded === null) {
+	if (monacoLoaded === undefined) {
 		monacoLoaded = new Promise<void>(resolve => {
 			require.config({ paths: { vs: "lib/monaco-editor/dev/vs" } });
 			// require.config({
