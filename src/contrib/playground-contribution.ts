@@ -135,21 +135,13 @@ export class PlaygroundContribution extends Disposable {
 	}
 
 	/**
-	 * Example to intercept links that are opened. Works per editor instance.
+	 * Example to intercept links that are opened.
 	 */
 	private addLinkOpenInterceptor() {
-		const linkDetector = this.editor.editor.getContribution<monaco.editor.ILinkDetector>("editor.linkDetector");
-		const remove = linkDetector.openerService._openers.unshift({
-			async open(resource: string | monaco.Uri) {
-				if (typeof resource === "string")
-					resource = monaco.Uri.parse(resource);
+		this.editor.registerLinkOpener({
+			async open(resource: monaco.Uri): Promise<boolean> {
 				console.log("Opening: ", resource);
-				return false; // was this resource handled?
-			}
-		});
-		this.register({
-			dispose() {
-				remove();
+				return false;
 			}
 		});
 	}

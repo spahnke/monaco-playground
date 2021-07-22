@@ -133,6 +133,11 @@ declare namespace monaco {
 
 		/** CAUTION: Unofficial patched API */
 		export let EditorZoom: IEditorZoom;
+
+		/** CAUTION: Unofficial patched API */
+		interface ILinkOpener {
+			open(resource: monaco.Uri): Promise<boolean>;
+		}
 	}
 
 	namespace platform {
