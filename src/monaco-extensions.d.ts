@@ -55,17 +55,19 @@ declare namespace monaco {
 			options?: ITextEditorOptions;
 		}
 
+		interface ICodeEditor {
+			/** CAUTION: Internal unofficial API */
+			_codeEditorService: {
+				openCodeEditor(input: IResourceEditorInput, source: ICodeEditor | null, sideBySide?: boolean): Promise<ICodeEditor | null>;
+			};
+		}
+
 		interface IStandaloneCodeEditor {
 			/** CAUTION: Internal unofficial API */
 			_actions: Record<string, {
 				id: string;
 				_precondition?: monaco.platform.IContextKeyExpr;
 			}>;
-
-			/** CAUTION: Internal unofficial API */
-			_codeEditorService: {
-				openCodeEditor(input: IResourceEditorInput, source: ICodeEditor | null, sideBySide?: boolean): Promise<ICodeEditor | null>;
-			};
 
 			/** CAUTION: Internal unofficial API */
 			_standaloneKeybindingService: {
@@ -138,6 +140,19 @@ declare namespace monaco {
 		interface ILinkOpener {
 			open(resource: monaco.Uri): Promise<boolean>;
 		}
+
+		/** CAUTION: Unofficial patched API */
+		interface ICodeEditorOpener {
+			openCodeEditor(source: monaco.editor.ICodeEditor, resource: monaco.Uri, selection?: monaco.IRange): Promise<boolean>;
+		}
+
+		/**
+		 * Registers a handler that is called when a resource other than the current model should be opened in the editor (e.g. "go to definition").
+		 * The handler callback should return `true` if the request was handled and `false` otherwise.
+		 *
+		 * CAUTION: Unofficial patched API
+		 */
+		export function registerEditorOpener(opener: ICodeEditorOpener): monaco.IDisposable;
 	}
 
 	namespace platform {

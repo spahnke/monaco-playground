@@ -40,22 +40,6 @@ export function addTemplates(language: string, templates: ITemplate[]): monaco.I
 	return monaco.languages.registerCompletionItemProvider(language, new SnippetCompletionProvider(new InMemorySnippetService(templates)));
 }
 
-/** CAUTION: Internal unofficial API */
-export const enum EditorOpenContext {
-
-	/**
-	 * Default: the editor is opening via a programmatic call
-	 * to the editor service API.
-	 */
-	API,
-
-	/**
-	 * Indicates that a user action triggered the opening, e.g.
-	 * via mouse or keyboard use.
-	 */
-	USER
-}
-
 let languageIdToDisplayNameMap: Map<string, string> | undefined;
 
 /**
