@@ -150,6 +150,8 @@ declare namespace monaco {
 		 * Registers a handler that is called when a resource other than the current model should be opened in the editor (e.g. "go to definition").
 		 * The handler callback should return `true` if the request was handled and `false` otherwise.
 		 *
+		 * Returns a disposable that can unregister the opener again.
+		 *
 		 * CAUTION: Unofficial patched API
 		 */
 		export function registerEditorOpener(opener: ICodeEditorOpener): monaco.IDisposable;

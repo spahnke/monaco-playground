@@ -213,9 +213,11 @@ export class CodeEditor extends Disposable {
 	 * Registers a handler that is called when a link is opened. The handler callback should return `true` if the link was handled and `false` otherwise.
 	 * The handler that was registered last will be called first when a link is opened.
 	 *
+	 * Returns a disposable that can unregister the opener again.
+	 *
 	 * CAUTION: Uses internal unofficial APIs
 	 */
-	registerLinkOpener(opener: monaco.editor.ILinkOpener): void {
+	registerLinkOpener(opener: monaco.editor.ILinkOpener): monaco.IDisposable {
 		const linkDetector = this.editor.getContribution<monaco.editor.ILinkDetector>("editor.linkDetector");
 		let remove: (() => void) | undefined = linkDetector.openerService._openers.unshift({
 			async open(resource: string | monaco.Uri) {
@@ -224,12 +226,12 @@ export class CodeEditor extends Disposable {
 				return opener.open(resource);
 			}
 		});
-		this.register({
+		return {
 			dispose() {
 				remove?.();
 				remove = undefined;
 			}
-		});
+		};
 	}
 
 	override dispose(): void {

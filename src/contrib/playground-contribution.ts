@@ -138,12 +138,12 @@ export class PlaygroundContribution extends Disposable {
 	 * Example to intercept links that are opened.
 	 */
 	private addLinkOpenInterceptor() {
-		this.editor.registerLinkOpener({
+		this.register(this.editor.registerLinkOpener({
 			async open(resource: monaco.Uri): Promise<boolean> {
 				console.log("Opening: ", resource);
 				return false;
 			}
-		});
+		}));
 	}
 
 	/**
