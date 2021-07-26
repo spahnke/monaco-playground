@@ -58,10 +58,10 @@ export class EsLintWorker {
 
 export type EslintConfig = Linter.Config<Linter.RulesRecord> & {
 	/**
-	 * Optional paths to additional rule files relative to the worker directory.
-	 * - The filename without the extension is the rule ID.
-	 * - The rule must be compiled as a standalone AMD module.
-	 * - The rule object must be the default export of the module.
+	 * Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.
+	 * - The filename without the extension is the rule ID
+	 * - The rule must be compiled as a standalone AMD module
+	 * - The rule object must be the default export of the module
 	 */
 	ruleFiles?: string[];
 };

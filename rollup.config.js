@@ -39,10 +39,10 @@ export default [
 	},
 	{
 		input: [
-			"src/languages/javascript/worker/rules/no-id-tostring-in-query.ts",
+			"src/rules/no-id-tostring-in-query.ts",
 		],
 		output: {
-			dir: "wwwroot/worker/rules",
+			dir: "wwwroot/rules",
 			format: "amd",
 			sourcemap: true,
 		},
