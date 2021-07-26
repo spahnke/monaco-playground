@@ -17,10 +17,4 @@ To build a minified version instead, run
 npm run webpack -- -- production
 ```
 
-Copy the resulting file here and replace the UMD header with
-
-```js
-(function webpackUniversalModuleDefinition(root, factory) {
-  root["eslint"] = factory();
-})(self, function() {
-```
+Copy the resulting file here.

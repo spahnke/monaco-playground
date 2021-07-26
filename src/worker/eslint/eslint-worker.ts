@@ -1,24 +1,19 @@
 import { Linter, Rule } from "eslint";
 import { EslintConfig, IEsLintWorker, IWorkerCreateData } from "../../languages/javascript/eslint-diagnostics.js";
-import "./eslint.js";
 
-declare namespace eslint {
-	export const Linter: typeof import("eslint").Linter;
-}
+type Eslint = { Linter: typeof import("eslint").Linter; };
 
 class EsLintWorker implements IEsLintWorker {
-	private linter: Linter;
-	private rulesLoaded: Promise<void>;
+	private linter: Promise<Linter>;
 
 	constructor(private context: monaco.worker.IWorkerContext, private config: EslintConfig) {
-		this.linter = new eslint.Linter();
-		this.rulesLoaded = this.loadRules();
+		this.linter = this.createLinter();
 	}
 
 	async getRuleToUrlMapping(): Promise<Map<string, string>> {
-		await this.rulesLoaded;
+		const linter = await this.linter;
 		const ruleToUrlMapping = new Map<string, string>();
-		for (const [ruleId, ruleData] of this.linter.getRules()) {
+		for (const [ruleId, ruleData] of linter.getRules()) {
 			const url = ruleData.meta?.docs?.url;
 			if (url)
 				ruleToUrlMapping.set(ruleId, url);
@@ -27,14 +22,22 @@ class EsLintWorker implements IEsLintWorker {
 	}
 
 	async lint(fileName: string): Promise<Linter.LintMessage[]> {
-		await this.rulesLoaded;
+		const linter = await this.linter;
 		const model = this.context.getMirrorModels().find(m => m.uri.toString() === fileName);
 		if (model === undefined)
 			return [];
-		return this.linter.verify(model.getValue(), this.config);
+		return linter.verify(model.getValue(), this.config);
 	}
 
-	private async loadRules() {
+	private async createLinter(): Promise<Linter> {
+		// @ts-ignore we define the type on the variable
+		const eslint: Eslint = await import("./eslint.js");
+		const linter = new eslint.Linter();
+		this.loadRules(linter);
+		return linter;
+	}
+
+	private async loadRules(linter: Linter) {
 		if (this.config.ruleFiles === undefined)
 			return;
 		if (!Array.isArray(this.config.ruleFiles)) {
@@ -52,7 +55,7 @@ class EsLintWorker implements IEsLintWorker {
 				if (!rule.create)
 					throw new Error(`The rule '${id}' does not define a 'create' method.`);
 
-				this.linter.defineRule(id, rule);
+				linter.defineRule(id, rule);
 			} catch (e: any) {
 				console.warn(`[ESLint] Could not load additional rule module '${ruleFile}': ${e.message}`);
 			}

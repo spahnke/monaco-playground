@@ -1,3 +1,4 @@
+import { resolve } from "path";
 import copy from "rollup-plugin-copy";
 import typescript from "@rollup/plugin-typescript";
 
@@ -37,7 +38,16 @@ export default [
 			format: "amd",
 			sourcemap: true,
 		},
-		plugins: commonPlugins
+		external: [resolve(__dirname, "src/worker/eslint/eslint.js")],
+		plugins: [
+			copy({
+				copyOnce: true,
+				targets: [
+					{ src: "src/worker/eslint/eslint.js", dest: "wwwroot/worker/" },
+				],
+			}),
+			...commonPlugins,
+		]
 	},
 	{
 		input: [
