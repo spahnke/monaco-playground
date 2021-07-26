@@ -1,12 +1,12 @@
 import { Linter, Rule } from "eslint";
-import { EslintConfig, IEsLintWorker, IWorkerCreateData } from "../../languages/javascript/eslint-diagnostics.js";
+import { EsLintConfig, IEsLintWorker, IWorkerCreateData } from "../../languages/javascript/eslint-diagnostics.js";
 
 type Eslint = { Linter: typeof import("eslint").Linter; };
 
 class EsLintWorker implements IEsLintWorker {
 	private linter: Promise<Linter>;
 
-	constructor(private context: monaco.worker.IWorkerContext, private config: EslintConfig) {
+	constructor(private context: monaco.worker.IWorkerContext, private config: EsLintConfig) {
 		this.linter = this.createLinter();
 	}
 
