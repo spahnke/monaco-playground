@@ -1,7 +1,7 @@
 import { Linter, Rule } from "eslint";
 import { EsLintConfig, IEsLintWorker, IWorkerCreateData } from "../../languages/javascript/eslint-diagnostics.js";
 
-type Eslint = { Linter: typeof import("eslint").Linter; };
+type Eslint = { Linter: typeof Linter; };
 
 class EsLintWorker implements IEsLintWorker {
 	private linter: Promise<Linter>;
