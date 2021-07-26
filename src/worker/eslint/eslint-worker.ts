@@ -52,7 +52,7 @@ class EsLintWorker implements IEsLintWorker {
 					throw new Error("Could not extract rule ID from file name.");
 
 				const rule: Rule.RuleModule = (await import(ruleFile)).default;
-				if (!rule.create)
+				if (typeof rule.create !== "function")
 					throw new Error(`The rule '${id}' does not define a 'create' method.`);
 
 				linter.defineRule(id, rule);
