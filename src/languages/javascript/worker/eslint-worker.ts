@@ -7,13 +7,15 @@ declare namespace eslint {
 
 export class EsLintWorker {
 	private linter: Linter;
+	private rulesLoaded: Promise<void>;
 
 	constructor(private context: monaco.worker.IWorkerContext, private config: EslintConfig) {
 		this.linter = new eslint.Linter();
-		this.loadRules();
+		this.rulesLoaded = this.loadRules();
 	}
 
 	async getRuleToUrlMapping(): Promise<Map<string, string>> {
+		await this.rulesLoaded;
 		const ruleToUrlMapping = new Map<string, string>();
 		for (const [ruleId, ruleData] of this.linter.getRules()) {
 			const url = ruleData.meta?.docs?.url;
@@ -24,6 +26,7 @@ export class EsLintWorker {
 	}
 
 	async lint(fileName: string): Promise<Linter.LintMessage[]> {
+		await this.rulesLoaded;
 		const model = this.context.getMirrorModels().find(m => m.uri.toString() === fileName);
 		if (model === undefined)
 			return [];
