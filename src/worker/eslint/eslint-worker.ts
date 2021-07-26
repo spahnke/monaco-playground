@@ -1,11 +1,12 @@
 import { Linter, Rule } from "eslint";
+import { EslintConfig, IEsLintWorker, IWorkerCreateData } from "../../languages/javascript/eslint-diagnostics.js";
 import "./eslint.js";
 
 declare namespace eslint {
 	export const Linter: typeof import("eslint").Linter;
 }
 
-export class EsLintWorker {
+class EsLintWorker implements IEsLintWorker {
 	private linter: Linter;
 	private rulesLoaded: Promise<void>;
 
@@ -59,20 +60,6 @@ export class EsLintWorker {
 	}
 }
 
-export type EslintConfig = Linter.Config<Linter.RulesRecord> & {
-	/**
-	 * Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.
-	 * - The filename without the extension is the rule ID
-	 * - The rule must be compiled as a standalone AMD module
-	 * - The rule object must be the default export of the module
-	 */
-	ruleFiles?: string[];
-};
-
-interface ICreateData {
-	config: EslintConfig;
-}
-
-export function create(context: monaco.worker.IWorkerContext, createData: ICreateData): EsLintWorker {
+export function create(context: monaco.worker.IWorkerContext, createData: IWorkerCreateData): EsLintWorker {
 	return new EsLintWorker(context, createData.config);
 }

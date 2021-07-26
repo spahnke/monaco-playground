@@ -1,6 +1,15 @@
 ﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
-import { EslintConfig, EsLintWorker } from "../../worker/eslint/eslint-worker.js";
+
+export type EslintConfig = Linter.Config<Linter.RulesRecord> & {
+	/**
+	 * Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.
+	 * - The filename without the extension is the rule ID
+	 * - The rule must be compiled as a standalone AMD module
+	 * - The rule object must be the default export of the module
+	 */
+	ruleFiles?: string[];
+};
 
 type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
 type Fix = {
@@ -8,6 +17,15 @@ type Fix = {
 	textEdit: monaco.languages.TextEdit;
 	autoFixAvailable: boolean;
 };
+
+export interface IEsLintWorker {
+	getRuleToUrlMapping(): Promise<Map<string, string>>;
+	lint(fileName: string): Promise<Linter.LintMessage[]>;
+}
+
+export interface IWorkerCreateData {
+	config: EslintConfig;
+}
 
 class DiagnosticContainer {
 	private diagnostics: Map<string, Linter.LintMessage[]> = new Map();
@@ -39,8 +57,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
 	private config: EslintConfig | undefined;
-	private webWorker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
-	private eslintWorker: Promise<EsLintWorker> | undefined;
+	private webWorker: monaco.editor.MonacoWebWorker<IEsLintWorker> | undefined;
+	private eslintWorker: Promise<IEsLintWorker> | undefined;
 	private ruleToUrlMapping: Map<string, string> | undefined;
 	private diagnostics = new DiagnosticContainer();
 
@@ -226,18 +244,18 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		];
 	}
 
-	private async createEslintWorker(): Promise<EsLintWorker> {
+	private async createEslintWorker(): Promise<IEsLintWorker> {
 		this.config = await fetch(this.configPath).then(r => r.json());
-		this.webWorker = monaco.editor.createWebWorker<EsLintWorker>({
+		this.webWorker = monaco.editor.createWebWorker<IEsLintWorker>({
 			moduleId: "/worker/eslint-worker",
 			label: this.owner,
-			createData: { config: this.createEsLintCompatibleConfig() }
+			createData: { config: this.createEsLintCompatibleConfig() } as IWorkerCreateData
 		});
 		this.register(this.webWorker);
 		return this.webWorker.getProxy();
 	}
 
-	private getEslintWorker(): Promise<EsLintWorker> {
+	private getEslintWorker(): Promise<IEsLintWorker> {
 		if (this.eslintWorker === undefined)
 			this.eslintWorker = this.createEslintWorker(); // don't await here, otherwise race conditions can occur!
 		// always sync models
