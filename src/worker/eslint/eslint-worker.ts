@@ -33,7 +33,7 @@ class EsLintWorker implements IEsLintWorker {
 		// @ts-ignore we define the type on the variable
 		const eslint: Eslint = await import("./eslint.js");
 		const linter = new eslint.Linter();
-		this.loadRules(linter);
+		await this.loadRules(linter);
 		return linter;
 	}
 
