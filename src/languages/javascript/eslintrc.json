@@ -22,5 +22,8 @@
 			}
 		],
 		"semi": "info"
-	}
+	},
+	"ruleFiles": [
+		"./rules/no-id-tostring-in-query.js"
+	]
 }

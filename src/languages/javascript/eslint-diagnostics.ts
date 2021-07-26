@@ -1,6 +1,6 @@
 ﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
-import { EsLintWorker } from "./worker/eslint-worker.js";
+import { EslintConfig, EsLintWorker } from "./worker/eslint-worker.js";
 
 type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
 type Fix = {
@@ -38,7 +38,7 @@ class DiagnosticContainer {
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
 
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
-	private config: Linter.Config<Linter.RulesRecord> | undefined;
+	private config: EslintConfig | undefined;
 	private webWorker: monaco.editor.MonacoWebWorker<EsLintWorker> | undefined;
 	private eslintWorker: Promise<EsLintWorker> | undefined;
 	private ruleToUrlMapping: Map<string, string> | undefined;
@@ -247,8 +247,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	/**
 	 * Creates a new config where all "info" and "hint" level severities are replaced by "warn".
 	 */
-	private createEsLintCompatibleConfig(): Linter.Config<Linter.RulesRecord> {
-		const compatConfig = (JSON.parse(JSON.stringify(this.config)) ?? {}) as Linter.Config<Linter.RulesRecord>;
+	private createEsLintCompatibleConfig(): EslintConfig {
+		const compatConfig = (JSON.parse(JSON.stringify(this.config)) ?? {}) as EslintConfig;
 		for (const ruleId in compatConfig.rules) {
 			const rule = compatConfig.rules[ruleId];
 			if (rule === undefined)

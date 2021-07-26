@@ -1,11 +1,7 @@
-import { AST, Linter, Rule } from "eslint";
+import { AST, Rule } from "eslint";
 import { CallExpression, Expression, Identifier, Literal, SourceLocation, TemplateLiteral, VariableDeclarator } from "estree";
 
-export class NoIdToStringInQuery implements Rule.RuleModule {
-	static register(linter: Linter): void {
-		linter.defineRule("no-id-tostring-in-query", new NoIdToStringInQuery());
-	}
-
+export default new class implements Rule.RuleModule {
 	private readonly reportPattern = /id\.toString\(\)\s*[!=]==?\s*"(?:[^"]*?")?/gi;
 	private readonly fixPattern = /(id)\.toString\(\)(\s*[!=]==?\s*)("[^"]*?")/i;
 	private reportedLocations: Set<string> = new Set();
@@ -149,4 +145,4 @@ export class NoIdToStringInQuery implements Rule.RuleModule {
 
 		return fixer.replaceTextRange(replaceRange, replaceText);
 	}
-}
+};

@@ -36,5 +36,16 @@ export default [
 			sourcemap: true,
 		},
 		plugins: commonPlugins
+	},
+	{
+		input: [
+			"src/languages/javascript/worker/rules/no-id-tostring-in-query.ts",
+		],
+		output: {
+			dir: "wwwroot/worker/rules",
+			format: "amd",
+			sourcemap: true,
+		},
+		plugins: commonPlugins
 	}
 ]
