@@ -29,7 +29,9 @@ export default [
 		]
 	},
 	{
-		input: "src/languages/javascript/worker/eslint-worker.ts",
+		input: [
+			"src/worker/eslint/eslint-worker.ts",
+		],
 		output: {
 			dir: "wwwroot/worker",
 			format: "amd",

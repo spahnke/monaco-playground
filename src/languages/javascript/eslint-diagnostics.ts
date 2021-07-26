@@ -1,6 +1,6 @@
 ﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
-import { EslintConfig, EsLintWorker } from "./worker/eslint-worker.js";
+import { EslintConfig, EsLintWorker } from "../../worker/eslint/eslint-worker.js";
 
 type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
 type Fix = {
