@@ -89,6 +89,20 @@
 			]
 		},
 		{
+			"label": "build tests",
+			"type": "typescript",
+			"tsconfig": "test/tsconfig.json",
+			"option": "watch",
+			"group": "build",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem"
+			},
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+		},
+		{
 			"label": "serve",
 			"type": "npm",
 			"script": "serve",
