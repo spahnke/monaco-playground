@@ -6,6 +6,21 @@ export default new class implements Rule.RuleModule {
 	private readonly fixPattern = /(id)\.toString\(\)(\s*[!=]==?\s*)("[^"]*?")/i;
 	private reportedLocations: Set<string> = new Set();
 
+	meta: Rule.RuleMetaData  = {
+		type: "suggestion",
+
+		docs: {
+			description: "disallow using `toString()` to compare GUIDs in LINQ expressions",
+			category: "Best Practices",
+			suggestion: true,
+		},
+
+		messages: {
+			possibleConversion: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
+			convertToGuid: "Convert `string` to `Guid` instead",
+		},
+	};
+
 	create(context: Rule.RuleContext): Rule.RuleListener {
 		this.reportedLocations = new Set();
 		return {
@@ -106,12 +121,12 @@ export default new class implements Rule.RuleModule {
 
 		this.reportedLocations.add(locationKey);
 		context.report({
-			message: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
+			messageId: "possibleConversion",
 			node,
 			loc,
 			suggest: [
 				{
-					desc: "Convert `string` to `Guid` instead",
+					messageId: "convertToGuid",
 					fix: fixer => this.applyFix(fixer, context, node, loc)
 				}
 			]
