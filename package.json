@@ -7,7 +7,8 @@
 		"clean": "node scripts/clean.js",
 		"build": "rollup -c",
 		"dev": "rollup -c -w",
-		"serve": "serve -p 9000 wwwroot"
+		"serve": "serve -p 9000 wwwroot",
+		"test": "tsc -p test/tsconfig.json && mocha test --recursive"
 	},
 	"keywords": [],
 	"author": "",
@@ -19,9 +20,12 @@
 		"@rollup/plugin-typescript": "^8.2.3",
 		"@types/eslint": "^7.28.0",
 		"@types/estree": "0.0.50",
+		"@types/mocha": "^9.0.0",
+		"@types/node": "^16.4.3",
 		"@typescript-eslint/eslint-plugin": "^4.28.4",
 		"@typescript-eslint/parser": "^4.28.4",
 		"eslint": "^7.31.0",
+		"mocha": "^9.0.3",
 		"rollup": "^2.54.0",
 		"rollup-plugin-copy": "^3.4.0",
 		"serve": "^12.0.0",

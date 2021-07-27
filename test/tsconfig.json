@@ -1,0 +1,9 @@
+{
+	"extends": "../src/tsconfig.json",
+	"compilerOptions": {
+		"moduleResolution": "node",
+		"types": ["mocha", "node"],
+		"outDir": "dist"
+	},
+	"include": ["**/*.test.ts", "../node_modules/monaco-editor/monaco.d.ts"]
+}
