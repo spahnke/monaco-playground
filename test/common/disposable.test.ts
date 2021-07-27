@@ -1,4 +1,4 @@
-import { equal } from "assert";
+import { strictEqual } from "assert";
 import { Disposable } from "../../src/common/disposable.js";
 
 describe("Disposable", () => {
@@ -16,6 +16,6 @@ describe("Disposable", () => {
 			}
 		});
 		disposable.dispose();
-		equal(disposed, 2);
+		strictEqual(disposed, 2);
 	});
 });
