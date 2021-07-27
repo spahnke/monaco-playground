@@ -131,14 +131,6 @@ export default new class implements Rule.RuleModule {
 
 		const textToReplace = literalText.substring(startOffset, endOffset);
 		const replaceText = textToReplace.replace(this.fixPattern, "$1$2new Guid($3)");
-		// console.group();
-		// console.log(node);
-		// console.log(loc);
-		// console.log(replaceRange);
-		// console.log(literalText);
-		// console.log(textToReplace);
-		// console.log(replaceText);
-		// console.groupEnd();
 
 		if (textToReplace === replaceText)
 			return null;
