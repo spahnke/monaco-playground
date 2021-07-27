@@ -39,10 +39,9 @@ ruleTester.run("no-id-tostring-in-query", rule, {
 			code: `linq.execute('a x.ID.toString() === "asdf"');`,
 			errors: [{ column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.ID === new Guid("asdf")');` }] }],
 		},
-		// TODO should we report column 19 here or do we keep the current behavior of 22 because we start at the 'Id' part?
 		{
 			code: `linq.execute('a x.fooId.toString() === "asdf"');`,
-			errors: [{ column: 22, endColumn: 46, type: "Literal", suggestions: [{ output: `linq.execute('a x.fooId === new Guid("asdf")');` }] }],
+			errors: [{ column: 19, endColumn: 46, type: "Literal", suggestions: [{ output: `linq.execute('a x.fooId === new Guid("asdf")');` }] }],
 		},
 		{
 			code: `linq.execute('a x.id.toString() === "asdf" asdf x.id.toString() === "qwer"');`,

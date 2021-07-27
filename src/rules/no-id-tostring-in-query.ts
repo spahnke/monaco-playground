@@ -2,7 +2,7 @@ import { AST, Rule } from "eslint";
 import { CallExpression, Expression, Identifier, Literal, SourceLocation, TemplateLiteral, VariableDeclarator } from "estree";
 
 export default new class implements Rule.RuleModule {
-	private readonly reportPattern = /id\.toString\(\)\s*[!=]==?\s*"(?:[^"]*?")?/gi;
+	private readonly reportPattern = /\.[a-z0-9]*?id\.toString\(\)\s*[!=]==?\s*"(?:[^"]*?")?/gi;
 	private readonly fixPattern = /(id)\.toString\(\)(\s*[!=]==?\s*)("[^"]*?")/i;
 	private reportedLocations: Set<string> = new Set();
 
@@ -76,10 +76,10 @@ export default new class implements Rule.RuleModule {
 			end: { ...literal.loc.end },
 		};
 
-		const offset = match.index ?? 0;
+		const offset = (match.index ?? 0) + 1; // +1 for the leading '.'
 		const columnStart = location.start.column + offset;
 		location.start.column = columnStart;
-		location.end.column = columnStart + match[0].length;
+		location.end.column = columnStart + match[0].length - 1; // -1 for the leading '.'
 
 		return location;
 	}
