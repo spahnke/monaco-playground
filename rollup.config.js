@@ -1,4 +1,5 @@
-import { resolve } from "path";
+import { readdirSync } from "fs";
+import { join, resolve } from "path";
 import copy from "rollup-plugin-copy";
 import typescript from "@rollup/plugin-typescript";
 
@@ -7,6 +8,11 @@ const commonPlugins = [
 		tsconfig: "src/tsconfig.json",
 	}),
 ];
+
+function getFilenames(path) {
+	const fileNames = readdirSync(path);
+	return fileNames.map(fileName => join(path, fileName));
+}
 
 export default [
 	{
@@ -50,9 +56,7 @@ export default [
 		]
 	},
 	{
-		input: [
-			"src/rules/no-id-tostring-in-query.ts",
-		],
+		input: [...getFilenames("src/rules")],
 		output: {
 			dir: "wwwroot/rules",
 			format: "amd",
