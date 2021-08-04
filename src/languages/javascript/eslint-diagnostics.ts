@@ -16,6 +16,7 @@ type Fix = {
 	description: string;
 	textEdit: monaco.languages.TextEdit;
 	autoFixAvailable: boolean;
+	range: monaco.IRange;
 	severity: monaco.MarkerSeverity;
 };
 
@@ -130,12 +131,14 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				fixes.set(diagnostic.ruleId, ruleFixes);
 			}
 
+			const range = this.toRange(diagnostic);
 			const severity = this.toSeverity(diagnostic);
 			if (diagnostic.fix) {
 				ruleFixes.push({
 					description: `Fix this '${diagnostic.message}' problem`,
 					textEdit: this.toTextEdit(model, diagnostic.fix),
 					autoFixAvailable: true,
+					range,
 					severity,
 				});
 			}
@@ -145,6 +148,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 						description: suggestion.desc,
 						textEdit: this.toTextEdit(model, suggestion.fix),
 						autoFixAvailable: false,
+						range,
 						severity,
 					});
 				}
@@ -154,7 +158,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private getFixCodeActions(model: monaco.editor.ITextModel, marker: monaco.editor.IMarkerData, fixes: Fix[]): monaco.languages.CodeAction[] {
-		return fixes.filter(fix => monaco.Range.areIntersectingOrTouching(marker, fix.textEdit.range)).map(fix => {
+		return fixes.filter(fix => monaco.Range.equalsRange(marker, fix.range)).map(fix => {
 			return {
 				title: fix.description,
 				diagnostics: [marker],
@@ -310,14 +314,20 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private toMarkerData(diagnostic: Linter.LintMessage): monaco.editor.IMarkerData {
 		return {
 			message: diagnostic.message,
-			startLineNumber: diagnostic.line,
-			startColumn: diagnostic.column,
-			endLineNumber: diagnostic.endLine ?? diagnostic.line,
-			endColumn: diagnostic.endColumn ?? diagnostic.column,
+			...this.toRange(diagnostic),
 			source: this.owner,
 			severity: this.toSeverity(diagnostic),
 			code: this.toCode(diagnostic),
 			tags: diagnostic.ruleId === "no-unused-vars" ? [monaco.MarkerTag.Unnecessary] : []
+		};
+	}
+
+	private toRange(diagnostic: Linter.LintMessage): monaco.IRange {
+		return {
+			startLineNumber: diagnostic.line,
+			startColumn: diagnostic.column,
+			endLineNumber: diagnostic.endLine ?? diagnostic.line,
+			endColumn: diagnostic.endColumn ?? diagnostic.column,
 		};
 	}
 
