@@ -1,4 +1,4 @@
-﻿import { Linter, Rule } from "eslint";
+import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 
 export type EsLintConfig = Linter.Config<Linter.RulesRecord> & {
@@ -16,6 +16,7 @@ type Fix = {
 	description: string;
 	textEdit: monaco.languages.TextEdit;
 	autoFixAvailable: boolean;
+	severity: monaco.MarkerSeverity;
 };
 
 export interface IEsLintWorker {
@@ -130,11 +131,13 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				fixes.set(diagnostic.ruleId, ruleFixes);
 			}
 
+			const severity = this.toSeverity(diagnostic);
 			if (diagnostic.fix) {
 				ruleFixes.push({
 					description: `Fix this '${diagnostic.message}' problem`,
 					textEdit: this.toTextEdit(model, diagnostic.fix),
 					autoFixAvailable: true,
+					severity,
 				});
 			}
 			if (diagnostic.suggestions) {
@@ -143,6 +146,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 						description: suggestion.desc,
 						textEdit: this.toTextEdit(model, suggestion.fix),
 						autoFixAvailable: false,
+						severity,
 					});
 				}
 			}
