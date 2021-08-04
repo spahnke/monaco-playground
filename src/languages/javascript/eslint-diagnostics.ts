@@ -98,7 +98,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 			const ruleFixes = fixes.get(ruleId) ?? [];
 			codeActions.push(...this.getFixCodeActions(model, range, marker, ruleFixes));
-			codeActions.push(...this.getFixAllCodeActions(model, range, marker, context.markers.filter(m => this.getRuleId(m) === ruleId), ruleFixes.filter(fix => fix.autoFixAvailable)));
+			codeActions.push(...this.getFixAllCodeActions(model, ruleId, context.markers.filter(m => this.getRuleId(m) === ruleId), ruleFixes.filter(fix => fix.autoFixAvailable)));
 			codeActions.push(...this.getDisableRuleCodeActions(model, range, marker, ruleId));
 		}
 		const allAutoFixes = [...fixes.values()].flat().filter(fix => fix.autoFixAvailable);
@@ -171,12 +171,12 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		});
 	}
 
-	private getFixAllCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, markers: monaco.editor.IMarkerData[], fixes: Fix[]): monaco.languages.CodeAction[] {
+	private getFixAllCodeActions(model: monaco.editor.ITextModel, ruleId: string, markers: monaco.editor.IMarkerData[], fixes: Fix[]): monaco.languages.CodeAction[] {
 		if (fixes.length === 0)
 			return [];
 
 		return [{
-			title: `Fix all '${marker.message}' problems`,
+			title: `Fix all '${ruleId}' problems`,
 			diagnostics: markers,
 			edit: {
 				edits: fixes.map(fix => {
