@@ -1,4 +1,4 @@
-import { Linter, Rule } from "eslint";
+﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 
 export type EsLintConfig = Linter.Config<Linter.RulesRecord> & {
@@ -225,25 +225,28 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		if (fixes.length === 0)
 			return [];
 
-		const edit: monaco.languages.WorkspaceEdit = {
-			edits: fixes.map(fix => {
-				return {
-					edit: fix.textEdit,
-					resource: model.uri
-				};
-			})
-		};
+		const edits: monaco.languages.WorkspaceTextEdit[] = [];
+		for (const fix of fixes) {
+			if (fix.severity === monaco.MarkerSeverity.Hint)
+				continue; // do not auto-fix "hint" level diagnostics in the global auto-fix
+			if (edits.some(x => monaco.Range.areIntersecting(x.edit.range, fix.textEdit.range)))
+				continue; // overlapping edits are not allowed
+			edits.push({
+				edit: fix.textEdit,
+				resource: model.uri
+			});
+		}
 
 		return [
 			{
 				title: "Fix all auto-fixable problems",
 				kind: "quickfix",
-				edit
+				edit: { edits }
 			},
 			{
 				title: "Fix all ESLint auto-fixable problems",
 				kind: "source.fixAll.eslint",
-				edit
+				edit: { edits }
 			}
 		];
 	}
