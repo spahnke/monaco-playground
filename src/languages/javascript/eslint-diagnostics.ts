@@ -97,12 +97,11 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				continue;
 
 			const ruleFixes = fixes.get(ruleId) ?? [];
-			codeActions.push(...this.getFixCodeActions(model, range, marker, ruleFixes));
-			codeActions.push(...this.getFixAllCodeActions(model, ruleId, context.markers.filter(m => this.getRuleId(m) === ruleId), ruleFixes.filter(fix => fix.autoFixAvailable)));
-			codeActions.push(...this.getDisableRuleCodeActions(model, range, marker, ruleId));
+			codeActions.push(...this.getFixCodeActions(model, marker, ruleFixes));
+			codeActions.push(...this.getFixAllCodeActions(model, marker, ruleId, ruleFixes));
+			codeActions.push(...this.getDisableRuleCodeActions(model, marker, ruleId));
 		}
-		const allAutoFixes = [...fixes.values()].flat().filter(fix => fix.autoFixAvailable);
-		codeActions.push(...this.getFixAllAutoFixableCodeActions(model, allAutoFixes));
+		codeActions.push(...this.getFixAllAutoFixableCodeActions(model, [...fixes.values()].flat()));
 		return { actions: codeActions, dispose: () => { } };
 	}
 
@@ -154,8 +153,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return fixes;
 	}
 
-	private getFixCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, fixes: Fix[]): monaco.languages.CodeAction[] {
-		return fixes.filter(fix => monaco.Range.areIntersectingOrTouching(range, fix.textEdit.range)).map(fix => {
+	private getFixCodeActions(model: monaco.editor.ITextModel, marker: monaco.editor.IMarkerData, fixes: Fix[]): monaco.languages.CodeAction[] {
+		return fixes.filter(fix => monaco.Range.areIntersectingOrTouching(marker, fix.textEdit.range)).map(fix => {
 			return {
 				title: fix.description,
 				diagnostics: [marker],
@@ -171,15 +170,16 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		});
 	}
 
-	private getFixAllCodeActions(model: monaco.editor.ITextModel, ruleId: string, markers: monaco.editor.IMarkerData[], fixes: Fix[]): monaco.languages.CodeAction[] {
-		if (fixes.length === 0)
+	private getFixAllCodeActions(model: monaco.editor.ITextModel, marker: monaco.editor.IMarkerData, ruleId: string, fixes: Fix[]): monaco.languages.CodeAction[] {
+		const applicableFixes = fixes.filter(fix => fix.autoFixAvailable);
+		if (applicableFixes.length === 0)
 			return [];
 
 		return [{
 			title: `Fix all '${ruleId}' problems`,
-			diagnostics: markers,
+			diagnostics: [marker],
 			edit: {
-				edits: fixes.map(fix => {
+				edits: applicableFixes.map(fix => {
 					return {
 						edit: fix.textEdit,
 						resource: model.uri
@@ -191,8 +191,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		}];
 	}
 
-	private getDisableRuleCodeActions(model: monaco.editor.ITextModel, range: monaco.Range, marker: monaco.editor.IMarkerData, ruleId: string): monaco.languages.CodeAction[] {
-		const line = Math.max(1, range.startLineNumber);
+	private getDisableRuleCodeActions(model: monaco.editor.ITextModel, marker: monaco.editor.IMarkerData, ruleId: string): monaco.languages.CodeAction[] {
+		const line = Math.max(1, marker.startLineNumber);
 		const lineText = model.getLineContent(line);
 		const indentation = /^(?<whitespace>[ \t]*)/.exec(lineText)?.groups?.["whitespace"] ?? "";
 		return [
@@ -222,11 +222,12 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private getFixAllAutoFixableCodeActions(model: monaco.editor.ITextModel, fixes: Fix[]): monaco.languages.CodeAction[] {
-		if (fixes.length === 0)
+		const applicableFixes = fixes.filter(fix => fix.autoFixAvailable);
+		if (applicableFixes.length === 0)
 			return [];
 
 		const edits: monaco.languages.WorkspaceTextEdit[] = [];
-		for (const fix of fixes) {
+		for (const fix of applicableFixes) {
 			if (fix.severity === monaco.MarkerSeverity.Hint)
 				continue; // do not auto-fix "hint" level diagnostics in the global auto-fix
 			if (edits.some(x => monaco.Range.areIntersecting(x.edit.range, fix.textEdit.range)))
