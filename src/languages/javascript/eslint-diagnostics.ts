@@ -226,12 +226,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private getFixAllAutoFixableCodeActions(model: monaco.editor.ITextModel, fixes: Fix[]): monaco.languages.CodeAction[] {
-		const applicableFixes = fixes.filter(fix => fix.autoFixAvailable);
-		if (applicableFixes.length === 0)
-			return [];
-
 		const edits: monaco.languages.WorkspaceTextEdit[] = [];
-		for (const fix of applicableFixes) {
+		for (const fix of fixes.filter(fix => fix.autoFixAvailable)) {
 			if (fix.severity === monaco.MarkerSeverity.Hint)
 				continue; // do not auto-fix "hint" level diagnostics in the global auto-fix
 			if (edits.some(x => monaco.Range.areIntersecting(x.edit.range, fix.textEdit.range)))
@@ -241,6 +237,9 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				resource: model.uri
 			});
 		}
+
+		if (edits.length === 0)
+			return [];
 
 		return [
 			{
