@@ -4,7 +4,7 @@ import { allowTopLevelReturn, enableJavaScriptBrowserCompletion } from "../langu
 import { CodeEditor } from "../code-editor.js";
 
 const contextMenuGroupId = "7_playground";
-const linqTestCode = `const query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
+const linqTestCode = `const query = foo + 'a x.id.toString() === "' + foo + \`" a x.id.toString() !== "\${text}" asdf\` + foo;
 const query2 = query;
 linq.execute('a x.id.toString() === "asdf" asdf x.id.toString() === "qwer"');
 linq.execute(\`a x.id.toString() === "asdf" asdf\`);
