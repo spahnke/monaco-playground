@@ -205,7 +205,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				diagnostics: [marker],
 				edit: {
 					edits: [{
-						edit: { range: new monaco.Range(line, 1, line, 1), text: `${indentation}/* eslint-disable-next-line ${ruleId} */${model.getEOL()}` },
+						edit: { range: new monaco.Range(line, 1, line, 1), text: `${indentation}// eslint-disable-next-line ${ruleId} -- <reason>${model.getEOL()}` },
 						resource: model.uri,
 					}],
 				},
@@ -216,7 +216,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				diagnostics: [marker],
 				edit: {
 					edits: [{
-						edit: { range: new monaco.Range(1, 1, 1, 1), text: `/* eslint-disable ${ruleId} */${model.getEOL()}` },
+						edit: { range: new monaco.Range(1, 1, 1, 1), text: `/* eslint-disable ${ruleId} -- <reason> */${model.getEOL()}` },
 						resource: model.uri,
 					}],
 				},
