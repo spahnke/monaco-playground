@@ -8,7 +8,8 @@
 		"build": "rollup -c",
 		"dev": "rollup -c -w",
 		"serve": "serve -p 9000 wwwroot",
-		"test": "tsc -p test/tsconfig.json && mocha test --recursive"
+		"test": "tsc -p test/tsconfig.json && mocha test --recursive",
+		"schema": "node scripts/update-eslint-schema.js"
 	},
 	"keywords": [],
 	"author": "",

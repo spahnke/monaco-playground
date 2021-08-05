@@ -1,5 +1,5 @@
 {
-	"$schema": "https://schemastore.azurewebsites.net/schemas/json/eslintrc.json",
+	"$schema": "./eslintrc-extended.schema.json",
 	"parserOptions": {
 		"ecmaVersion": "latest",
 		"ecmaFeatures": { "globalReturn": true }
