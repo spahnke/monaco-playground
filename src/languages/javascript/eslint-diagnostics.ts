@@ -99,7 +99,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 			const ruleFixes = fixes.get(ruleId) ?? [];
 			codeActions.push(...this.getFixCodeActions(model, marker, ruleFixes));
-			codeActions.push(...this.getFixAllCodeActions(model, marker, ruleId, ruleFixes));
+			codeActions.push(...this.getFixAllCodeAction(model, marker, ruleId, ruleFixes));
 			codeActions.push(...this.getDisableRuleCodeActions(model, marker, ruleId));
 		}
 		codeActions.push(...this.getFixAllAutoFixableCodeActions(model, [...fixes.values()].flat()));
@@ -174,7 +174,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		});
 	}
 
-	private getFixAllCodeActions(model: monaco.editor.ITextModel, marker: monaco.editor.IMarkerData, ruleId: string, fixes: Fix[]): monaco.languages.CodeAction[] {
+	private getFixAllCodeAction(model: monaco.editor.ITextModel, marker: monaco.editor.IMarkerData, ruleId: string, fixes: Fix[]): monaco.languages.CodeAction[] {
 		const applicableFixes = fixes.filter(fix => fix.autoFixAvailable);
 		if (applicableFixes.length === 0)
 			return [];
