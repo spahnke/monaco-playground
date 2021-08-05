@@ -55,7 +55,7 @@
 		"no-extra-bind": "warn",
 		"no-fallthrough": "warn",
 		"no-labels": "warn",
-		"no-implicit-coercion": ["warn", { "boolean": true, "number": true, "string": true }],
+		"no-implicit-coercion": ["warn", { "allow": ["*"] }],
 		"no-invalid-this": "warn",
 		"no-new-func": "error",
 		"no-new-wrappers": "warn",
