@@ -6,20 +6,20 @@ export default new class implements Rule.RuleModule {
 	private readonly fixPattern = /(id)\.toString\(\)(\s*[!=]==?\s*)("[^"]*?")/i;
 	private reportedLocations: Set<string> = new Set();
 
-	meta: Rule.RuleMetaData  = {
+	meta: Rule.RuleMetaData = {
 		type: "suggestion",
+		hasSuggestions: true,
 
 		docs: {
 			description: "disallow using `toString()` to compare GUIDs in LINQ expressions",
 			category: "Best Practices",
-			suggestion: true,
 		},
 
 		messages: {
 			possibleConversion: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
 			convertToGuid: "Convert `string` to `Guid` instead",
 		},
-	};
+	} as any; // TODO remove any once we have the new types for ESLint 8
 
 	create(context: Rule.RuleContext): Rule.RuleListener {
 		this.reportedLocations = new Set();
