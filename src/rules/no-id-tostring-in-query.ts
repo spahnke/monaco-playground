@@ -12,7 +12,6 @@ export default new class implements Rule.RuleModule {
 
 		docs: {
 			description: "disallow using `toString()` to compare GUIDs in LINQ expressions",
-			category: "Best Practices",
 		},
 
 		messages: {
