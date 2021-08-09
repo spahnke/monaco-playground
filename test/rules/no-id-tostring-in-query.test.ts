@@ -137,7 +137,8 @@ linq.execute(query2);
 			parserOptions: { ecmaVersion: 2015 },
 		},
 		{
-			code: `/* let/const in block */
+			code: `
+/* let/const in block */
 {
 	let query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
 	linq.execute(query);
@@ -148,7 +149,8 @@ linq.execute(query2);
 					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
 					suggestions: [
 						{
-							output: `/* let/const in block */
+							output: `
+/* let/const in block */
 {
 	let query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
 	linq.execute(query);
@@ -160,7 +162,8 @@ linq.execute(query2);
 			parserOptions: { ecmaVersion: 2015 },
 		},
 		{
-			code: `/* let/const in nested block */
+			code: `
+/* let/const in nested block */
 {
 	let query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
 	{
@@ -173,7 +176,8 @@ linq.execute(query2);
 					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
 					suggestions: [
 						{
-							output: `/* let/const in nested block */
+							output: `
+/* let/const in nested block */
 {
 	let query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
 	{
@@ -187,7 +191,8 @@ linq.execute(query2);
 			parserOptions: { ecmaVersion: 2015 },
 		},
 		{
-			code: `/* var in block */
+			code: `
+/* var in block */
 {
 	var query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
 	linq.execute(query);
@@ -198,7 +203,8 @@ linq.execute(query2);
 					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
 					suggestions: [
 						{
-							output: `/* var in block */
+							output: `
+/* var in block */
 {
 	var query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
 	linq.execute(query);
@@ -210,7 +216,8 @@ linq.execute(query2);
 			parserOptions: { ecmaVersion: 2015 },
 		},
 		{
-			code: `/* var in nested block */
+			code: `
+/* var in nested block */
 {
 	var query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
 	{
@@ -223,7 +230,8 @@ linq.execute(query2);
 					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
 					suggestions: [
 						{
-							output: `/* var in nested block */
+							output: `
+/* var in nested block */
 {
 	var query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
 	{
