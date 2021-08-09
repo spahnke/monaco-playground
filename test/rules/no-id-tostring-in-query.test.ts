@@ -25,7 +25,7 @@ ruleTester.run("no-id-tostring-in-query", rule, {
 		// single quotes
 		{
 			code: `linq.execute('a x.id.toString() === "asdf"');`,
-			errors: [{ message: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.", column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.id === new Guid("asdf")');`, desc: "Convert `string` to `Guid` instead" }] }],
+			errors: [{ messageId: "possibleConversion", column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.id === new Guid("asdf")');`, messageId: "convertToGuid" }] }],
 		},
 		{
 			code: `linq.execute('a x.Id.toString() === "asdf"');`,
