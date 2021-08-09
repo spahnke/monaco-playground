@@ -36,7 +36,8 @@ export class TodoContribution extends DiagnosticsAdapter {
 			});
 		}
 
-		if (decorations.length > 0)
-			this.currentDecorations.set(resource.toString(), model.deltaDecorations(this.currentDecorations.get(resource.toString()) ?? [], decorations));
+		if (decorations.length === 0 && !this.currentDecorations.has(resource.toString()))
+			return;
+		this.currentDecorations.set(resource.toString(), model.deltaDecorations(this.currentDecorations.get(resource.toString()) ?? [], decorations));
 	}
 }

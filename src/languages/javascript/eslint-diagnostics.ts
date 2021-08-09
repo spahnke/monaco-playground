@@ -50,8 +50,9 @@ class DiagnosticContainer {
 
 	/** Sets the diagnostics and clears previous fixes for the model specified by `resource`. */
 	set(resource: monaco.Uri, diagnostics: Linter.LintMessage[]): void {
-		if (diagnostics.length > 0)
-			this.diagnostics.set(resource.toString(), diagnostics);
+		if (diagnostics.length === 0 && !this.diagnostics.has(resource.toString()))
+			return;
+		this.diagnostics.set(resource.toString(), diagnostics);
 		this.fixes.get(resource.toString())?.clear();
 	}
 }
