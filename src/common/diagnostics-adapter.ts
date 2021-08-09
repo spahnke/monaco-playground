@@ -43,7 +43,7 @@ export abstract class DiagnosticsAdapter extends Disposable {
 			monaco.editor.setModelMarkers(model, this.owner, []);
 			const key = model.uri.toString();
 			if (this.listeners.has(key)) {
-				this.listeners.get(key)?.dispose();
+				this.listeners.get(key)!.dispose();
 				this.listeners.delete(key);
 			}
 		};
