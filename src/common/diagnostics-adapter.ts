@@ -11,8 +11,16 @@ export abstract class DiagnosticsAdapter extends Disposable {
 
 	constructor(protected readonly languageId: string, protected readonly owner: string = languageId) {
 		super();
+	}
+
+	/**
+	 * Registers necessary event listeners for created/changed/disposed models and validates all relevant existing models.
+	 *
+	 * Call this in the constructor of any derived class after its own initialization steps.
+	 */
+	protected startValidation(): void {
 		const onModelAdd = (model: monaco.editor.IModel): void => {
-			if (languageId !== allLanguages && model.getModeId() !== languageId)
+			if (this.languageId !== allLanguages && model.getModeId() !== this.languageId)
 				return;
 
 			let handle: number;

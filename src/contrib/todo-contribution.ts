@@ -2,16 +2,15 @@ import { allLanguages, DiagnosticsAdapter } from "../common/diagnostics-adapter.
 import { isInComment } from "../common/monaco-utils.js";
 
 export class TodoContribution extends DiagnosticsAdapter {
-	private currentDecorations: Map<monaco.Uri, string[]> | undefined;
+	private currentDecorations: Map<monaco.Uri, string[]>;
 
 	constructor() {
 		super(allLanguages, "todo");
+		this.currentDecorations = new Map();
+		this.startValidation();
 	}
 
 	protected async doValidate(resource: monaco.Uri): Promise<void> {
-		if (this.currentDecorations === undefined)
-			this.currentDecorations = new Map();
-
 		const model = monaco.editor.getModel(resource);
 		if (!model)
 			return;

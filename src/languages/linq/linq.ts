@@ -19,6 +19,6 @@ export function registerLinq(): void {
 		monaco.languages.registerCompletionItemProvider(languageId, new SnippetCompletionProvider(new JsonSnippetService("languages/linq/snippets.json")));
 		monaco.languages.registerDocumentFormattingEditProvider(languageId, new LinqFormatter());
 		monaco.languages.registerHoverProvider(languageId, new LinqHoverProvider());
-		new LinqDiagnostics(languageId); // has side effects
+		new LinqDiagnostics(); // has side effects
 	});
 }

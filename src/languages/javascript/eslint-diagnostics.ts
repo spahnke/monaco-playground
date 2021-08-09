@@ -1,4 +1,4 @@
-import { Linter, Rule } from "eslint";
+﻿import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 
 export type EsLintConfig = Linter.Config<Linter.RulesRecord> & {
@@ -66,6 +66,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	constructor(private configPath: string) {
 		super("javascript", "eslint");
+		this.startValidation();
 	}
 
 	protected async doValidate(resource: monaco.Uri): Promise<void> {

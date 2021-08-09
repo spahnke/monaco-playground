@@ -1,8 +1,14 @@
 ﻿import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { LinqCompletionProvider } from "./linq-completion-provider.js";
+import { languageId } from "./linq-language.js";
 
 export class LinqDiagnostics extends DiagnosticsAdapter {
 	private static tableAndViewNames: string[] | null = null;
+
+	constructor() {
+		super(languageId);
+		this.startValidation();
+	}
 
 	protected async doValidate(resource: monaco.Uri): Promise<void> {
 		try {
