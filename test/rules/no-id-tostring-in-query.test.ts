@@ -115,5 +115,26 @@ linq.execute(query2);
 			],
 			parserOptions: { ecmaVersion: 2015 },
 		},
+		{
+			code: `/* var in block */{
+var query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
+linq.execute(query);
+}`.trim(),
+			errors: [
+				{ line: 2, column: 24, endColumn: 43, type: "Literal", suggestions: [] },
+				{
+					line: 2, column: 58, endColumn: 85, type: "TemplateLiteral",
+					suggestions: [
+						{
+							output: `/* var in block */{
+var query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
+linq.execute(query);
+}`.trim()
+						}
+					]
+				},
+			],
+			parserOptions: { ecmaVersion: 2015 },
+		},
 	]
 });

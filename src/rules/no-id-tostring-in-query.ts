@@ -100,7 +100,7 @@ export default new class implements Rule.RuleModule {
 
 	private getVariableDeclarator(context: Rule.RuleContext, identifier: Identifier): VariableDeclarator | undefined {
 		const scope = context.getScope();
-		const variable = scope.set.get(identifier.name);
+		const variable = scope.variableScope.set.get(identifier.name);
 		if (!variable)
 			return undefined;
 
