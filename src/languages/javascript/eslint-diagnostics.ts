@@ -60,12 +60,13 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
 	private config: EsLintConfig | undefined;
 	private webWorker: monaco.editor.MonacoWebWorker<IEsLintWorker> | undefined;
-	private eslintWorker: Promise<IEsLintWorker> | undefined;
+	private eslintWorker: Promise<IEsLintWorker>;
 	private ruleToUrlMapping: Map<string, string> | undefined;
 	private diagnostics = new DiagnosticContainer();
 
-	constructor(private configPath: string) {
+	constructor(configPath: string) {
 		super("javascript", "eslint");
+		this.eslintWorker = this.createEslintWorker(configPath);
 		this.startValidation();
 	}
 
@@ -107,8 +108,21 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return { actions: codeActions, dispose: () => { } };
 	}
 
+	private async createEslintWorker(configPath: string): Promise<IEsLintWorker> {
+		this.config = await fetch(configPath).then(r => r.json());
+		this.webWorker = monaco.editor.createWebWorker<IEsLintWorker>({
+			moduleId: "/worker/eslint-worker",
+			label: this.owner,
+			createData: { config: this.createEsLintCompatibleConfig() } as IWorkerCreateData
+		});
+		this.register(this.webWorker);
+		return this.webWorker.getProxy();
+	}
+
 	private async computeDiagnostics(resource: monaco.Uri): Promise<void> {
-		const eslint = await this.getEslintWorker();
+		const eslint = await this.eslintWorker;
+		await this.webWorker?.withSyncedResources([resource]);
+
 		if (this.ruleToUrlMapping === undefined)
 			this.ruleToUrlMapping = await eslint.getRuleToUrlMapping();
 		this.diagnostics.set(resource, await eslint.lint(resource.toString()));
@@ -254,27 +268,6 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				edit: { edits }
 			}
 		];
-	}
-
-	private async createEslintWorker(): Promise<IEsLintWorker> {
-		this.config = await fetch(this.configPath).then(r => r.json());
-		this.webWorker = monaco.editor.createWebWorker<IEsLintWorker>({
-			moduleId: "/worker/eslint-worker",
-			label: this.owner,
-			createData: { config: this.createEsLintCompatibleConfig() } as IWorkerCreateData
-		});
-		this.register(this.webWorker);
-		return this.webWorker.getProxy();
-	}
-
-	private async getEslintWorker(): Promise<IEsLintWorker> {
-		if (this.eslintWorker === undefined)
-			this.eslintWorker = this.createEslintWorker(); // don't await here, otherwise race conditions can occur!
-
-		await this.eslintWorker; // always wait on worker creation
-		// always sync models
-		const modelsToSync = monaco.editor.getModels().filter(m => m.getModeId() === this.languageId);
-		return this.webWorker!.withSyncedResources(modelsToSync.map(m => m.uri));
 	}
 
 	/**
