@@ -1,4 +1,4 @@
-﻿import { Linter, Rule } from "eslint";
+import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 
 export type EsLintConfig = Linter.Config<Linter.RulesRecord> & {
@@ -266,11 +266,14 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		return this.webWorker.getProxy();
 	}
 
-	private getEslintWorker(): Promise<IEsLintWorker> {
+	private async getEslintWorker(): Promise<IEsLintWorker> {
 		if (this.eslintWorker === undefined)
 			this.eslintWorker = this.createEslintWorker(); // don't await here, otherwise race conditions can occur!
+
+		await this.eslintWorker; // always wait on worker creation
 		// always sync models
-		return this.eslintWorker.then(() => this.webWorker!.withSyncedResources(monaco.editor.getModels().filter(m => m.getModeId() === this.languageId).map(m => m.uri)));
+		const modelsToSync = monaco.editor.getModels().filter(m => m.getModeId() === this.languageId);
+		return this.webWorker!.withSyncedResources(modelsToSync.map(m => m.uri));
 	}
 
 	/**
