@@ -116,16 +116,16 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			createData: { config: this.createEsLintCompatibleConfig() } as IWorkerCreateData
 		});
 		this.register(this.webWorker);
-		return this.webWorker.getProxy();
+
+		const eslintWorker = await this.webWorker.getProxy();
+		this.ruleToUrlMapping = await eslintWorker.getRuleToUrlMapping();
+		return eslintWorker;
 	}
 
 	private async computeDiagnostics(resource: monaco.Uri): Promise<void> {
-		const eslint = await this.eslintWorker;
+		const eslintWorker = await this.eslintWorker;
 		await this.webWorker?.withSyncedResources([resource]);
-
-		if (this.ruleToUrlMapping === undefined)
-			this.ruleToUrlMapping = await eslint.getRuleToUrlMapping();
-		this.diagnostics.set(resource, await eslint.lint(resource.toString()));
+		this.diagnostics.set(resource, await eslintWorker.lint(resource.toString()));
 	}
 
 	private computeFixes(model: monaco.editor.ITextModel, token: monaco.CancellationToken): Map<string, Fix[]> {
