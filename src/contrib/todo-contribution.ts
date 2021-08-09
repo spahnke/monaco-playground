@@ -2,7 +2,7 @@ import { allLanguages, DiagnosticsAdapter } from "../common/diagnostics-adapter.
 import { isInComment } from "../common/monaco-utils.js";
 
 export class TodoContribution extends DiagnosticsAdapter {
-	private readonly currentDecorations: Map<monaco.Uri, string[]>;
+	private readonly currentDecorations: Map<string, string[]>;
 
 	constructor() {
 		super(allLanguages, "todo");
@@ -36,6 +36,6 @@ export class TodoContribution extends DiagnosticsAdapter {
 			});
 		}
 
-		this.currentDecorations.set(resource, model.deltaDecorations(this.currentDecorations.get(resource) ?? [], decorations));
+		this.currentDecorations.set(resource.toString(), model.deltaDecorations(this.currentDecorations.get(resource.toString()) ?? [], decorations));
 	}
 }
