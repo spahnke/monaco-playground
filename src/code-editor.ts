@@ -1,5 +1,5 @@
 ﻿import { Disposable } from "./common/disposable.js";
-import { addLibrary, ILibrary, patchKeybindings } from "./common/monaco-utils.js";
+import { addLibrary, delay, ILibrary, patchKeybindings } from "./common/monaco-utils.js";
 import { loadMonaco } from "./monaco-loader.js";
 
 class LocalStorageEditorConfiguration implements monaco.IDisposable {
@@ -183,10 +183,9 @@ export class CodeEditor extends Disposable {
 		if (action.isSupported())
 			return true;
 
-		const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 		let remainingIterations = 20;
 		while (remainingIterations-- > 0) {
-			await sleep(100);
+			await delay(100);
 			if (action.isSupported())
 				return true;
 		}

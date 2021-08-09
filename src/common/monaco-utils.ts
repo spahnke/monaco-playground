@@ -171,7 +171,7 @@ export function patchKeybindings(editor: monaco.editor.IStandaloneCodeEditor): m
 	return disposable;
 }
 
-function delay(ms: number): Promise<void> {
+export function delay(ms: number): Promise<void> {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
