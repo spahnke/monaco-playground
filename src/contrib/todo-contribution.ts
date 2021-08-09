@@ -2,7 +2,7 @@ import { allLanguages, DiagnosticsAdapter } from "../common/diagnostics-adapter.
 import { isInComment } from "../common/monaco-utils.js";
 
 export class TodoContribution extends DiagnosticsAdapter {
-	private currentDecorations: Map<monaco.Uri, string[]>;
+	private readonly currentDecorations: Map<monaco.Uri, string[]>;
 
 	constructor() {
 		super(allLanguages, "todo");
