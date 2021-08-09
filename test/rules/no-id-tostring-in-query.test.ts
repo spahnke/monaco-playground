@@ -94,6 +94,27 @@ linq.execute(query);
 		},
 		{
 			code: `
+var query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
+linq.execute(query);
+`.trim(),
+			errors: [
+				{ line: 1, column: 24, endColumn: 43, type: "Literal", suggestions: [] },
+				{
+					line: 1, column: 58, endColumn: 85, type: "TemplateLiteral",
+					suggestions: [
+						{
+							output: `
+var query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
+linq.execute(query);
+`.trim()
+						}
+					]
+				},
+			],
+			parserOptions: { ecmaVersion: 2015 },
+		},
+		{
+			code: `
 const query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
 const query2 = query;
 linq.execute(query2);
@@ -116,19 +137,98 @@ linq.execute(query2);
 			parserOptions: { ecmaVersion: 2015 },
 		},
 		{
-			code: `/* var in block */{
-var query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
-linq.execute(query);
+			code: `/* let/const in block */
+{
+	let query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
+	linq.execute(query);
 }`.trim(),
 			errors: [
-				{ line: 2, column: 24, endColumn: 43, type: "Literal", suggestions: [] },
+				{ line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
 				{
-					line: 2, column: 58, endColumn: 85, type: "TemplateLiteral",
+					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
 					suggestions: [
 						{
-							output: `/* var in block */{
-var query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
-linq.execute(query);
+							output: `/* let/const in block */
+{
+	let query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
+	linq.execute(query);
+}`.trim()
+						}
+					]
+				},
+			],
+			parserOptions: { ecmaVersion: 2015 },
+		},
+		{
+			code: `/* let/const in nested block */
+{
+	let query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
+	{
+		linq.execute(query);
+	}
+}`.trim(),
+			errors: [
+				{ line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
+				{
+					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
+					suggestions: [
+						{
+							output: `/* let/const in nested block */
+{
+	let query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
+	{
+		linq.execute(query);
+	}
+}`.trim()
+						}
+					]
+				},
+			],
+			parserOptions: { ecmaVersion: 2015 },
+		},
+		{
+			code: `/* var in block */
+{
+	var query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
+	linq.execute(query);
+}`.trim(),
+			errors: [
+				{ line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
+				{
+					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
+					suggestions: [
+						{
+							output: `/* var in block */
+{
+	var query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
+	linq.execute(query);
+}`.trim()
+						}
+					]
+				},
+			],
+			parserOptions: { ecmaVersion: 2015 },
+		},
+		{
+			code: `/* var in nested block */
+{
+	var query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${text}" asdf\` + foo;
+	{
+		linq.execute(query);
+	}
+}`.trim(),
+			errors: [
+				{ line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
+				{
+					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
+					suggestions: [
+						{
+							output: `/* var in nested block */
+{
+	var query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
+	{
+		linq.execute(query);
+	}
 }`.trim()
 						}
 					]

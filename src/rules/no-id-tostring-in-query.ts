@@ -1,4 +1,4 @@
-import { AST, Rule } from "eslint";
+import { AST, Rule, Scope } from "eslint";
 import { CallExpression, Expression, Identifier, Literal, SourceLocation, TemplateLiteral, VariableDeclarator } from "estree";
 
 export default new class implements Rule.RuleModule {
@@ -99,8 +99,7 @@ export default new class implements Rule.RuleModule {
 	}
 
 	private getVariableDeclarator(context: Rule.RuleContext, identifier: Identifier): VariableDeclarator | undefined {
-		const scope = context.getScope();
-		const variable = scope.variableScope.set.get(identifier.name);
+		const variable = this.findVariable(context.getScope(), identifier.name);
 		if (!variable)
 			return undefined;
 
@@ -108,6 +107,16 @@ export default new class implements Rule.RuleModule {
 		if (definition?.type !== "Variable")
 			return undefined;
 		return definition.node;
+	}
+
+	private findVariable(scope: Scope.Scope | null, variableName: string): Scope.Variable | undefined {
+		while (scope !== null) {
+			const variable = scope.set.get(variableName);
+			if (variable)
+				return variable;
+			scope = scope.upper;
+		}
+		return undefined;
 	}
 
 	private report(context: Rule.RuleContext, node: Literal | TemplateLiteral, loc?: SourceLocation): void {
