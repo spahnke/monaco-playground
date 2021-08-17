@@ -1,4 +1,5 @@
-﻿import { registerLanguages } from "./languages/language-registry.js";
+﻿import { toDisposable } from "./common/disposable.js";
+import { registerLanguages } from "./languages/language-registry.js";
 
 declare const require: IRequire;
 
@@ -72,12 +73,10 @@ class EditorOpenService {
 	registerOpener(opener: monaco.editor.ICodeEditorOpener): monaco.IDisposable {
 		this.openers.add(opener);
 		let remove: (() => void) | undefined = () => this.openers.delete(opener);
-		return {
-			dispose() {
-				remove?.();
-				remove = undefined;
-			}
-		};
+		return toDisposable(() => {
+			remove?.();
+			remove = undefined;
+		});
 	}
 
 	private patchMonacoOpenEditorMethod(editor: monaco.editor.ICodeEditor) {

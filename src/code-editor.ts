@@ -1,4 +1,4 @@
-﻿import { Disposable } from "./common/disposable.js";
+﻿import { Disposable, toDisposable } from "./common/disposable.js";
 import { addLibrary, delay, ILibrary, patchKeybindings } from "./common/monaco-utils.js";
 import { loadMonaco } from "./monaco-loader.js";
 
@@ -224,12 +224,10 @@ export class CodeEditor extends Disposable {
 				return opener.open(resource);
 			}
 		});
-		return {
-			dispose() {
-				remove?.();
-				remove = undefined;
-			}
-		};
+		return toDisposable(() => {
+			remove?.();
+			remove = undefined;
+		});
 	}
 
 	override dispose(): void {

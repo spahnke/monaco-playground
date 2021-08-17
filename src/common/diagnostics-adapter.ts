@@ -2,7 +2,7 @@
  *  Adopted partly from https://github.com/microsoft/monaco-typescript/blob/master/src/languageFeatures.ts
  *--------------------------------------------------------------------------------------------*/
 
-import { Disposable } from "./disposable.js";
+import { Disposable, toDisposable } from "./disposable.js";
 
 export const allLanguages = "all_languages";
 
@@ -29,12 +29,10 @@ export abstract class DiagnosticsAdapter extends Disposable {
 				handle = setTimeout(() => this.doValidate(model.uri), 500);
 			});
 
-			this.listeners.set(model.uri.toString(), {
-				dispose() {
-					changeSubscription.dispose();
-					clearTimeout(handle);
-				}
-			});
+			this.listeners.set(model.uri.toString(), toDisposable(() => {
+				changeSubscription.dispose();
+				clearTimeout(handle);
+			}));
 
 			this.doValidate(model.uri);
 		};
@@ -55,11 +53,7 @@ export abstract class DiagnosticsAdapter extends Disposable {
 			onModelAdd(event.model);
 		}));
 
-		this.register({
-			dispose() {
-				monaco.editor.getModels().forEach(onModelRemoved);
-			}
-		});
+		this.register(toDisposable(() => monaco.editor.getModels().forEach(onModelRemoved)));
 
 		monaco.editor.getModels().forEach(onModelAdd);
 	}

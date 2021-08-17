@@ -16,3 +16,15 @@ export class Disposable implements monaco.IDisposable {
 		this.disposables.clear();
 	}
 }
+
+export function toDisposable(f: () => void): monaco.IDisposable {
+	let didCall = false;
+	return {
+		dispose() {
+			if (didCall)
+				return;
+			didCall = true;
+			f();
+		}
+	};
+}
