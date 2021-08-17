@@ -1,4 +1,5 @@
 ﻿import { toDisposable } from "./common/disposable.js";
+import { registerPromiseCanceledErrorHandler } from "./common/monaco-utils.js";
 import { registerLanguages } from "./languages/language-registry.js";
 
 declare const require: IRequire;
@@ -35,6 +36,7 @@ export function loadMonaco(): Promise<void> {
 					const editorOpenService = new EditorOpenService();
 					monaco.editor.registerEditorOpener = opener => editorOpenService.registerOpener(opener);
 					registerLanguages();
+					registerPromiseCanceledErrorHandler();
 					resolve();
 				});
 			});

@@ -15,6 +15,19 @@ export interface ITemplate {
 	sortText?: string;
 }
 
+const canceledName = "Canceled";
+
+function isPromiseCanceledError(error: unknown): boolean {
+	return error instanceof Error && error.name === canceledName && error.message === canceledName;
+}
+
+export function registerPromiseCanceledErrorHandler(): void {
+	window.addEventListener("unhandledrejection", event => {
+		if (isPromiseCanceledError(event.reason))
+			event.preventDefault();
+	});
+}
+
 export function addLibrary(library: ILibrary): monaco.IDisposable {
 	const disposable = new Disposable();
 
