@@ -148,7 +148,7 @@ export function getKeybindings(editor: monaco.editor.IStandaloneCodeEditor): Key
 /**
  * CAUTION: Uses an internal API.
  */
-export function patchKeybinding(editor: monaco.editor.IStandaloneCodeEditor, id: string, newKeyBinding?: number, when?: monaco.platform.IContextKeyExpr): monaco.IDisposable {
+export function patchKeybinding(editor: monaco.editor.IStandaloneCodeEditor, id: string, newKeyBinding?: number, when?: monaco.platform.IContextKeyExpr | null): monaco.IDisposable {
 	// remove existing one; no official API yet
 	// the '-' before the commandId removes the binding
 	// as of >=0.21.0 we need to supply a dummy command handler to not get errors (because of the fix for https://github.com/microsoft/monaco-editor/issues/1857)
@@ -156,7 +156,9 @@ export function patchKeybinding(editor: monaco.editor.IStandaloneCodeEditor, id:
 	let undoPatchKeybinding: monaco.IDisposable | undefined;
 	if (newKeyBinding) {
 		const action = editor.getAction(id);
-		undoPatchKeybinding = editor._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
+		if (when !== undefined) // undefined to keep the original when clause, null to remove the original when clause, or overwrite with an entirely new one
+			action._precondition = when ?? undefined; // patch the original action when-clause because the action is wrapped again and this is the important one
+		undoPatchKeybinding = editor._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run());
 	}
 
 	// register undo operations in reverse order

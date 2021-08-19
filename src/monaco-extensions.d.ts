@@ -1,5 +1,10 @@
 declare namespace monaco {
 	namespace editor {
+		interface IEditorAction {
+			/** CAUTION: Internal unofficial API */
+			_precondition?: monaco.platform.IContextKeyExpr;
+		}
+
 		/** CAUTION: Internal unofficial API */
 		interface IEditorZoom {
 			onDidChangeZoomLevel: monaco.IEvent<number>;
