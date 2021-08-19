@@ -190,7 +190,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	private getFixAllCodeAction(model: monaco.editor.ITextModel, marker: monaco.editor.IMarkerData, ruleId: string, fixes: Fix[]): monaco.languages.CodeAction[] {
 		const applicableFixes = fixes.filter(fix => fix.autoFixAvailable);
-		if (applicableFixes.length === 0)
+		if (applicableFixes.length <= 1)
 			return [];
 
 		return [{
