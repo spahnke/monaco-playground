@@ -180,6 +180,7 @@ export function patchKeybindings(editor: monaco.editor.IStandaloneCodeEditor): m
 	disposable.register(patchKeybinding(editor, "editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0)); // no default
 	disposable.register(patchKeybinding(editor, "editor.action.marker.nextInFiles")); // default F8 (jumps between files/models which is not desirable)
 	disposable.register(patchKeybinding(editor, "editor.action.marker.prevInFiles")); // default Shift+F8 (jumps between files/models which is not desirable)
+	// TODO use default when clause again, after https://github.com/microsoft/vscode/pull/131254 is merged and shipped
 	disposable.register(patchKeybinding(editor, "editor.action.autoFix", monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.Enter, monaco.ContextKeyExpr.deserialize("editorTextFocus && !editorReadonly && editorHasCodeActionsProvider"))); // default is Shift+Alt+. with additional when-clause "&& supportedCodeAction =~ /(\\s|^)quickfix\\b/", but supportedCodeAction context-key is always "" in Monaco -> replace with "editorHasCodeActionsProvider"
 	disposable.register(patchKeybinding(editor, "editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter, monaco.ContextKeyExpr.deserialize("editorHasCodeActionsProvider && editorTextFocus && !editorReadonly"))); // default is Ctrl+.
 	disposable.register(patchKeybinding(editor, "editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O, monaco.ContextKeyExpr.deserialize("editorFocus && editorHasDocumentSymbolProvider"))); // default is Ctrl+Shift+O
