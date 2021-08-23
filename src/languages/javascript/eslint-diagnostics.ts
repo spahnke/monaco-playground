@@ -58,6 +58,7 @@ class DiagnosticContainer {
 }
 
 export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.languages.CodeActionProvider {
+	static readonly providedCodeActionKinds = ["quickfix", "source.fixAll.eslint"];
 
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
 	private config: EsLintConfig | undefined;
