@@ -7,6 +7,19 @@ Columns:
 KeyCode combination -> what's displayed in Monaco editor (i.e. in US layout)
 UI label            -> what needs to be pressed on the German layout
 
+Differences:
+---------------------------------------------------------
+|    KeyCode combination    |         German Key        |
+---------------------------------------------------------
+|                         [ |                         ß |
+|                         ] |                         ´ |
+|                         ; |                         ü |
+|                         = |                         + |
+|                         / |                         # |
+|                         ` |                         ö |
+|                         ' |                         ä |
+|                         \ |                         ^ |
+
 Layout info:
 {
 	"name": "00000407",
