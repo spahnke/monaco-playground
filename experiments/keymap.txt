@@ -1,24 +1,25 @@
 To get this:
 - Open VS Code Web in Edge/Chrome
-- Switch physical keyboard layout to German
+- Switch physical keyboard layout to e.g. German
 - Execute command "Developer: Inspect Key Mappings"
 
 Columns:
 KeyCode combination -> what's displayed in Monaco editor (i.e. in US layout)
-UI label            -> what needs to be pressed on the German layout
+UI label            -> what needs to be pressed on the e.g. German layout
 
 Differences:
----------------------------------------------------------
-|    KeyCode combination    |         German Key        |
----------------------------------------------------------
-|                         [ |                         ß |
-|                         ] |                         ´ |
-|                         ; |                         ü |
-|                         = |                         + |
-|                         / |                         # |
-|                         ` |                         ö |
-|                         ' |                         ä |
-|                         \ |                         ^ |
+---------------------------------------------------------------------------------------------------------------------------------------------
+|    KeyCode combination    |         German Key        |            UK Key         |         French Key        |          Swiss Key        |
+---------------------------------------------------------------------------------------------------------------------------------------------
+|                         [ |                         ß |                         [ |                         ) |                         ' |
+|                         ] |                         ´ |                         ] |                         ^ |                         ^ |
+|                         ; |                         ü |                         ; |                         $ |                         ü |
+|                         = |                         + |                         = |                         = |                           |
+|                         / |                         # |                         / |                         : |                         § |
+|                         ` |                         ö |                         ` |                         ù |                         ¨ |
+|                         ' |                         ä |                         # |                         ² |                         ö |
+|                         \ |                         ^ |                         \ |                         * |                         ä |
+|                         . |                         . |                         . |                         ; |                         . |
 
 Layout info:
 {
