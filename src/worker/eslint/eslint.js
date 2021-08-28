@@ -275,8 +275,6 @@ __webpack_require__(275);
 
 __webpack_require__(276);
 
-__webpack_require__(277);
-
 __webpack_require__(278);
 
 __webpack_require__(279);
@@ -295,11 +293,11 @@ __webpack_require__(285);
 
 __webpack_require__(286);
 
-__webpack_require__(292);
+__webpack_require__(287);
 
 __webpack_require__(293);
 
-__webpack_require__(295);
+__webpack_require__(294);
 
 __webpack_require__(296);
 
@@ -311,9 +309,9 @@ __webpack_require__(299);
 
 __webpack_require__(300);
 
-__webpack_require__(302);
+__webpack_require__(301);
 
-__webpack_require__(305);
+__webpack_require__(303);
 
 __webpack_require__(306);
 
@@ -321,11 +319,11 @@ __webpack_require__(307);
 
 __webpack_require__(308);
 
-__webpack_require__(312);
+__webpack_require__(309);
 
 __webpack_require__(313);
 
-__webpack_require__(315);
+__webpack_require__(314);
 
 __webpack_require__(316);
 
@@ -333,7 +331,7 @@ __webpack_require__(317);
 
 __webpack_require__(318);
 
-__webpack_require__(320);
+__webpack_require__(319);
 
 __webpack_require__(321);
 
@@ -345,13 +343,13 @@ __webpack_require__(324);
 
 __webpack_require__(325);
 
-__webpack_require__(327);
+__webpack_require__(326);
 
 __webpack_require__(328);
 
 __webpack_require__(329);
 
-__webpack_require__(332);
+__webpack_require__(330);
 
 __webpack_require__(333);
 
@@ -377,7 +375,7 @@ __webpack_require__(343);
 
 __webpack_require__(344);
 
-__webpack_require__(350);
+__webpack_require__(345);
 
 __webpack_require__(351);
 
@@ -401,7 +399,7 @@ __webpack_require__(360);
 
 __webpack_require__(361);
 
-__webpack_require__(365);
+__webpack_require__(362);
 
 __webpack_require__(366);
 
@@ -447,11 +445,11 @@ __webpack_require__(386);
 
 __webpack_require__(387);
 
-__webpack_require__(389);
+__webpack_require__(388);
 
 __webpack_require__(390);
 
-__webpack_require__(392);
+__webpack_require__(391);
 
 __webpack_require__(393);
 
@@ -461,9 +459,11 @@ __webpack_require__(395);
 
 __webpack_require__(396);
 
-__webpack_require__(401);
+__webpack_require__(397);
 
-__webpack_require__(399);
+__webpack_require__(402);
+
+__webpack_require__(400);
 
 module.exports = __webpack_require__(62);
 
@@ -1303,7 +1303,7 @@ var store = __webpack_require__(26);
 (module.exports = function (key, value) {
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
-  version: '3.16.1',
+  version: '3.16.3',
   mode: IS_PURE ? 'pure' : 'global',
   copyright: '© 2021 Denis Pushkarev (zloirock.ru)'
 });
@@ -1940,18 +1940,15 @@ var NullProtoObjectViaIFrame = function () {
   var iframe = documentCreateElement('iframe');
   var JS = 'java' + SCRIPT + ':';
   var iframeDocument;
+  iframe.style.display = 'none';
+  html.appendChild(iframe); // https://github.com/zloirock/core-js/issues/475
 
-  if (iframe.style) {
-    iframe.style.display = 'none';
-    html.appendChild(iframe); // https://github.com/zloirock/core-js/issues/475
-
-    iframe.src = String(JS);
-    iframeDocument = iframe.contentWindow.document;
-    iframeDocument.open();
-    iframeDocument.write(scriptTag('document.F=Object'));
-    iframeDocument.close();
-    return iframeDocument.F;
-  }
+  iframe.src = String(JS);
+  iframeDocument = iframe.contentWindow.document;
+  iframeDocument.open();
+  iframeDocument.write(scriptTag('document.F=Object'));
+  iframeDocument.close();
+  return iframeDocument.F;
 }; // Check for document.domain and active x support
 // No need to use active x approach when document.domain is not set
 // see https://github.com/es-shims/es5-shim/issues/150
@@ -1968,8 +1965,8 @@ var NullProtoObject = function () {
     /* ignore */
   }
 
-  NullProtoObject = document.domain && activeXDocument ? NullProtoObjectViaActiveX(activeXDocument) : // old IE
-  NullProtoObjectViaIFrame() || NullProtoObjectViaActiveX(activeXDocument); // WSH
+  NullProtoObject = typeof document != 'undefined' ? document.domain && activeXDocument ? NullProtoObjectViaActiveX(activeXDocument) // old IE
+  : NullProtoObjectViaIFrame() : NullProtoObjectViaActiveX(activeXDocument); // WSH
 
   var length = enumBugKeys.length;
 
@@ -9136,7 +9133,7 @@ module.exports = {
 
 var userAgent = __webpack_require__(21);
 
-module.exports = /(?:iphone|ipod|ipad).*applewebkit/i.test(userAgent);
+module.exports = /(?:ipad|iphone|ipod).*applewebkit/i.test(userAgent);
 
 /***/ }),
 /* 261 */
@@ -9251,7 +9248,7 @@ var userAgent = __webpack_require__(21);
 
 var global = __webpack_require__(3);
 
-module.exports = /iphone|ipod|ipad/i.test(userAgent) && global.Pebble !== undefined;
+module.exports = /ipad|iphone|ipod/i.test(userAgent) && global.Pebble !== undefined;
 
 /***/ }),
 /* 263 */
@@ -9735,7 +9732,7 @@ var isObject = __webpack_require__(15);
 
 var anObject = __webpack_require__(35);
 
-var has = __webpack_require__(28);
+var isDataDescriptor = __webpack_require__(277);
 
 var getOwnPropertyDescriptorModule = __webpack_require__(4);
 
@@ -9749,7 +9746,8 @@ function get(target, propertyKey
   var receiver = arguments.length < 3 ? target : arguments[2];
   var descriptor, prototype;
   if (anObject(target) === receiver) return target[propertyKey];
-  if (descriptor = getOwnPropertyDescriptorModule.f(target, propertyKey)) return has(descriptor, 'value') ? descriptor.value : descriptor.get === undefined ? undefined : descriptor.get.call(receiver);
+  descriptor = getOwnPropertyDescriptorModule.f(target, propertyKey);
+  if (descriptor) return isDataDescriptor(descriptor) ? descriptor.value : descriptor.get === undefined ? undefined : descriptor.get.call(receiver);
   if (isObject(prototype = getPrototypeOf(target))) return get(prototype, propertyKey, receiver);
 }
 
@@ -9762,6 +9760,16 @@ $({
 
 /***/ }),
 /* 277 */
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var has = __webpack_require__(28);
+
+module.exports = function (descriptor) {
+  return descriptor !== undefined && (has(descriptor, 'value') || has(descriptor, 'writable'));
+};
+
+/***/ }),
+/* 278 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -9785,7 +9793,7 @@ $({
 });
 
 /***/ }),
-/* 278 */
+/* 279 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -9809,7 +9817,7 @@ $({
 });
 
 /***/ }),
-/* 279 */
+/* 280 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2); // `Reflect.has` method
@@ -9826,7 +9834,7 @@ $({
 });
 
 /***/ }),
-/* 280 */
+/* 281 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -9848,7 +9856,7 @@ $({
 });
 
 /***/ }),
-/* 281 */
+/* 282 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -9865,7 +9873,7 @@ $({
 });
 
 /***/ }),
-/* 282 */
+/* 283 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -9897,7 +9905,7 @@ $({
 });
 
 /***/ }),
-/* 283 */
+/* 284 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -9906,7 +9914,7 @@ var anObject = __webpack_require__(35);
 
 var isObject = __webpack_require__(15);
 
-var has = __webpack_require__(28);
+var isDataDescriptor = __webpack_require__(277);
 
 var fails = __webpack_require__(6);
 
@@ -9925,7 +9933,7 @@ function set(target, propertyKey, V
 ) {
   var receiver = arguments.length < 4 ? target : arguments[3];
   var ownDescriptor = getOwnPropertyDescriptorModule.f(anObject(target), propertyKey);
-  var existingDescriptor, prototype;
+  var existingDescriptor, prototype, setter;
 
   if (!ownDescriptor) {
     if (isObject(prototype = getPrototypeOf(target))) {
@@ -9935,7 +9943,7 @@ function set(target, propertyKey, V
     ownDescriptor = createPropertyDescriptor(0);
   }
 
-  if (has(ownDescriptor, 'value')) {
+  if (isDataDescriptor(ownDescriptor)) {
     if (ownDescriptor.writable === false || !isObject(receiver)) return false;
 
     if (existingDescriptor = getOwnPropertyDescriptorModule.f(receiver, propertyKey)) {
@@ -9943,11 +9951,13 @@ function set(target, propertyKey, V
       existingDescriptor.value = V;
       definePropertyModule.f(receiver, propertyKey, existingDescriptor);
     } else definePropertyModule.f(receiver, propertyKey, createPropertyDescriptor(0, V));
-
-    return true;
+  } else {
+    setter = ownDescriptor.set;
+    if (setter === undefined) return false;
+    setter.call(receiver, V);
   }
 
-  return ownDescriptor.set === undefined ? false : (ownDescriptor.set.call(receiver, V), true);
+  return true;
 } // MS Edge 17-18 Reflect.set allows setting the property to object
 // with non-writable property on the prototype
 
@@ -9972,7 +9982,7 @@ $({
 });
 
 /***/ }),
-/* 284 */
+/* 285 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -10003,7 +10013,7 @@ if (objectSetPrototypeOf) $({
 });
 
 /***/ }),
-/* 285 */
+/* 286 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -10022,7 +10032,7 @@ $({
 setToStringTag(global.Reflect, 'Reflect', true);
 
 /***/ }),
-/* 286 */
+/* 287 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var DESCRIPTORS = __webpack_require__(5);
@@ -10039,13 +10049,13 @@ var defineProperty = __webpack_require__(34).f;
 
 var getOwnPropertyNames = __webpack_require__(44).f;
 
-var isRegExp = __webpack_require__(287);
+var isRegExp = __webpack_require__(288);
 
 var toString = __webpack_require__(54);
 
-var getFlags = __webpack_require__(288);
+var getFlags = __webpack_require__(289);
 
-var stickyHelpers = __webpack_require__(289);
+var stickyHelpers = __webpack_require__(290);
 
 var redefine = __webpack_require__(36);
 
@@ -10059,9 +10069,9 @@ var setSpecies = __webpack_require__(142);
 
 var wellKnownSymbol = __webpack_require__(23);
 
-var UNSUPPORTED_DOT_ALL = __webpack_require__(290);
+var UNSUPPORTED_DOT_ALL = __webpack_require__(291);
 
-var UNSUPPORTED_NCG = __webpack_require__(291);
+var UNSUPPORTED_NCG = __webpack_require__(292);
 
 var MATCH = wellKnownSymbol('match');
 var NativeRegExp = global.RegExp;
@@ -10252,7 +10262,7 @@ if (isForced('RegExp', BASE_FORCED)) {
 setSpecies('RegExp');
 
 /***/ }),
-/* 287 */
+/* 288 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var isObject = __webpack_require__(15);
@@ -10270,7 +10280,7 @@ module.exports = function (it) {
 };
 
 /***/ }),
-/* 288 */
+/* 289 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -10293,38 +10303,25 @@ module.exports = function () {
 };
 
 /***/ }),
-/* 289 */
+/* 290 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-var fails = __webpack_require__(6); // babel-minify transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError,
+var fails = __webpack_require__(6);
+
+var global = __webpack_require__(3); // babel-minify and Closure Compiler transpiles RegExp('a', 'y') -> /a/y and it causes SyntaxError
 
 
-var RE = function (s, f) {
-  return RegExp(s, f);
-};
-
+var $RegExp = global.RegExp;
 exports.UNSUPPORTED_Y = fails(function () {
-  var re = RE('a', 'y');
+  var re = $RegExp('a', 'y');
   re.lastIndex = 2;
   return re.exec('abcd') != null;
 });
 exports.BROKEN_CARET = fails(function () {
   // https://bugzilla.mozilla.org/show_bug.cgi?id=773687
-  var re = RE('^r', 'gy');
+  var re = $RegExp('^r', 'gy');
   re.lastIndex = 2;
   return re.exec('str') != null;
-});
-
-/***/ }),
-/* 290 */
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-var fails = __webpack_require__(6);
-
-module.exports = fails(function () {
-  // babel-minify transpiles RegExp('.', 's') -> /./s and it causes SyntaxError
-  var re = RegExp('.', (typeof '').charAt(0));
-  return !(re.dotAll && re.exec('\n') && re.flags === 's');
 });
 
 /***/ }),
@@ -10333,19 +10330,37 @@ module.exports = fails(function () {
 
 var fails = __webpack_require__(6);
 
+var global = __webpack_require__(3); // babel-minify and Closure Compiler transpiles RegExp('.', 's') -> /./s and it causes SyntaxError
+
+
+var $RegExp = global.RegExp;
 module.exports = fails(function () {
-  // babel-minify transpiles RegExp('.', 'g') -> /./g and it causes SyntaxError
-  var re = RegExp('(?<a>b)', (typeof '').charAt(5));
-  return re.exec('b').groups.a !== 'b' || 'b'.replace(re, '$<a>c') !== 'bc';
+  var re = $RegExp('.', 's');
+  return !(re.dotAll && re.exec('\n') && re.flags === 's');
 });
 
 /***/ }),
 /* 292 */
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+var fails = __webpack_require__(6);
+
+var global = __webpack_require__(3); // babel-minify and Closure Compiler transpiles RegExp('(?<a>b)', 'g') -> /(?<a>b)/g and it causes SyntaxError
+
+
+var $RegExp = global.RegExp;
+module.exports = fails(function () {
+  var re = $RegExp('(?<a>b)', 'g');
+  return re.exec('b').groups.a !== 'b' || 'b'.replace(re, '$<a>c') !== 'bc';
+});
+
+/***/ }),
+/* 293 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var DESCRIPTORS = __webpack_require__(5);
 
-var UNSUPPORTED_DOT_ALL = __webpack_require__(290);
+var UNSUPPORTED_DOT_ALL = __webpack_require__(291);
 
 var defineProperty = __webpack_require__(34).f;
 
@@ -10371,7 +10386,7 @@ if (DESCRIPTORS && UNSUPPORTED_DOT_ALL) {
 }
 
 /***/ }),
-/* 293 */
+/* 294 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -10379,7 +10394,7 @@ if (DESCRIPTORS && UNSUPPORTED_DOT_ALL) {
 
 var $ = __webpack_require__(2);
 
-var exec = __webpack_require__(294); // `RegExp.prototype.exec` method
+var exec = __webpack_require__(295); // `RegExp.prototype.exec` method
 // https://tc39.es/ecma262/#sec-regexp.prototype.exec
 
 
@@ -10392,20 +10407,20 @@ $({
 });
 
 /***/ }),
-/* 294 */
+/* 295 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
-/* eslint-disable regexp/no-assertion-capturing-group, regexp/no-empty-group, regexp/no-lazy-ends -- testing */
+/* eslint-disable regexp/no-empty-capturing-group, regexp/no-empty-group, regexp/no-lazy-ends -- testing */
 
 /* eslint-disable regexp/no-useless-quantifier -- testing */
 
 var toString = __webpack_require__(54);
 
-var regexpFlags = __webpack_require__(288);
+var regexpFlags = __webpack_require__(289);
 
-var stickyHelpers = __webpack_require__(289);
+var stickyHelpers = __webpack_require__(290);
 
 var shared = __webpack_require__(24);
 
@@ -10413,9 +10428,9 @@ var create = __webpack_require__(55);
 
 var getInternalState = __webpack_require__(38).get;
 
-var UNSUPPORTED_DOT_ALL = __webpack_require__(290);
+var UNSUPPORTED_DOT_ALL = __webpack_require__(291);
 
-var UNSUPPORTED_NCG = __webpack_require__(291);
+var UNSUPPORTED_NCG = __webpack_require__(292);
 
 var nativeExec = RegExp.prototype.exec;
 var nativeReplace = shared('native-string-replace', String.prototype.replace);
@@ -10521,14 +10536,14 @@ if (PATCH) {
 module.exports = patchedExec;
 
 /***/ }),
-/* 295 */
+/* 296 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var DESCRIPTORS = __webpack_require__(5);
 
 var objectDefinePropertyModule = __webpack_require__(34);
 
-var regExpFlags = __webpack_require__(288);
+var regExpFlags = __webpack_require__(289);
 
 var fails = __webpack_require__(6);
 
@@ -10547,12 +10562,12 @@ if (FORCED) objectDefinePropertyModule.f(RegExp.prototype, 'flags', {
 });
 
 /***/ }),
-/* 296 */
+/* 297 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var DESCRIPTORS = __webpack_require__(5);
 
-var UNSUPPORTED_Y = __webpack_require__(289).UNSUPPORTED_Y;
+var UNSUPPORTED_Y = __webpack_require__(290).UNSUPPORTED_Y;
 
 var defineProperty = __webpack_require__(34).f;
 
@@ -10578,13 +10593,13 @@ if (DESCRIPTORS && UNSUPPORTED_Y) {
 }
 
 /***/ }),
-/* 297 */
+/* 298 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
  // TODO: Remove from `core-js@4` since it's moved to entry points
 
-__webpack_require__(293);
+__webpack_require__(294);
 
 var $ = __webpack_require__(2);
 
@@ -10626,7 +10641,7 @@ $({
 });
 
 /***/ }),
-/* 298 */
+/* 299 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -10640,7 +10655,7 @@ var $toString = __webpack_require__(54);
 
 var fails = __webpack_require__(6);
 
-var flags = __webpack_require__(288);
+var flags = __webpack_require__(289);
 
 var TO_STRING = 'toString';
 var RegExpPrototype = RegExp.prototype;
@@ -10668,7 +10683,7 @@ if (NOT_GENERIC || INCORRECT_NAME) {
 }
 
 /***/ }),
-/* 299 */
+/* 300 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -10687,7 +10702,7 @@ module.exports = collection('Set', function (init) {
 }, collectionStrong);
 
 /***/ }),
-/* 300 */
+/* 301 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -10695,7 +10710,7 @@ module.exports = collection('Set', function (init) {
 
 var $ = __webpack_require__(2);
 
-var codeAt = __webpack_require__(301).codeAt; // `String.prototype.codePointAt` method
+var codeAt = __webpack_require__(302).codeAt; // `String.prototype.codePointAt` method
 // https://tc39.es/ecma262/#sec-string.prototype.codepointat
 
 
@@ -10709,7 +10724,7 @@ $({
 });
 
 /***/ }),
-/* 301 */
+/* 302 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var toInteger = __webpack_require__(48);
@@ -10741,7 +10756,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 302 */
+/* 303 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -10755,11 +10770,11 @@ var toLength = __webpack_require__(47);
 
 var toString = __webpack_require__(54);
 
-var notARegExp = __webpack_require__(303);
+var notARegExp = __webpack_require__(304);
 
 var requireObjectCoercible = __webpack_require__(12);
 
-var correctIsRegExpLogic = __webpack_require__(304);
+var correctIsRegExpLogic = __webpack_require__(305);
 
 var IS_PURE = __webpack_require__(25); // eslint-disable-next-line es/no-string-prototype-endswith -- safe
 
@@ -10793,10 +10808,10 @@ $({
 });
 
 /***/ }),
-/* 303 */
+/* 304 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var isRegExp = __webpack_require__(287);
+var isRegExp = __webpack_require__(288);
 
 module.exports = function (it) {
   if (isRegExp(it)) {
@@ -10807,7 +10822,7 @@ module.exports = function (it) {
 };
 
 /***/ }),
-/* 304 */
+/* 305 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var wellKnownSymbol = __webpack_require__(23);
@@ -10832,7 +10847,7 @@ module.exports = function (METHOD_NAME) {
 };
 
 /***/ }),
-/* 305 */
+/* 306 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -10869,7 +10884,7 @@ $({
 });
 
 /***/ }),
-/* 306 */
+/* 307 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -10877,13 +10892,13 @@ $({
 
 var $ = __webpack_require__(2);
 
-var notARegExp = __webpack_require__(303);
+var notARegExp = __webpack_require__(304);
 
 var requireObjectCoercible = __webpack_require__(12);
 
 var toString = __webpack_require__(54);
 
-var correctIsRegExpLogic = __webpack_require__(304); // `String.prototype.includes` method
+var correctIsRegExpLogic = __webpack_require__(305); // `String.prototype.includes` method
 // https://tc39.es/ecma262/#sec-string.prototype.includes
 
 
@@ -10900,13 +10915,13 @@ $({
 });
 
 /***/ }),
-/* 307 */
+/* 308 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var charAt = __webpack_require__(301).charAt;
+var charAt = __webpack_require__(302).charAt;
 
 var toString = __webpack_require__(54);
 
@@ -10944,13 +10959,13 @@ defineIterator(String, 'String', function (iterated) {
 });
 
 /***/ }),
-/* 308 */
+/* 309 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var fixRegExpWellKnownSymbolLogic = __webpack_require__(309);
+var fixRegExpWellKnownSymbolLogic = __webpack_require__(310);
 
 var anObject = __webpack_require__(35);
 
@@ -10960,9 +10975,9 @@ var toString = __webpack_require__(54);
 
 var requireObjectCoercible = __webpack_require__(12);
 
-var advanceStringIndex = __webpack_require__(310);
+var advanceStringIndex = __webpack_require__(311);
 
-var regExpExec = __webpack_require__(311); // @@match logic
+var regExpExec = __webpack_require__(312); // @@match logic
 
 
 fixRegExpWellKnownSymbolLogic('match', function (MATCH, nativeMatch, maybeCallNative) {
@@ -10998,17 +11013,17 @@ fixRegExpWellKnownSymbolLogic('match', function (MATCH, nativeMatch, maybeCallNa
 });
 
 /***/ }),
-/* 309 */
+/* 310 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
  // TODO: Remove from `core-js@4` since it's moved to entry points
 
-__webpack_require__(293);
+__webpack_require__(294);
 
 var redefine = __webpack_require__(36);
 
-var regexpExec = __webpack_require__(294);
+var regexpExec = __webpack_require__(295);
 
 var fails = __webpack_require__(6);
 
@@ -11096,13 +11111,13 @@ module.exports = function (KEY, exec, FORCED, SHAM) {
 };
 
 /***/ }),
-/* 310 */
+/* 311 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var charAt = __webpack_require__(301).charAt; // `AdvanceStringIndex` abstract operation
+var charAt = __webpack_require__(302).charAt; // `AdvanceStringIndex` abstract operation
 // https://tc39.es/ecma262/#sec-advancestringindex
 
 
@@ -11111,12 +11126,12 @@ module.exports = function (S, index, unicode) {
 };
 
 /***/ }),
-/* 311 */
+/* 312 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var classof = __webpack_require__(11);
 
-var regexpExec = __webpack_require__(294); // `RegExpExec` abstract operation
+var regexpExec = __webpack_require__(295); // `RegExpExec` abstract operation
 // https://tc39.es/ecma262/#sec-regexpexec
 
 
@@ -11141,7 +11156,7 @@ module.exports = function (R, S) {
 };
 
 /***/ }),
-/* 312 */
+/* 313 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -11164,9 +11179,9 @@ var anObject = __webpack_require__(35);
 
 var classof = __webpack_require__(11);
 
-var isRegExp = __webpack_require__(287);
+var isRegExp = __webpack_require__(288);
 
-var getRegExpFlags = __webpack_require__(288);
+var getRegExpFlags = __webpack_require__(289);
 
 var createNonEnumerableProperty = __webpack_require__(33);
 
@@ -11176,7 +11191,7 @@ var wellKnownSymbol = __webpack_require__(23);
 
 var speciesConstructor = __webpack_require__(156);
 
-var advanceStringIndex = __webpack_require__(310);
+var advanceStringIndex = __webpack_require__(311);
 
 var InternalStateModule = __webpack_require__(38);
 
@@ -11296,7 +11311,7 @@ $({
 IS_PURE || MATCH_ALL in RegExpPrototype || createNonEnumerableProperty(RegExpPrototype, MATCH_ALL, $matchAll);
 
 /***/ }),
-/* 313 */
+/* 314 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -11306,7 +11321,7 @@ var $ = __webpack_require__(2);
 
 var $padEnd = __webpack_require__(164).end;
 
-var WEBKIT_BUG = __webpack_require__(314); // `String.prototype.padEnd` method
+var WEBKIT_BUG = __webpack_require__(315); // `String.prototype.padEnd` method
 // https://tc39.es/ecma262/#sec-string.prototype.padend
 
 
@@ -11323,7 +11338,7 @@ $({
 });
 
 /***/ }),
-/* 314 */
+/* 315 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // https://github.com/zloirock/core-js/issues/280
@@ -11333,7 +11348,7 @@ var userAgent = __webpack_require__(21); // eslint-disable-next-line unicorn/no-
 module.exports = /Version\/10(?:\.\d+){1,2}(?: [\w./]+)?(?: Mobile\/\w+)? Safari\//.test(userAgent);
 
 /***/ }),
-/* 315 */
+/* 316 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -11343,7 +11358,7 @@ var $ = __webpack_require__(2);
 
 var $padStart = __webpack_require__(164).start;
 
-var WEBKIT_BUG = __webpack_require__(314); // `String.prototype.padStart` method
+var WEBKIT_BUG = __webpack_require__(315); // `String.prototype.padStart` method
 // https://tc39.es/ecma262/#sec-string.prototype.padstart
 
 
@@ -11360,7 +11375,7 @@ $({
 });
 
 /***/ }),
-/* 316 */
+/* 317 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -11394,7 +11409,7 @@ $({
 });
 
 /***/ }),
-/* 317 */
+/* 318 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -11411,13 +11426,13 @@ $({
 });
 
 /***/ }),
-/* 318 */
+/* 319 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var fixRegExpWellKnownSymbolLogic = __webpack_require__(309);
+var fixRegExpWellKnownSymbolLogic = __webpack_require__(310);
 
 var fails = __webpack_require__(6);
 
@@ -11431,11 +11446,11 @@ var toString = __webpack_require__(54);
 
 var requireObjectCoercible = __webpack_require__(12);
 
-var advanceStringIndex = __webpack_require__(310);
+var advanceStringIndex = __webpack_require__(311);
 
-var getSubstitution = __webpack_require__(319);
+var getSubstitution = __webpack_require__(320);
 
-var regExpExec = __webpack_require__(311);
+var regExpExec = __webpack_require__(312);
 
 var wellKnownSymbol = __webpack_require__(23);
 
@@ -11472,7 +11487,8 @@ var REPLACE_SUPPORTS_NAMED_GROUPS = !fails(function () {
       a: '7'
     };
     return result;
-  };
+  }; // eslint-disable-next-line regexp/no-useless-dollar-replacements -- false positive
+
 
   return ''.replace(re, '$<a>') !== '7';
 }); // @@replace logic
@@ -11552,7 +11568,7 @@ fixRegExpWellKnownSymbolLogic('replace', function (_, nativeReplace, maybeCallNa
 }, !REPLACE_SUPPORTS_NAMED_GROUPS || !REPLACE_KEEPS_$0 || REGEXP_REPLACE_SUBSTITUTES_UNDEFINED_CAPTURE);
 
 /***/ }),
-/* 319 */
+/* 320 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var toObject = __webpack_require__(29);
@@ -11613,7 +11629,7 @@ module.exports = function (matched, str, position, captures, namedCaptures, repl
 };
 
 /***/ }),
-/* 320 */
+/* 321 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -11623,13 +11639,13 @@ var $ = __webpack_require__(2);
 
 var requireObjectCoercible = __webpack_require__(12);
 
-var isRegExp = __webpack_require__(287);
+var isRegExp = __webpack_require__(288);
 
 var toString = __webpack_require__(54);
 
-var getRegExpFlags = __webpack_require__(288);
+var getRegExpFlags = __webpack_require__(289);
 
-var getSubstitution = __webpack_require__(319);
+var getSubstitution = __webpack_require__(320);
 
 var wellKnownSymbol = __webpack_require__(23);
 
@@ -11704,13 +11720,13 @@ $({
 });
 
 /***/ }),
-/* 321 */
+/* 322 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var fixRegExpWellKnownSymbolLogic = __webpack_require__(309);
+var fixRegExpWellKnownSymbolLogic = __webpack_require__(310);
 
 var anObject = __webpack_require__(35);
 
@@ -11720,7 +11736,7 @@ var sameValue = __webpack_require__(242);
 
 var toString = __webpack_require__(54);
 
-var regExpExec = __webpack_require__(311); // @@search logic
+var regExpExec = __webpack_require__(312); // @@search logic
 
 
 fixRegExpWellKnownSymbolLogic('search', function (SEARCH, nativeSearch, maybeCallNative) {
@@ -11746,15 +11762,15 @@ fixRegExpWellKnownSymbolLogic('search', function (SEARCH, nativeSearch, maybeCal
 });
 
 /***/ }),
-/* 322 */
+/* 323 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var fixRegExpWellKnownSymbolLogic = __webpack_require__(309);
+var fixRegExpWellKnownSymbolLogic = __webpack_require__(310);
 
-var isRegExp = __webpack_require__(287);
+var isRegExp = __webpack_require__(288);
 
 var anObject = __webpack_require__(35);
 
@@ -11762,17 +11778,17 @@ var requireObjectCoercible = __webpack_require__(12);
 
 var speciesConstructor = __webpack_require__(156);
 
-var advanceStringIndex = __webpack_require__(310);
+var advanceStringIndex = __webpack_require__(311);
 
 var toLength = __webpack_require__(47);
 
 var toString = __webpack_require__(54);
 
-var callRegExpExec = __webpack_require__(311);
+var callRegExpExec = __webpack_require__(312);
 
-var regexpExec = __webpack_require__(294);
+var regexpExec = __webpack_require__(295);
 
-var stickyHelpers = __webpack_require__(289);
+var stickyHelpers = __webpack_require__(290);
 
 var fails = __webpack_require__(6);
 
@@ -11799,7 +11815,7 @@ fixRegExpWellKnownSymbolLogic('split', function (SPLIT, nativeSplit, maybeCallNa
   var internalSplit;
 
   if ('abbc'.split(/(b)*/)[1] == 'c' || // eslint-disable-next-line regexp/no-empty-group -- required for testing
-  'test'.split(/(?:)/, -1).length != 4 || 'ab'.split(/(?:ab)*/).length != 2 || '.'.split(/(.?)(.?)/).length != 4 || // eslint-disable-next-line regexp/no-assertion-capturing-group, regexp/no-empty-group -- required for testing
+  'test'.split(/(?:)/, -1).length != 4 || 'ab'.split(/(?:ab)*/).length != 2 || '.'.split(/(.?)(.?)/).length != 4 || // eslint-disable-next-line regexp/no-empty-capturing-group, regexp/no-empty-group -- required for testing
   '.'.split(/()()/).length > 1 || ''.split(/.?/).length) {
     // based on es5-shim implementation, need to rework it
     internalSplit = function (separator, limit) {
@@ -11901,7 +11917,7 @@ fixRegExpWellKnownSymbolLogic('split', function (SPLIT, nativeSplit, maybeCallNa
 }, !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC, UNSUPPORTED_Y);
 
 /***/ }),
-/* 323 */
+/* 324 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -11915,11 +11931,11 @@ var toLength = __webpack_require__(47);
 
 var toString = __webpack_require__(54);
 
-var notARegExp = __webpack_require__(303);
+var notARegExp = __webpack_require__(304);
 
 var requireObjectCoercible = __webpack_require__(12);
 
-var correctIsRegExpLogic = __webpack_require__(304);
+var correctIsRegExpLogic = __webpack_require__(305);
 
 var IS_PURE = __webpack_require__(25); // eslint-disable-next-line es/no-string-prototype-startswith -- safe
 
@@ -11951,7 +11967,7 @@ $({
 });
 
 /***/ }),
-/* 324 */
+/* 325 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -11989,7 +12005,7 @@ $({
 });
 
 /***/ }),
-/* 325 */
+/* 326 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -11999,7 +12015,7 @@ var $ = __webpack_require__(2);
 
 var $trim = __webpack_require__(207).trim;
 
-var forcedStringTrimMethod = __webpack_require__(326); // `String.prototype.trim` method
+var forcedStringTrimMethod = __webpack_require__(327); // `String.prototype.trim` method
 // https://tc39.es/ecma262/#sec-string.prototype.trim
 
 
@@ -12014,7 +12030,7 @@ $({
 });
 
 /***/ }),
-/* 326 */
+/* 327 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var fails = __webpack_require__(6);
@@ -12031,7 +12047,7 @@ module.exports = function (METHOD_NAME) {
 };
 
 /***/ }),
-/* 327 */
+/* 328 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12041,7 +12057,7 @@ var $ = __webpack_require__(2);
 
 var $trimEnd = __webpack_require__(207).end;
 
-var forcedStringTrimMethod = __webpack_require__(326);
+var forcedStringTrimMethod = __webpack_require__(327);
 
 var FORCED = forcedStringTrimMethod('trimEnd');
 var trimEnd = FORCED ? function trimEnd() {
@@ -12060,7 +12076,7 @@ $({
 });
 
 /***/ }),
-/* 328 */
+/* 329 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12070,7 +12086,7 @@ var $ = __webpack_require__(2);
 
 var $trimStart = __webpack_require__(207).start;
 
-var forcedStringTrimMethod = __webpack_require__(326);
+var forcedStringTrimMethod = __webpack_require__(327);
 
 var FORCED = forcedStringTrimMethod('trimStart');
 var trimStart = FORCED ? function trimStart() {
@@ -12089,7 +12105,7 @@ $({
 });
 
 /***/ }),
-/* 329 */
+/* 330 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12097,9 +12113,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.anchor` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.anchor` method
 // https://tc39.es/ecma262/#sec-string.prototype.anchor
 
 
@@ -12114,7 +12130,7 @@ $({
 });
 
 /***/ }),
-/* 330 */
+/* 331 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var requireObjectCoercible = __webpack_require__(12);
@@ -12132,7 +12148,7 @@ module.exports = function (string, tag, attribute, value) {
 };
 
 /***/ }),
-/* 331 */
+/* 332 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var fails = __webpack_require__(6); // check the existence of a method, lowercase
@@ -12147,7 +12163,7 @@ module.exports = function (METHOD_NAME) {
 };
 
 /***/ }),
-/* 332 */
+/* 333 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12155,9 +12171,9 @@ module.exports = function (METHOD_NAME) {
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.big` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.big` method
 // https://tc39.es/ecma262/#sec-string.prototype.big
 
 
@@ -12172,7 +12188,7 @@ $({
 });
 
 /***/ }),
-/* 333 */
+/* 334 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12180,9 +12196,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.blink` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.blink` method
 // https://tc39.es/ecma262/#sec-string.prototype.blink
 
 
@@ -12197,7 +12213,7 @@ $({
 });
 
 /***/ }),
-/* 334 */
+/* 335 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12205,9 +12221,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.bold` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.bold` method
 // https://tc39.es/ecma262/#sec-string.prototype.bold
 
 
@@ -12222,7 +12238,7 @@ $({
 });
 
 /***/ }),
-/* 335 */
+/* 336 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12230,9 +12246,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.fixed` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.fixed` method
 // https://tc39.es/ecma262/#sec-string.prototype.fixed
 
 
@@ -12247,7 +12263,7 @@ $({
 });
 
 /***/ }),
-/* 336 */
+/* 337 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12255,9 +12271,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.fontcolor` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.fontcolor` method
 // https://tc39.es/ecma262/#sec-string.prototype.fontcolor
 
 
@@ -12272,7 +12288,7 @@ $({
 });
 
 /***/ }),
-/* 337 */
+/* 338 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12280,9 +12296,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.fontsize` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.fontsize` method
 // https://tc39.es/ecma262/#sec-string.prototype.fontsize
 
 
@@ -12297,7 +12313,7 @@ $({
 });
 
 /***/ }),
-/* 338 */
+/* 339 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12305,9 +12321,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.italics` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.italics` method
 // https://tc39.es/ecma262/#sec-string.prototype.italics
 
 
@@ -12322,7 +12338,7 @@ $({
 });
 
 /***/ }),
-/* 339 */
+/* 340 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12330,9 +12346,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.link` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.link` method
 // https://tc39.es/ecma262/#sec-string.prototype.link
 
 
@@ -12347,7 +12363,7 @@ $({
 });
 
 /***/ }),
-/* 340 */
+/* 341 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12355,9 +12371,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.small` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.small` method
 // https://tc39.es/ecma262/#sec-string.prototype.small
 
 
@@ -12372,7 +12388,7 @@ $({
 });
 
 /***/ }),
-/* 341 */
+/* 342 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12380,9 +12396,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.strike` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.strike` method
 // https://tc39.es/ecma262/#sec-string.prototype.strike
 
 
@@ -12397,7 +12413,7 @@ $({
 });
 
 /***/ }),
-/* 342 */
+/* 343 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12405,9 +12421,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.sub` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.sub` method
 // https://tc39.es/ecma262/#sec-string.prototype.sub
 
 
@@ -12422,7 +12438,7 @@ $({
 });
 
 /***/ }),
-/* 343 */
+/* 344 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12430,9 +12446,9 @@ $({
 
 var $ = __webpack_require__(2);
 
-var createHTML = __webpack_require__(330);
+var createHTML = __webpack_require__(331);
 
-var forcedStringHTMLMethod = __webpack_require__(331); // `String.prototype.sup` method
+var forcedStringHTMLMethod = __webpack_require__(332); // `String.prototype.sup` method
 // https://tc39.es/ecma262/#sec-string.prototype.sup
 
 
@@ -12447,10 +12463,10 @@ $({
 });
 
 /***/ }),
-/* 344 */
+/* 345 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var createTypedArrayConstructor = __webpack_require__(345); // `Float32Array` constructor
+var createTypedArrayConstructor = __webpack_require__(346); // `Float32Array` constructor
 // https://tc39.es/ecma262/#sec-typedarray-objects
 
 
@@ -12461,7 +12477,7 @@ createTypedArrayConstructor('Float32', function (init) {
 });
 
 /***/ }),
-/* 345 */
+/* 346 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12473,7 +12489,7 @@ var global = __webpack_require__(3);
 
 var DESCRIPTORS = __webpack_require__(5);
 
-var TYPED_ARRAYS_CONSTRUCTORS_REQUIRES_WRAPPERS = __webpack_require__(346);
+var TYPED_ARRAYS_CONSTRUCTORS_REQUIRES_WRAPPERS = __webpack_require__(347);
 
 var ArrayBufferViewCore = __webpack_require__(154);
 
@@ -12491,7 +12507,7 @@ var toLength = __webpack_require__(47);
 
 var toIndex = __webpack_require__(151);
 
-var toOffset = __webpack_require__(347);
+var toOffset = __webpack_require__(348);
 
 var toPropertyKey = __webpack_require__(13);
 
@@ -12509,7 +12525,7 @@ var setPrototypeOf = __webpack_require__(86);
 
 var getOwnPropertyNames = __webpack_require__(44).f;
 
-var typedArrayFrom = __webpack_require__(349);
+var typedArrayFrom = __webpack_require__(350);
 
 var forEach = __webpack_require__(64).forEach;
 
@@ -12732,7 +12748,7 @@ if (DESCRIPTORS) {
 };
 
 /***/ }),
-/* 346 */
+/* 347 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 /* eslint-disable no-new -- required for testing */
@@ -12761,10 +12777,10 @@ module.exports = !NATIVE_ARRAY_BUFFER_VIEWS || !fails(function () {
 });
 
 /***/ }),
-/* 347 */
+/* 348 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var toPositiveInteger = __webpack_require__(348);
+var toPositiveInteger = __webpack_require__(349);
 
 module.exports = function (it, BYTES) {
   var offset = toPositiveInteger(it);
@@ -12773,7 +12789,7 @@ module.exports = function (it, BYTES) {
 };
 
 /***/ }),
-/* 348 */
+/* 349 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var toInteger = __webpack_require__(48);
@@ -12785,7 +12801,7 @@ module.exports = function (it) {
 };
 
 /***/ }),
-/* 349 */
+/* 350 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var toObject = __webpack_require__(29);
@@ -12835,10 +12851,10 @@ module.exports = function from(source
 };
 
 /***/ }),
-/* 350 */
+/* 351 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var createTypedArrayConstructor = __webpack_require__(345); // `Float64Array` constructor
+var createTypedArrayConstructor = __webpack_require__(346); // `Float64Array` constructor
 // https://tc39.es/ecma262/#sec-typedarray-objects
 
 
@@ -12849,10 +12865,10 @@ createTypedArrayConstructor('Float64', function (init) {
 });
 
 /***/ }),
-/* 351 */
+/* 352 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var createTypedArrayConstructor = __webpack_require__(345); // `Int8Array` constructor
+var createTypedArrayConstructor = __webpack_require__(346); // `Int8Array` constructor
 // https://tc39.es/ecma262/#sec-typedarray-objects
 
 
@@ -12863,10 +12879,10 @@ createTypedArrayConstructor('Int8', function (init) {
 });
 
 /***/ }),
-/* 352 */
+/* 353 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var createTypedArrayConstructor = __webpack_require__(345); // `Int16Array` constructor
+var createTypedArrayConstructor = __webpack_require__(346); // `Int16Array` constructor
 // https://tc39.es/ecma262/#sec-typedarray-objects
 
 
@@ -12877,10 +12893,10 @@ createTypedArrayConstructor('Int16', function (init) {
 });
 
 /***/ }),
-/* 353 */
+/* 354 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var createTypedArrayConstructor = __webpack_require__(345); // `Int32Array` constructor
+var createTypedArrayConstructor = __webpack_require__(346); // `Int32Array` constructor
 // https://tc39.es/ecma262/#sec-typedarray-objects
 
 
@@ -12891,10 +12907,10 @@ createTypedArrayConstructor('Int32', function (init) {
 });
 
 /***/ }),
-/* 354 */
+/* 355 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var createTypedArrayConstructor = __webpack_require__(345); // `Uint8Array` constructor
+var createTypedArrayConstructor = __webpack_require__(346); // `Uint8Array` constructor
 // https://tc39.es/ecma262/#sec-typedarray-objects
 
 
@@ -12905,10 +12921,10 @@ createTypedArrayConstructor('Uint8', function (init) {
 });
 
 /***/ }),
-/* 355 */
+/* 356 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var createTypedArrayConstructor = __webpack_require__(345); // `Uint8ClampedArray` constructor
+var createTypedArrayConstructor = __webpack_require__(346); // `Uint8ClampedArray` constructor
 // https://tc39.es/ecma262/#sec-typedarray-objects
 
 
@@ -12919,10 +12935,10 @@ createTypedArrayConstructor('Uint8', function (init) {
 }, true);
 
 /***/ }),
-/* 356 */
+/* 357 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var createTypedArrayConstructor = __webpack_require__(345); // `Uint16Array` constructor
+var createTypedArrayConstructor = __webpack_require__(346); // `Uint16Array` constructor
 // https://tc39.es/ecma262/#sec-typedarray-objects
 
 
@@ -12933,10 +12949,10 @@ createTypedArrayConstructor('Uint16', function (init) {
 });
 
 /***/ }),
-/* 357 */
+/* 358 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var createTypedArrayConstructor = __webpack_require__(345); // `Uint32Array` constructor
+var createTypedArrayConstructor = __webpack_require__(346); // `Uint32Array` constructor
 // https://tc39.es/ecma262/#sec-typedarray-objects
 
 
@@ -12947,7 +12963,7 @@ createTypedArrayConstructor('Uint32', function (init) {
 });
 
 /***/ }),
-/* 358 */
+/* 359 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12968,7 +12984,7 @@ exportTypedArrayMethod('copyWithin', function copyWithin(target, start
 });
 
 /***/ }),
-/* 359 */
+/* 360 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -12989,7 +13005,7 @@ exportTypedArrayMethod('every', function every(callbackfn
 });
 
 /***/ }),
-/* 360 */
+/* 361 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13011,7 +13027,7 @@ exportTypedArrayMethod('fill', function fill(value
 });
 
 /***/ }),
-/* 361 */
+/* 362 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13021,7 +13037,7 @@ var ArrayBufferViewCore = __webpack_require__(154);
 
 var $filter = __webpack_require__(64).filter;
 
-var fromSpeciesAndList = __webpack_require__(362);
+var fromSpeciesAndList = __webpack_require__(363);
 
 var aTypedArray = ArrayBufferViewCore.aTypedArray;
 var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod; // `%TypedArray%.prototype.filter` method
@@ -13035,19 +13051,19 @@ exportTypedArrayMethod('filter', function filter(callbackfn
 });
 
 /***/ }),
-/* 362 */
+/* 363 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var arrayFromConstructorAndList = __webpack_require__(363);
+var arrayFromConstructorAndList = __webpack_require__(364);
 
-var typedArraySpeciesConstructor = __webpack_require__(364);
+var typedArraySpeciesConstructor = __webpack_require__(365);
 
 module.exports = function (instance, list) {
   return arrayFromConstructorAndList(typedArraySpeciesConstructor(instance), list);
 };
 
 /***/ }),
-/* 363 */
+/* 364 */
 /***/ ((module) => {
 
 module.exports = function (Constructor, list) {
@@ -13061,7 +13077,7 @@ module.exports = function (Constructor, list) {
 };
 
 /***/ }),
-/* 364 */
+/* 365 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var ArrayBufferViewCore = __webpack_require__(154);
@@ -13077,7 +13093,7 @@ module.exports = function (originalArray) {
 };
 
 /***/ }),
-/* 365 */
+/* 366 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13098,7 +13114,7 @@ exportTypedArrayMethod('find', function find(predicate
 });
 
 /***/ }),
-/* 366 */
+/* 367 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13119,7 +13135,7 @@ exportTypedArrayMethod('findIndex', function findIndex(predicate
 });
 
 /***/ }),
-/* 367 */
+/* 368 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13140,24 +13156,24 @@ exportTypedArrayMethod('forEach', function forEach(callbackfn
 });
 
 /***/ }),
-/* 368 */
+/* 369 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var TYPED_ARRAYS_CONSTRUCTORS_REQUIRES_WRAPPERS = __webpack_require__(346);
+var TYPED_ARRAYS_CONSTRUCTORS_REQUIRES_WRAPPERS = __webpack_require__(347);
 
 var exportTypedArrayStaticMethod = __webpack_require__(154).exportTypedArrayStaticMethod;
 
-var typedArrayFrom = __webpack_require__(349); // `%TypedArray%.from` method
+var typedArrayFrom = __webpack_require__(350); // `%TypedArray%.from` method
 // https://tc39.es/ecma262/#sec-%typedarray%.from
 
 
 exportTypedArrayStaticMethod('from', typedArrayFrom, TYPED_ARRAYS_CONSTRUCTORS_REQUIRES_WRAPPERS);
 
 /***/ }),
-/* 369 */
+/* 370 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13178,7 +13194,7 @@ exportTypedArrayMethod('includes', function includes(searchElement
 });
 
 /***/ }),
-/* 370 */
+/* 371 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13199,7 +13215,7 @@ exportTypedArrayMethod('indexOf', function indexOf(searchElement
 });
 
 /***/ }),
-/* 371 */
+/* 372 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13245,7 +13261,7 @@ exportTypedArrayMethod('values', typedArrayValues, !CORRECT_ITER_NAME); // `%Typ
 exportTypedArrayMethod(ITERATOR, typedArrayValues, !CORRECT_ITER_NAME);
 
 /***/ }),
-/* 372 */
+/* 373 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13264,7 +13280,7 @@ exportTypedArrayMethod('join', function join(separator) {
 });
 
 /***/ }),
-/* 373 */
+/* 374 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13286,7 +13302,7 @@ exportTypedArrayMethod('lastIndexOf', function lastIndexOf(searchElement
 });
 
 /***/ }),
-/* 374 */
+/* 375 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13296,7 +13312,7 @@ var ArrayBufferViewCore = __webpack_require__(154);
 
 var $map = __webpack_require__(64).map;
 
-var typedArraySpeciesConstructor = __webpack_require__(364);
+var typedArraySpeciesConstructor = __webpack_require__(365);
 
 var aTypedArray = ArrayBufferViewCore.aTypedArray;
 var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod; // `%TypedArray%.prototype.map` method
@@ -13311,7 +13327,7 @@ exportTypedArrayMethod('map', function map(mapfn
 });
 
 /***/ }),
-/* 375 */
+/* 376 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13319,7 +13335,7 @@ exportTypedArrayMethod('map', function map(mapfn
 
 var ArrayBufferViewCore = __webpack_require__(154);
 
-var TYPED_ARRAYS_CONSTRUCTORS_REQUIRES_WRAPPERS = __webpack_require__(346);
+var TYPED_ARRAYS_CONSTRUCTORS_REQUIRES_WRAPPERS = __webpack_require__(347);
 
 var aTypedArrayConstructor = ArrayBufferViewCore.aTypedArrayConstructor;
 var exportTypedArrayStaticMethod = ArrayBufferViewCore.exportTypedArrayStaticMethod; // `%TypedArray%.of` method
@@ -13336,7 +13352,7 @@ exportTypedArrayStaticMethod('of', function of() {
 }, TYPED_ARRAYS_CONSTRUCTORS_REQUIRES_WRAPPERS);
 
 /***/ }),
-/* 376 */
+/* 377 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13357,7 +13373,7 @@ exportTypedArrayMethod('reduce', function reduce(callbackfn
 });
 
 /***/ }),
-/* 377 */
+/* 378 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13378,7 +13394,7 @@ exportTypedArrayMethod('reduceRight', function reduceRight(callbackfn
 });
 
 /***/ }),
-/* 378 */
+/* 379 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13408,7 +13424,7 @@ exportTypedArrayMethod('reverse', function reverse() {
 });
 
 /***/ }),
-/* 379 */
+/* 380 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13418,7 +13434,7 @@ var ArrayBufferViewCore = __webpack_require__(154);
 
 var toLength = __webpack_require__(47);
 
-var toOffset = __webpack_require__(347);
+var toOffset = __webpack_require__(348);
 
 var toObject = __webpack_require__(29);
 
@@ -13447,7 +13463,7 @@ exportTypedArrayMethod('set', function set(arrayLike
 }, FORCED);
 
 /***/ }),
-/* 380 */
+/* 381 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13455,7 +13471,7 @@ exportTypedArrayMethod('set', function set(arrayLike
 
 var ArrayBufferViewCore = __webpack_require__(154);
 
-var typedArraySpeciesConstructor = __webpack_require__(364);
+var typedArraySpeciesConstructor = __webpack_require__(365);
 
 var fails = __webpack_require__(6);
 
@@ -13481,7 +13497,7 @@ exportTypedArrayMethod('slice', function slice(start, end) {
 }, FORCED);
 
 /***/ }),
-/* 381 */
+/* 382 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13502,7 +13518,7 @@ exportTypedArrayMethod('some', function some(callbackfn
 });
 
 /***/ }),
-/* 382 */
+/* 383 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13600,7 +13616,7 @@ exportTypedArrayMethod('sort', function sort(comparefn) {
 }, !STABLE_SORT || ACCEPT_INCORRECT_ARGUMENTS);
 
 /***/ }),
-/* 383 */
+/* 384 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13612,7 +13628,7 @@ var toLength = __webpack_require__(47);
 
 var toAbsoluteIndex = __webpack_require__(49);
 
-var typedArraySpeciesConstructor = __webpack_require__(364);
+var typedArraySpeciesConstructor = __webpack_require__(365);
 
 var aTypedArray = ArrayBufferViewCore.aTypedArray;
 var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod; // `%TypedArray%.prototype.subarray` method
@@ -13627,7 +13643,7 @@ exportTypedArrayMethod('subarray', function subarray(begin, end) {
 });
 
 /***/ }),
-/* 384 */
+/* 385 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13660,7 +13676,7 @@ exportTypedArrayMethod('toLocaleString', function toLocaleString() {
 }, FORCED);
 
 /***/ }),
-/* 385 */
+/* 386 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13691,7 +13707,7 @@ var IS_NOT_ARRAY_METHOD = Uint8ArrayPrototype.toString != arrayToString; // `%Ty
 exportTypedArrayMethod('toString', arrayToString, IS_NOT_ARRAY_METHOD);
 
 /***/ }),
-/* 386 */
+/* 387 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13747,7 +13763,7 @@ $({
 });
 
 /***/ }),
-/* 387 */
+/* 388 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13761,7 +13777,7 @@ var InternalMetadataModule = __webpack_require__(180);
 
 var collection = __webpack_require__(179);
 
-var collectionWeak = __webpack_require__(388);
+var collectionWeak = __webpack_require__(389);
 
 var isObject = __webpack_require__(15);
 
@@ -13835,7 +13851,7 @@ if (NATIVE_WEAK_MAP && IS_IE11) {
 }
 
 /***/ }),
-/* 388 */
+/* 389 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13973,7 +13989,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 389 */
+/* 390 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -13981,7 +13997,7 @@ module.exports = {
 
 var collection = __webpack_require__(179);
 
-var collectionWeak = __webpack_require__(388); // `WeakSet` constructor
+var collectionWeak = __webpack_require__(389); // `WeakSet` constructor
 // https://tc39.es/ecma262/#sec-weakset-constructor
 
 
@@ -13992,12 +14008,12 @@ collection('WeakSet', function (init) {
 }, collectionWeak);
 
 /***/ }),
-/* 390 */
+/* 391 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var global = __webpack_require__(3);
 
-var DOMIterables = __webpack_require__(391);
+var DOMIterables = __webpack_require__(392);
 
 var forEach = __webpack_require__(112);
 
@@ -14015,7 +14031,7 @@ for (var COLLECTION_NAME in DOMIterables) {
 }
 
 /***/ }),
-/* 391 */
+/* 392 */
 /***/ ((module) => {
 
 // iterable DOM collections
@@ -14055,12 +14071,12 @@ module.exports = {
 };
 
 /***/ }),
-/* 392 */
+/* 393 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var global = __webpack_require__(3);
 
-var DOMIterables = __webpack_require__(391);
+var DOMIterables = __webpack_require__(392);
 
 var ArrayIteratorMethods = __webpack_require__(120);
 
@@ -14100,7 +14116,7 @@ for (var COLLECTION_NAME in DOMIterables) {
 }
 
 /***/ }),
-/* 393 */
+/* 394 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -14126,7 +14142,7 @@ $({
 });
 
 /***/ }),
-/* 394 */
+/* 395 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -14152,7 +14168,7 @@ $({
 });
 
 /***/ }),
-/* 395 */
+/* 396 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 var $ = __webpack_require__(2);
@@ -14193,19 +14209,19 @@ $({
 });
 
 /***/ }),
-/* 396 */
+/* 397 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
  // TODO: in core-js@4, move /modules/ dependencies to public entries for better optimization by tools like `preset-env`
 
-__webpack_require__(307);
+__webpack_require__(308);
 
 var $ = __webpack_require__(2);
 
 var DESCRIPTORS = __webpack_require__(5);
 
-var USE_NATIVE_URL = __webpack_require__(397);
+var USE_NATIVE_URL = __webpack_require__(398);
 
 var global = __webpack_require__(3);
 
@@ -14221,15 +14237,15 @@ var assign = __webpack_require__(226);
 
 var arrayFrom = __webpack_require__(114);
 
-var codeAt = __webpack_require__(301).codeAt;
+var codeAt = __webpack_require__(302).codeAt;
 
-var toASCII = __webpack_require__(398);
+var toASCII = __webpack_require__(399);
 
 var $toString = __webpack_require__(54);
 
 var setToStringTag = __webpack_require__(63);
 
-var URLSearchParamsModule = __webpack_require__(399);
+var URLSearchParamsModule = __webpack_require__(400);
 
 var InternalStateModule = __webpack_require__(38);
 
@@ -15316,7 +15332,7 @@ $({
 });
 
 /***/ }),
-/* 397 */
+/* 398 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var fails = __webpack_require__(6);
@@ -15344,7 +15360,7 @@ module.exports = !fails(function () {
 });
 
 /***/ }),
-/* 398 */
+/* 399 */
 /***/ ((module) => {
 
 "use strict";
@@ -15540,7 +15556,7 @@ module.exports = function (input) {
 };
 
 /***/ }),
-/* 399 */
+/* 400 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -15552,7 +15568,7 @@ var $ = __webpack_require__(2);
 
 var getBuiltIn = __webpack_require__(17);
 
-var USE_NATIVE_URL = __webpack_require__(397);
+var USE_NATIVE_URL = __webpack_require__(398);
 
 var redefine = __webpack_require__(36);
 
@@ -15582,7 +15598,7 @@ var create = __webpack_require__(55);
 
 var createPropertyDescriptor = __webpack_require__(8);
 
-var getIterator = __webpack_require__(400);
+var getIterator = __webpack_require__(401);
 
 var getIteratorMethod = __webpack_require__(91);
 
@@ -15980,7 +15996,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 400 */
+/* 401 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var anObject = __webpack_require__(35);
@@ -15998,7 +16014,7 @@ module.exports = function (it) {
 };
 
 /***/ }),
-/* 401 */
+/* 402 */
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -16019,7 +16035,7 @@ $({
 });
 
 /***/ }),
-/* 402 */
+/* 403 */
 /***/ ((module) => {
 
 /**
@@ -16747,11 +16763,11 @@ try {
 }
 
 /***/ }),
-/* 403 */
+/* 404 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(405);
+/* provided dependency */ var process = __webpack_require__(406);
 /**
  * @fileoverview Main Linter Class
  * @author Gyandeep Singh
@@ -16761,37 +16777,37 @@ try {
 // Requirements
 //------------------------------------------------------------------------------
 
-const path = __webpack_require__(404),
-      eslintScope = __webpack_require__(406),
-      evk = __webpack_require__(448),
-      espree = __webpack_require__(449),
-      merge = __webpack_require__(453),
-      pkg = __webpack_require__(454),
-      astUtils = __webpack_require__(455),
+const path = __webpack_require__(405),
+      eslintScope = __webpack_require__(407),
+      evk = __webpack_require__(449),
+      espree = __webpack_require__(450),
+      merge = __webpack_require__(454),
+      pkg = __webpack_require__(455),
+      astUtils = __webpack_require__(456),
       {
   Legacy: {
     ConfigOps,
     ConfigValidator,
     environments: BuiltInEnvironments
   }
-} = __webpack_require__(456),
+} = __webpack_require__(457),
       // eslint-disable-line node/no-missing-require -- false positive
-Traverser = __webpack_require__(505),
+Traverser = __webpack_require__(506),
       {
   SourceCode
-} = __webpack_require__(509),
-      CodePathAnalyzer = __webpack_require__(527),
-      applyDisableDirectives = __webpack_require__(534),
-      ConfigCommentParser = __webpack_require__(536),
-      NodeEventGenerator = __webpack_require__(549),
-      createReportTranslator = __webpack_require__(551),
-      Rules = __webpack_require__(554),
-      createEmitter = __webpack_require__(864),
-      SourceCodeFixer = __webpack_require__(865),
-      timing = __webpack_require__(866),
-      ruleReplacements = __webpack_require__(867);
+} = __webpack_require__(510),
+      CodePathAnalyzer = __webpack_require__(528),
+      applyDisableDirectives = __webpack_require__(535),
+      ConfigCommentParser = __webpack_require__(537),
+      NodeEventGenerator = __webpack_require__(550),
+      createReportTranslator = __webpack_require__(552),
+      Rules = __webpack_require__(555),
+      createEmitter = __webpack_require__(865),
+      SourceCodeFixer = __webpack_require__(866),
+      timing = __webpack_require__(867),
+      ruleReplacements = __webpack_require__(868);
 
-const debug = __webpack_require__(506)("eslint:linter");
+const debug = __webpack_require__(507)("eslint:linter");
 
 const MAX_AUTOFIX_PASSES = 10;
 const DEFAULT_PARSER_NAME = "espree";
@@ -16811,9 +16827,9 @@ const parserSymbol = Symbol.for("eslint.RuleTester.parser"); //-----------------
 // Typedefs
 //------------------------------------------------------------------------------
 
-/** @typedef {InstanceType<import("../cli-engine/config-array")["ConfigArray"]>} ConfigArray */
+/** @typedef {InstanceType<import("../cli-engine/config-array").ConfigArray>} ConfigArray */
 
-/** @typedef {InstanceType<import("../cli-engine/config-array")["ExtractedConfig"]>} ExtractedConfig */
+/** @typedef {InstanceType<import("../cli-engine/config-array").ExtractedConfig>} ExtractedConfig */
 
 /** @typedef {import("../shared/types").ConfigData} ConfigData */
 
@@ -16829,17 +16845,21 @@ const parserSymbol = Symbol.for("eslint.RuleTester.parser"); //-----------------
 
 /** @typedef {import("../shared/types").Rule} Rule */
 
+/* eslint-disable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/4#issuecomment-778805577 */
+
 /**
  * @template T
  * @typedef {{ [P in keyof T]-?: T[P] }} Required
  */
 
+/* eslint-enable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/4#issuecomment-778805577 */
+
 /**
  * @typedef {Object} DisableDirective
- * @property {("disable"|"enable"|"disable-line"|"disable-next-line")} type
- * @property {number} line
- * @property {number} column
- * @property {(string|null)} ruleId
+ * @property {("disable"|"enable"|"disable-line"|"disable-next-line")} type Type of directive
+ * @property {number} line The line number
+ * @property {number} column The column number
+ * @property {(string|null)} ruleId The rule ID
  */
 
 /**
@@ -16867,12 +16887,12 @@ const parserSymbol = Symbol.for("eslint.RuleTester.parser"); //-----------------
  * @typedef {Object} ProcessorOptions
  * @property {(filename:string, text:string) => boolean} [filterCodeBlock] the
  *      predicate function that selects adopt code blocks.
- * @property {Processor["postprocess"]} [postprocess] postprocessor for report
+ * @property {Processor.postprocess} [postprocess] postprocessor for report
  *      messages. If provided, this should accept an array of the message lists
  *      for each code block returned from the preprocessor, apply a mapping to
  *      the messages as appropriate, and return a one-dimensional array of
  *      messages.
- * @property {Processor["preprocess"]} [preprocess] preprocessor for source text.
+ * @property {Processor.preprocess} [preprocess] preprocessor for source text.
  *      If provided, this should accept a string of source text, and return an
  *      array of code blocks to lint.
  */
@@ -17100,7 +17120,11 @@ function getDirectiveComments(filename, ast, ruleMapper, warnInlineConfig) {
     }
 
     const directiveText = match[1];
-    const mustBeOnSingleLine = /^eslint-disable-(next-)?line$/u.test(directiveText);
+    const lineCommentSupported = /^eslint-disable-(next-)?line$/u.test(directiveText);
+
+    if (comment.type === "Line" && !lineCommentSupported) {
+      return;
+    }
 
     if (warnInlineConfig) {
       const kind = comment.type === "Block" ? `/*${directiveText}*/` : `//${directiveText}`;
@@ -17113,7 +17137,7 @@ function getDirectiveComments(filename, ast, ruleMapper, warnInlineConfig) {
       return;
     }
 
-    if (mustBeOnSingleLine && comment.loc.start.line !== comment.loc.end.line) {
+    if (lineCommentSupported && comment.loc.start.line !== comment.loc.end.line) {
       const message = `${directiveText} comment should not span multiple lines.`;
       problems.push(createLintingProblem({
         ruleId: null,
@@ -17253,9 +17277,7 @@ function normalizeEcmaVersion(parser, ecmaVersion) {
   return ecmaVersion >= 2015 ? ecmaVersion - 2009 : ecmaVersion;
 }
 
-const eslintEnvPatterns = [/\/\*\s*eslint-env\s(.+?)\*\//gsu, // block comments
-/\/\/[^\S\r\n\u2028\u2029]*eslint-env[^\S\r\n\u2028\u2029](.+)/gu // line comments
-];
+const eslintEnvPattern = /\/\*\s*eslint-env\s(.+?)(?:\*\/|$)/gsu;
 /**
  * Checks whether or not there is a comment which has "eslint-env *" in a given text.
  * @param {string} text A source code text to check.
@@ -17264,11 +17286,10 @@ const eslintEnvPatterns = [/\/\*\s*eslint-env\s(.+?)\*\//gsu, // block comments
 
 function findEslintEnv(text) {
   let match, retv;
+  eslintEnvPattern.lastIndex = 0;
 
-  for (const eslintEnvPattern of eslintEnvPatterns) {
-    eslintEnvPattern.lastIndex = 0;
-
-    while ((match = eslintEnvPattern.exec(text)) !== null) {
+  while ((match = eslintEnvPattern.exec(text)) !== null) {
+    if (match[0].endsWith("*/")) {
       retv = Object.assign(retv || {}, commentParser.parseListConfig(stripDirectiveComment(match[1])));
     }
   }
@@ -17551,6 +17572,7 @@ function markVariableAsUsed(scopeManager, currentNode, parserOptions, name) {
  * Runs a rule, and gets its listeners
  * @param {Rule} rule A normalized rule with a `create` method
  * @param {Context} ruleContext The context that should be passed to the rule
+ * @throws {any} Any error during the rule's `create`
  * @returns {Object} A map of selector listeners provided by the rule
  */
 
@@ -17816,7 +17838,7 @@ function normalizeCwd(cwd) {
   if (typeof process === "object") {
     return process.cwd();
   } // It's more explicit to assign the undefined
-  // eslint-disable-next-line no-undefined
+  // eslint-disable-next-line no-undefined -- Consistently returning a value
 
 
   return undefined;
@@ -17840,7 +17862,7 @@ class Linter {
   /**
    * Initialize the Linter.
    * @param {Object} [config] the config object
-   * @param {string} [config.cwd]  path to a directory that should be considered as the current working directory, can be undefined.
+   * @param {string} [config.cwd] path to a directory that should be considered as the current working directory, can be undefined.
    */
   constructor({
     cwd
@@ -17869,6 +17891,7 @@ class Linter {
    * @param {string|SourceCode} textOrSourceCode The text to parse or a SourceCode object.
    * @param {ConfigData} providedConfig An ESLintConfig instance to configure everything.
    * @param {VerifyOptions} [providedOptions] The optional filename of the file being checked.
+   * @throws {Error} If during rule execution.
    * @returns {LintMessage[]} The results as an array of messages or an empty array if no messages.
    */
 
@@ -18253,11 +18276,11 @@ module.exports = {
 };
 
 /***/ }),
-/* 404 */
+/* 405 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(405);
+/* provided dependency */ var process = __webpack_require__(406);
 // 'path' module extracted from Node.js v8.11.1 (only the posix part)
 // transplited with Babel
 // Copyright Joyent, Inc. and other Node contributors.
@@ -18811,7 +18834,7 @@ posix.posix = posix;
 module.exports = posix;
 
 /***/ }),
-/* 405 */
+/* 406 */
 /***/ ((module) => {
 
 // shim for using process in browser
@@ -19024,7 +19047,7 @@ process.umask = function () {
 };
 
 /***/ }),
-/* 406 */
+/* 407 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -19032,9 +19055,9 @@ process.umask = function () {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
-var assert = __webpack_require__(407);
-var estraverse = __webpack_require__(445);
-var esrecurse = __webpack_require__(446);
+var assert = __webpack_require__(408);
+var estraverse = __webpack_require__(446);
+var esrecurse = __webpack_require__(447);
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -21244,12 +21267,12 @@ exports.version = version;
 
 
 /***/ }),
-/* 407 */
+/* 408 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(405);
-/* provided dependency */ var console = __webpack_require__(410);
+/* provided dependency */ var process = __webpack_require__(406);
+/* provided dependency */ var console = __webpack_require__(411);
 // Currently in sync with Node.js lib/assert.js
 // https://github.com/nodejs/node/commit/2a51ae424a513ec9a6aa3466baa0cc1d55dd4f3b
 // Originally from narwhal.js (http://narwhaljs.org)
@@ -21293,7 +21316,7 @@ function _classCallCheck(instance, Constructor) {
   }
 }
 
-var _require = __webpack_require__(408),
+var _require = __webpack_require__(409),
     _require$codes = _require.codes,
     ERR_AMBIGUOUS_ARGUMENT = _require$codes.ERR_AMBIGUOUS_ARGUMENT,
     ERR_INVALID_ARG_TYPE = _require$codes.ERR_INVALID_ARG_TYPE,
@@ -21301,17 +21324,17 @@ var _require = __webpack_require__(408),
     ERR_INVALID_RETURN_VALUE = _require$codes.ERR_INVALID_RETURN_VALUE,
     ERR_MISSING_ARGS = _require$codes.ERR_MISSING_ARGS;
 
-var AssertionError = __webpack_require__(430);
+var AssertionError = __webpack_require__(431);
 
-var _require2 = __webpack_require__(409),
+var _require2 = __webpack_require__(410),
     inspect = _require2.inspect;
 
-var _require$types = __webpack_require__(409).types,
+var _require$types = __webpack_require__(410).types,
     isPromise = _require$types.isPromise,
     isRegExp = _require$types.isRegExp;
 
-var objectAssign = Object.assign ? Object.assign : __webpack_require__(431).assign;
-var objectIs = Object.is ? Object.is : __webpack_require__(432);
+var objectAssign = Object.assign ? Object.assign : __webpack_require__(432).assign;
+var objectIs = Object.is ? Object.is : __webpack_require__(433);
 var errorCache = new Map();
 var isDeepEqual;
 var isDeepStrictEqual;
@@ -21320,7 +21343,7 @@ var findNodeAround;
 var decoder;
 
 function lazyLoadComparison() {
-  var comparison = __webpack_require__(440);
+  var comparison = __webpack_require__(441);
 
   isDeepEqual = comparison.isDeepEqual;
   isDeepStrictEqual = comparison.isDeepStrictEqual;
@@ -21899,7 +21922,7 @@ assert.strict = objectAssign(strict, assert, {
 assert.strict.strict = assert.strict;
 
 /***/ }),
-/* 408 */
+/* 409 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -22070,7 +22093,7 @@ function includes(str, search, start) {
 
 createErrorType('ERR_AMBIGUOUS_ARGUMENT', 'The "%s" argument is ambiguous. %s', TypeError);
 createErrorType('ERR_INVALID_ARG_TYPE', function (name, expected, actual) {
-  if (assert === undefined) assert = __webpack_require__(407);
+  if (assert === undefined) assert = __webpack_require__(408);
   assert(typeof name === 'string', "'name' must be a string"); // determiner: 'must be' or 'must not be'
 
   var determiner;
@@ -22098,7 +22121,7 @@ createErrorType('ERR_INVALID_ARG_TYPE', function (name, expected, actual) {
 }, TypeError);
 createErrorType('ERR_INVALID_ARG_VALUE', function (name, value) {
   var reason = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'is invalid';
-  if (util === undefined) util = __webpack_require__(409);
+  if (util === undefined) util = __webpack_require__(410);
   var inspected = util.inspect(value);
 
   if (inspected.length > 128) {
@@ -22123,7 +22146,7 @@ createErrorType('ERR_MISSING_ARGS', function () {
     args[_key] = arguments[_key];
   }
 
-  if (assert === undefined) assert = __webpack_require__(407);
+  if (assert === undefined) assert = __webpack_require__(408);
   assert(args.length > 0, 'At least one arg needs to be specified');
   var msg = 'The ';
   var len = args.length;
@@ -22151,11 +22174,11 @@ createErrorType('ERR_MISSING_ARGS', function () {
 module.exports.codes = codes;
 
 /***/ }),
-/* 409 */
+/* 410 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-/* provided dependency */ var process = __webpack_require__(405);
-/* provided dependency */ var console = __webpack_require__(410);
+/* provided dependency */ var process = __webpack_require__(406);
+/* provided dependency */ var console = __webpack_require__(411);
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -22622,7 +22645,7 @@ function reduceToSingleString(output, base, braces) {
 // because it is fragile and can be easily faked with `Object.create()`.
 
 
-exports.types = __webpack_require__(411);
+exports.types = __webpack_require__(412);
 
 function isArray(ar) {
   return Array.isArray(ar);
@@ -22711,7 +22734,7 @@ function isPrimitive(arg) {
 }
 
 exports.isPrimitive = isPrimitive;
-exports.isBuffer = __webpack_require__(428);
+exports.isBuffer = __webpack_require__(429);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -22748,7 +22771,7 @@ exports.log = function () {
  */
 
 
-exports.inherits = __webpack_require__(429);
+exports.inherits = __webpack_require__(430);
 
 exports._extend = function (origin, add) {
   // Don't do anything if add isn't an object
@@ -22887,13 +22910,13 @@ function callbackify(original) {
 exports.callbackify = callbackify;
 
 /***/ }),
-/* 410 */
+/* 411 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 /*global window, global*/
-var util = __webpack_require__(409);
+var util = __webpack_require__(410);
 
-var assert = __webpack_require__(407);
+var assert = __webpack_require__(408);
 
 function now() {
   return new Date().getTime();
@@ -22974,7 +22997,7 @@ function consoleAssert(expression) {
 }
 
 /***/ }),
-/* 411 */
+/* 412 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -22982,13 +23005,13 @@ function consoleAssert(expression) {
 // https://github.com/nodejs/node/commit/112cc7c27551254aa2b17098fb774867f05ed0d9
 
 
-var isArgumentsObject = __webpack_require__(412);
+var isArgumentsObject = __webpack_require__(413);
 
-var isGeneratorFunction = __webpack_require__(422);
+var isGeneratorFunction = __webpack_require__(423);
 
-var whichTypedArray = __webpack_require__(423);
+var whichTypedArray = __webpack_require__(424);
 
-var isTypedArray = __webpack_require__(427);
+var isTypedArray = __webpack_require__(428);
 
 function uncurryThis(f) {
   return f.call.bind(f);
@@ -23302,15 +23325,15 @@ exports.isAnyArrayBuffer = isAnyArrayBuffer;
 });
 
 /***/ }),
-/* 412 */
+/* 413 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var hasToStringTag = __webpack_require__(413)();
+var hasToStringTag = __webpack_require__(414)();
 
-var callBound = __webpack_require__(415);
+var callBound = __webpack_require__(416);
 
 var $toString = callBound('Object.prototype.toString');
 
@@ -23339,20 +23362,20 @@ isStandardArguments.isLegacyArguments = isLegacyArguments; // for tests
 module.exports = supportsStandardArguments ? isStandardArguments : isLegacyArguments;
 
 /***/ }),
-/* 413 */
+/* 414 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var hasSymbols = __webpack_require__(414);
+var hasSymbols = __webpack_require__(415);
 
 module.exports = function hasToStringTagShams() {
   return hasSymbols() && !!Symbol.toStringTag;
 };
 
 /***/ }),
-/* 414 */
+/* 415 */
 /***/ ((module) => {
 
 "use strict";
@@ -23428,15 +23451,15 @@ module.exports = function hasSymbols() {
 };
 
 /***/ }),
-/* 415 */
+/* 416 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var GetIntrinsic = __webpack_require__(416);
+var GetIntrinsic = __webpack_require__(417);
 
-var callBind = __webpack_require__(421);
+var callBind = __webpack_require__(422);
 
 var $indexOf = callBind(GetIntrinsic('String.prototype.indexOf'));
 
@@ -23451,7 +23474,7 @@ module.exports = function callBoundIntrinsic(name, allowMissing) {
 };
 
 /***/ }),
-/* 416 */
+/* 417 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -23498,7 +23521,7 @@ var ThrowTypeError = $gOPD ? function () {
   }
 }() : throwTypeError;
 
-var hasSymbols = __webpack_require__(417)();
+var hasSymbols = __webpack_require__(418)();
 
 var getProto = Object.getPrototypeOf || function (x) {
   return x.__proto__;
@@ -23656,9 +23679,9 @@ var LEGACY_ALIASES = {
   '%WeakSetPrototype%': ['WeakSet', 'prototype']
 };
 
-var bind = __webpack_require__(418);
+var bind = __webpack_require__(419);
 
-var hasOwn = __webpack_require__(420);
+var hasOwn = __webpack_require__(421);
 
 var $concat = bind.call(Function.call, Array.prototype.concat);
 var $spliceApply = bind.call(Function.apply, Array.prototype.splice);
@@ -23798,7 +23821,7 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 };
 
 /***/ }),
-/* 417 */
+/* 418 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -23806,7 +23829,7 @@ module.exports = function GetIntrinsic(name, allowMissing) {
 
 var origSymbol = typeof Symbol !== 'undefined' && Symbol;
 
-var hasSymbolSham = __webpack_require__(414);
+var hasSymbolSham = __webpack_require__(415);
 
 module.exports = function hasNativeSymbols() {
   if (typeof origSymbol !== 'function') {
@@ -23829,18 +23852,18 @@ module.exports = function hasNativeSymbols() {
 };
 
 /***/ }),
-/* 418 */
+/* 419 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var implementation = __webpack_require__(419);
+var implementation = __webpack_require__(420);
 
 module.exports = Function.prototype.bind || implementation;
 
 /***/ }),
-/* 419 */
+/* 420 */
 /***/ ((module) => {
 
 "use strict";
@@ -23897,26 +23920,26 @@ module.exports = function bind(that) {
 };
 
 /***/ }),
-/* 420 */
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-"use strict";
-
-
-var bind = __webpack_require__(418);
-
-module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
-
-/***/ }),
 /* 421 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var bind = __webpack_require__(418);
+var bind = __webpack_require__(419);
 
-var GetIntrinsic = __webpack_require__(416);
+module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
+
+/***/ }),
+/* 422 */
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+var bind = __webpack_require__(419);
+
+var GetIntrinsic = __webpack_require__(417);
 
 var $apply = GetIntrinsic('%Function.prototype.apply%');
 var $call = GetIntrinsic('%Function.prototype.call%');
@@ -23966,7 +23989,7 @@ if ($defineProperty) {
 }
 
 /***/ }),
-/* 422 */
+/* 423 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -23976,7 +23999,7 @@ var toStr = Object.prototype.toString;
 var fnToStr = Function.prototype.toString;
 var isFnRegex = /^\s*(?:function)?\*/;
 
-var hasToStringTag = __webpack_require__(413)();
+var hasToStringTag = __webpack_require__(414)();
 
 var getProto = Object.getPrototypeOf;
 
@@ -24020,27 +24043,27 @@ module.exports = function isGeneratorFunction(fn) {
 };
 
 /***/ }),
-/* 423 */
+/* 424 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var forEach = __webpack_require__(424);
+var forEach = __webpack_require__(425);
 
-var availableTypedArrays = __webpack_require__(425);
+var availableTypedArrays = __webpack_require__(426);
 
-var callBound = __webpack_require__(415);
+var callBound = __webpack_require__(416);
 
 var $toString = callBound('Object.prototype.toString');
 
-var hasToStringTag = __webpack_require__(413)();
+var hasToStringTag = __webpack_require__(414)();
 
 var typedArrays = availableTypedArrays();
 var $slice = callBound('String.prototype.slice');
 var toStrTags = {};
 
-var gOPD = __webpack_require__(426);
+var gOPD = __webpack_require__(427);
 
 var getPrototypeOf = Object.getPrototypeOf; // require('getprototypeof');
 
@@ -24080,7 +24103,7 @@ var tryTypedArrays = function tryAllTypedArrays(value) {
   return foundName;
 };
 
-var isTypedArray = __webpack_require__(427);
+var isTypedArray = __webpack_require__(428);
 
 module.exports = function whichTypedArray(value) {
   if (!isTypedArray(value)) {
@@ -24095,7 +24118,7 @@ module.exports = function whichTypedArray(value) {
 };
 
 /***/ }),
-/* 424 */
+/* 425 */
 /***/ ((module) => {
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -24122,7 +24145,7 @@ module.exports = function forEach(obj, fn, ctx) {
 };
 
 /***/ }),
-/* 425 */
+/* 426 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -24143,13 +24166,13 @@ module.exports = function availableTypedArrays() {
 };
 
 /***/ }),
-/* 426 */
+/* 427 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var GetIntrinsic = __webpack_require__(416);
+var GetIntrinsic = __webpack_require__(417);
 
 var $gOPD = GetIntrinsic('%Object.getOwnPropertyDescriptor%');
 
@@ -24165,21 +24188,21 @@ if ($gOPD) {
 module.exports = $gOPD;
 
 /***/ }),
-/* 427 */
+/* 428 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var forEach = __webpack_require__(424);
+var forEach = __webpack_require__(425);
 
-var availableTypedArrays = __webpack_require__(425);
+var availableTypedArrays = __webpack_require__(426);
 
-var callBound = __webpack_require__(415);
+var callBound = __webpack_require__(416);
 
 var $toString = callBound('Object.prototype.toString');
 
-var hasToStringTag = __webpack_require__(413)();
+var hasToStringTag = __webpack_require__(414)();
 
 var typedArrays = availableTypedArrays();
 
@@ -24196,7 +24219,7 @@ var $indexOf = callBound('Array.prototype.indexOf', true) || function indexOf(ar
 var $slice = callBound('String.prototype.slice');
 var toStrTags = {};
 
-var gOPD = __webpack_require__(426);
+var gOPD = __webpack_require__(427);
 
 var getPrototypeOf = Object.getPrototypeOf; // require('getprototypeof');
 
@@ -24250,7 +24273,7 @@ module.exports = function isTypedArray(value) {
 };
 
 /***/ }),
-/* 428 */
+/* 429 */
 /***/ ((module) => {
 
 module.exports = function isBuffer(arg) {
@@ -24258,7 +24281,7 @@ module.exports = function isBuffer(arg) {
 };
 
 /***/ }),
-/* 429 */
+/* 430 */
 /***/ ((module) => {
 
 if (typeof Object.create === 'function') {
@@ -24292,11 +24315,11 @@ if (typeof Object.create === 'function') {
 }
 
 /***/ }),
-/* 430 */
+/* 431 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(405);
+/* provided dependency */ var process = __webpack_require__(406);
 // Currently in sync with Node.js lib/internal/assert/assertion_error.js
 // https://github.com/nodejs/node/commit/0817840f775032169ddd70c85ac059f18ffcc81c
 
@@ -24486,10 +24509,10 @@ function _typeof(obj) {
   return _typeof(obj);
 }
 
-var _require = __webpack_require__(409),
+var _require = __webpack_require__(410),
     inspect = _require.inspect;
 
-var _require2 = __webpack_require__(408),
+var _require2 = __webpack_require__(409),
     ERR_INVALID_ARG_TYPE = _require2.codes.ERR_INVALID_ARG_TYPE; // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith
 
 
@@ -24953,7 +24976,7 @@ var AssertionError = /*#__PURE__*/function (_Error) {
 module.exports = AssertionError;
 
 /***/ }),
-/* 431 */
+/* 432 */
 /***/ ((module) => {
 
 "use strict";
@@ -25009,21 +25032,21 @@ module.exports = {
 };
 
 /***/ }),
-/* 432 */
+/* 433 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var define = __webpack_require__(433);
+var define = __webpack_require__(434);
 
-var callBind = __webpack_require__(421);
+var callBind = __webpack_require__(422);
 
-var implementation = __webpack_require__(437);
+var implementation = __webpack_require__(438);
 
-var getPolyfill = __webpack_require__(438);
+var getPolyfill = __webpack_require__(439);
 
-var shim = __webpack_require__(439);
+var shim = __webpack_require__(440);
 
 var polyfill = callBind(getPolyfill(), Object);
 define(polyfill, {
@@ -25034,13 +25057,13 @@ define(polyfill, {
 module.exports = polyfill;
 
 /***/ }),
-/* 433 */
+/* 434 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var keys = __webpack_require__(434);
+var keys = __webpack_require__(435);
 
 var hasSymbols = typeof Symbol === 'function' && typeof Symbol('foo') === 'symbol';
 var toStr = Object.prototype.toString;
@@ -25108,7 +25131,7 @@ defineProperties.supportsDescriptors = !!supportsDescriptors;
 module.exports = defineProperties;
 
 /***/ }),
-/* 434 */
+/* 435 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -25116,12 +25139,12 @@ module.exports = defineProperties;
 
 var slice = Array.prototype.slice;
 
-var isArgs = __webpack_require__(435);
+var isArgs = __webpack_require__(436);
 
 var origKeys = Object.keys;
 var keysShim = origKeys ? function keys(o) {
   return origKeys(o);
-} : __webpack_require__(436);
+} : __webpack_require__(437);
 var originalKeys = Object.keys;
 
 keysShim.shim = function shimObjectKeys() {
@@ -25152,7 +25175,7 @@ keysShim.shim = function shimObjectKeys() {
 module.exports = keysShim;
 
 /***/ }),
-/* 435 */
+/* 436 */
 /***/ ((module) => {
 
 "use strict";
@@ -25172,7 +25195,7 @@ module.exports = function isArguments(value) {
 };
 
 /***/ }),
-/* 436 */
+/* 437 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -25185,7 +25208,7 @@ if (!Object.keys) {
   var has = Object.prototype.hasOwnProperty;
   var toStr = Object.prototype.toString;
 
-  var isArgs = __webpack_require__(435); // eslint-disable-line global-require
+  var isArgs = __webpack_require__(436); // eslint-disable-line global-require
 
 
   var isEnumerable = Object.prototype.propertyIsEnumerable;
@@ -25310,7 +25333,7 @@ if (!Object.keys) {
 module.exports = keysShim;
 
 /***/ }),
-/* 437 */
+/* 438 */
 /***/ ((module) => {
 
 "use strict";
@@ -25337,28 +25360,28 @@ module.exports = function is(a, b) {
 };
 
 /***/ }),
-/* 438 */
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-"use strict";
-
-
-var implementation = __webpack_require__(437);
-
-module.exports = function getPolyfill() {
-  return typeof Object.is === 'function' ? Object.is : implementation;
-};
-
-/***/ }),
 /* 439 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var getPolyfill = __webpack_require__(438);
+var implementation = __webpack_require__(438);
 
-var define = __webpack_require__(433);
+module.exports = function getPolyfill() {
+  return typeof Object.is === 'function' ? Object.is : implementation;
+};
+
+/***/ }),
+/* 440 */
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+var getPolyfill = __webpack_require__(439);
+
+var define = __webpack_require__(434);
 
 module.exports = function shimObjectIs() {
   var polyfill = getPolyfill();
@@ -25373,7 +25396,7 @@ module.exports = function shimObjectIs() {
 };
 
 /***/ }),
-/* 440 */
+/* 441 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -25451,11 +25474,11 @@ var arrayFromMap = function arrayFromMap(map) {
   return array;
 };
 
-var objectIs = Object.is ? Object.is : __webpack_require__(432);
+var objectIs = Object.is ? Object.is : __webpack_require__(433);
 var objectGetOwnPropertySymbols = Object.getOwnPropertySymbols ? Object.getOwnPropertySymbols : function () {
   return [];
 };
-var numberIsNaN = Number.isNaN ? Number.isNaN : __webpack_require__(441);
+var numberIsNaN = Number.isNaN ? Number.isNaN : __webpack_require__(442);
 
 function uncurryThis(f) {
   return f.call.bind(f);
@@ -25465,7 +25488,7 @@ var hasOwnProperty = uncurryThis(Object.prototype.hasOwnProperty);
 var propertyIsEnumerable = uncurryThis(Object.prototype.propertyIsEnumerable);
 var objectToString = uncurryThis(Object.prototype.toString);
 
-var _require$types = __webpack_require__(409).types,
+var _require$types = __webpack_require__(410).types,
     isAnyArrayBuffer = _require$types.isAnyArrayBuffer,
     isArrayBufferView = _require$types.isArrayBufferView,
     isDate = _require$types.isDate,
@@ -26109,21 +26132,21 @@ module.exports = {
 };
 
 /***/ }),
-/* 441 */
+/* 442 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var callBind = __webpack_require__(421);
+var callBind = __webpack_require__(422);
 
-var define = __webpack_require__(433);
+var define = __webpack_require__(434);
 
-var implementation = __webpack_require__(442);
+var implementation = __webpack_require__(443);
 
-var getPolyfill = __webpack_require__(443);
+var getPolyfill = __webpack_require__(444);
 
-var shim = __webpack_require__(444);
+var shim = __webpack_require__(445);
 
 var polyfill = callBind(getPolyfill(), Number);
 /* http://www.ecma-international.org/ecma-262/6.0/#sec-number.isnan */
@@ -26136,7 +26159,7 @@ define(polyfill, {
 module.exports = polyfill;
 
 /***/ }),
-/* 442 */
+/* 443 */
 /***/ ((module) => {
 
 "use strict";
@@ -26148,13 +26171,13 @@ module.exports = function isNaN(value) {
 };
 
 /***/ }),
-/* 443 */
+/* 444 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var implementation = __webpack_require__(442);
+var implementation = __webpack_require__(443);
 
 module.exports = function getPolyfill() {
   if (Number.isNaN && Number.isNaN(NaN) && !Number.isNaN('a')) {
@@ -26165,15 +26188,15 @@ module.exports = function getPolyfill() {
 };
 
 /***/ }),
-/* 444 */
+/* 445 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var define = __webpack_require__(433);
+var define = __webpack_require__(434);
 
-var getPolyfill = __webpack_require__(443);
+var getPolyfill = __webpack_require__(444);
 /* http://www.ecma-international.org/ecma-262/6.0/#sec-number.isnan */
 
 
@@ -26190,7 +26213,7 @@ module.exports = function shimNumberIsNaN() {
 };
 
 /***/ }),
-/* 445 */
+/* 446 */
 /***/ ((__unused_webpack_module, exports) => {
 
 /*
@@ -27000,7 +27023,7 @@ module.exports = function shimNumberIsNaN() {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 446 */
+/* 447 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 /*
@@ -27029,7 +27052,7 @@ module.exports = function shimNumberIsNaN() {
 (function () {
   'use strict';
 
-  var estraverse = __webpack_require__(445);
+  var estraverse = __webpack_require__(446);
 
   function isNode(node) {
     if (node == null) {
@@ -27117,7 +27140,7 @@ module.exports = function shimNumberIsNaN() {
     this.visitChildren(node);
   };
 
-  exports.version = __webpack_require__(447).version;
+  exports.version = __webpack_require__(448).version;
   exports.Visitor = Visitor;
 
   exports.visit = function (node, visitor, options) {
@@ -27128,14 +27151,14 @@ module.exports = function shimNumberIsNaN() {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 447 */
+/* 448 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = JSON.parse('{"name":"esrecurse","description":"ECMAScript AST recursive visitor","homepage":"https://github.com/estools/esrecurse","main":"esrecurse.js","version":"4.3.0","engines":{"node":">=4.0"},"maintainers":[{"name":"Yusuke Suzuki","email":"utatane.tea@gmail.com","web":"https://github.com/Constellation"}],"repository":{"type":"git","url":"https://github.com/estools/esrecurse.git"},"dependencies":{"estraverse":"^5.2.0"},"devDependencies":{"babel-cli":"^6.24.1","babel-eslint":"^7.2.3","babel-preset-es2015":"^6.24.1","babel-register":"^6.24.1","chai":"^4.0.2","esprima":"^4.0.0","gulp":"^3.9.0","gulp-bump":"^2.7.0","gulp-eslint":"^4.0.0","gulp-filter":"^5.0.0","gulp-git":"^2.4.1","gulp-mocha":"^4.3.1","gulp-tag-version":"^1.2.1","jsdoc":"^3.3.0-alpha10","minimist":"^1.1.0"},"license":"BSD-2-Clause","scripts":{"test":"gulp travis","unit-test":"gulp test","lint":"gulp lint"},"babel":{"presets":["es2015"]}}');
 
 /***/ }),
-/* 448 */
+/* 449 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -27506,7 +27529,7 @@ exports.unionWith = unionWith;
 
 
 /***/ }),
-/* 449 */
+/* 450 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -27514,9 +27537,9 @@ exports.unionWith = unionWith;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
-var acorn = __webpack_require__(450);
-var jsx = __webpack_require__(451);
-var visitorKeys = __webpack_require__(448);
+var acorn = __webpack_require__(451);
+var jsx = __webpack_require__(452);
+var visitorKeys = __webpack_require__(449);
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -28494,10 +28517,10 @@ exports.version = version;
 
 
 /***/ }),
-/* 450 */
+/* 451 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
-/* provided dependency */ var console = __webpack_require__(410);
+/* provided dependency */ var console = __webpack_require__(411);
 (function (global, factory) {
    true ? factory(exports) : 0;
 })(this, function (exports) {
@@ -35584,13 +35607,13 @@ exports.version = version;
 });
 
 /***/ }),
-/* 451 */
+/* 452 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-const XHTMLEntities = __webpack_require__(452);
+const XHTMLEntities = __webpack_require__(453);
 
 const hexNumber = /^[\da-fA-F]+$/;
 const decimalNumber = /^\d+$/; // The map to `acorn-jsx` tokens from `acorn` namespace objects.
@@ -35675,14 +35698,14 @@ module.exports = function (options) {
 
 Object.defineProperty(module.exports, "tokTypes", ({
   get: function get_tokTypes() {
-    return getJsxTokens(__webpack_require__(450)).tokTypes;
+    return getJsxTokens(__webpack_require__(451)).tokTypes;
   },
   configurable: true,
   enumerable: true
 }));
 
 function plugin(options, Parser) {
-  const acorn = Parser.acorn || __webpack_require__(450);
+  const acorn = Parser.acorn || __webpack_require__(451);
 
   const acornJsx = getJsxTokens(acorn);
   const tt = acorn.tokTypes;
@@ -36086,7 +36109,7 @@ function plugin(options, Parser) {
 }
 
 /***/ }),
-/* 452 */
+/* 453 */
 /***/ ((module) => {
 
 module.exports = {
@@ -36346,7 +36369,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 453 */
+/* 454 */
 /***/ ((module, exports, __webpack_require__) => {
 
 /* module decorator */ module = __webpack_require__.nmd(module);
@@ -38401,14 +38424,14 @@ function stubFalse() {
 module.exports = merge;
 
 /***/ }),
-/* 454 */
+/* 455 */
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"eslint","version":"8.0.0-beta.0","author":"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>","description":"An AST-based pattern checker for JavaScript.","bin":{"eslint":"./bin/eslint.js"},"main":"./lib/api.js","exports":{"./package.json":"./package.json",".":"./lib/api.js","./use-at-your-own-risk":"./lib/unsupported-api.js"},"scripts":{"test":"node Makefile.js test","test:cli":"mocha","lint":"node Makefile.js lint","fix":"node Makefile.js lint -- fix","fuzz":"node Makefile.js fuzz","generate-release":"node Makefile.js generateRelease","generate-alpharelease":"node Makefile.js generatePrerelease -- alpha","generate-betarelease":"node Makefile.js generatePrerelease -- beta","generate-rcrelease":"node Makefile.js generatePrerelease -- rc","publish-release":"node Makefile.js publishRelease","docs":"node Makefile.js docs","gensite":"node Makefile.js gensite","webpack":"node Makefile.js webpack","perf":"node Makefile.js perf"},"gitHooks":{"pre-commit":"lint-staged"},"lint-staged":{"*.js":"eslint --fix","*.md":"markdownlint"},"files":["LICENSE","README.md","bin","conf","lib","messages"],"repository":"eslint/eslint","funding":"https://opencollective.com/eslint","homepage":"https://eslint.org","bugs":"https://github.com/eslint/eslint/issues/","dependencies":{"@eslint/eslintrc":"^1.0.0","@humanwhocodes/config-array":"^0.6.0","ajv":"^6.10.0","chalk":"^4.0.0","cross-spawn":"^7.0.2","debug":"^4.3.2","doctrine":"^3.0.0","enquirer":"^2.3.5","escape-string-regexp":"^4.0.0","eslint-scope":"^6.0.0","eslint-utils":"^3.0.0","eslint-visitor-keys":"^3.0.0","espree":"^8.0.0","esquery":"^1.4.0","esutils":"^2.0.2","fast-deep-equal":"^3.1.3","file-entry-cache":"^6.0.1","functional-red-black-tree":"^1.0.1","glob-parent":"^6.0.1","globals":"^13.6.0","ignore":"^4.0.6","import-fresh":"^3.0.0","imurmurhash":"^0.1.4","is-glob":"^4.0.0","js-yaml":"^4.1.0","json-stable-stringify-without-jsonify":"^1.0.1","levn":"^0.4.1","lodash.merge":"^4.6.2","minimatch":"^3.0.4","natural-compare":"^1.4.0","optionator":"^0.9.1","progress":"^2.0.0","regexpp":"^3.2.0","semver":"^7.2.1","strip-ansi":"^6.0.0","strip-json-comments":"^3.1.0","text-table":"^0.2.0","v8-compile-cache":"^2.0.3"},"devDependencies":{"@babel/core":"^7.4.3","@babel/preset-env":"^7.4.3","babel-loader":"^8.0.5","chai":"^4.0.1","cheerio":"^0.22.0","common-tags":"^1.8.0","core-js":"^3.1.3","dateformat":"^4.5.1","ejs":"^3.0.2","eslint":"file:.","eslint-config-eslint":"file:packages/eslint-config-eslint","eslint-plugin-eslint-plugin":"^3.5.3","eslint-plugin-internal-rules":"file:tools/internal-rules","eslint-plugin-jsdoc":"^33.3.0","eslint-plugin-node":"^11.1.0","eslint-release":"^3.1.2","eslump":"^3.0.0","esprima":"^4.0.1","fs-teardown":"^0.1.3","glob":"^7.1.6","jsdoc":"^3.5.5","karma":"^6.1.1","karma-chrome-launcher":"^3.1.0","karma-mocha":"^2.0.1","karma-mocha-reporter":"^2.2.5","karma-webpack":"^5.0.0","lint-staged":"^11.0.0","load-perf":"^0.2.0","markdownlint":"^0.23.1","markdownlint-cli":"^0.28.1","memfs":"^3.0.1","mocha":"^8.3.2","mocha-junit-reporter":"^2.0.0","node-polyfill-webpack-plugin":"^1.0.3","npm-license":"^0.3.3","nyc":"^15.0.1","proxyquire":"^2.0.1","puppeteer":"^9.1.1","recast":"^0.20.4","regenerator-runtime":"^0.13.2","shelljs":"^0.8.2","sinon":"^11.0.0","temp":"^0.9.0","webpack":"^5.23.0","webpack-cli":"^4.5.0","yorkie":"^2.0.0"},"keywords":["ast","lint","javascript","ecmascript","espree"],"license":"MIT","engines":{"node":"^12.22.0 || ^14.17.0 || >=16.0.0"}}');
+module.exports = JSON.parse('{"name":"eslint","version":"8.0.0-beta.1","author":"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>","description":"An AST-based pattern checker for JavaScript.","bin":{"eslint":"./bin/eslint.js"},"main":"./lib/api.js","exports":{"./package.json":"./package.json",".":"./lib/api.js","./use-at-your-own-risk":"./lib/unsupported-api.js"},"scripts":{"test":"node Makefile.js test","test:cli":"mocha","lint":"node Makefile.js lint","fix":"node Makefile.js lint -- fix","fuzz":"node Makefile.js fuzz","generate-release":"node Makefile.js generateRelease","generate-alpharelease":"node Makefile.js generatePrerelease -- alpha","generate-betarelease":"node Makefile.js generatePrerelease -- beta","generate-rcrelease":"node Makefile.js generatePrerelease -- rc","publish-release":"node Makefile.js publishRelease","gensite":"node Makefile.js gensite","webpack":"node Makefile.js webpack","perf":"node Makefile.js perf"},"gitHooks":{"pre-commit":"lint-staged"},"lint-staged":{"*.js":"eslint --fix","*.md":"markdownlint"},"files":["LICENSE","README.md","bin","conf","lib","messages"],"repository":"eslint/eslint","funding":"https://opencollective.com/eslint","homepage":"https://eslint.org","bugs":"https://github.com/eslint/eslint/issues/","dependencies":{"@eslint/eslintrc":"^1.0.0","@humanwhocodes/config-array":"^0.6.0","ajv":"^6.10.0","chalk":"^4.0.0","cross-spawn":"^7.0.2","debug":"^4.3.2","doctrine":"^3.0.0","enquirer":"^2.3.5","escape-string-regexp":"^4.0.0","eslint-scope":"^6.0.0","eslint-utils":"^3.0.0","eslint-visitor-keys":"^3.0.0","espree":"^8.0.0","esquery":"^1.4.0","esutils":"^2.0.2","fast-deep-equal":"^3.1.3","file-entry-cache":"^6.0.1","functional-red-black-tree":"^1.0.1","glob-parent":"^6.0.1","globals":"^13.6.0","ignore":"^4.0.6","import-fresh":"^3.0.0","imurmurhash":"^0.1.4","is-glob":"^4.0.0","js-yaml":"^4.1.0","json-stable-stringify-without-jsonify":"^1.0.1","levn":"^0.4.1","lodash.merge":"^4.6.2","minimatch":"^3.0.4","natural-compare":"^1.4.0","optionator":"^0.9.1","progress":"^2.0.0","regexpp":"^3.2.0","semver":"^7.2.1","strip-ansi":"^6.0.0","strip-json-comments":"^3.1.0","text-table":"^0.2.0","v8-compile-cache":"^2.0.3"},"devDependencies":{"@babel/core":"^7.4.3","@babel/preset-env":"^7.4.3","babel-loader":"^8.0.5","chai":"^4.0.1","cheerio":"^0.22.0","common-tags":"^1.8.0","core-js":"^3.1.3","dateformat":"^4.5.1","ejs":"^3.0.2","eslint":"file:.","eslint-config-eslint":"file:packages/eslint-config-eslint","eslint-plugin-eslint-comments":"^3.2.0","eslint-plugin-eslint-plugin":"^3.5.3","eslint-plugin-internal-rules":"file:tools/internal-rules","eslint-plugin-jsdoc":"^36.0.6","eslint-plugin-node":"^11.1.0","eslint-release":"^3.1.2","eslump":"^3.0.0","esprima":"^4.0.1","fs-teardown":"^0.1.3","glob":"^7.1.6","jsdoc":"^3.5.5","karma":"^6.1.1","karma-chrome-launcher":"^3.1.0","karma-mocha":"^2.0.1","karma-mocha-reporter":"^2.2.5","karma-webpack":"^5.0.0","lint-staged":"^11.0.0","load-perf":"^0.2.0","markdownlint":"^0.23.1","markdownlint-cli":"^0.28.1","memfs":"^3.0.1","mocha":"^8.3.2","mocha-junit-reporter":"^2.0.0","node-polyfill-webpack-plugin":"^1.0.3","npm-license":"^0.3.3","nyc":"^15.0.1","proxyquire":"^2.0.1","puppeteer":"^9.1.1","recast":"^0.20.4","regenerator-runtime":"^0.13.2","shelljs":"^0.8.2","sinon":"^11.0.0","temp":"^0.9.0","webpack":"^5.23.0","webpack-cli":"^4.5.0","yorkie":"^2.0.0"},"keywords":["ast","lint","javascript","ecmascript","espree"],"license":"MIT","engines":{"node":"^12.22.0 || ^14.17.0 || >=16.0.0"}}');
 
 /***/ }),
-/* 455 */
+/* 456 */
 /***/ ((module) => {
 
 "use strict";
@@ -38443,19 +38466,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 456 */
+/* 457 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(405);
+/* provided dependency */ var process = __webpack_require__(406);
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
-var util = __webpack_require__(409);
-var path = __webpack_require__(404);
-var Ajv = __webpack_require__(457);
-var globals = __webpack_require__(503);
+var util = __webpack_require__(410);
+var path = __webpack_require__(405);
+var Ajv = __webpack_require__(458);
+var globals = __webpack_require__(504);
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -39519,22 +39542,22 @@ exports.Legacy = Legacy;
 
 
 /***/ }),
-/* 457 */
+/* 458 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var console = __webpack_require__(410);
+/* provided dependency */ var console = __webpack_require__(411);
 
 
-var compileSchema = __webpack_require__(458),
-    resolve = __webpack_require__(459),
-    Cache = __webpack_require__(469),
-    SchemaObject = __webpack_require__(464),
-    stableStringify = __webpack_require__(467),
-    formats = __webpack_require__(470),
-    rules = __webpack_require__(471),
-    $dataMetaSchema = __webpack_require__(496),
-    util = __webpack_require__(462);
+var compileSchema = __webpack_require__(459),
+    resolve = __webpack_require__(460),
+    Cache = __webpack_require__(470),
+    SchemaObject = __webpack_require__(465),
+    stableStringify = __webpack_require__(468),
+    formats = __webpack_require__(471),
+    rules = __webpack_require__(472),
+    $dataMetaSchema = __webpack_require__(497),
+    util = __webpack_require__(463);
 
 module.exports = Ajv;
 Ajv.prototype.validate = validate;
@@ -39548,16 +39571,16 @@ Ajv.prototype.addFormat = addFormat;
 Ajv.prototype.errorsText = errorsText;
 Ajv.prototype._addSchema = _addSchema;
 Ajv.prototype._compile = _compile;
-Ajv.prototype.compileAsync = __webpack_require__(497);
+Ajv.prototype.compileAsync = __webpack_require__(498);
 
-var customKeyword = __webpack_require__(498);
+var customKeyword = __webpack_require__(499);
 
 Ajv.prototype.addKeyword = customKeyword.add;
 Ajv.prototype.getKeyword = customKeyword.get;
 Ajv.prototype.removeKeyword = customKeyword.remove;
 Ajv.prototype.validateKeyword = customKeyword.validate;
 
-var errorClasses = __webpack_require__(466);
+var errorClasses = __webpack_require__(467);
 
 Ajv.ValidationError = errorClasses.Validation;
 Ajv.MissingRefError = errorClasses.MissingRef;
@@ -39990,13 +40013,13 @@ function addDefaultMetaSchema(self) {
   var $dataSchema;
 
   if (self._opts.$data) {
-    $dataSchema = __webpack_require__(502);
+    $dataSchema = __webpack_require__(503);
     self.addMetaSchema($dataSchema, $dataSchema.$id, true);
   }
 
   if (self._opts.meta === false) return;
 
-  var metaSchema = __webpack_require__(501);
+  var metaSchema = __webpack_require__(502);
 
   if (self._opts.$data) metaSchema = $dataMetaSchema(metaSchema, META_SUPPORT_DATA);
   self.addMetaSchema(metaSchema, META_SCHEMA_ID, true);
@@ -40054,18 +40077,18 @@ function setLogger(self) {
 function noop() {}
 
 /***/ }),
-/* 458 */
+/* 459 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var resolve = __webpack_require__(459),
-    util = __webpack_require__(462),
-    errorClasses = __webpack_require__(466),
-    stableStringify = __webpack_require__(467);
+var resolve = __webpack_require__(460),
+    util = __webpack_require__(463),
+    errorClasses = __webpack_require__(467),
+    stableStringify = __webpack_require__(468);
 
-var validateGenerator = __webpack_require__(468);
+var validateGenerator = __webpack_require__(469);
 /**
  * Functions below are used inside compiled validations function
  */
@@ -40073,7 +40096,7 @@ var validateGenerator = __webpack_require__(468);
 
 var ucs2length = util.ucs2length;
 
-var equal = __webpack_require__(461); // this error is thrown by async schemas to return validation errors via exception
+var equal = __webpack_require__(462); // this error is thrown by async schemas to return validation errors via exception
 
 
 var ValidationError = errorClasses.Validation;
@@ -40435,17 +40458,17 @@ function vars(arr, statement) {
 }
 
 /***/ }),
-/* 459 */
+/* 460 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var URI = __webpack_require__(460),
-    equal = __webpack_require__(461),
-    util = __webpack_require__(462),
-    SchemaObject = __webpack_require__(464),
-    traverse = __webpack_require__(465);
+var URI = __webpack_require__(461),
+    equal = __webpack_require__(462),
+    util = __webpack_require__(463),
+    SchemaObject = __webpack_require__(465),
+    traverse = __webpack_require__(466);
 
 module.exports = resolve;
 resolve.normalizeId = normalizeId;
@@ -40723,7 +40746,7 @@ function resolveIds(schema) {
 }
 
 /***/ }),
-/* 460 */
+/* 461 */
 /***/ (function(__unused_webpack_module, exports) {
 
 /** @license URI.js v4.4.1 (c) 2011 Gary Court. License: http://github.com/garycourt/uri-js */
@@ -42299,7 +42322,7 @@ function resolveIds(schema) {
 });
 
 /***/ }),
-/* 461 */
+/* 462 */
 /***/ ((module) => {
 
 "use strict";
@@ -42343,7 +42366,7 @@ module.exports = function equal(a, b) {
 };
 
 /***/ }),
-/* 462 */
+/* 463 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -42357,8 +42380,8 @@ module.exports = {
   toHash: toHash,
   getProperty: getProperty,
   escapeQuotes: escapeQuotes,
-  equal: __webpack_require__(461),
-  ucs2length: __webpack_require__(463),
+  equal: __webpack_require__(462),
+  ucs2length: __webpack_require__(464),
   varOccurences: varOccurences,
   varReplace: varReplace,
   schemaHasRules: schemaHasRules,
@@ -42582,7 +42605,7 @@ function unescapeJsonPointer(str) {
 }
 
 /***/ }),
-/* 463 */
+/* 464 */
 /***/ ((module) => {
 
 "use strict";
@@ -42610,13 +42633,13 @@ module.exports = function ucs2length(str) {
 };
 
 /***/ }),
-/* 464 */
+/* 465 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var util = __webpack_require__(462);
+var util = __webpack_require__(463);
 
 module.exports = SchemaObject;
 
@@ -42625,7 +42648,7 @@ function SchemaObject(obj) {
 }
 
 /***/ }),
-/* 465 */
+/* 466 */
 /***/ ((module) => {
 
 "use strict";
@@ -42716,13 +42739,13 @@ function escapeJsonPtr(str) {
 }
 
 /***/ }),
-/* 466 */
+/* 467 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var resolve = __webpack_require__(459);
+var resolve = __webpack_require__(460);
 
 module.exports = {
   Validation: errorSubclass(ValidationError),
@@ -42752,7 +42775,7 @@ function errorSubclass(Subclass) {
 }
 
 /***/ }),
-/* 467 */
+/* 468 */
 /***/ ((module) => {
 
 "use strict";
@@ -42828,7 +42851,7 @@ module.exports = function (data, opts) {
 };
 
 /***/ }),
-/* 468 */
+/* 469 */
 /***/ ((module) => {
 
 "use strict";
@@ -43435,7 +43458,7 @@ module.exports = function generate_validate(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 469 */
+/* 470 */
 /***/ ((module) => {
 
 "use strict";
@@ -43462,13 +43485,13 @@ Cache.prototype.clear = function Cache_clear() {
 };
 
 /***/ }),
-/* 470 */
+/* 471 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var util = __webpack_require__(462);
+var util = __webpack_require__(463);
 
 var DATE = /^(\d\d\d\d)-(\d\d)-(\d\d)$/;
 var DAYS = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -43597,14 +43620,14 @@ function regex(str) {
 }
 
 /***/ }),
-/* 471 */
+/* 472 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var ruleModules = __webpack_require__(472),
-    toHash = __webpack_require__(462).toHash;
+var ruleModules = __webpack_require__(473),
+    toHash = __webpack_require__(463).toHash;
 
 module.exports = function rules() {
   var RULES = [{
@@ -43667,45 +43690,45 @@ module.exports = function rules() {
 };
 
 /***/ }),
-/* 472 */
+/* 473 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
  //all requires must be explicit because browserify won't work with dynamic requires
 
 module.exports = {
-  '$ref': __webpack_require__(473),
-  allOf: __webpack_require__(474),
-  anyOf: __webpack_require__(475),
-  '$comment': __webpack_require__(476),
-  const: __webpack_require__(477),
-  contains: __webpack_require__(478),
-  dependencies: __webpack_require__(479),
-  'enum': __webpack_require__(480),
-  format: __webpack_require__(481),
-  'if': __webpack_require__(482),
-  items: __webpack_require__(483),
-  maximum: __webpack_require__(484),
-  minimum: __webpack_require__(484),
-  maxItems: __webpack_require__(485),
-  minItems: __webpack_require__(485),
-  maxLength: __webpack_require__(486),
-  minLength: __webpack_require__(486),
-  maxProperties: __webpack_require__(487),
-  minProperties: __webpack_require__(487),
-  multipleOf: __webpack_require__(488),
-  not: __webpack_require__(489),
-  oneOf: __webpack_require__(490),
-  pattern: __webpack_require__(491),
-  properties: __webpack_require__(492),
-  propertyNames: __webpack_require__(493),
-  required: __webpack_require__(494),
-  uniqueItems: __webpack_require__(495),
-  validate: __webpack_require__(468)
+  '$ref': __webpack_require__(474),
+  allOf: __webpack_require__(475),
+  anyOf: __webpack_require__(476),
+  '$comment': __webpack_require__(477),
+  const: __webpack_require__(478),
+  contains: __webpack_require__(479),
+  dependencies: __webpack_require__(480),
+  'enum': __webpack_require__(481),
+  format: __webpack_require__(482),
+  'if': __webpack_require__(483),
+  items: __webpack_require__(484),
+  maximum: __webpack_require__(485),
+  minimum: __webpack_require__(485),
+  maxItems: __webpack_require__(486),
+  minItems: __webpack_require__(486),
+  maxLength: __webpack_require__(487),
+  minLength: __webpack_require__(487),
+  maxProperties: __webpack_require__(488),
+  minProperties: __webpack_require__(488),
+  multipleOf: __webpack_require__(489),
+  not: __webpack_require__(490),
+  oneOf: __webpack_require__(491),
+  pattern: __webpack_require__(492),
+  properties: __webpack_require__(493),
+  propertyNames: __webpack_require__(494),
+  required: __webpack_require__(495),
+  uniqueItems: __webpack_require__(496),
+  validate: __webpack_require__(469)
 };
 
 /***/ }),
-/* 473 */
+/* 474 */
 /***/ ((module) => {
 
 "use strict";
@@ -43864,7 +43887,7 @@ module.exports = function generate_ref(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 474 */
+/* 475 */
 /***/ ((module) => {
 
 "use strict";
@@ -43920,7 +43943,7 @@ module.exports = function generate_allOf(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 475 */
+/* 476 */
 /***/ ((module) => {
 
 "use strict";
@@ -44015,7 +44038,7 @@ module.exports = function generate_anyOf(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 476 */
+/* 477 */
 /***/ ((module) => {
 
 "use strict";
@@ -44038,7 +44061,7 @@ module.exports = function generate_comment(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 477 */
+/* 478 */
 /***/ ((module) => {
 
 "use strict";
@@ -44114,7 +44137,7 @@ module.exports = function generate_const(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 478 */
+/* 479 */
 /***/ ((module) => {
 
 "use strict";
@@ -44217,7 +44240,7 @@ module.exports = function generate_contains(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 479 */
+/* 480 */
 /***/ ((module) => {
 
 "use strict";
@@ -44442,7 +44465,7 @@ module.exports = function generate_dependencies(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 480 */
+/* 481 */
 /***/ ((module) => {
 
 "use strict";
@@ -44533,7 +44556,7 @@ module.exports = function generate_enum(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 481 */
+/* 482 */
 /***/ ((module) => {
 
 "use strict";
@@ -44734,7 +44757,7 @@ module.exports = function generate_format(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 482 */
+/* 483 */
 /***/ ((module) => {
 
 "use strict";
@@ -44863,7 +44886,7 @@ module.exports = function generate_if(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 483 */
+/* 484 */
 /***/ ((module) => {
 
 "use strict";
@@ -45039,7 +45062,7 @@ module.exports = function generate_items(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 484 */
+/* 485 */
 /***/ ((module) => {
 
 "use strict";
@@ -45246,7 +45269,7 @@ module.exports = function generate__limit(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 485 */
+/* 486 */
 /***/ ((module) => {
 
 "use strict";
@@ -45354,7 +45377,7 @@ module.exports = function generate__limitItems(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 486 */
+/* 487 */
 /***/ ((module) => {
 
 "use strict";
@@ -45468,7 +45491,7 @@ module.exports = function generate__limitLength(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 487 */
+/* 488 */
 /***/ ((module) => {
 
 "use strict";
@@ -45576,7 +45599,7 @@ module.exports = function generate__limitProperties(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 488 */
+/* 489 */
 /***/ ((module) => {
 
 "use strict";
@@ -45685,7 +45708,7 @@ module.exports = function generate_multipleOf(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 489 */
+/* 490 */
 /***/ ((module) => {
 
 "use strict";
@@ -45796,7 +45819,7 @@ module.exports = function generate_not(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 490 */
+/* 491 */
 /***/ ((module) => {
 
 "use strict";
@@ -45893,7 +45916,7 @@ module.exports = function generate_oneOf(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 491 */
+/* 492 */
 /***/ ((module) => {
 
 "use strict";
@@ -45995,7 +46018,7 @@ module.exports = function generate_pattern(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 492 */
+/* 493 */
 /***/ ((module) => {
 
 "use strict";
@@ -46416,7 +46439,7 @@ module.exports = function generate_properties(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 493 */
+/* 494 */
 /***/ ((module) => {
 
 "use strict";
@@ -46521,7 +46544,7 @@ module.exports = function generate_propertyNames(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 494 */
+/* 495 */
 /***/ ((module) => {
 
 "use strict";
@@ -46887,7 +46910,7 @@ module.exports = function generate_required(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 495 */
+/* 496 */
 /***/ ((module) => {
 
 "use strict";
@@ -47001,7 +47024,7 @@ module.exports = function generate_uniqueItems(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 496 */
+/* 497 */
 /***/ ((module) => {
 
 "use strict";
@@ -47036,13 +47059,13 @@ module.exports = function (metaSchema, keywordsJsonPointers) {
 };
 
 /***/ }),
-/* 497 */
+/* 498 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var MissingRefError = __webpack_require__(466).MissingRef;
+var MissingRefError = __webpack_require__(467).MissingRef;
 
 module.exports = compileAsync;
 /**
@@ -47130,7 +47153,7 @@ function compileAsync(schema, meta, callback) {
 }
 
 /***/ }),
-/* 498 */
+/* 499 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -47138,9 +47161,9 @@ function compileAsync(schema, meta, callback) {
 
 var IDENTIFIER = /^[a-z_$][a-z0-9_$-]*$/i;
 
-var customRuleCode = __webpack_require__(499);
+var customRuleCode = __webpack_require__(500);
 
-var definitionSchema = __webpack_require__(500);
+var definitionSchema = __webpack_require__(501);
 
 module.exports = {
   add: addKeyword,
@@ -47283,7 +47306,7 @@ function validateKeyword(definition, throwError) {
 }
 
 /***/ }),
-/* 499 */
+/* 500 */
 /***/ ((module) => {
 
 "use strict";
@@ -47566,13 +47589,13 @@ module.exports = function generate_custom(it, $keyword, $ruleType) {
 };
 
 /***/ }),
-/* 500 */
+/* 501 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-var metaSchema = __webpack_require__(501);
+var metaSchema = __webpack_require__(502);
 
 module.exports = {
   $id: 'https://github.com/ajv-validator/ajv/blob/master/lib/definition_schema.js',
@@ -47630,37 +47653,37 @@ module.exports = {
 };
 
 /***/ }),
-/* 501 */
+/* 502 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = JSON.parse('{"$schema":"http://json-schema.org/draft-07/schema#","$id":"http://json-schema.org/draft-07/schema#","title":"Core schema meta-schema","definitions":{"schemaArray":{"type":"array","minItems":1,"items":{"$ref":"#"}},"nonNegativeInteger":{"type":"integer","minimum":0},"nonNegativeIntegerDefault0":{"allOf":[{"$ref":"#/definitions/nonNegativeInteger"},{"default":0}]},"simpleTypes":{"enum":["array","boolean","integer","null","number","object","string"]},"stringArray":{"type":"array","items":{"type":"string"},"uniqueItems":true,"default":[]}},"type":["object","boolean"],"properties":{"$id":{"type":"string","format":"uri-reference"},"$schema":{"type":"string","format":"uri"},"$ref":{"type":"string","format":"uri-reference"},"$comment":{"type":"string"},"title":{"type":"string"},"description":{"type":"string"},"default":true,"readOnly":{"type":"boolean","default":false},"examples":{"type":"array","items":true},"multipleOf":{"type":"number","exclusiveMinimum":0},"maximum":{"type":"number"},"exclusiveMaximum":{"type":"number"},"minimum":{"type":"number"},"exclusiveMinimum":{"type":"number"},"maxLength":{"$ref":"#/definitions/nonNegativeInteger"},"minLength":{"$ref":"#/definitions/nonNegativeIntegerDefault0"},"pattern":{"type":"string","format":"regex"},"additionalItems":{"$ref":"#"},"items":{"anyOf":[{"$ref":"#"},{"$ref":"#/definitions/schemaArray"}],"default":true},"maxItems":{"$ref":"#/definitions/nonNegativeInteger"},"minItems":{"$ref":"#/definitions/nonNegativeIntegerDefault0"},"uniqueItems":{"type":"boolean","default":false},"contains":{"$ref":"#"},"maxProperties":{"$ref":"#/definitions/nonNegativeInteger"},"minProperties":{"$ref":"#/definitions/nonNegativeIntegerDefault0"},"required":{"$ref":"#/definitions/stringArray"},"additionalProperties":{"$ref":"#"},"definitions":{"type":"object","additionalProperties":{"$ref":"#"},"default":{}},"properties":{"type":"object","additionalProperties":{"$ref":"#"},"default":{}},"patternProperties":{"type":"object","additionalProperties":{"$ref":"#"},"propertyNames":{"format":"regex"},"default":{}},"dependencies":{"type":"object","additionalProperties":{"anyOf":[{"$ref":"#"},{"$ref":"#/definitions/stringArray"}]}},"propertyNames":{"$ref":"#"},"const":true,"enum":{"type":"array","items":true,"minItems":1,"uniqueItems":true},"type":{"anyOf":[{"$ref":"#/definitions/simpleTypes"},{"type":"array","items":{"$ref":"#/definitions/simpleTypes"},"minItems":1,"uniqueItems":true}]},"format":{"type":"string"},"contentMediaType":{"type":"string"},"contentEncoding":{"type":"string"},"if":{"$ref":"#"},"then":{"$ref":"#"},"else":{"$ref":"#"},"allOf":{"$ref":"#/definitions/schemaArray"},"anyOf":{"$ref":"#/definitions/schemaArray"},"oneOf":{"$ref":"#/definitions/schemaArray"},"not":{"$ref":"#"}},"default":true}');
 
 /***/ }),
-/* 502 */
+/* 503 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = JSON.parse('{"$schema":"http://json-schema.org/draft-07/schema#","$id":"https://raw.githubusercontent.com/ajv-validator/ajv/master/lib/refs/data.json#","description":"Meta-schema for $data reference (JSON Schema extension proposal)","type":"object","required":["$data"],"properties":{"$data":{"type":"string","anyOf":[{"format":"relative-json-pointer"},{"format":"json-pointer"}]}},"additionalProperties":false}');
 
 /***/ }),
-/* 503 */
+/* 504 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
-module.exports = __webpack_require__(504);
+module.exports = __webpack_require__(505);
 
 /***/ }),
-/* 504 */
+/* 505 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = JSON.parse('{"builtin":{"AggregateError":false,"Array":false,"ArrayBuffer":false,"Atomics":false,"BigInt":false,"BigInt64Array":false,"BigUint64Array":false,"Boolean":false,"constructor":false,"DataView":false,"Date":false,"decodeURI":false,"decodeURIComponent":false,"encodeURI":false,"encodeURIComponent":false,"Error":false,"escape":false,"eval":false,"EvalError":false,"FinalizationRegistry":false,"Float32Array":false,"Float64Array":false,"Function":false,"globalThis":false,"hasOwnProperty":false,"Infinity":false,"Int16Array":false,"Int32Array":false,"Int8Array":false,"isFinite":false,"isNaN":false,"isPrototypeOf":false,"JSON":false,"Map":false,"Math":false,"NaN":false,"Number":false,"Object":false,"parseFloat":false,"parseInt":false,"Promise":false,"propertyIsEnumerable":false,"Proxy":false,"RangeError":false,"ReferenceError":false,"Reflect":false,"RegExp":false,"Set":false,"SharedArrayBuffer":false,"String":false,"Symbol":false,"SyntaxError":false,"toLocaleString":false,"toString":false,"TypeError":false,"Uint16Array":false,"Uint32Array":false,"Uint8Array":false,"Uint8ClampedArray":false,"undefined":false,"unescape":false,"URIError":false,"valueOf":false,"WeakMap":false,"WeakRef":false,"WeakSet":false},"es5":{"Array":false,"Boolean":false,"constructor":false,"Date":false,"decodeURI":false,"decodeURIComponent":false,"encodeURI":false,"encodeURIComponent":false,"Error":false,"escape":false,"eval":false,"EvalError":false,"Function":false,"hasOwnProperty":false,"Infinity":false,"isFinite":false,"isNaN":false,"isPrototypeOf":false,"JSON":false,"Math":false,"NaN":false,"Number":false,"Object":false,"parseFloat":false,"parseInt":false,"propertyIsEnumerable":false,"RangeError":false,"ReferenceError":false,"RegExp":false,"String":false,"SyntaxError":false,"toLocaleString":false,"toString":false,"TypeError":false,"undefined":false,"unescape":false,"URIError":false,"valueOf":false},"es2015":{"Array":false,"ArrayBuffer":false,"Boolean":false,"constructor":false,"DataView":false,"Date":false,"decodeURI":false,"decodeURIComponent":false,"encodeURI":false,"encodeURIComponent":false,"Error":false,"escape":false,"eval":false,"EvalError":false,"Float32Array":false,"Float64Array":false,"Function":false,"hasOwnProperty":false,"Infinity":false,"Int16Array":false,"Int32Array":false,"Int8Array":false,"isFinite":false,"isNaN":false,"isPrototypeOf":false,"JSON":false,"Map":false,"Math":false,"NaN":false,"Number":false,"Object":false,"parseFloat":false,"parseInt":false,"Promise":false,"propertyIsEnumerable":false,"Proxy":false,"RangeError":false,"ReferenceError":false,"Reflect":false,"RegExp":false,"Set":false,"String":false,"Symbol":false,"SyntaxError":false,"toLocaleString":false,"toString":false,"TypeError":false,"Uint16Array":false,"Uint32Array":false,"Uint8Array":false,"Uint8ClampedArray":false,"undefined":false,"unescape":false,"URIError":false,"valueOf":false,"WeakMap":false,"WeakSet":false},"es2017":{"Array":false,"ArrayBuffer":false,"Atomics":false,"Boolean":false,"constructor":false,"DataView":false,"Date":false,"decodeURI":false,"decodeURIComponent":false,"encodeURI":false,"encodeURIComponent":false,"Error":false,"escape":false,"eval":false,"EvalError":false,"Float32Array":false,"Float64Array":false,"Function":false,"hasOwnProperty":false,"Infinity":false,"Int16Array":false,"Int32Array":false,"Int8Array":false,"isFinite":false,"isNaN":false,"isPrototypeOf":false,"JSON":false,"Map":false,"Math":false,"NaN":false,"Number":false,"Object":false,"parseFloat":false,"parseInt":false,"Promise":false,"propertyIsEnumerable":false,"Proxy":false,"RangeError":false,"ReferenceError":false,"Reflect":false,"RegExp":false,"Set":false,"SharedArrayBuffer":false,"String":false,"Symbol":false,"SyntaxError":false,"toLocaleString":false,"toString":false,"TypeError":false,"Uint16Array":false,"Uint32Array":false,"Uint8Array":false,"Uint8ClampedArray":false,"undefined":false,"unescape":false,"URIError":false,"valueOf":false,"WeakMap":false,"WeakSet":false},"es2020":{"Array":false,"ArrayBuffer":false,"Atomics":false,"BigInt":false,"BigInt64Array":false,"BigUint64Array":false,"Boolean":false,"constructor":false,"DataView":false,"Date":false,"decodeURI":false,"decodeURIComponent":false,"encodeURI":false,"encodeURIComponent":false,"Error":false,"escape":false,"eval":false,"EvalError":false,"Float32Array":false,"Float64Array":false,"Function":false,"globalThis":false,"hasOwnProperty":false,"Infinity":false,"Int16Array":false,"Int32Array":false,"Int8Array":false,"isFinite":false,"isNaN":false,"isPrototypeOf":false,"JSON":false,"Map":false,"Math":false,"NaN":false,"Number":false,"Object":false,"parseFloat":false,"parseInt":false,"Promise":false,"propertyIsEnumerable":false,"Proxy":false,"RangeError":false,"ReferenceError":false,"Reflect":false,"RegExp":false,"Set":false,"SharedArrayBuffer":false,"String":false,"Symbol":false,"SyntaxError":false,"toLocaleString":false,"toString":false,"TypeError":false,"Uint16Array":false,"Uint32Array":false,"Uint8Array":false,"Uint8ClampedArray":false,"undefined":false,"unescape":false,"URIError":false,"valueOf":false,"WeakMap":false,"WeakSet":false},"es2021":{"AggregateError":false,"Array":false,"ArrayBuffer":false,"Atomics":false,"BigInt":false,"BigInt64Array":false,"BigUint64Array":false,"Boolean":false,"constructor":false,"DataView":false,"Date":false,"decodeURI":false,"decodeURIComponent":false,"encodeURI":false,"encodeURIComponent":false,"Error":false,"escape":false,"eval":false,"EvalError":false,"FinalizationRegistry":false,"Float32Array":false,"Float64Array":false,"Function":false,"globalThis":false,"hasOwnProperty":false,"Infinity":false,"Int16Array":false,"Int32Array":false,"Int8Array":false,"isFinite":false,"isNaN":false,"isPrototypeOf":false,"JSON":false,"Map":false,"Math":false,"NaN":false,"Number":false,"Object":false,"parseFloat":false,"parseInt":false,"Promise":false,"propertyIsEnumerable":false,"Proxy":false,"RangeError":false,"ReferenceError":false,"Reflect":false,"RegExp":false,"Set":false,"SharedArrayBuffer":false,"String":false,"Symbol":false,"SyntaxError":false,"toLocaleString":false,"toString":false,"TypeError":false,"Uint16Array":false,"Uint32Array":false,"Uint8Array":false,"Uint8ClampedArray":false,"undefined":false,"unescape":false,"URIError":false,"valueOf":false,"WeakMap":false,"WeakRef":false,"WeakSet":false},"browser":{"AbortController":false,"AbortSignal":false,"addEventListener":false,"alert":false,"AnalyserNode":false,"Animation":false,"AnimationEffectReadOnly":false,"AnimationEffectTiming":false,"AnimationEffectTimingReadOnly":false,"AnimationEvent":false,"AnimationPlaybackEvent":false,"AnimationTimeline":false,"applicationCache":false,"ApplicationCache":false,"ApplicationCacheErrorEvent":false,"atob":false,"Attr":false,"Audio":false,"AudioBuffer":false,"AudioBufferSourceNode":false,"AudioContext":false,"AudioDestinationNode":false,"AudioListener":false,"AudioNode":false,"AudioParam":false,"AudioProcessingEvent":false,"AudioScheduledSourceNode":false,"AudioWorkletGlobalScope ":false,"AudioWorkletNode":false,"AudioWorkletProcessor":false,"BarProp":false,"BaseAudioContext":false,"BatteryManager":false,"BeforeUnloadEvent":false,"BiquadFilterNode":false,"Blob":false,"BlobEvent":false,"blur":false,"BroadcastChannel":false,"btoa":false,"BudgetService":false,"ByteLengthQueuingStrategy":false,"Cache":false,"caches":false,"CacheStorage":false,"cancelAnimationFrame":false,"cancelIdleCallback":false,"CanvasCaptureMediaStreamTrack":false,"CanvasGradient":false,"CanvasPattern":false,"CanvasRenderingContext2D":false,"ChannelMergerNode":false,"ChannelSplitterNode":false,"CharacterData":false,"clearInterval":false,"clearTimeout":false,"clientInformation":false,"ClipboardEvent":false,"close":false,"closed":false,"CloseEvent":false,"Comment":false,"CompositionEvent":false,"confirm":false,"console":false,"ConstantSourceNode":false,"ConvolverNode":false,"CountQueuingStrategy":false,"createImageBitmap":false,"Credential":false,"CredentialsContainer":false,"crypto":false,"Crypto":false,"CryptoKey":false,"CSS":false,"CSSConditionRule":false,"CSSFontFaceRule":false,"CSSGroupingRule":false,"CSSImportRule":false,"CSSKeyframeRule":false,"CSSKeyframesRule":false,"CSSMatrixComponent":false,"CSSMediaRule":false,"CSSNamespaceRule":false,"CSSPageRule":false,"CSSPerspective":false,"CSSRotate":false,"CSSRule":false,"CSSRuleList":false,"CSSScale":false,"CSSSkew":false,"CSSSkewX":false,"CSSSkewY":false,"CSSStyleDeclaration":false,"CSSStyleRule":false,"CSSStyleSheet":false,"CSSSupportsRule":false,"CSSTransformValue":false,"CSSTranslate":false,"CustomElementRegistry":false,"customElements":false,"CustomEvent":false,"DataTransfer":false,"DataTransferItem":false,"DataTransferItemList":false,"defaultstatus":false,"defaultStatus":false,"DelayNode":false,"DeviceMotionEvent":false,"DeviceOrientationEvent":false,"devicePixelRatio":false,"dispatchEvent":false,"document":false,"Document":false,"DocumentFragment":false,"DocumentType":false,"DOMError":false,"DOMException":false,"DOMImplementation":false,"DOMMatrix":false,"DOMMatrixReadOnly":false,"DOMParser":false,"DOMPoint":false,"DOMPointReadOnly":false,"DOMQuad":false,"DOMRect":false,"DOMRectList":false,"DOMRectReadOnly":false,"DOMStringList":false,"DOMStringMap":false,"DOMTokenList":false,"DragEvent":false,"DynamicsCompressorNode":false,"Element":false,"ErrorEvent":false,"event":false,"Event":false,"EventSource":false,"EventTarget":false,"external":false,"fetch":false,"File":false,"FileList":false,"FileReader":false,"find":false,"focus":false,"FocusEvent":false,"FontFace":false,"FontFaceSetLoadEvent":false,"FormData":false,"frameElement":false,"frames":false,"GainNode":false,"Gamepad":false,"GamepadButton":false,"GamepadEvent":false,"getComputedStyle":false,"getSelection":false,"HashChangeEvent":false,"Headers":false,"history":false,"History":false,"HTMLAllCollection":false,"HTMLAnchorElement":false,"HTMLAreaElement":false,"HTMLAudioElement":false,"HTMLBaseElement":false,"HTMLBodyElement":false,"HTMLBRElement":false,"HTMLButtonElement":false,"HTMLCanvasElement":false,"HTMLCollection":false,"HTMLContentElement":false,"HTMLDataElement":false,"HTMLDataListElement":false,"HTMLDetailsElement":false,"HTMLDialogElement":false,"HTMLDirectoryElement":false,"HTMLDivElement":false,"HTMLDListElement":false,"HTMLDocument":false,"HTMLElement":false,"HTMLEmbedElement":false,"HTMLFieldSetElement":false,"HTMLFontElement":false,"HTMLFormControlsCollection":false,"HTMLFormElement":false,"HTMLFrameElement":false,"HTMLFrameSetElement":false,"HTMLHeadElement":false,"HTMLHeadingElement":false,"HTMLHRElement":false,"HTMLHtmlElement":false,"HTMLIFrameElement":false,"HTMLImageElement":false,"HTMLInputElement":false,"HTMLLabelElement":false,"HTMLLegendElement":false,"HTMLLIElement":false,"HTMLLinkElement":false,"HTMLMapElement":false,"HTMLMarqueeElement":false,"HTMLMediaElement":false,"HTMLMenuElement":false,"HTMLMetaElement":false,"HTMLMeterElement":false,"HTMLModElement":false,"HTMLObjectElement":false,"HTMLOListElement":false,"HTMLOptGroupElement":false,"HTMLOptionElement":false,"HTMLOptionsCollection":false,"HTMLOutputElement":false,"HTMLParagraphElement":false,"HTMLParamElement":false,"HTMLPictureElement":false,"HTMLPreElement":false,"HTMLProgressElement":false,"HTMLQuoteElement":false,"HTMLScriptElement":false,"HTMLSelectElement":false,"HTMLShadowElement":false,"HTMLSlotElement":false,"HTMLSourceElement":false,"HTMLSpanElement":false,"HTMLStyleElement":false,"HTMLTableCaptionElement":false,"HTMLTableCellElement":false,"HTMLTableColElement":false,"HTMLTableElement":false,"HTMLTableRowElement":false,"HTMLTableSectionElement":false,"HTMLTemplateElement":false,"HTMLTextAreaElement":false,"HTMLTimeElement":false,"HTMLTitleElement":false,"HTMLTrackElement":false,"HTMLUListElement":false,"HTMLUnknownElement":false,"HTMLVideoElement":false,"IDBCursor":false,"IDBCursorWithValue":false,"IDBDatabase":false,"IDBFactory":false,"IDBIndex":false,"IDBKeyRange":false,"IDBObjectStore":false,"IDBOpenDBRequest":false,"IDBRequest":false,"IDBTransaction":false,"IDBVersionChangeEvent":false,"IdleDeadline":false,"IIRFilterNode":false,"Image":false,"ImageBitmap":false,"ImageBitmapRenderingContext":false,"ImageCapture":false,"ImageData":false,"indexedDB":false,"innerHeight":false,"innerWidth":false,"InputEvent":false,"IntersectionObserver":false,"IntersectionObserverEntry":false,"Intl":false,"isSecureContext":false,"KeyboardEvent":false,"KeyframeEffect":false,"KeyframeEffectReadOnly":false,"length":false,"localStorage":false,"location":true,"Location":false,"locationbar":false,"matchMedia":false,"MediaDeviceInfo":false,"MediaDevices":false,"MediaElementAudioSourceNode":false,"MediaEncryptedEvent":false,"MediaError":false,"MediaKeyMessageEvent":false,"MediaKeySession":false,"MediaKeyStatusMap":false,"MediaKeySystemAccess":false,"MediaList":false,"MediaQueryList":false,"MediaQueryListEvent":false,"MediaRecorder":false,"MediaSettingsRange":false,"MediaSource":false,"MediaStream":false,"MediaStreamAudioDestinationNode":false,"MediaStreamAudioSourceNode":false,"MediaStreamEvent":false,"MediaStreamTrack":false,"MediaStreamTrackEvent":false,"menubar":false,"MessageChannel":false,"MessageEvent":false,"MessagePort":false,"MIDIAccess":false,"MIDIConnectionEvent":false,"MIDIInput":false,"MIDIInputMap":false,"MIDIMessageEvent":false,"MIDIOutput":false,"MIDIOutputMap":false,"MIDIPort":false,"MimeType":false,"MimeTypeArray":false,"MouseEvent":false,"moveBy":false,"moveTo":false,"MutationEvent":false,"MutationObserver":false,"MutationRecord":false,"name":false,"NamedNodeMap":false,"NavigationPreloadManager":false,"navigator":false,"Navigator":false,"NetworkInformation":false,"Node":false,"NodeFilter":false,"NodeIterator":false,"NodeList":false,"Notification":false,"OfflineAudioCompletionEvent":false,"OfflineAudioContext":false,"offscreenBuffering":false,"OffscreenCanvas":true,"OffscreenCanvasRenderingContext2D":false,"onabort":true,"onafterprint":true,"onanimationend":true,"onanimationiteration":true,"onanimationstart":true,"onappinstalled":true,"onauxclick":true,"onbeforeinstallprompt":true,"onbeforeprint":true,"onbeforeunload":true,"onblur":true,"oncancel":true,"oncanplay":true,"oncanplaythrough":true,"onchange":true,"onclick":true,"onclose":true,"oncontextmenu":true,"oncuechange":true,"ondblclick":true,"ondevicemotion":true,"ondeviceorientation":true,"ondeviceorientationabsolute":true,"ondrag":true,"ondragend":true,"ondragenter":true,"ondragleave":true,"ondragover":true,"ondragstart":true,"ondrop":true,"ondurationchange":true,"onemptied":true,"onended":true,"onerror":true,"onfocus":true,"ongotpointercapture":true,"onhashchange":true,"oninput":true,"oninvalid":true,"onkeydown":true,"onkeypress":true,"onkeyup":true,"onlanguagechange":true,"onload":true,"onloadeddata":true,"onloadedmetadata":true,"onloadstart":true,"onlostpointercapture":true,"onmessage":true,"onmessageerror":true,"onmousedown":true,"onmouseenter":true,"onmouseleave":true,"onmousemove":true,"onmouseout":true,"onmouseover":true,"onmouseup":true,"onmousewheel":true,"onoffline":true,"ononline":true,"onpagehide":true,"onpageshow":true,"onpause":true,"onplay":true,"onplaying":true,"onpointercancel":true,"onpointerdown":true,"onpointerenter":true,"onpointerleave":true,"onpointermove":true,"onpointerout":true,"onpointerover":true,"onpointerup":true,"onpopstate":true,"onprogress":true,"onratechange":true,"onrejectionhandled":true,"onreset":true,"onresize":true,"onscroll":true,"onsearch":true,"onseeked":true,"onseeking":true,"onselect":true,"onstalled":true,"onstorage":true,"onsubmit":true,"onsuspend":true,"ontimeupdate":true,"ontoggle":true,"ontransitionend":true,"onunhandledrejection":true,"onunload":true,"onvolumechange":true,"onwaiting":true,"onwheel":true,"open":false,"openDatabase":false,"opener":false,"Option":false,"origin":false,"OscillatorNode":false,"outerHeight":false,"outerWidth":false,"OverconstrainedError":false,"PageTransitionEvent":false,"pageXOffset":false,"pageYOffset":false,"PannerNode":false,"parent":false,"Path2D":false,"PaymentAddress":false,"PaymentRequest":false,"PaymentRequestUpdateEvent":false,"PaymentResponse":false,"performance":false,"Performance":false,"PerformanceEntry":false,"PerformanceLongTaskTiming":false,"PerformanceMark":false,"PerformanceMeasure":false,"PerformanceNavigation":false,"PerformanceNavigationTiming":false,"PerformanceObserver":false,"PerformanceObserverEntryList":false,"PerformancePaintTiming":false,"PerformanceResourceTiming":false,"PerformanceTiming":false,"PeriodicWave":false,"Permissions":false,"PermissionStatus":false,"personalbar":false,"PhotoCapabilities":false,"Plugin":false,"PluginArray":false,"PointerEvent":false,"PopStateEvent":false,"postMessage":false,"Presentation":false,"PresentationAvailability":false,"PresentationConnection":false,"PresentationConnectionAvailableEvent":false,"PresentationConnectionCloseEvent":false,"PresentationConnectionList":false,"PresentationReceiver":false,"PresentationRequest":false,"print":false,"ProcessingInstruction":false,"ProgressEvent":false,"PromiseRejectionEvent":false,"prompt":false,"PushManager":false,"PushSubscription":false,"PushSubscriptionOptions":false,"queueMicrotask":false,"RadioNodeList":false,"Range":false,"ReadableStream":false,"registerProcessor":false,"RemotePlayback":false,"removeEventListener":false,"Request":false,"requestAnimationFrame":false,"requestIdleCallback":false,"resizeBy":false,"ResizeObserver":false,"ResizeObserverEntry":false,"resizeTo":false,"Response":false,"RTCCertificate":false,"RTCDataChannel":false,"RTCDataChannelEvent":false,"RTCDtlsTransport":false,"RTCIceCandidate":false,"RTCIceGatherer":false,"RTCIceTransport":false,"RTCPeerConnection":false,"RTCPeerConnectionIceEvent":false,"RTCRtpContributingSource":false,"RTCRtpReceiver":false,"RTCRtpSender":false,"RTCSctpTransport":false,"RTCSessionDescription":false,"RTCStatsReport":false,"RTCTrackEvent":false,"screen":false,"Screen":false,"screenLeft":false,"ScreenOrientation":false,"screenTop":false,"screenX":false,"screenY":false,"ScriptProcessorNode":false,"scroll":false,"scrollbars":false,"scrollBy":false,"scrollTo":false,"scrollX":false,"scrollY":false,"SecurityPolicyViolationEvent":false,"Selection":false,"self":false,"ServiceWorker":false,"ServiceWorkerContainer":false,"ServiceWorkerRegistration":false,"sessionStorage":false,"setInterval":false,"setTimeout":false,"ShadowRoot":false,"SharedWorker":false,"SourceBuffer":false,"SourceBufferList":false,"speechSynthesis":false,"SpeechSynthesisEvent":false,"SpeechSynthesisUtterance":false,"StaticRange":false,"status":false,"statusbar":false,"StereoPannerNode":false,"stop":false,"Storage":false,"StorageEvent":false,"StorageManager":false,"styleMedia":false,"StyleSheet":false,"StyleSheetList":false,"SubtleCrypto":false,"SVGAElement":false,"SVGAngle":false,"SVGAnimatedAngle":false,"SVGAnimatedBoolean":false,"SVGAnimatedEnumeration":false,"SVGAnimatedInteger":false,"SVGAnimatedLength":false,"SVGAnimatedLengthList":false,"SVGAnimatedNumber":false,"SVGAnimatedNumberList":false,"SVGAnimatedPreserveAspectRatio":false,"SVGAnimatedRect":false,"SVGAnimatedString":false,"SVGAnimatedTransformList":false,"SVGAnimateElement":false,"SVGAnimateMotionElement":false,"SVGAnimateTransformElement":false,"SVGAnimationElement":false,"SVGCircleElement":false,"SVGClipPathElement":false,"SVGComponentTransferFunctionElement":false,"SVGDefsElement":false,"SVGDescElement":false,"SVGDiscardElement":false,"SVGElement":false,"SVGEllipseElement":false,"SVGFEBlendElement":false,"SVGFEColorMatrixElement":false,"SVGFEComponentTransferElement":false,"SVGFECompositeElement":false,"SVGFEConvolveMatrixElement":false,"SVGFEDiffuseLightingElement":false,"SVGFEDisplacementMapElement":false,"SVGFEDistantLightElement":false,"SVGFEDropShadowElement":false,"SVGFEFloodElement":false,"SVGFEFuncAElement":false,"SVGFEFuncBElement":false,"SVGFEFuncGElement":false,"SVGFEFuncRElement":false,"SVGFEGaussianBlurElement":false,"SVGFEImageElement":false,"SVGFEMergeElement":false,"SVGFEMergeNodeElement":false,"SVGFEMorphologyElement":false,"SVGFEOffsetElement":false,"SVGFEPointLightElement":false,"SVGFESpecularLightingElement":false,"SVGFESpotLightElement":false,"SVGFETileElement":false,"SVGFETurbulenceElement":false,"SVGFilterElement":false,"SVGForeignObjectElement":false,"SVGGElement":false,"SVGGeometryElement":false,"SVGGradientElement":false,"SVGGraphicsElement":false,"SVGImageElement":false,"SVGLength":false,"SVGLengthList":false,"SVGLinearGradientElement":false,"SVGLineElement":false,"SVGMarkerElement":false,"SVGMaskElement":false,"SVGMatrix":false,"SVGMetadataElement":false,"SVGMPathElement":false,"SVGNumber":false,"SVGNumberList":false,"SVGPathElement":false,"SVGPatternElement":false,"SVGPoint":false,"SVGPointList":false,"SVGPolygonElement":false,"SVGPolylineElement":false,"SVGPreserveAspectRatio":false,"SVGRadialGradientElement":false,"SVGRect":false,"SVGRectElement":false,"SVGScriptElement":false,"SVGSetElement":false,"SVGStopElement":false,"SVGStringList":false,"SVGStyleElement":false,"SVGSVGElement":false,"SVGSwitchElement":false,"SVGSymbolElement":false,"SVGTextContentElement":false,"SVGTextElement":false,"SVGTextPathElement":false,"SVGTextPositioningElement":false,"SVGTitleElement":false,"SVGTransform":false,"SVGTransformList":false,"SVGTSpanElement":false,"SVGUnitTypes":false,"SVGUseElement":false,"SVGViewElement":false,"TaskAttributionTiming":false,"Text":false,"TextDecoder":false,"TextEncoder":false,"TextEvent":false,"TextMetrics":false,"TextTrack":false,"TextTrackCue":false,"TextTrackCueList":false,"TextTrackList":false,"TimeRanges":false,"toolbar":false,"top":false,"Touch":false,"TouchEvent":false,"TouchList":false,"TrackEvent":false,"TransitionEvent":false,"TreeWalker":false,"UIEvent":false,"URL":false,"URLSearchParams":false,"ValidityState":false,"visualViewport":false,"VisualViewport":false,"VTTCue":false,"WaveShaperNode":false,"WebAssembly":false,"WebGL2RenderingContext":false,"WebGLActiveInfo":false,"WebGLBuffer":false,"WebGLContextEvent":false,"WebGLFramebuffer":false,"WebGLProgram":false,"WebGLQuery":false,"WebGLRenderbuffer":false,"WebGLRenderingContext":false,"WebGLSampler":false,"WebGLShader":false,"WebGLShaderPrecisionFormat":false,"WebGLSync":false,"WebGLTexture":false,"WebGLTransformFeedback":false,"WebGLUniformLocation":false,"WebGLVertexArrayObject":false,"WebSocket":false,"WheelEvent":false,"window":false,"Window":false,"Worker":false,"WritableStream":false,"XMLDocument":false,"XMLHttpRequest":false,"XMLHttpRequestEventTarget":false,"XMLHttpRequestUpload":false,"XMLSerializer":false,"XPathEvaluator":false,"XPathExpression":false,"XPathResult":false,"XSLTProcessor":false},"worker":{"addEventListener":false,"applicationCache":false,"atob":false,"Blob":false,"BroadcastChannel":false,"btoa":false,"Cache":false,"caches":false,"clearInterval":false,"clearTimeout":false,"close":true,"console":false,"fetch":false,"FileReaderSync":false,"FormData":false,"Headers":false,"IDBCursor":false,"IDBCursorWithValue":false,"IDBDatabase":false,"IDBFactory":false,"IDBIndex":false,"IDBKeyRange":false,"IDBObjectStore":false,"IDBOpenDBRequest":false,"IDBRequest":false,"IDBTransaction":false,"IDBVersionChangeEvent":false,"ImageData":false,"importScripts":true,"indexedDB":false,"location":false,"MessageChannel":false,"MessagePort":false,"name":false,"navigator":false,"Notification":false,"onclose":true,"onconnect":true,"onerror":true,"onlanguagechange":true,"onmessage":true,"onoffline":true,"ononline":true,"onrejectionhandled":true,"onunhandledrejection":true,"performance":false,"Performance":false,"PerformanceEntry":false,"PerformanceMark":false,"PerformanceMeasure":false,"PerformanceNavigation":false,"PerformanceResourceTiming":false,"PerformanceTiming":false,"postMessage":true,"Promise":false,"queueMicrotask":false,"removeEventListener":false,"Request":false,"Response":false,"self":true,"ServiceWorkerRegistration":false,"setInterval":false,"setTimeout":false,"TextDecoder":false,"TextEncoder":false,"URL":false,"URLSearchParams":false,"WebSocket":false,"Worker":false,"WorkerGlobalScope":false,"XMLHttpRequest":false},"node":{"__dirname":false,"__filename":false,"AbortController":false,"Buffer":false,"clearImmediate":false,"clearInterval":false,"clearTimeout":false,"console":false,"exports":true,"global":false,"Intl":false,"module":false,"process":false,"queueMicrotask":false,"require":false,"setImmediate":false,"setInterval":false,"setTimeout":false,"TextDecoder":false,"TextEncoder":false,"URL":false,"URLSearchParams":false},"nodeBuiltin":{"AbortController":false,"Buffer":false,"clearImmediate":false,"clearInterval":false,"clearTimeout":false,"console":false,"global":false,"Intl":false,"process":false,"queueMicrotask":false,"setImmediate":false,"setInterval":false,"setTimeout":false,"TextDecoder":false,"TextEncoder":false,"URL":false,"URLSearchParams":false},"commonjs":{"exports":true,"global":false,"module":false,"require":false},"amd":{"define":false,"require":false},"mocha":{"after":false,"afterEach":false,"before":false,"beforeEach":false,"context":false,"describe":false,"it":false,"mocha":false,"run":false,"setup":false,"specify":false,"suite":false,"suiteSetup":false,"suiteTeardown":false,"teardown":false,"test":false,"xcontext":false,"xdescribe":false,"xit":false,"xspecify":false},"jasmine":{"afterAll":false,"afterEach":false,"beforeAll":false,"beforeEach":false,"describe":false,"expect":false,"expectAsync":false,"fail":false,"fdescribe":false,"fit":false,"it":false,"jasmine":false,"pending":false,"runs":false,"spyOn":false,"spyOnAllFunctions":false,"spyOnProperty":false,"waits":false,"waitsFor":false,"xdescribe":false,"xit":false},"jest":{"afterAll":false,"afterEach":false,"beforeAll":false,"beforeEach":false,"describe":false,"expect":false,"fdescribe":false,"fit":false,"it":false,"jest":false,"pit":false,"require":false,"test":false,"xdescribe":false,"xit":false,"xtest":false},"qunit":{"asyncTest":false,"deepEqual":false,"equal":false,"expect":false,"module":false,"notDeepEqual":false,"notEqual":false,"notOk":false,"notPropEqual":false,"notStrictEqual":false,"ok":false,"propEqual":false,"QUnit":false,"raises":false,"start":false,"stop":false,"strictEqual":false,"test":false,"throws":false},"phantomjs":{"console":true,"exports":true,"phantom":true,"require":true,"WebPage":true},"couch":{"emit":false,"exports":false,"getRow":false,"log":false,"module":false,"provides":false,"require":false,"respond":false,"send":false,"start":false,"sum":false},"rhino":{"defineClass":false,"deserialize":false,"gc":false,"help":false,"importClass":false,"importPackage":false,"java":false,"load":false,"loadClass":false,"Packages":false,"print":false,"quit":false,"readFile":false,"readUrl":false,"runCommand":false,"seal":false,"serialize":false,"spawn":false,"sync":false,"toint32":false,"version":false},"nashorn":{"__DIR__":false,"__FILE__":false,"__LINE__":false,"com":false,"edu":false,"exit":false,"java":false,"Java":false,"javafx":false,"JavaImporter":false,"javax":false,"JSAdapter":false,"load":false,"loadWithNewGlobal":false,"org":false,"Packages":false,"print":false,"quit":false},"wsh":{"ActiveXObject":false,"CollectGarbage":false,"Debug":false,"Enumerator":false,"GetObject":false,"RuntimeObject":false,"ScriptEngine":false,"ScriptEngineBuildVersion":false,"ScriptEngineMajorVersion":false,"ScriptEngineMinorVersion":false,"VBArray":false,"WScript":false,"WSH":false},"jquery":{"$":false,"jQuery":false},"yui":{"YAHOO":false,"YAHOO_config":false,"YUI":false,"YUI_config":false},"shelljs":{"cat":false,"cd":false,"chmod":false,"config":false,"cp":false,"dirs":false,"echo":false,"env":false,"error":false,"exec":false,"exit":false,"find":false,"grep":false,"ln":false,"ls":false,"mkdir":false,"mv":false,"popd":false,"pushd":false,"pwd":false,"rm":false,"sed":false,"set":false,"target":false,"tempdir":false,"test":false,"touch":false,"which":false},"prototypejs":{"$":false,"$$":false,"$A":false,"$break":false,"$continue":false,"$F":false,"$H":false,"$R":false,"$w":false,"Abstract":false,"Ajax":false,"Autocompleter":false,"Builder":false,"Class":false,"Control":false,"Draggable":false,"Draggables":false,"Droppables":false,"Effect":false,"Element":false,"Enumerable":false,"Event":false,"Field":false,"Form":false,"Hash":false,"Insertion":false,"ObjectRange":false,"PeriodicalExecuter":false,"Position":false,"Prototype":false,"Scriptaculous":false,"Selector":false,"Sortable":false,"SortableObserver":false,"Sound":false,"Template":false,"Toggle":false,"Try":false},"meteor":{"$":false,"Accounts":false,"AccountsClient":false,"AccountsCommon":false,"AccountsServer":false,"App":false,"Assets":false,"Blaze":false,"check":false,"Cordova":false,"DDP":false,"DDPRateLimiter":false,"DDPServer":false,"Deps":false,"EJSON":false,"Email":false,"HTTP":false,"Log":false,"Match":false,"Meteor":false,"Mongo":false,"MongoInternals":false,"Npm":false,"Package":false,"Plugin":false,"process":false,"Random":false,"ReactiveDict":false,"ReactiveVar":false,"Router":false,"ServiceConfiguration":false,"Session":false,"share":false,"Spacebars":false,"Template":false,"Tinytest":false,"Tracker":false,"UI":false,"Utils":false,"WebApp":false,"WebAppInternals":false},"mongo":{"_isWindows":false,"_rand":false,"BulkWriteResult":false,"cat":false,"cd":false,"connect":false,"db":false,"getHostName":false,"getMemInfo":false,"hostname":false,"ISODate":false,"listFiles":false,"load":false,"ls":false,"md5sumFile":false,"mkdir":false,"Mongo":false,"NumberInt":false,"NumberLong":false,"ObjectId":false,"PlanCache":false,"print":false,"printjson":false,"pwd":false,"quit":false,"removeFile":false,"rs":false,"sh":false,"UUID":false,"version":false,"WriteResult":false},"applescript":{"$":false,"Application":false,"Automation":false,"console":false,"delay":false,"Library":false,"ObjC":false,"ObjectSpecifier":false,"Path":false,"Progress":false,"Ref":false},"serviceworker":{"addEventListener":false,"applicationCache":false,"atob":false,"Blob":false,"BroadcastChannel":false,"btoa":false,"Cache":false,"caches":false,"CacheStorage":false,"clearInterval":false,"clearTimeout":false,"Client":false,"clients":false,"Clients":false,"close":true,"console":false,"ExtendableEvent":false,"ExtendableMessageEvent":false,"fetch":false,"FetchEvent":false,"FileReaderSync":false,"FormData":false,"Headers":false,"IDBCursor":false,"IDBCursorWithValue":false,"IDBDatabase":false,"IDBFactory":false,"IDBIndex":false,"IDBKeyRange":false,"IDBObjectStore":false,"IDBOpenDBRequest":false,"IDBRequest":false,"IDBTransaction":false,"IDBVersionChangeEvent":false,"ImageData":false,"importScripts":false,"indexedDB":false,"location":false,"MessageChannel":false,"MessagePort":false,"name":false,"navigator":false,"Notification":false,"onclose":true,"onconnect":true,"onerror":true,"onfetch":true,"oninstall":true,"onlanguagechange":true,"onmessage":true,"onmessageerror":true,"onnotificationclick":true,"onnotificationclose":true,"onoffline":true,"ononline":true,"onpush":true,"onpushsubscriptionchange":true,"onrejectionhandled":true,"onsync":true,"onunhandledrejection":true,"performance":false,"Performance":false,"PerformanceEntry":false,"PerformanceMark":false,"PerformanceMeasure":false,"PerformanceNavigation":false,"PerformanceResourceTiming":false,"PerformanceTiming":false,"postMessage":true,"Promise":false,"queueMicrotask":false,"registration":false,"removeEventListener":false,"Request":false,"Response":false,"self":false,"ServiceWorker":false,"ServiceWorkerContainer":false,"ServiceWorkerGlobalScope":false,"ServiceWorkerMessageEvent":false,"ServiceWorkerRegistration":false,"setInterval":false,"setTimeout":false,"skipWaiting":false,"TextDecoder":false,"TextEncoder":false,"URL":false,"URLSearchParams":false,"WebSocket":false,"WindowClient":false,"Worker":false,"WorkerGlobalScope":false,"XMLHttpRequest":false},"atomtest":{"advanceClock":false,"atom":false,"fakeClearInterval":false,"fakeClearTimeout":false,"fakeSetInterval":false,"fakeSetTimeout":false,"resetTimeouts":false,"waitsForPromise":false},"embertest":{"andThen":false,"click":false,"currentPath":false,"currentRouteName":false,"currentURL":false,"fillIn":false,"find":false,"findAll":false,"findWithAssert":false,"keyEvent":false,"pauseTest":false,"resumeTest":false,"triggerEvent":false,"visit":false,"wait":false},"protractor":{"$":false,"$$":false,"browser":false,"by":false,"By":false,"DartObject":false,"element":false,"protractor":false},"shared-node-browser":{"clearInterval":false,"clearTimeout":false,"console":false,"setInterval":false,"setTimeout":false,"URL":false,"URLSearchParams":false},"webextensions":{"browser":false,"chrome":false,"opr":false},"greasemonkey":{"cloneInto":false,"createObjectIn":false,"exportFunction":false,"GM":false,"GM_addElement":false,"GM_addStyle":false,"GM_addValueChangeListener":false,"GM_deleteValue":false,"GM_download":false,"GM_getResourceText":false,"GM_getResourceURL":false,"GM_getTab":false,"GM_getTabs":false,"GM_getValue":false,"GM_info":false,"GM_listValues":false,"GM_log":false,"GM_notification":false,"GM_openInTab":false,"GM_registerMenuCommand":false,"GM_removeValueChangeListener":false,"GM_saveTab":false,"GM_setClipboard":false,"GM_setValue":false,"GM_unregisterMenuCommand":false,"GM_xmlhttpRequest":false,"unsafeWindow":false},"devtools":{"$":false,"$_":false,"$$":false,"$0":false,"$1":false,"$2":false,"$3":false,"$4":false,"$x":false,"chrome":false,"clear":false,"copy":false,"debug":false,"dir":false,"dirxml":false,"getEventListeners":false,"inspect":false,"keys":false,"monitor":false,"monitorEvents":false,"profile":false,"profileEnd":false,"queryObjects":false,"table":false,"undebug":false,"unmonitor":false,"unmonitorEvents":false,"values":false}}');
 
 /***/ }),
-/* 505 */
+/* 506 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -47673,9 +47696,9 @@ module.exports = JSON.parse('{"builtin":{"AggregateError":false,"Array":false,"A
 // Requirements
 //------------------------------------------------------------------------------
 
-const vk = __webpack_require__(448);
+const vk = __webpack_require__(449);
 
-const debug = __webpack_require__(506)("eslint:traverser"); //------------------------------------------------------------------------------
+const debug = __webpack_require__(507)("eslint:traverser"); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -47729,18 +47752,18 @@ class Traverser {
     this._visitorKeys = null;
     this._enter = null;
     this._leave = null;
-  } // eslint-disable-next-line jsdoc/require-description
-
+  }
   /**
+   * Gives current node.
    * @returns {ASTNode} The current node.
    */
 
 
   current() {
     return this._current;
-  } // eslint-disable-next-line jsdoc/require-description
-
+  }
   /**
+   * Gives a a copy of the ancestor nodes.
    * @returns {ASTNode[]} The ancestor nodes.
    */
 
@@ -47875,11 +47898,11 @@ class Traverser {
 module.exports = Traverser;
 
 /***/ }),
-/* 506 */
+/* 507 */
 /***/ ((module, exports, __webpack_require__) => {
 
-/* provided dependency */ var console = __webpack_require__(410);
-/* provided dependency */ var process = __webpack_require__(405);
+/* provided dependency */ var console = __webpack_require__(411);
+/* provided dependency */ var process = __webpack_require__(406);
 /* eslint-env browser */
 
 /**
@@ -48044,7 +48067,7 @@ function localstorage() {
   }
 }
 
-module.exports = __webpack_require__(507)(exports);
+module.exports = __webpack_require__(508)(exports);
 const {
   formatters
 } = module.exports;
@@ -48061,10 +48084,10 @@ formatters.j = function (v) {
 };
 
 /***/ }),
-/* 507 */
+/* 508 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-/* provided dependency */ var console = __webpack_require__(410);
+/* provided dependency */ var console = __webpack_require__(411);
 /**
  * This is the common logic for both the Node.js and web browser
  * implementations of `debug()`.
@@ -48076,7 +48099,7 @@ function setup(env) {
   createDebug.disable = disable;
   createDebug.enable = enable;
   createDebug.enabled = enabled;
-  createDebug.humanize = __webpack_require__(508);
+  createDebug.humanize = __webpack_require__(509);
   createDebug.destroy = destroy;
   Object.keys(env).forEach(key => {
     createDebug[key] = env[key];
@@ -48335,7 +48358,7 @@ function setup(env) {
 module.exports = setup;
 
 /***/ }),
-/* 508 */
+/* 509 */
 /***/ ((module) => {
 
 /**
@@ -48519,18 +48542,18 @@ function plural(ms, msAbs, n, name) {
 }
 
 /***/ }),
-/* 509 */
+/* 510 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 
 
 module.exports = {
-  SourceCode: __webpack_require__(510)
+  SourceCode: __webpack_require__(511)
 };
 
 /***/ }),
-/* 510 */
+/* 511 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -48544,10 +48567,10 @@ module.exports = {
 
 const {
   isCommentToken
-} = __webpack_require__(511),
-      TokenStore = __webpack_require__(514),
-      astUtils = __webpack_require__(455),
-      Traverser = __webpack_require__(505); //------------------------------------------------------------------------------
+} = __webpack_require__(512),
+      TokenStore = __webpack_require__(515),
+      astUtils = __webpack_require__(456),
+      Traverser = __webpack_require__(506); //------------------------------------------------------------------------------
 // Private
 //------------------------------------------------------------------------------
 
@@ -48665,10 +48688,13 @@ function isSpaceBetween(sourceCode, first, second, checkInsideOfJSXText) {
 // Public Interface
 //------------------------------------------------------------------------------
 
+/**
+ * Represents parsed source code.
+ */
+
 
 class SourceCode extends TokenStore {
   /**
-   * Represents parsed source code.
    * @param {string|Object} textOrConfig The source code text or config object.
    * @param {string} textOrConfig.text The source code text.
    * @param {ASTNode} textOrConfig.ast The Program node of the AST representing the code. This AST should be created from the text that BOM was stripped.
@@ -48695,20 +48721,20 @@ class SourceCode extends TokenStore {
     super(ast.tokens, ast.comments);
     /**
      * The flag to indicate that the source code has Unicode BOM.
-     * @type boolean
+     * @type {boolean}
      */
 
     this.hasBOM = text.charCodeAt(0) === 0xFEFF;
     /**
      * The original text source code.
      * BOM was stripped from this text.
-     * @type string
+     * @type {string}
      */
 
     this.text = this.hasBOM ? text.slice(1) : text;
     /**
      * The parsed AST for the source code.
-     * @type ASTNode
+     * @type {ASTNode}
      */
 
     this.ast = ast;
@@ -48742,7 +48768,7 @@ class SourceCode extends TokenStore {
     /**
      * The source code split into lines according to ECMA-262 specification.
      * This is done to avoid each rule needing to do so separately.
-     * @type string[]
+     * @type {string[]}
      */
 
     this.lines = [];
@@ -49030,6 +49056,7 @@ class SourceCode extends TokenStore {
   /**
    * Converts a source text index into a (line, column) pair.
    * @param {number} index The index of a character in a file
+   * @throws {TypeError} If non-numeric index or index out of range.
    * @returns {Object} A {line, column} location object with a 0-indexed column
    * @public
    */
@@ -49075,6 +49102,9 @@ class SourceCode extends TokenStore {
    * @param {Object} loc A line/column location
    * @param {number} loc.line The line number of the location (1-indexed)
    * @param {number} loc.column The column number of the location (0-indexed)
+   * @throws {TypeError|RangeError} If `loc` is not an object with a numeric
+   *   `line` and `column`, if the `line` is less than or equal to zero or
+   *   the line or column is out of the expected range.
    * @returns {number} The range index of the location in the file.
    * @public
    */
@@ -49117,7 +49147,7 @@ class SourceCode extends TokenStore {
 module.exports = SourceCode;
 
 /***/ }),
-/* 511 */
+/* 512 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -49132,7 +49162,7 @@ function _interopDefault(ex) {
   return ex && typeof ex === 'object' && 'default' in ex ? ex['default'] : ex;
 }
 
-var evk = _interopDefault(__webpack_require__(512));
+var evk = _interopDefault(__webpack_require__(513));
 /**
  * Get the innermost scope which contains a given location.
  * @param {Scope} initialScope The initial scope to search.
@@ -51134,7 +51164,7 @@ exports.isParenthesized = isParenthesized;
 exports.isSemicolonToken = isSemicolonToken;
 
 /***/ }),
-/* 512 */
+/* 513 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -51144,7 +51174,7 @@ exports.isSemicolonToken = isSemicolonToken;
  */
 
 
-const KEYS = __webpack_require__(513); // Types.
+const KEYS = __webpack_require__(514); // Types.
 
 
 const NODE_TYPES = Object.freeze(Object.keys(KEYS)); // Freeze the keys.
@@ -51216,14 +51246,14 @@ module.exports = Object.freeze({
 });
 
 /***/ }),
-/* 513 */
+/* 514 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = JSON.parse('{"AssignmentExpression":["left","right"],"AssignmentPattern":["left","right"],"ArrayExpression":["elements"],"ArrayPattern":["elements"],"ArrowFunctionExpression":["params","body"],"AwaitExpression":["argument"],"BlockStatement":["body"],"BinaryExpression":["left","right"],"BreakStatement":["label"],"CallExpression":["callee","arguments"],"CatchClause":["param","body"],"ChainExpression":["expression"],"ClassBody":["body"],"ClassDeclaration":["id","superClass","body"],"ClassExpression":["id","superClass","body"],"ConditionalExpression":["test","consequent","alternate"],"ContinueStatement":["label"],"DebuggerStatement":[],"DoWhileStatement":["body","test"],"EmptyStatement":[],"ExportAllDeclaration":["exported","source"],"ExportDefaultDeclaration":["declaration"],"ExportNamedDeclaration":["declaration","specifiers","source"],"ExportSpecifier":["exported","local"],"ExpressionStatement":["expression"],"ExperimentalRestProperty":["argument"],"ExperimentalSpreadProperty":["argument"],"ForStatement":["init","test","update","body"],"ForInStatement":["left","right","body"],"ForOfStatement":["left","right","body"],"FunctionDeclaration":["id","params","body"],"FunctionExpression":["id","params","body"],"Identifier":[],"IfStatement":["test","consequent","alternate"],"ImportDeclaration":["specifiers","source"],"ImportDefaultSpecifier":["local"],"ImportExpression":["source"],"ImportNamespaceSpecifier":["local"],"ImportSpecifier":["imported","local"],"JSXAttribute":["name","value"],"JSXClosingElement":["name"],"JSXElement":["openingElement","children","closingElement"],"JSXEmptyExpression":[],"JSXExpressionContainer":["expression"],"JSXIdentifier":[],"JSXMemberExpression":["object","property"],"JSXNamespacedName":["namespace","name"],"JSXOpeningElement":["name","attributes"],"JSXSpreadAttribute":["argument"],"JSXText":[],"JSXFragment":["openingFragment","children","closingFragment"],"Literal":[],"LabeledStatement":["label","body"],"LogicalExpression":["left","right"],"MemberExpression":["object","property"],"MetaProperty":["meta","property"],"MethodDefinition":["key","value"],"NewExpression":["callee","arguments"],"ObjectExpression":["properties"],"ObjectPattern":["properties"],"PrivateIdentifier":[],"Program":["body"],"Property":["key","value"],"PropertyDefinition":["key","value"],"RestElement":["argument"],"ReturnStatement":["argument"],"SequenceExpression":["expressions"],"SpreadElement":["argument"],"Super":[],"SwitchStatement":["discriminant","cases"],"SwitchCase":["test","consequent"],"TaggedTemplateExpression":["tag","quasi"],"TemplateElement":[],"TemplateLiteral":["quasis","expressions"],"ThisExpression":[],"ThrowStatement":["argument"],"TryStatement":["block","handler","finalizer"],"UnaryExpression":["argument"],"UpdateExpression":["argument"],"VariableDeclaration":["declarations"],"VariableDeclarator":["id","init"],"WhileStatement":["test","body"],"WithStatement":["object","body"],"YieldExpression":["argument"]}');
 
 /***/ }),
-/* 514 */
+/* 515 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -51235,19 +51265,19 @@ module.exports = JSON.parse('{"AssignmentExpression":["left","right"],"Assignmen
 // Requirements
 //------------------------------------------------------------------------------
 
-const assert = __webpack_require__(407);
+const assert = __webpack_require__(408);
 
 const {
   isCommentToken
-} = __webpack_require__(511);
+} = __webpack_require__(512);
 
-const cursors = __webpack_require__(515);
+const cursors = __webpack_require__(516);
 
-const ForwardTokenCursor = __webpack_require__(523);
+const ForwardTokenCursor = __webpack_require__(524);
 
-const PaddedTokenCursor = __webpack_require__(526);
+const PaddedTokenCursor = __webpack_require__(527);
 
-const utils = __webpack_require__(518); //------------------------------------------------------------------------------
+const utils = __webpack_require__(519); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -51759,7 +51789,7 @@ module.exports = class TokenStore {
 };
 
 /***/ }),
-/* 515 */
+/* 516 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -51771,19 +51801,19 @@ module.exports = class TokenStore {
 // Requirements
 //------------------------------------------------------------------------------
 
-const BackwardTokenCommentCursor = __webpack_require__(516);
+const BackwardTokenCommentCursor = __webpack_require__(517);
 
-const BackwardTokenCursor = __webpack_require__(519);
+const BackwardTokenCursor = __webpack_require__(520);
 
-const FilterCursor = __webpack_require__(520);
+const FilterCursor = __webpack_require__(521);
 
-const ForwardTokenCommentCursor = __webpack_require__(522);
+const ForwardTokenCommentCursor = __webpack_require__(523);
 
-const ForwardTokenCursor = __webpack_require__(523);
+const ForwardTokenCursor = __webpack_require__(524);
 
-const LimitCursor = __webpack_require__(524);
+const LimitCursor = __webpack_require__(525);
 
-const SkipCursor = __webpack_require__(525); //------------------------------------------------------------------------------
+const SkipCursor = __webpack_require__(526); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -51861,7 +51891,7 @@ exports.forward = new CursorFactory(ForwardTokenCursor, ForwardTokenCommentCurso
 exports.backward = new CursorFactory(BackwardTokenCursor, BackwardTokenCommentCursor);
 
 /***/ }),
-/* 516 */
+/* 517 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -51873,9 +51903,9 @@ exports.backward = new CursorFactory(BackwardTokenCursor, BackwardTokenCommentCu
 // Requirements
 //------------------------------------------------------------------------------
 
-const Cursor = __webpack_require__(517);
+const Cursor = __webpack_require__(518);
 
-const utils = __webpack_require__(518); //------------------------------------------------------------------------------
+const utils = __webpack_require__(519); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -51924,7 +51954,7 @@ module.exports = class BackwardTokenCommentCursor extends Cursor {
 };
 
 /***/ }),
-/* 517 */
+/* 518 */
 /***/ ((module) => {
 
 "use strict";
@@ -52003,14 +52033,14 @@ module.exports = class Cursor {
 
 
   moveNext() {
-    // eslint-disable-line class-methods-use-this
+    // eslint-disable-line class-methods-use-this -- Unused
     throw new Error("Not implemented.");
   }
 
 };
 
 /***/ }),
-/* 518 */
+/* 519 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -52114,7 +52144,7 @@ exports.getLastIndex = function getLastIndex(tokens, indexMap, endLoc) {
 };
 
 /***/ }),
-/* 519 */
+/* 520 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -52126,9 +52156,9 @@ exports.getLastIndex = function getLastIndex(tokens, indexMap, endLoc) {
 // Requirements
 //------------------------------------------------------------------------------
 
-const Cursor = __webpack_require__(517);
+const Cursor = __webpack_require__(518);
 
-const utils = __webpack_require__(518); //------------------------------------------------------------------------------
+const utils = __webpack_require__(519); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -52180,7 +52210,7 @@ module.exports = class BackwardTokenCursor extends Cursor {
 };
 
 /***/ }),
-/* 520 */
+/* 521 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -52192,7 +52222,7 @@ module.exports = class BackwardTokenCursor extends Cursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const DecorativeCursor = __webpack_require__(521); //------------------------------------------------------------------------------
+const DecorativeCursor = __webpack_require__(522); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -52229,7 +52259,7 @@ module.exports = class FilterCursor extends DecorativeCursor {
 };
 
 /***/ }),
-/* 521 */
+/* 522 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -52241,7 +52271,7 @@ module.exports = class FilterCursor extends DecorativeCursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const Cursor = __webpack_require__(517); //------------------------------------------------------------------------------
+const Cursor = __webpack_require__(518); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -52271,7 +52301,7 @@ module.exports = class DecorativeCursor extends Cursor {
 };
 
 /***/ }),
-/* 522 */
+/* 523 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -52283,9 +52313,9 @@ module.exports = class DecorativeCursor extends Cursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const Cursor = __webpack_require__(517);
+const Cursor = __webpack_require__(518);
 
-const utils = __webpack_require__(518); //------------------------------------------------------------------------------
+const utils = __webpack_require__(519); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -52334,7 +52364,7 @@ module.exports = class ForwardTokenCommentCursor extends Cursor {
 };
 
 /***/ }),
-/* 523 */
+/* 524 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -52346,9 +52376,9 @@ module.exports = class ForwardTokenCommentCursor extends Cursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const Cursor = __webpack_require__(517);
+const Cursor = __webpack_require__(518);
 
-const utils = __webpack_require__(518); //------------------------------------------------------------------------------
+const utils = __webpack_require__(519); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -52406,7 +52436,7 @@ module.exports = class ForwardTokenCursor extends Cursor {
 };
 
 /***/ }),
-/* 524 */
+/* 525 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -52418,7 +52448,7 @@ module.exports = class ForwardTokenCursor extends Cursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const DecorativeCursor = __webpack_require__(521); //------------------------------------------------------------------------------
+const DecorativeCursor = __webpack_require__(522); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -52452,7 +52482,7 @@ module.exports = class LimitCursor extends DecorativeCursor {
 };
 
 /***/ }),
-/* 525 */
+/* 526 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -52464,7 +52494,7 @@ module.exports = class LimitCursor extends DecorativeCursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const DecorativeCursor = __webpack_require__(521); //------------------------------------------------------------------------------
+const DecorativeCursor = __webpack_require__(522); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -52501,7 +52531,7 @@ module.exports = class SkipCursor extends DecorativeCursor {
 };
 
 /***/ }),
-/* 526 */
+/* 527 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -52513,7 +52543,7 @@ module.exports = class SkipCursor extends DecorativeCursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const ForwardTokenCursor = __webpack_require__(523); //------------------------------------------------------------------------------
+const ForwardTokenCursor = __webpack_require__(524); //------------------------------------------------------------------------------
 // Exports
 //------------------------------------------------------------------------------
 
@@ -52543,7 +52573,7 @@ module.exports = class PaddedTokenCursor extends ForwardTokenCursor {
 };
 
 /***/ }),
-/* 527 */
+/* 528 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -52555,14 +52585,14 @@ module.exports = class PaddedTokenCursor extends ForwardTokenCursor {
 // Requirements
 //------------------------------------------------------------------------------
 
-const assert = __webpack_require__(407),
+const assert = __webpack_require__(408),
       {
   breakableTypePattern
-} = __webpack_require__(455),
-      CodePath = __webpack_require__(528),
-      CodePathSegment = __webpack_require__(530),
-      IdGenerator = __webpack_require__(533),
-      debug = __webpack_require__(531); //------------------------------------------------------------------------------
+} = __webpack_require__(456),
+      CodePath = __webpack_require__(529),
+      CodePathSegment = __webpack_require__(531),
+      IdGenerator = __webpack_require__(534),
+      debug = __webpack_require__(532); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -52575,6 +52605,18 @@ const assert = __webpack_require__(407),
 
 function isCaseNode(node) {
   return Boolean(node.test);
+}
+/**
+ * Checks if a given node appears as the value of a PropertyDefinition node.
+ * @param {ASTNode} node THe node to check.
+ * @returns {boolean} `true` if the node is a PropertyDefinition value,
+ *      false if not.
+ */
+
+
+function isPropertyDefinitionValue(node) {
+  const parent = node.parent;
+  return parent && parent.type === "PropertyDefinition" && parent.value === node;
 }
 /**
  * Checks whether the given logical operator is taken into account for the code
@@ -52694,6 +52736,7 @@ function isIdentifierReference(node) {
       return parent.id !== node;
 
     case "Property":
+    case "PropertyDefinition":
     case "MethodDefinition":
       return parent.key !== node || parent.computed || parent.shorthand;
 
@@ -52932,24 +52975,62 @@ function processCodePathToEnter(analyzer, node) {
   let codePath = analyzer.codePath;
   let state = codePath && CodePath.getState(codePath);
   const parent = node.parent;
+  /**
+   * Creates a new code path and trigger the onCodePathStart event
+   * based on the currently selected node.
+   * @param {string} origin The reason the code path was started.
+   * @returns {void}
+   */
+
+  function startCodePath(origin) {
+    if (codePath) {
+      // Emits onCodePathSegmentStart events if updated.
+      forwardCurrentToHead(analyzer, node);
+      debug.dumpState(node, state, false);
+    } // Create the code path of this scope.
+
+
+    codePath = analyzer.codePath = new CodePath({
+      id: analyzer.idGenerator.next(),
+      origin,
+      upper: codePath,
+      onLooped: analyzer.onLooped
+    });
+    state = CodePath.getState(codePath); // Emits onCodePathStart events.
+
+    debug.dump(`onCodePathStart ${codePath.id}`);
+    analyzer.emitter.emit("onCodePathStart", codePath, node);
+  }
+  /*
+   * Special case: The right side of class field initializer is considered
+   * to be its own function, so we need to start a new code path in this
+   * case.
+   */
+
+
+  if (isPropertyDefinitionValue(node)) {
+    startCodePath("class-field-initializer");
+    /*
+     * Intentional fall through because `node` needs to also be
+     * processed by the code below. For example, if we have:
+     *
+     * class Foo {
+     *     a = () => {}
+     * }
+     *
+     * In this case, we also need start a second code path.
+     */
+  }
 
   switch (node.type) {
     case "Program":
+      startCodePath("program");
+      break;
+
     case "FunctionDeclaration":
     case "FunctionExpression":
     case "ArrowFunctionExpression":
-      if (codePath) {
-        // Emits onCodePathSegmentStart events if updated.
-        forwardCurrentToHead(analyzer, node);
-        debug.dumpState(node, state, false);
-      } // Create the code path of this scope.
-
-
-      codePath = analyzer.codePath = new CodePath(analyzer.idGenerator.next(), codePath, analyzer.onLooped);
-      state = CodePath.getState(codePath); // Emits onCodePathStart events.
-
-      debug.dump(`onCodePathStart ${codePath.id}`);
-      analyzer.emitter.emit("onCodePathStart", codePath, node);
+      startCodePath("function");
       break;
 
     case "ChainExpression":
@@ -53173,27 +53254,34 @@ function processCodePathToExit(analyzer, node) {
 
 
 function postprocess(analyzer, node) {
+  /**
+   * Ends the code path for the current node.
+   * @returns {void}
+   */
+  function endCodePath() {
+    let codePath = analyzer.codePath; // Mark the current path as the final node.
+
+    CodePath.getState(codePath).makeFinal(); // Emits onCodePathSegmentEnd event of the current segments.
+
+    leaveFromCurrentSegment(analyzer, node); // Emits onCodePathEnd event of this code path.
+
+    debug.dump(`onCodePathEnd ${codePath.id}`);
+    analyzer.emitter.emit("onCodePathEnd", codePath, node);
+    debug.dumpDot(codePath);
+    codePath = analyzer.codePath = analyzer.codePath.upper;
+
+    if (codePath) {
+      debug.dumpState(node, CodePath.getState(codePath), true);
+    }
+  }
+
   switch (node.type) {
     case "Program":
     case "FunctionDeclaration":
     case "FunctionExpression":
     case "ArrowFunctionExpression":
       {
-        let codePath = analyzer.codePath; // Mark the current path as the final node.
-
-        CodePath.getState(codePath).makeFinal(); // Emits onCodePathSegmentEnd event of the current segments.
-
-        leaveFromCurrentSegment(analyzer, node); // Emits onCodePathEnd event of this code path.
-
-        debug.dump(`onCodePathEnd ${codePath.id}`);
-        analyzer.emitter.emit("onCodePathEnd", codePath, node);
-        debug.dumpDot(codePath);
-        codePath = analyzer.codePath = analyzer.codePath.upper;
-
-        if (codePath) {
-          debug.dumpState(node, CodePath.getState(codePath), true);
-        }
-
+        endCodePath();
         break;
       }
     // The `arguments.length >= 1` case is in `preprocess` function.
@@ -53208,6 +53296,28 @@ function postprocess(analyzer, node) {
     default:
       break;
   }
+  /*
+   * Special case: The right side of class field initializer is considered
+   * to be its own function, so we need to end a code path in this
+   * case.
+   *
+   * We need to check after the other checks in order to close the
+   * code paths in the correct order for code like this:
+   *
+   *
+   * class Foo {
+   *     a = () => {}
+   * }
+   *
+   * In this case, The ArrowFunctionExpression code path is closed first
+   * and then we need to close the code path for the PropertyDefinition
+   * value.
+   */
+
+
+  if (isPropertyDefinitionValue(node)) {
+    endCodePath();
+  }
 } //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------
@@ -53219,8 +53329,6 @@ function postprocess(analyzer, node) {
 
 
 class CodePathAnalyzer {
-  // eslint-disable-next-line jsdoc/require-description
-
   /**
    * @param {EventGenerator} eventGenerator An event generator to wrap.
    */
@@ -53300,7 +53408,7 @@ class CodePathAnalyzer {
 module.exports = CodePathAnalyzer;
 
 /***/ }),
-/* 528 */
+/* 529 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -53312,9 +53420,9 @@ module.exports = CodePathAnalyzer;
 // Requirements
 //------------------------------------------------------------------------------
 
-const CodePathState = __webpack_require__(529);
+const CodePathState = __webpack_require__(530);
 
-const IdGenerator = __webpack_require__(533); //------------------------------------------------------------------------------
+const IdGenerator = __webpack_require__(534); //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------
 
@@ -53324,20 +53432,33 @@ const IdGenerator = __webpack_require__(533); //--------------------------------
 
 
 class CodePath {
-  // eslint-disable-next-line jsdoc/require-description
-
   /**
-   * @param {string} id An identifier.
-   * @param {CodePath|null} upper The code path of the upper function scope.
-   * @param {Function} onLooped A callback function to notify looping.
+   * Creates a new instance.
+   * @param {Object} options Options for the function (see below).
+   * @param {string} options.id An identifier.
+   * @param {string} options.origin The type of code path origin.
+   * @param {CodePath|null} options.upper The code path of the upper function scope.
+   * @param {Function} options.onLooped A callback function to notify looping.
    */
-  constructor(id, upper, onLooped) {
+  constructor({
+    id,
+    origin,
+    upper,
+    onLooped
+  }) {
     /**
      * The identifier of this code path.
      * Rules use it to store additional information of each rule.
      * @type {string}
      */
     this.id = id;
+    /**
+     * The reason that this code path was started. May be "program",
+     * "function", or "class-field-initializer".
+     * @type {string}
+     */
+
+    this.origin = origin;
     /**
      * The code path of the upper function scope.
      * @type {CodePath|null}
@@ -53542,7 +53663,7 @@ class CodePath {
 module.exports = CodePath;
 
 /***/ }),
-/* 529 */
+/* 530 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -53554,8 +53675,8 @@ module.exports = CodePath;
 // Requirements
 //------------------------------------------------------------------------------
 
-const CodePathSegment = __webpack_require__(530),
-      ForkContext = __webpack_require__(532); //------------------------------------------------------------------------------
+const CodePathSegment = __webpack_require__(531),
+      ForkContext = __webpack_require__(533); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -53776,8 +53897,6 @@ function finalizeTestSegmentsOfFor(context, choiceContext, head) {
 
 
 class CodePathState {
-  // eslint-disable-next-line jsdoc/require-description
-
   /**
    * @param {IdGenerator} idGenerator An id generator to generate id for code
    *   path segments.
@@ -53913,6 +54032,7 @@ class CodePathState {
   }
   /**
    * Pops the last choice context and finalizes it.
+   * @throws {Error} (Unreachable.)
    * @returns {ChoiceContext} The popped context.
    */
 
@@ -53996,6 +54116,7 @@ class CodePathState {
   /**
    * Makes a code path segment of the right-hand operand of a logical
    * expression.
+   * @throws {Error} (Unreachable.)
    * @returns {void}
    */
 
@@ -54500,6 +54621,7 @@ class CodePathState {
    *   `WhileStatement`, `DoWhileStatement`, `ForStatement`, `ForInStatement`,
    *   and `ForStatement`.
    * @param {string|null} label A label of the node which was triggered.
+   * @throws {Error} (Unreachable - unknown type.)
    * @returns {void}
    */
 
@@ -54573,6 +54695,7 @@ class CodePathState {
   }
   /**
    * Pops the last context of a loop statement and finalizes it.
+   * @throws {Error} (Unreachable - unknown type.)
    * @returns {void}
    */
 
@@ -54994,7 +55117,7 @@ class CodePathState {
 module.exports = CodePathState;
 
 /***/ }),
-/* 530 */
+/* 531 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -55006,7 +55129,7 @@ module.exports = CodePathState;
 // Requirements
 //------------------------------------------------------------------------------
 
-const debug = __webpack_require__(531); //------------------------------------------------------------------------------
+const debug = __webpack_require__(532); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -55029,8 +55152,6 @@ function isReachable(segment) {
 
 
 class CodePathSegment {
-  // eslint-disable-next-line jsdoc/require-description
-
   /**
    * @param {string} id An identifier.
    * @param {CodePathSegment[]} allPrevSegments An array of the previous segments.
@@ -55233,7 +55354,7 @@ class CodePathSegment {
 module.exports = CodePathSegment;
 
 /***/ }),
-/* 531 */
+/* 532 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -55245,7 +55366,7 @@ module.exports = CodePathSegment;
 // Requirements
 //------------------------------------------------------------------------------
 
-const debug = __webpack_require__(506)("eslint:code-path"); //------------------------------------------------------------------------------
+const debug = __webpack_require__(507)("eslint:code-path"); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -55259,7 +55380,7 @@ const debug = __webpack_require__(506)("eslint:code-path"); //------------------
 
 
 function getId(segment) {
-  // eslint-disable-line jsdoc/require-jsdoc
+  // eslint-disable-line jsdoc/require-jsdoc -- Ignoring
   return segment.id + (segment.reachable ? "" : "!");
 }
 /**
@@ -55356,7 +55477,7 @@ module.exports = {
     const arrows = this.makeDotArrows(codePath, traceMap);
 
     for (const id in traceMap) {
-      // eslint-disable-line guard-for-in
+      // eslint-disable-line guard-for-in -- Want ability to traverse prototype
       const segment = traceMap[id];
       text += `${id}[`;
 
@@ -55444,7 +55565,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 532 */
+/* 533 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -55460,8 +55581,8 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const assert = __webpack_require__(407),
-      CodePathSegment = __webpack_require__(530); //------------------------------------------------------------------------------
+const assert = __webpack_require__(408),
+      CodePathSegment = __webpack_require__(531); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -55542,8 +55663,6 @@ function mergeExtraSegments(context, segments) {
 
 
 class ForkContext {
-  // eslint-disable-next-line jsdoc/require-description
-
   /**
    * @param {IdGenerator} idGenerator An identifier generator for segments.
    * @param {ForkContext|null} upper An upper fork context.
@@ -55697,7 +55816,7 @@ class ForkContext {
 module.exports = ForkContext;
 
 /***/ }),
-/* 533 */
+/* 534 */
 /***/ ((module) => {
 
 "use strict";
@@ -55718,8 +55837,6 @@ module.exports = ForkContext;
  */
 
 class IdGenerator {
-  // eslint-disable-next-line jsdoc/require-description
-
   /**
    * @param {string} prefix Optional. A prefix of generated ids.
    */
@@ -55749,7 +55866,7 @@ class IdGenerator {
 module.exports = IdGenerator;
 
 /***/ }),
-/* 534 */
+/* 535 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -55759,7 +55876,7 @@ module.exports = IdGenerator;
  */
 
 
-const escapeRegExp = __webpack_require__(535);
+const escapeRegExp = __webpack_require__(536);
 /**
  * Compares the locations of two objects in a source file
  * @param {{line: number, column: number}} itemA The first object
@@ -56047,7 +56164,7 @@ module.exports = ({
 };
 
 /***/ }),
-/* 535 */
+/* 536 */
 /***/ ((module) => {
 
 "use strict";
@@ -56064,7 +56181,7 @@ module.exports = string => {
 };
 
 /***/ }),
-/* 536 */
+/* 537 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -56073,20 +56190,20 @@ module.exports = string => {
  * @author Nicholas C. Zakas
  */
 
-/* eslint-disable class-methods-use-this*/
+/* eslint class-methods-use-this: off -- Methods desired on instance */
  //------------------------------------------------------------------------------
 // Requirements
 //------------------------------------------------------------------------------
 
-const levn = __webpack_require__(537),
+const levn = __webpack_require__(538),
       {
   Legacy: {
     ConfigOps
   }
-} = __webpack_require__(456); // eslint-disable-line node/no-missing-require -- false positive
+} = __webpack_require__(457); // eslint-disable-line node/no-missing-require -- false positive
 
 
-const debug = __webpack_require__(506)("eslint:config-comment-parser"); //------------------------------------------------------------------------------
+const debug = __webpack_require__(507)("eslint:config-comment-parser"); //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------
 
@@ -56205,15 +56322,15 @@ module.exports = class ConfigCommentParser {
 };
 
 /***/ }),
-/* 537 */
+/* 538 */
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
 (function () {
   var parseString, cast, parseType, VERSION, parsedTypeParse, parse;
-  parseString = __webpack_require__(538);
-  cast = __webpack_require__(545);
-  parseType = __webpack_require__(546).parseType;
+  parseString = __webpack_require__(539);
+  cast = __webpack_require__(546);
+  parseType = __webpack_require__(547).parseType;
   VERSION = '0.4.1';
 
   parsedTypeParse = function (parsedType, string, options) {
@@ -56235,13 +56352,13 @@ module.exports = class ConfigCommentParser {
 }).call(this);
 
 /***/ }),
-/* 538 */
+/* 539 */
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
 (function () {
   var reject, special, tokenRegex;
-  reject = __webpack_require__(539).reject;
+  reject = __webpack_require__(540).reject;
 
   function consumeOp(tokens, op) {
     if (tokens[0] === op) {
@@ -56382,7 +56499,7 @@ module.exports = class ConfigCommentParser {
 }).call(this);
 
 /***/ }),
-/* 539 */
+/* 540 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // Generated by LiveScript 1.6.0
@@ -56396,11 +56513,11 @@ var Func,
     replicate,
     prelude,
     toString$ = {}.toString;
-Func = __webpack_require__(540);
-List = __webpack_require__(541);
-Obj = __webpack_require__(542);
-Str = __webpack_require__(543);
-Num = __webpack_require__(544);
+Func = __webpack_require__(541);
+List = __webpack_require__(542);
+Obj = __webpack_require__(543);
+Str = __webpack_require__(544);
+Num = __webpack_require__(545);
 
 id = function (x) {
   return x;
@@ -56579,7 +56696,7 @@ function curry$(f, bound) {
 }
 
 /***/ }),
-/* 540 */
+/* 541 */
 /***/ ((module) => {
 
 // Generated by LiveScript 1.6.0
@@ -56672,7 +56789,7 @@ function curry$(f, bound) {
 }
 
 /***/ }),
-/* 541 */
+/* 542 */
 /***/ ((module) => {
 
 // Generated by LiveScript 1.6.0
@@ -57701,7 +57818,7 @@ function not$(x) {
 }
 
 /***/ }),
-/* 542 */
+/* 543 */
 /***/ ((module) => {
 
 // Generated by LiveScript 1.6.0
@@ -57921,7 +58038,7 @@ function curry$(f, bound) {
 }
 
 /***/ }),
-/* 543 */
+/* 544 */
 /***/ ((module) => {
 
 // Generated by LiveScript 1.6.0
@@ -58032,7 +58149,7 @@ function curry$(f, bound) {
 }
 
 /***/ }),
-/* 544 */
+/* 545 */
 /***/ ((module) => {
 
 // Generated by LiveScript 1.6.0
@@ -58181,7 +58298,7 @@ function curry$(f, bound) {
 }
 
 /***/ }),
-/* 545 */
+/* 546 */
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
@@ -58189,7 +58306,7 @@ function curry$(f, bound) {
   var parsedTypeCheck,
       types,
       toString$ = {}.toString;
-  parsedTypeCheck = __webpack_require__(546).parsedTypeCheck;
+  parsedTypeCheck = __webpack_require__(547).parsedTypeCheck;
   types = {
     '*': function (value, options) {
       switch (toString$.call(value).slice(8, -1)) {
@@ -58562,15 +58679,15 @@ function curry$(f, bound) {
 }).call(this);
 
 /***/ }),
-/* 546 */
+/* 547 */
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
 (function () {
   var VERSION, parseType, parsedTypeCheck, typeCheck;
   VERSION = '0.4.0';
-  parseType = __webpack_require__(547);
-  parsedTypeCheck = __webpack_require__(548);
+  parseType = __webpack_require__(548);
+  parsedTypeCheck = __webpack_require__(549);
 
   typeCheck = function (type, input, options) {
     return parsedTypeCheck(parseType(type), input, options);
@@ -58585,7 +58702,7 @@ function curry$(f, bound) {
 }).call(this);
 
 /***/ }),
-/* 547 */
+/* 548 */
 /***/ (function(module) {
 
 // Generated by LiveScript 1.6.0
@@ -58838,7 +58955,7 @@ function curry$(f, bound) {
 }).call(this);
 
 /***/ }),
-/* 548 */
+/* 549 */
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by LiveScript 1.6.0
@@ -58850,7 +58967,7 @@ function curry$(f, bound) {
       types,
       defaultType,
       toString$ = {}.toString;
-  ref$ = __webpack_require__(539), any = ref$.any, all = ref$.all, isItNaN = ref$.isItNaN;
+  ref$ = __webpack_require__(540), any = ref$.any, all = ref$.all, isItNaN = ref$.isItNaN;
   types = {
     Number: {
       typeOf: 'Number',
@@ -59004,7 +59121,7 @@ function curry$(f, bound) {
 }).call(this);
 
 /***/ }),
-/* 549 */
+/* 550 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -59016,7 +59133,7 @@ function curry$(f, bound) {
 // Requirements
 //------------------------------------------------------------------------------
 
-const esquery = __webpack_require__(550); //------------------------------------------------------------------------------
+const esquery = __webpack_require__(551); //------------------------------------------------------------------------------
 // Typedefs
 //------------------------------------------------------------------------------
 
@@ -59248,8 +59365,6 @@ function parseSelector(rawSelector) {
 
 
 class NodeEventGenerator {
-  // eslint-disable-next-line jsdoc/require-description
-
   /**
    * @param {SafeEmitter} emitter
    * An SafeEmitter which is the destination of events. This emitter must already
@@ -59360,7 +59475,7 @@ class NodeEventGenerator {
 module.exports = NodeEventGenerator;
 
 /***/ }),
-/* 550 */
+/* 551 */
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 !function (e, t) {
@@ -61025,7 +61140,7 @@ module.exports = NodeEventGenerator;
 });
 
 /***/ }),
-/* 551 */
+/* 552 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -61037,11 +61152,11 @@ module.exports = NodeEventGenerator;
 // Requirements
 //------------------------------------------------------------------------------
 
-const assert = __webpack_require__(407);
+const assert = __webpack_require__(408);
 
-const ruleFixer = __webpack_require__(552);
+const ruleFixer = __webpack_require__(553);
 
-const interpolate = __webpack_require__(553); //------------------------------------------------------------------------------
+const interpolate = __webpack_require__(554); //------------------------------------------------------------------------------
 // Typedefs
 //------------------------------------------------------------------------------
 
@@ -61060,18 +61175,18 @@ const interpolate = __webpack_require__(553); //--------------------------------
 /**
  * Information about the report
  * @typedef {Object} ReportInfo
- * @property {string} ruleId
- * @property {(0|1|2)} severity
- * @property {(string|undefined)} message
- * @property {(string|undefined)} [messageId]
- * @property {number} line
- * @property {number} column
- * @property {(number|undefined)} [endLine]
- * @property {(number|undefined)} [endColumn]
- * @property {(string|null)} nodeType
- * @property {string} source
- * @property {({text: string, range: (number[]|null)}|null)} [fix]
- * @property {Array<{text: string, range: (number[]|null)}|null>} [suggestions]
+ * @property {string} ruleId The rule ID
+ * @property {(0|1|2)} severity Severity of the error
+ * @property {(string|undefined)} message The message
+ * @property {(string|undefined)} [messageId] The message ID
+ * @property {number} line The line number
+ * @property {number} column The column number
+ * @property {(number|undefined)} [endLine] The ending line number
+ * @property {(number|undefined)} [endColumn] The ending column number
+ * @property {(string|null)} nodeType Type of node
+ * @property {string} source Source text
+ * @property {({text: string, range: (number[]|null)}|null)} [fix] The fix object
+ * @property {Array<{text: string, range: (number[]|null)}|null>} [suggestions] Suggestion info
  */
 //------------------------------------------------------------------------------
 // Module Definition
@@ -61409,7 +61524,7 @@ module.exports = function createReportTranslator(metadata) {
 };
 
 /***/ }),
-/* 552 */
+/* 553 */
 /***/ ((module) => {
 
 "use strict";
@@ -61548,7 +61663,7 @@ const ruleFixer = Object.freeze({
 module.exports = ruleFixer;
 
 /***/ }),
-/* 553 */
+/* 554 */
 /***/ ((module) => {
 
 "use strict";
@@ -61579,7 +61694,7 @@ module.exports = (text, data) => {
 };
 
 /***/ }),
-/* 554 */
+/* 555 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -61592,7 +61707,7 @@ module.exports = (text, data) => {
 // Requirements
 //------------------------------------------------------------------------------
 
-const builtInRules = __webpack_require__(555); //------------------------------------------------------------------------------
+const builtInRules = __webpack_require__(556); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -61611,6 +61726,10 @@ function normalizeRule(rule) {
 } //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------
+
+/**
+ * A storage for rules.
+ */
 
 
 class Rules {
@@ -61638,7 +61757,7 @@ class Rules {
 
   get(ruleId) {
     if (typeof this._rules[ruleId] === "string") {
-      this.define(ruleId, __webpack_require__(863)(this._rules[ruleId]));
+      this.define(ruleId, __webpack_require__(864)(this._rules[ruleId]));
     }
 
     if (this._rules[ruleId]) {
@@ -61665,7 +61784,7 @@ class Rules {
 module.exports = Rules;
 
 /***/ }),
-/* 555 */
+/* 556 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -61675,303 +61794,303 @@ module.exports = Rules;
  * @author Peter (Somogyvari) Metz
  */
 
-/* eslint sort-keys: ["error", "asc"] */
+/* eslint sort-keys: ["error", "asc"] -- More readable for long list */
 
 const {
   LazyLoadingRuleMap
-} = __webpack_require__(556);
+} = __webpack_require__(557);
 /** @type {Map<string, import("../shared/types").Rule>} */
 
 
 module.exports = new LazyLoadingRuleMap(Object.entries({
-  "accessor-pairs": () => __webpack_require__(557),
-  "array-bracket-newline": () => __webpack_require__(563),
-  "array-bracket-spacing": () => __webpack_require__(564),
-  "array-callback-return": () => __webpack_require__(565),
-  "array-element-newline": () => __webpack_require__(566),
-  "arrow-body-style": () => __webpack_require__(567),
-  "arrow-parens": () => __webpack_require__(568),
-  "arrow-spacing": () => __webpack_require__(569),
-  "block-scoped-var": () => __webpack_require__(570),
-  "block-spacing": () => __webpack_require__(571),
-  "brace-style": () => __webpack_require__(572),
-  "callback-return": () => __webpack_require__(573),
-  camelcase: () => __webpack_require__(574),
-  "capitalized-comments": () => __webpack_require__(575),
-  "class-methods-use-this": () => __webpack_require__(577),
-  "comma-dangle": () => __webpack_require__(578),
-  "comma-spacing": () => __webpack_require__(579),
-  "comma-style": () => __webpack_require__(580),
-  complexity: () => __webpack_require__(581),
-  "computed-property-spacing": () => __webpack_require__(583),
-  "consistent-return": () => __webpack_require__(584),
-  "consistent-this": () => __webpack_require__(585),
-  "constructor-super": () => __webpack_require__(586),
-  curly: () => __webpack_require__(587),
-  "default-case": () => __webpack_require__(588),
-  "default-case-last": () => __webpack_require__(589),
-  "default-param-last": () => __webpack_require__(590),
-  "dot-location": () => __webpack_require__(591),
-  "dot-notation": () => __webpack_require__(592),
-  "eol-last": () => __webpack_require__(594),
-  eqeqeq: () => __webpack_require__(595),
-  "for-direction": () => __webpack_require__(596),
-  "func-call-spacing": () => __webpack_require__(597),
-  "func-name-matching": () => __webpack_require__(598),
-  "func-names": () => __webpack_require__(599),
-  "func-style": () => __webpack_require__(600),
-  "function-call-argument-newline": () => __webpack_require__(601),
-  "function-paren-newline": () => __webpack_require__(602),
-  "generator-star-spacing": () => __webpack_require__(603),
-  "getter-return": () => __webpack_require__(604),
-  "global-require": () => __webpack_require__(605),
-  "grouped-accessor-pairs": () => __webpack_require__(606),
-  "guard-for-in": () => __webpack_require__(607),
-  "handle-callback-err": () => __webpack_require__(608),
-  "id-blacklist": () => __webpack_require__(609),
-  "id-denylist": () => __webpack_require__(610),
-  "id-length": () => __webpack_require__(611),
-  "id-match": () => __webpack_require__(612),
-  "implicit-arrow-linebreak": () => __webpack_require__(613),
-  indent: () => __webpack_require__(614),
-  "indent-legacy": () => __webpack_require__(616),
-  "init-declarations": () => __webpack_require__(617),
-  "jsx-quotes": () => __webpack_require__(618),
-  "key-spacing": () => __webpack_require__(619),
-  "keyword-spacing": () => __webpack_require__(620),
-  "line-comment-position": () => __webpack_require__(621),
-  "linebreak-style": () => __webpack_require__(622),
-  "lines-around-comment": () => __webpack_require__(623),
-  "lines-around-directive": () => __webpack_require__(624),
-  "lines-between-class-members": () => __webpack_require__(625),
-  "max-classes-per-file": () => __webpack_require__(626),
-  "max-depth": () => __webpack_require__(627),
-  "max-len": () => __webpack_require__(628),
-  "max-lines": () => __webpack_require__(629),
-  "max-lines-per-function": () => __webpack_require__(630),
-  "max-nested-callbacks": () => __webpack_require__(631),
-  "max-params": () => __webpack_require__(632),
-  "max-statements": () => __webpack_require__(633),
-  "max-statements-per-line": () => __webpack_require__(634),
-  "multiline-comment-style": () => __webpack_require__(635),
-  "multiline-ternary": () => __webpack_require__(636),
-  "new-cap": () => __webpack_require__(637),
-  "new-parens": () => __webpack_require__(638),
-  "newline-after-var": () => __webpack_require__(639),
-  "newline-before-return": () => __webpack_require__(640),
-  "newline-per-chained-call": () => __webpack_require__(641),
-  "no-alert": () => __webpack_require__(642),
-  "no-array-constructor": () => __webpack_require__(643),
-  "no-async-promise-executor": () => __webpack_require__(644),
-  "no-await-in-loop": () => __webpack_require__(645),
-  "no-bitwise": () => __webpack_require__(646),
-  "no-buffer-constructor": () => __webpack_require__(647),
-  "no-caller": () => __webpack_require__(648),
-  "no-case-declarations": () => __webpack_require__(649),
-  "no-catch-shadow": () => __webpack_require__(650),
-  "no-class-assign": () => __webpack_require__(651),
-  "no-compare-neg-zero": () => __webpack_require__(652),
-  "no-cond-assign": () => __webpack_require__(653),
-  "no-confusing-arrow": () => __webpack_require__(654),
-  "no-console": () => __webpack_require__(655),
-  "no-const-assign": () => __webpack_require__(656),
-  "no-constant-condition": () => __webpack_require__(657),
-  "no-constructor-return": () => __webpack_require__(658),
-  "no-continue": () => __webpack_require__(659),
-  "no-control-regex": () => __webpack_require__(660),
-  "no-debugger": () => __webpack_require__(662),
-  "no-delete-var": () => __webpack_require__(663),
-  "no-div-regex": () => __webpack_require__(664),
-  "no-dupe-args": () => __webpack_require__(665),
-  "no-dupe-class-members": () => __webpack_require__(666),
-  "no-dupe-else-if": () => __webpack_require__(667),
-  "no-dupe-keys": () => __webpack_require__(668),
-  "no-duplicate-case": () => __webpack_require__(669),
-  "no-duplicate-imports": () => __webpack_require__(670),
-  "no-else-return": () => __webpack_require__(671),
-  "no-empty": () => __webpack_require__(673),
-  "no-empty-character-class": () => __webpack_require__(674),
-  "no-empty-function": () => __webpack_require__(675),
-  "no-empty-pattern": () => __webpack_require__(676),
-  "no-eq-null": () => __webpack_require__(677),
-  "no-eval": () => __webpack_require__(678),
-  "no-ex-assign": () => __webpack_require__(679),
-  "no-extend-native": () => __webpack_require__(680),
-  "no-extra-bind": () => __webpack_require__(681),
-  "no-extra-boolean-cast": () => __webpack_require__(682),
-  "no-extra-label": () => __webpack_require__(683),
-  "no-extra-parens": () => __webpack_require__(684),
-  "no-extra-semi": () => __webpack_require__(685),
-  "no-fallthrough": () => __webpack_require__(686),
-  "no-floating-decimal": () => __webpack_require__(687),
-  "no-func-assign": () => __webpack_require__(688),
-  "no-global-assign": () => __webpack_require__(689),
-  "no-implicit-coercion": () => __webpack_require__(690),
-  "no-implicit-globals": () => __webpack_require__(691),
-  "no-implied-eval": () => __webpack_require__(692),
-  "no-import-assign": () => __webpack_require__(693),
-  "no-inline-comments": () => __webpack_require__(694),
-  "no-inner-declarations": () => __webpack_require__(695),
-  "no-invalid-regexp": () => __webpack_require__(696),
-  "no-invalid-this": () => __webpack_require__(697),
-  "no-irregular-whitespace": () => __webpack_require__(698),
-  "no-iterator": () => __webpack_require__(699),
-  "no-label-var": () => __webpack_require__(700),
-  "no-labels": () => __webpack_require__(701),
-  "no-lone-blocks": () => __webpack_require__(702),
-  "no-lonely-if": () => __webpack_require__(703),
-  "no-loop-func": () => __webpack_require__(704),
-  "no-loss-of-precision": () => __webpack_require__(705),
-  "no-magic-numbers": () => __webpack_require__(706),
-  "no-misleading-character-class": () => __webpack_require__(707),
-  "no-mixed-operators": () => __webpack_require__(713),
-  "no-mixed-requires": () => __webpack_require__(714),
-  "no-mixed-spaces-and-tabs": () => __webpack_require__(715),
-  "no-multi-assign": () => __webpack_require__(716),
-  "no-multi-spaces": () => __webpack_require__(717),
-  "no-multi-str": () => __webpack_require__(718),
-  "no-multiple-empty-lines": () => __webpack_require__(719),
-  "no-native-reassign": () => __webpack_require__(720),
-  "no-negated-condition": () => __webpack_require__(721),
-  "no-negated-in-lhs": () => __webpack_require__(722),
-  "no-nested-ternary": () => __webpack_require__(723),
-  "no-new": () => __webpack_require__(724),
-  "no-new-func": () => __webpack_require__(725),
-  "no-new-object": () => __webpack_require__(726),
-  "no-new-require": () => __webpack_require__(727),
-  "no-new-symbol": () => __webpack_require__(728),
-  "no-new-wrappers": () => __webpack_require__(729),
-  "no-nonoctal-decimal-escape": () => __webpack_require__(730),
-  "no-obj-calls": () => __webpack_require__(731),
-  "no-octal": () => __webpack_require__(732),
-  "no-octal-escape": () => __webpack_require__(733),
-  "no-param-reassign": () => __webpack_require__(734),
-  "no-path-concat": () => __webpack_require__(735),
-  "no-plusplus": () => __webpack_require__(736),
-  "no-process-env": () => __webpack_require__(737),
-  "no-process-exit": () => __webpack_require__(738),
-  "no-promise-executor-return": () => __webpack_require__(739),
-  "no-proto": () => __webpack_require__(740),
-  "no-prototype-builtins": () => __webpack_require__(741),
-  "no-redeclare": () => __webpack_require__(742),
-  "no-regex-spaces": () => __webpack_require__(743),
-  "no-restricted-exports": () => __webpack_require__(744),
-  "no-restricted-globals": () => __webpack_require__(745),
-  "no-restricted-imports": () => __webpack_require__(746),
-  "no-restricted-modules": () => __webpack_require__(748),
-  "no-restricted-properties": () => __webpack_require__(749),
-  "no-restricted-syntax": () => __webpack_require__(750),
-  "no-return-assign": () => __webpack_require__(751),
-  "no-return-await": () => __webpack_require__(752),
-  "no-script-url": () => __webpack_require__(753),
-  "no-self-assign": () => __webpack_require__(754),
-  "no-self-compare": () => __webpack_require__(755),
-  "no-sequences": () => __webpack_require__(756),
-  "no-setter-return": () => __webpack_require__(757),
-  "no-shadow": () => __webpack_require__(758),
-  "no-shadow-restricted-names": () => __webpack_require__(759),
-  "no-spaced-func": () => __webpack_require__(760),
-  "no-sparse-arrays": () => __webpack_require__(761),
-  "no-sync": () => __webpack_require__(762),
-  "no-tabs": () => __webpack_require__(763),
-  "no-template-curly-in-string": () => __webpack_require__(764),
-  "no-ternary": () => __webpack_require__(765),
-  "no-this-before-super": () => __webpack_require__(766),
-  "no-throw-literal": () => __webpack_require__(767),
-  "no-trailing-spaces": () => __webpack_require__(768),
-  "no-undef": () => __webpack_require__(769),
-  "no-undef-init": () => __webpack_require__(770),
-  "no-undefined": () => __webpack_require__(771),
-  "no-underscore-dangle": () => __webpack_require__(772),
-  "no-unexpected-multiline": () => __webpack_require__(773),
-  "no-unmodified-loop-condition": () => __webpack_require__(774),
-  "no-unneeded-ternary": () => __webpack_require__(775),
-  "no-unreachable": () => __webpack_require__(776),
-  "no-unreachable-loop": () => __webpack_require__(777),
-  "no-unsafe-finally": () => __webpack_require__(778),
-  "no-unsafe-negation": () => __webpack_require__(779),
-  "no-unsafe-optional-chaining": () => __webpack_require__(780),
-  "no-unused-expressions": () => __webpack_require__(781),
-  "no-unused-labels": () => __webpack_require__(782),
-  "no-unused-vars": () => __webpack_require__(783),
-  "no-use-before-define": () => __webpack_require__(784),
-  "no-useless-backreference": () => __webpack_require__(785),
-  "no-useless-call": () => __webpack_require__(786),
-  "no-useless-catch": () => __webpack_require__(787),
-  "no-useless-computed-key": () => __webpack_require__(788),
-  "no-useless-concat": () => __webpack_require__(789),
-  "no-useless-constructor": () => __webpack_require__(790),
-  "no-useless-escape": () => __webpack_require__(791),
-  "no-useless-rename": () => __webpack_require__(792),
-  "no-useless-return": () => __webpack_require__(793),
-  "no-var": () => __webpack_require__(794),
-  "no-void": () => __webpack_require__(795),
-  "no-warning-comments": () => __webpack_require__(796),
-  "no-whitespace-before-property": () => __webpack_require__(797),
-  "no-with": () => __webpack_require__(798),
-  "nonblock-statement-body-position": () => __webpack_require__(799),
-  "object-curly-newline": () => __webpack_require__(800),
-  "object-curly-spacing": () => __webpack_require__(801),
-  "object-property-newline": () => __webpack_require__(802),
-  "object-shorthand": () => __webpack_require__(803),
-  "one-var": () => __webpack_require__(804),
-  "one-var-declaration-per-line": () => __webpack_require__(805),
-  "operator-assignment": () => __webpack_require__(806),
-  "operator-linebreak": () => __webpack_require__(807),
-  "padded-blocks": () => __webpack_require__(808),
-  "padding-line-between-statements": () => __webpack_require__(809),
-  "prefer-arrow-callback": () => __webpack_require__(810),
-  "prefer-const": () => __webpack_require__(811),
-  "prefer-destructuring": () => __webpack_require__(812),
-  "prefer-exponentiation-operator": () => __webpack_require__(813),
-  "prefer-named-capture-group": () => __webpack_require__(814),
-  "prefer-numeric-literals": () => __webpack_require__(815),
-  "prefer-object-spread": () => __webpack_require__(816),
-  "prefer-promise-reject-errors": () => __webpack_require__(817),
-  "prefer-reflect": () => __webpack_require__(818),
-  "prefer-regex-literals": () => __webpack_require__(819),
-  "prefer-rest-params": () => __webpack_require__(820),
-  "prefer-spread": () => __webpack_require__(821),
-  "prefer-template": () => __webpack_require__(822),
-  "quote-props": () => __webpack_require__(823),
-  quotes: () => __webpack_require__(824),
-  radix: () => __webpack_require__(825),
-  "require-atomic-updates": () => __webpack_require__(826),
-  "require-await": () => __webpack_require__(827),
-  "require-jsdoc": () => __webpack_require__(828),
-  "require-unicode-regexp": () => __webpack_require__(829),
-  "require-yield": () => __webpack_require__(830),
-  "rest-spread-spacing": () => __webpack_require__(831),
-  semi: () => __webpack_require__(832),
-  "semi-spacing": () => __webpack_require__(833),
-  "semi-style": () => __webpack_require__(834),
-  "sort-imports": () => __webpack_require__(835),
-  "sort-keys": () => __webpack_require__(836),
-  "sort-vars": () => __webpack_require__(838),
-  "space-before-blocks": () => __webpack_require__(839),
-  "space-before-function-paren": () => __webpack_require__(840),
-  "space-in-parens": () => __webpack_require__(841),
-  "space-infix-ops": () => __webpack_require__(842),
-  "space-unary-ops": () => __webpack_require__(843),
-  "spaced-comment": () => __webpack_require__(844),
-  strict: () => __webpack_require__(845),
-  "switch-colon-spacing": () => __webpack_require__(846),
-  "symbol-description": () => __webpack_require__(847),
-  "template-curly-spacing": () => __webpack_require__(848),
-  "template-tag-spacing": () => __webpack_require__(849),
-  "unicode-bom": () => __webpack_require__(850),
-  "use-isnan": () => __webpack_require__(851),
-  "valid-jsdoc": () => __webpack_require__(852),
-  "valid-typeof": () => __webpack_require__(857),
-  "vars-on-top": () => __webpack_require__(858),
-  "wrap-iife": () => __webpack_require__(859),
-  "wrap-regex": () => __webpack_require__(860),
-  "yield-star-spacing": () => __webpack_require__(861),
-  yoda: () => __webpack_require__(862)
+  "accessor-pairs": () => __webpack_require__(558),
+  "array-bracket-newline": () => __webpack_require__(564),
+  "array-bracket-spacing": () => __webpack_require__(565),
+  "array-callback-return": () => __webpack_require__(566),
+  "array-element-newline": () => __webpack_require__(567),
+  "arrow-body-style": () => __webpack_require__(568),
+  "arrow-parens": () => __webpack_require__(569),
+  "arrow-spacing": () => __webpack_require__(570),
+  "block-scoped-var": () => __webpack_require__(571),
+  "block-spacing": () => __webpack_require__(572),
+  "brace-style": () => __webpack_require__(573),
+  "callback-return": () => __webpack_require__(574),
+  camelcase: () => __webpack_require__(575),
+  "capitalized-comments": () => __webpack_require__(576),
+  "class-methods-use-this": () => __webpack_require__(578),
+  "comma-dangle": () => __webpack_require__(579),
+  "comma-spacing": () => __webpack_require__(580),
+  "comma-style": () => __webpack_require__(581),
+  complexity: () => __webpack_require__(582),
+  "computed-property-spacing": () => __webpack_require__(584),
+  "consistent-return": () => __webpack_require__(585),
+  "consistent-this": () => __webpack_require__(586),
+  "constructor-super": () => __webpack_require__(587),
+  curly: () => __webpack_require__(588),
+  "default-case": () => __webpack_require__(589),
+  "default-case-last": () => __webpack_require__(590),
+  "default-param-last": () => __webpack_require__(591),
+  "dot-location": () => __webpack_require__(592),
+  "dot-notation": () => __webpack_require__(593),
+  "eol-last": () => __webpack_require__(595),
+  eqeqeq: () => __webpack_require__(596),
+  "for-direction": () => __webpack_require__(597),
+  "func-call-spacing": () => __webpack_require__(598),
+  "func-name-matching": () => __webpack_require__(599),
+  "func-names": () => __webpack_require__(600),
+  "func-style": () => __webpack_require__(601),
+  "function-call-argument-newline": () => __webpack_require__(602),
+  "function-paren-newline": () => __webpack_require__(603),
+  "generator-star-spacing": () => __webpack_require__(604),
+  "getter-return": () => __webpack_require__(605),
+  "global-require": () => __webpack_require__(606),
+  "grouped-accessor-pairs": () => __webpack_require__(607),
+  "guard-for-in": () => __webpack_require__(608),
+  "handle-callback-err": () => __webpack_require__(609),
+  "id-blacklist": () => __webpack_require__(610),
+  "id-denylist": () => __webpack_require__(611),
+  "id-length": () => __webpack_require__(612),
+  "id-match": () => __webpack_require__(613),
+  "implicit-arrow-linebreak": () => __webpack_require__(614),
+  indent: () => __webpack_require__(615),
+  "indent-legacy": () => __webpack_require__(617),
+  "init-declarations": () => __webpack_require__(618),
+  "jsx-quotes": () => __webpack_require__(619),
+  "key-spacing": () => __webpack_require__(620),
+  "keyword-spacing": () => __webpack_require__(621),
+  "line-comment-position": () => __webpack_require__(622),
+  "linebreak-style": () => __webpack_require__(623),
+  "lines-around-comment": () => __webpack_require__(624),
+  "lines-around-directive": () => __webpack_require__(625),
+  "lines-between-class-members": () => __webpack_require__(626),
+  "max-classes-per-file": () => __webpack_require__(627),
+  "max-depth": () => __webpack_require__(628),
+  "max-len": () => __webpack_require__(629),
+  "max-lines": () => __webpack_require__(630),
+  "max-lines-per-function": () => __webpack_require__(631),
+  "max-nested-callbacks": () => __webpack_require__(632),
+  "max-params": () => __webpack_require__(633),
+  "max-statements": () => __webpack_require__(634),
+  "max-statements-per-line": () => __webpack_require__(635),
+  "multiline-comment-style": () => __webpack_require__(636),
+  "multiline-ternary": () => __webpack_require__(637),
+  "new-cap": () => __webpack_require__(638),
+  "new-parens": () => __webpack_require__(639),
+  "newline-after-var": () => __webpack_require__(640),
+  "newline-before-return": () => __webpack_require__(641),
+  "newline-per-chained-call": () => __webpack_require__(642),
+  "no-alert": () => __webpack_require__(643),
+  "no-array-constructor": () => __webpack_require__(644),
+  "no-async-promise-executor": () => __webpack_require__(645),
+  "no-await-in-loop": () => __webpack_require__(646),
+  "no-bitwise": () => __webpack_require__(647),
+  "no-buffer-constructor": () => __webpack_require__(648),
+  "no-caller": () => __webpack_require__(649),
+  "no-case-declarations": () => __webpack_require__(650),
+  "no-catch-shadow": () => __webpack_require__(651),
+  "no-class-assign": () => __webpack_require__(652),
+  "no-compare-neg-zero": () => __webpack_require__(653),
+  "no-cond-assign": () => __webpack_require__(654),
+  "no-confusing-arrow": () => __webpack_require__(655),
+  "no-console": () => __webpack_require__(656),
+  "no-const-assign": () => __webpack_require__(657),
+  "no-constant-condition": () => __webpack_require__(658),
+  "no-constructor-return": () => __webpack_require__(659),
+  "no-continue": () => __webpack_require__(660),
+  "no-control-regex": () => __webpack_require__(661),
+  "no-debugger": () => __webpack_require__(663),
+  "no-delete-var": () => __webpack_require__(664),
+  "no-div-regex": () => __webpack_require__(665),
+  "no-dupe-args": () => __webpack_require__(666),
+  "no-dupe-class-members": () => __webpack_require__(667),
+  "no-dupe-else-if": () => __webpack_require__(668),
+  "no-dupe-keys": () => __webpack_require__(669),
+  "no-duplicate-case": () => __webpack_require__(670),
+  "no-duplicate-imports": () => __webpack_require__(671),
+  "no-else-return": () => __webpack_require__(672),
+  "no-empty": () => __webpack_require__(674),
+  "no-empty-character-class": () => __webpack_require__(675),
+  "no-empty-function": () => __webpack_require__(676),
+  "no-empty-pattern": () => __webpack_require__(677),
+  "no-eq-null": () => __webpack_require__(678),
+  "no-eval": () => __webpack_require__(679),
+  "no-ex-assign": () => __webpack_require__(680),
+  "no-extend-native": () => __webpack_require__(681),
+  "no-extra-bind": () => __webpack_require__(682),
+  "no-extra-boolean-cast": () => __webpack_require__(683),
+  "no-extra-label": () => __webpack_require__(684),
+  "no-extra-parens": () => __webpack_require__(685),
+  "no-extra-semi": () => __webpack_require__(686),
+  "no-fallthrough": () => __webpack_require__(687),
+  "no-floating-decimal": () => __webpack_require__(688),
+  "no-func-assign": () => __webpack_require__(689),
+  "no-global-assign": () => __webpack_require__(690),
+  "no-implicit-coercion": () => __webpack_require__(691),
+  "no-implicit-globals": () => __webpack_require__(692),
+  "no-implied-eval": () => __webpack_require__(693),
+  "no-import-assign": () => __webpack_require__(694),
+  "no-inline-comments": () => __webpack_require__(695),
+  "no-inner-declarations": () => __webpack_require__(696),
+  "no-invalid-regexp": () => __webpack_require__(697),
+  "no-invalid-this": () => __webpack_require__(698),
+  "no-irregular-whitespace": () => __webpack_require__(699),
+  "no-iterator": () => __webpack_require__(700),
+  "no-label-var": () => __webpack_require__(701),
+  "no-labels": () => __webpack_require__(702),
+  "no-lone-blocks": () => __webpack_require__(703),
+  "no-lonely-if": () => __webpack_require__(704),
+  "no-loop-func": () => __webpack_require__(705),
+  "no-loss-of-precision": () => __webpack_require__(706),
+  "no-magic-numbers": () => __webpack_require__(707),
+  "no-misleading-character-class": () => __webpack_require__(708),
+  "no-mixed-operators": () => __webpack_require__(714),
+  "no-mixed-requires": () => __webpack_require__(715),
+  "no-mixed-spaces-and-tabs": () => __webpack_require__(716),
+  "no-multi-assign": () => __webpack_require__(717),
+  "no-multi-spaces": () => __webpack_require__(718),
+  "no-multi-str": () => __webpack_require__(719),
+  "no-multiple-empty-lines": () => __webpack_require__(720),
+  "no-native-reassign": () => __webpack_require__(721),
+  "no-negated-condition": () => __webpack_require__(722),
+  "no-negated-in-lhs": () => __webpack_require__(723),
+  "no-nested-ternary": () => __webpack_require__(724),
+  "no-new": () => __webpack_require__(725),
+  "no-new-func": () => __webpack_require__(726),
+  "no-new-object": () => __webpack_require__(727),
+  "no-new-require": () => __webpack_require__(728),
+  "no-new-symbol": () => __webpack_require__(729),
+  "no-new-wrappers": () => __webpack_require__(730),
+  "no-nonoctal-decimal-escape": () => __webpack_require__(731),
+  "no-obj-calls": () => __webpack_require__(732),
+  "no-octal": () => __webpack_require__(733),
+  "no-octal-escape": () => __webpack_require__(734),
+  "no-param-reassign": () => __webpack_require__(735),
+  "no-path-concat": () => __webpack_require__(736),
+  "no-plusplus": () => __webpack_require__(737),
+  "no-process-env": () => __webpack_require__(738),
+  "no-process-exit": () => __webpack_require__(739),
+  "no-promise-executor-return": () => __webpack_require__(740),
+  "no-proto": () => __webpack_require__(741),
+  "no-prototype-builtins": () => __webpack_require__(742),
+  "no-redeclare": () => __webpack_require__(743),
+  "no-regex-spaces": () => __webpack_require__(744),
+  "no-restricted-exports": () => __webpack_require__(745),
+  "no-restricted-globals": () => __webpack_require__(746),
+  "no-restricted-imports": () => __webpack_require__(747),
+  "no-restricted-modules": () => __webpack_require__(749),
+  "no-restricted-properties": () => __webpack_require__(750),
+  "no-restricted-syntax": () => __webpack_require__(751),
+  "no-return-assign": () => __webpack_require__(752),
+  "no-return-await": () => __webpack_require__(753),
+  "no-script-url": () => __webpack_require__(754),
+  "no-self-assign": () => __webpack_require__(755),
+  "no-self-compare": () => __webpack_require__(756),
+  "no-sequences": () => __webpack_require__(757),
+  "no-setter-return": () => __webpack_require__(758),
+  "no-shadow": () => __webpack_require__(759),
+  "no-shadow-restricted-names": () => __webpack_require__(760),
+  "no-spaced-func": () => __webpack_require__(761),
+  "no-sparse-arrays": () => __webpack_require__(762),
+  "no-sync": () => __webpack_require__(763),
+  "no-tabs": () => __webpack_require__(764),
+  "no-template-curly-in-string": () => __webpack_require__(765),
+  "no-ternary": () => __webpack_require__(766),
+  "no-this-before-super": () => __webpack_require__(767),
+  "no-throw-literal": () => __webpack_require__(768),
+  "no-trailing-spaces": () => __webpack_require__(769),
+  "no-undef": () => __webpack_require__(770),
+  "no-undef-init": () => __webpack_require__(771),
+  "no-undefined": () => __webpack_require__(772),
+  "no-underscore-dangle": () => __webpack_require__(773),
+  "no-unexpected-multiline": () => __webpack_require__(774),
+  "no-unmodified-loop-condition": () => __webpack_require__(775),
+  "no-unneeded-ternary": () => __webpack_require__(776),
+  "no-unreachable": () => __webpack_require__(777),
+  "no-unreachable-loop": () => __webpack_require__(778),
+  "no-unsafe-finally": () => __webpack_require__(779),
+  "no-unsafe-negation": () => __webpack_require__(780),
+  "no-unsafe-optional-chaining": () => __webpack_require__(781),
+  "no-unused-expressions": () => __webpack_require__(782),
+  "no-unused-labels": () => __webpack_require__(783),
+  "no-unused-vars": () => __webpack_require__(784),
+  "no-use-before-define": () => __webpack_require__(785),
+  "no-useless-backreference": () => __webpack_require__(786),
+  "no-useless-call": () => __webpack_require__(787),
+  "no-useless-catch": () => __webpack_require__(788),
+  "no-useless-computed-key": () => __webpack_require__(789),
+  "no-useless-concat": () => __webpack_require__(790),
+  "no-useless-constructor": () => __webpack_require__(791),
+  "no-useless-escape": () => __webpack_require__(792),
+  "no-useless-rename": () => __webpack_require__(793),
+  "no-useless-return": () => __webpack_require__(794),
+  "no-var": () => __webpack_require__(795),
+  "no-void": () => __webpack_require__(796),
+  "no-warning-comments": () => __webpack_require__(797),
+  "no-whitespace-before-property": () => __webpack_require__(798),
+  "no-with": () => __webpack_require__(799),
+  "nonblock-statement-body-position": () => __webpack_require__(800),
+  "object-curly-newline": () => __webpack_require__(801),
+  "object-curly-spacing": () => __webpack_require__(802),
+  "object-property-newline": () => __webpack_require__(803),
+  "object-shorthand": () => __webpack_require__(804),
+  "one-var": () => __webpack_require__(805),
+  "one-var-declaration-per-line": () => __webpack_require__(806),
+  "operator-assignment": () => __webpack_require__(807),
+  "operator-linebreak": () => __webpack_require__(808),
+  "padded-blocks": () => __webpack_require__(809),
+  "padding-line-between-statements": () => __webpack_require__(810),
+  "prefer-arrow-callback": () => __webpack_require__(811),
+  "prefer-const": () => __webpack_require__(812),
+  "prefer-destructuring": () => __webpack_require__(813),
+  "prefer-exponentiation-operator": () => __webpack_require__(814),
+  "prefer-named-capture-group": () => __webpack_require__(815),
+  "prefer-numeric-literals": () => __webpack_require__(816),
+  "prefer-object-spread": () => __webpack_require__(817),
+  "prefer-promise-reject-errors": () => __webpack_require__(818),
+  "prefer-reflect": () => __webpack_require__(819),
+  "prefer-regex-literals": () => __webpack_require__(820),
+  "prefer-rest-params": () => __webpack_require__(821),
+  "prefer-spread": () => __webpack_require__(822),
+  "prefer-template": () => __webpack_require__(823),
+  "quote-props": () => __webpack_require__(824),
+  quotes: () => __webpack_require__(825),
+  radix: () => __webpack_require__(826),
+  "require-atomic-updates": () => __webpack_require__(827),
+  "require-await": () => __webpack_require__(828),
+  "require-jsdoc": () => __webpack_require__(829),
+  "require-unicode-regexp": () => __webpack_require__(830),
+  "require-yield": () => __webpack_require__(831),
+  "rest-spread-spacing": () => __webpack_require__(832),
+  semi: () => __webpack_require__(833),
+  "semi-spacing": () => __webpack_require__(834),
+  "semi-style": () => __webpack_require__(835),
+  "sort-imports": () => __webpack_require__(836),
+  "sort-keys": () => __webpack_require__(837),
+  "sort-vars": () => __webpack_require__(839),
+  "space-before-blocks": () => __webpack_require__(840),
+  "space-before-function-paren": () => __webpack_require__(841),
+  "space-in-parens": () => __webpack_require__(842),
+  "space-infix-ops": () => __webpack_require__(843),
+  "space-unary-ops": () => __webpack_require__(844),
+  "spaced-comment": () => __webpack_require__(845),
+  strict: () => __webpack_require__(846),
+  "switch-colon-spacing": () => __webpack_require__(847),
+  "symbol-description": () => __webpack_require__(848),
+  "template-curly-spacing": () => __webpack_require__(849),
+  "template-tag-spacing": () => __webpack_require__(850),
+  "unicode-bom": () => __webpack_require__(851),
+  "use-isnan": () => __webpack_require__(852),
+  "valid-jsdoc": () => __webpack_require__(853),
+  "valid-typeof": () => __webpack_require__(858),
+  "vars-on-top": () => __webpack_require__(859),
+  "wrap-iife": () => __webpack_require__(860),
+  "wrap-regex": () => __webpack_require__(861),
+  "yield-star-spacing": () => __webpack_require__(862),
+  yoda: () => __webpack_require__(863)
 }));
 
 /***/ }),
-/* 556 */
+/* 557 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -61981,7 +62100,7 @@ module.exports = new LazyLoadingRuleMap(Object.entries({
  */
 
 
-const debug = __webpack_require__(506)("eslint:rules");
+const debug = __webpack_require__(507)("eslint:rules");
 /** @typedef {import("./types").Rule} Rule */
 
 /**
@@ -61990,10 +62109,10 @@ const debug = __webpack_require__(506)("eslint:rules");
  * const rules = new LazyLoadingRuleMap([
  *     ["eqeqeq", () => require("eqeqeq")],
  *     ["semi", () => require("semi")],
- *     ["no-unused-vars", () => require("no-unused-vars")],
- * ])
+ *     ["no-unused-vars", () => require("no-unused-vars")]
+ * ]);
  *
- * rules.get("semi") // call `() => require("semi")` here.
+ * rules.get("semi"); // call `() => require("semi")` here.
  *
  * @extends {Map<string, () => Rule>}
  */
@@ -62094,7 +62213,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 557 */
+/* 558 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -62106,7 +62225,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Typedefs
 //------------------------------------------------------------------------------
 
@@ -62226,7 +62345,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce getter and setter pairs in objects and classes",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/accessor-pairs"
     },
@@ -62453,7 +62571,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 558 */
+/* 559 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -62465,18 +62583,18 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const esutils = __webpack_require__(559);
+const esutils = __webpack_require__(560);
 
-const espree = __webpack_require__(449);
+const espree = __webpack_require__(450);
 
-const escapeRegExp = __webpack_require__(535);
+const escapeRegExp = __webpack_require__(536);
 
 const {
   breakableTypePattern,
   createGlobalLinebreakMatcher,
   lineBreakPattern,
   shebangPattern
-} = __webpack_require__(455); //------------------------------------------------------------------------------
+} = __webpack_require__(456); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -63313,8 +63431,8 @@ module.exports = {
 
   /**
    * Validate that a string passed in is surrounded by the specified character
-   * @param  {string} val The text to check.
-   * @param  {string} character The character to see if it's surrounded by.
+   * @param {string} val The text to check.
+   * @param {string} character The character to see if it's surrounded by.
    * @returns {boolean} True if the text is surrounded by the character, false if not.
    * @private
    */
@@ -63329,7 +63447,7 @@ module.exports = {
    */
   isDirectiveComment(node) {
     const comment = node.value.trim();
-    return /^(?:eslint[- ]|(?:globals?|exported) )/u.test(comment);
+    return node.type === "Line" && comment.indexOf("eslint-") === 0 || node.type === "Block" && (comment.indexOf("global ") === 0 || comment.indexOf("eslint ") === 0 || comment.indexOf("eslint-") === 0);
   },
 
   /**
@@ -63715,7 +63833,8 @@ module.exports = {
    * 5e1_000   // false
    * 5n        // false
    * 1_000n    // false
-   * '5'       // false
+   * "5"       // false
+   *
    */
   isDecimalInteger(node) {
     return node.type === "Literal" && typeof node.value === "number" && DECIMAL_INTEGER_PATTERN.test(node.raw);
@@ -64057,9 +64176,9 @@ module.exports = {
     return sourceCode.getText().slice(leftToken.range[0], rightToken.range[1]);
   },
 
-  /*
+  /**
    * Determine if a node has a possibility to be an Error object
-   * @param  {ASTNode} node  ASTNode to check
+   * @param {ASTNode} node ASTNode to check
    * @returns {boolean} True if there is a chance it contains an Error obj
    */
   couldBeError(node) {
@@ -64280,7 +64399,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 559 */
+/* 560 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 /*
@@ -64309,14 +64428,14 @@ module.exports = {
 (function () {
   'use strict';
 
-  exports.ast = __webpack_require__(560);
-  exports.code = __webpack_require__(561);
-  exports.keyword = __webpack_require__(562);
+  exports.ast = __webpack_require__(561);
+  exports.code = __webpack_require__(562);
+  exports.keyword = __webpack_require__(563);
 })();
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 560 */
+/* 561 */
 /***/ ((module) => {
 
 /*
@@ -64481,7 +64600,7 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 561 */
+/* 562 */
 /***/ ((module) => {
 
 /*
@@ -64611,7 +64730,7 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 562 */
+/* 563 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 /*
@@ -64640,7 +64759,7 @@ module.exports = {
 (function () {
   'use strict';
 
-  var code = __webpack_require__(561);
+  var code = __webpack_require__(562);
 
   function isStrictModeReservedWordES6(id) {
     switch (id) {
@@ -64804,7 +64923,7 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 563 */
+/* 564 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -64814,7 +64933,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -64824,7 +64943,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce linebreaks after opening and before closing array brackets",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/array-bracket-newline"
     },
@@ -65066,7 +65184,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 564 */
+/* 565 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -65076,7 +65194,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -65086,7 +65204,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing inside array brackets",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/array-bracket-spacing"
     },
@@ -65313,7 +65430,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 565 */
+/* 566 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -65325,7 +65442,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -65456,7 +65573,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "enforce `return` statements in callbacks of array methods",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/array-callback-return"
     },
@@ -65603,7 +65719,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 566 */
+/* 567 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -65613,7 +65729,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -65623,7 +65739,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce line breaks after each array element",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/array-element-newline"
     },
@@ -65899,7 +66014,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 567 */
+/* 568 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -65911,7 +66026,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -65921,7 +66036,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require braces around arrow function bodies",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/arrow-body-style"
     },
@@ -66183,7 +66297,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 568 */
+/* 569 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -66195,7 +66309,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -66218,7 +66332,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require parentheses around arrow function arguments",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/arrow-parens"
     },
@@ -66354,7 +66467,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 569 */
+/* 570 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -66366,7 +66479,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -66376,7 +66489,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing before and after the arrow in arrow functions",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/arrow-spacing"
     },
@@ -66516,7 +66628,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 570 */
+/* 571 */
 /***/ ((module) => {
 
 "use strict";
@@ -66533,7 +66645,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce the use of variables within the scope they are defined",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/block-scoped-var"
     },
@@ -66641,7 +66752,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 571 */
+/* 572 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -66651,7 +66762,7 @@ module.exports = {
  */
 
 
-const util = __webpack_require__(558); //------------------------------------------------------------------------------
+const util = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -66661,7 +66772,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "disallow or enforce spaces inside of blocks after opening block and before closing block",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/block-spacing"
     },
@@ -66810,7 +66920,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 572 */
+/* 573 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -66820,7 +66930,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -66830,7 +66940,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent brace style for blocks",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/brace-style"
     },
@@ -66997,13 +67106,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 573 */
+/* 574 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Enforce return after a callback.
  * @author Jamund Ferguson
+ * @deprecated in ESLint v7.0.0
  */
  //------------------------------------------------------------------------------
 // Rule Definition
@@ -67016,7 +67126,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require `return` statements after callbacks",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/callback-return"
     },
@@ -67177,7 +67286,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 574 */
+/* 575 */
 /***/ ((module) => {
 
 "use strict";
@@ -67194,7 +67303,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce camelcase naming convention",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/camelcase"
     },
@@ -67395,23 +67503,22 @@ module.exports = {
     return {
       // Report camelcase of global variable references ------------------
       Program() {
-        if (ignoreGlobals) {
-          return;
-        }
+        const scope = context.getScope();
 
-        const scope = context.getScope(); // Defined globals in config files or directive comments.
+        if (!ignoreGlobals) {
+          // Defined globals in config files or directive comments.
+          for (const variable of scope.variables) {
+            if (variable.identifiers.length > 0 || isGoodName(variable.name)) {
+              continue;
+            }
 
-        for (const variable of scope.variables) {
-          if (variable.identifiers.length > 0 || isGoodName(variable.name)) {
-            continue;
-          }
-
-          for (const reference of variable.references) {
-            /*
-             * For backward compatibility, this rule reports read-only
-             * references as well.
-             */
-            reportReferenceId(reference.identifier);
+            for (const reference of variable.references) {
+              /*
+               * For backward compatibility, this rule reports read-only
+               * references as well.
+               */
+              reportReferenceId(reference.identifier);
+            }
           }
         } // Undefined globals.
 
@@ -67531,7 +67638,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 575 */
+/* 576 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -67543,9 +67650,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const LETTER_PATTERN = __webpack_require__(576);
+const LETTER_PATTERN = __webpack_require__(577);
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -67640,7 +67747,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce or disallow capitalization of the first letter of a comment",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/capitalized-comments"
     },
@@ -67817,7 +67923,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 576 */
+/* 577 */
 /***/ ((module) => {
 
 "use strict";
@@ -67858,7 +67964,7 @@ module.exports = {
 module.exports = /[A-Za-z\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\u02E0-\u02E4\u02EC\u02EE\u0370-\u0374\u0376\u0377\u037A-\u037D\u037F\u0386\u0388-\u038A\u038C\u038E-\u03A1\u03A3-\u03F5\u03F7-\u0481\u048A-\u052F\u0531-\u0556\u0559\u0561-\u0587\u05D0-\u05EA\u05F0-\u05F2\u0620-\u064A\u066E\u066F\u0671-\u06D3\u06D5\u06E5\u06E6\u06EE\u06EF\u06FA-\u06FC\u06FF\u0710\u0712-\u072F\u074D-\u07A5\u07B1\u07CA-\u07EA\u07F4\u07F5\u07FA\u0800-\u0815\u081A\u0824\u0828\u0840-\u0858\u08A0-\u08B2\u0904-\u0939\u093D\u0950\u0958-\u0961\u0971-\u0980\u0985-\u098C\u098F\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BD\u09CE\u09DC\u09DD\u09DF-\u09E1\u09F0\u09F1\u0A05-\u0A0A\u0A0F\u0A10\u0A13-\u0A28\u0A2A-\u0A30\u0A32\u0A33\u0A35\u0A36\u0A38\u0A39\u0A59-\u0A5C\u0A5E\u0A72-\u0A74\u0A85-\u0A8D\u0A8F-\u0A91\u0A93-\u0AA8\u0AAA-\u0AB0\u0AB2\u0AB3\u0AB5-\u0AB9\u0ABD\u0AD0\u0AE0\u0AE1\u0B05-\u0B0C\u0B0F\u0B10\u0B13-\u0B28\u0B2A-\u0B30\u0B32\u0B33\u0B35-\u0B39\u0B3D\u0B5C\u0B5D\u0B5F-\u0B61\u0B71\u0B83\u0B85-\u0B8A\u0B8E-\u0B90\u0B92-\u0B95\u0B99\u0B9A\u0B9C\u0B9E\u0B9F\u0BA3\u0BA4\u0BA8-\u0BAA\u0BAE-\u0BB9\u0BD0\u0C05-\u0C0C\u0C0E-\u0C10\u0C12-\u0C28\u0C2A-\u0C39\u0C3D\u0C58\u0C59\u0C60\u0C61\u0C85-\u0C8C\u0C8E-\u0C90\u0C92-\u0CA8\u0CAA-\u0CB3\u0CB5-\u0CB9\u0CBD\u0CDE\u0CE0\u0CE1\u0CF1\u0CF2\u0D05-\u0D0C\u0D0E-\u0D10\u0D12-\u0D3A\u0D3D\u0D4E\u0D60\u0D61\u0D7A-\u0D7F\u0D85-\u0D96\u0D9A-\u0DB1\u0DB3-\u0DBB\u0DBD\u0DC0-\u0DC6\u0E01-\u0E30\u0E32\u0E33\u0E40-\u0E46\u0E81\u0E82\u0E84\u0E87\u0E88\u0E8A\u0E8D\u0E94-\u0E97\u0E99-\u0E9F\u0EA1-\u0EA3\u0EA5\u0EA7\u0EAA\u0EAB\u0EAD-\u0EB0\u0EB2\u0EB3\u0EBD\u0EC0-\u0EC4\u0EC6\u0EDC-\u0EDF\u0F00\u0F40-\u0F47\u0F49-\u0F6C\u0F88-\u0F8C\u1000-\u102A\u103F\u1050-\u1055\u105A-\u105D\u1061\u1065\u1066\u106E-\u1070\u1075-\u1081\u108E\u10A0-\u10C5\u10C7\u10CD\u10D0-\u10FA\u10FC-\u1248\u124A-\u124D\u1250-\u1256\u1258\u125A-\u125D\u1260-\u1288\u128A-\u128D\u1290-\u12B0\u12B2-\u12B5\u12B8-\u12BE\u12C0\u12C2-\u12C5\u12C8-\u12D6\u12D8-\u1310\u1312-\u1315\u1318-\u135A\u1380-\u138F\u13A0-\u13F4\u1401-\u166C\u166F-\u167F\u1681-\u169A\u16A0-\u16EA\u16F1-\u16F8\u1700-\u170C\u170E-\u1711\u1720-\u1731\u1740-\u1751\u1760-\u176C\u176E-\u1770\u1780-\u17B3\u17D7\u17DC\u1820-\u1877\u1880-\u18A8\u18AA\u18B0-\u18F5\u1900-\u191E\u1950-\u196D\u1970-\u1974\u1980-\u19AB\u19C1-\u19C7\u1A00-\u1A16\u1A20-\u1A54\u1AA7\u1B05-\u1B33\u1B45-\u1B4B\u1B83-\u1BA0\u1BAE\u1BAF\u1BBA-\u1BE5\u1C00-\u1C23\u1C4D-\u1C4F\u1C5A-\u1C7D\u1CE9-\u1CEC\u1CEE-\u1CF1\u1CF5\u1CF6\u1D00-\u1DBF\u1E00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6-\u1FCC\u1FD0-\u1FD3\u1FD6-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FF4\u1FF6-\u1FFC\u2071\u207F\u2090-\u209C\u2102\u2107\u210A-\u2113\u2115\u2119-\u211D\u2124\u2126\u2128\u212A-\u212D\u212F-\u2139\u213C-\u213F\u2145-\u2149\u214E\u2183\u2184\u2C00-\u2C2E\u2C30-\u2C5E\u2C60-\u2CE4\u2CEB-\u2CEE\u2CF2\u2CF3\u2D00-\u2D25\u2D27\u2D2D\u2D30-\u2D67\u2D6F\u2D80-\u2D96\u2DA0-\u2DA6\u2DA8-\u2DAE\u2DB0-\u2DB6\u2DB8-\u2DBE\u2DC0-\u2DC6\u2DC8-\u2DCE\u2DD0-\u2DD6\u2DD8-\u2DDE\u2E2F\u3005\u3006\u3031-\u3035\u303B\u303C\u3041-\u3096\u309D-\u309F\u30A1-\u30FA\u30FC-\u30FF\u3105-\u312D\u3131-\u318E\u31A0-\u31BA\u31F0-\u31FF\u3400-\u4DB5\u4E00-\u9FCC\uA000-\uA48C\uA4D0-\uA4FD\uA500-\uA60C\uA610-\uA61F\uA62A\uA62B\uA640-\uA66E\uA67F-\uA69D\uA6A0-\uA6E5\uA717-\uA71F\uA722-\uA788\uA78B-\uA78E\uA790-\uA7AD\uA7B0\uA7B1\uA7F7-\uA801\uA803-\uA805\uA807-\uA80A\uA80C-\uA822\uA840-\uA873\uA882-\uA8B3\uA8F2-\uA8F7\uA8FB\uA90A-\uA925\uA930-\uA946\uA960-\uA97C\uA984-\uA9B2\uA9CF\uA9E0-\uA9E4\uA9E6-\uA9EF\uA9FA-\uA9FE\uAA00-\uAA28\uAA40-\uAA42\uAA44-\uAA4B\uAA60-\uAA76\uAA7A\uAA7E-\uAAAF\uAAB1\uAAB5\uAAB6\uAAB9-\uAABD\uAAC0\uAAC2\uAADB-\uAADD\uAAE0-\uAAEA\uAAF2-\uAAF4\uAB01-\uAB06\uAB09-\uAB0E\uAB11-\uAB16\uAB20-\uAB26\uAB28-\uAB2E\uAB30-\uAB5A\uAB5C-\uAB5F\uAB64\uAB65\uABC0-\uABE2\uAC00-\uD7A3\uD7B0-\uD7C6\uD7CB-\uD7FB\uF900-\uFA6D\uFA70-\uFAD9\uFB00-\uFB06\uFB13-\uFB17\uFB1D\uFB1F-\uFB28\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFBB1\uFBD3-\uFD3D\uFD50-\uFD8F\uFD92-\uFDC7\uFDF0-\uFDFB\uFE70-\uFE74\uFE76-\uFEFC\uFF21-\uFF3A\uFF41-\uFF5A\uFF66-\uFFBE\uFFC2-\uFFC7\uFFCA-\uFFCF\uFFD2-\uFFD7\uFFDA-\uFFDC]|\uD800[\uDC00-\uDC0B\uDC0D-\uDC26\uDC28-\uDC3A\uDC3C\uDC3D\uDC3F-\uDC4D\uDC50-\uDC5D\uDC80-\uDCFA\uDE80-\uDE9C\uDEA0-\uDED0\uDF00-\uDF1F\uDF30-\uDF40\uDF42-\uDF49\uDF50-\uDF75\uDF80-\uDF9D\uDFA0-\uDFC3\uDFC8-\uDFCF]|\uD801[\uDC00-\uDC9D\uDD00-\uDD27\uDD30-\uDD63\uDE00-\uDF36\uDF40-\uDF55\uDF60-\uDF67]|\uD802[\uDC00-\uDC05\uDC08\uDC0A-\uDC35\uDC37\uDC38\uDC3C\uDC3F-\uDC55\uDC60-\uDC76\uDC80-\uDC9E\uDD00-\uDD15\uDD20-\uDD39\uDD80-\uDDB7\uDDBE\uDDBF\uDE00\uDE10-\uDE13\uDE15-\uDE17\uDE19-\uDE33\uDE60-\uDE7C\uDE80-\uDE9C\uDEC0-\uDEC7\uDEC9-\uDEE4\uDF00-\uDF35\uDF40-\uDF55\uDF60-\uDF72\uDF80-\uDF91]|\uD803[\uDC00-\uDC48]|\uD804[\uDC03-\uDC37\uDC83-\uDCAF\uDCD0-\uDCE8\uDD03-\uDD26\uDD50-\uDD72\uDD76\uDD83-\uDDB2\uDDC1-\uDDC4\uDDDA\uDE00-\uDE11\uDE13-\uDE2B\uDEB0-\uDEDE\uDF05-\uDF0C\uDF0F\uDF10\uDF13-\uDF28\uDF2A-\uDF30\uDF32\uDF33\uDF35-\uDF39\uDF3D\uDF5D-\uDF61]|\uD805[\uDC80-\uDCAF\uDCC4\uDCC5\uDCC7\uDD80-\uDDAE\uDE00-\uDE2F\uDE44\uDE80-\uDEAA]|\uD806[\uDCA0-\uDCDF\uDCFF\uDEC0-\uDEF8]|\uD808[\uDC00-\uDF98]|[\uD80C\uD840-\uD868\uD86A-\uD86C][\uDC00-\uDFFF]|\uD80D[\uDC00-\uDC2E]|\uD81A[\uDC00-\uDE38\uDE40-\uDE5E\uDED0-\uDEED\uDF00-\uDF2F\uDF40-\uDF43\uDF63-\uDF77\uDF7D-\uDF8F]|\uD81B[\uDF00-\uDF44\uDF50\uDF93-\uDF9F]|\uD82C[\uDC00\uDC01]|\uD82F[\uDC00-\uDC6A\uDC70-\uDC7C\uDC80-\uDC88\uDC90-\uDC99]|\uD835[\uDC00-\uDC54\uDC56-\uDC9C\uDC9E\uDC9F\uDCA2\uDCA5\uDCA6\uDCA9-\uDCAC\uDCAE-\uDCB9\uDCBB\uDCBD-\uDCC3\uDCC5-\uDD05\uDD07-\uDD0A\uDD0D-\uDD14\uDD16-\uDD1C\uDD1E-\uDD39\uDD3B-\uDD3E\uDD40-\uDD44\uDD46\uDD4A-\uDD50\uDD52-\uDEA5\uDEA8-\uDEC0\uDEC2-\uDEDA\uDEDC-\uDEFA\uDEFC-\uDF14\uDF16-\uDF34\uDF36-\uDF4E\uDF50-\uDF6E\uDF70-\uDF88\uDF8A-\uDFA8\uDFAA-\uDFC2\uDFC4-\uDFCB]|\uD83A[\uDC00-\uDCC4]|\uD83B[\uDE00-\uDE03\uDE05-\uDE1F\uDE21\uDE22\uDE24\uDE27\uDE29-\uDE32\uDE34-\uDE37\uDE39\uDE3B\uDE42\uDE47\uDE49\uDE4B\uDE4D-\uDE4F\uDE51\uDE52\uDE54\uDE57\uDE59\uDE5B\uDE5D\uDE5F\uDE61\uDE62\uDE64\uDE67-\uDE6A\uDE6C-\uDE72\uDE74-\uDE77\uDE79-\uDE7C\uDE7E\uDE80-\uDE89\uDE8B-\uDE9B\uDEA1-\uDEA3\uDEA5-\uDEA9\uDEAB-\uDEBB]|\uD869[\uDC00-\uDED6\uDF00-\uDFFF]|\uD86D[\uDC00-\uDF34\uDF40-\uDFFF]|\uD86E[\uDC00-\uDC1D]|\uD87E[\uDC00-\uDE1D]/u;
 
 /***/ }),
-/* 577 */
+/* 578 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -67870,7 +67976,7 @@ module.exports = /[A-Za-z\xAA\xB5\xBA\xC0-\xD6\xD8-\xF6\xF8-\u02C1\u02C6-\u02D1\
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -67880,7 +67986,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce that class methods utilize `this`",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/class-methods-use-this"
     },
@@ -67998,7 +68103,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 578 */
+/* 579 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -68010,7 +68115,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -68072,7 +68177,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow trailing commas",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/comma-dangle"
     },
@@ -68349,7 +68453,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 579 */
+/* 580 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -68359,7 +68463,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -68369,7 +68473,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing before and after commas",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/comma-spacing"
     },
@@ -68535,7 +68638,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 580 */
+/* 581 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -68545,7 +68648,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -68555,7 +68658,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent comma style",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/comma-style"
     },
@@ -68828,7 +68930,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 581 */
+/* 582 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -68841,11 +68943,11 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const {
   upperCaseFirst
-} = __webpack_require__(582); //------------------------------------------------------------------------------
+} = __webpack_require__(583); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -68855,7 +68957,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce a maximum cyclomatic complexity allowed in a program",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/complexity"
     },
@@ -68991,7 +69092,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 582 */
+/* 583 */
 /***/ ((module) => {
 
 "use strict";
@@ -69019,7 +69120,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 583 */
+/* 584 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -69029,7 +69130,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -69039,7 +69140,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing inside computed property brackets",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/computed-property-spacing"
     },
@@ -69239,7 +69339,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 584 */
+/* 585 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -69251,11 +69351,11 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const {
   upperCaseFirst
-} = __webpack_require__(582); //------------------------------------------------------------------------------
+} = __webpack_require__(583); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -69288,7 +69388,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require `return` statements to either always or never specify values",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/consistent-return"
     },
@@ -69418,7 +69517,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 585 */
+/* 586 */
 /***/ ((module) => {
 
 "use strict";
@@ -69435,7 +69534,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce consistent naming when capturing the current execution context",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/consistent-this"
     },
@@ -69465,7 +69563,7 @@ module.exports = {
      * Reports that a variable declarator or assignment expression is assigning
      * a non-'this' value to the specified alias.
      * @param {ASTNode} node The assigning node.
-     * @param {string}  name the name of the alias that was incorrectly used.
+     * @param {string} name the name of the alias that was incorrectly used.
      * @returns {void}
      */
 
@@ -69580,7 +69678,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 586 */
+/* 587 */
 /***/ ((module) => {
 
 "use strict";
@@ -69693,7 +69791,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "require `super()` calls in constructors",
-      category: "ECMAScript 6",
       recommended: true,
       url: "https://eslint.org/docs/rules/constructor-super"
     },
@@ -69977,7 +70074,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 587 */
+/* 588 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -69989,7 +70086,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -69999,7 +70096,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce consistent brace style for all control statements",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/curly"
     },
@@ -70451,7 +70547,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 588 */
+/* 589 */
 /***/ ((module) => {
 
 "use strict";
@@ -70470,7 +70566,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require `default` cases in `switch` statements",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/default-case"
     },
@@ -70497,8 +70592,8 @@ module.exports = {
 
     /**
      * Shortcut to get last element of array
-     * @param  {*[]} collection Array
-     * @returns {*} Last element
+     * @param {*[]} collection Array
+     * @returns {any} Last element
      */
 
     function last(collection) {
@@ -70544,7 +70639,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 589 */
+/* 590 */
 /***/ ((module) => {
 
 "use strict";
@@ -70561,7 +70656,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce default clauses in switch statements to be last",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/default-case-last"
     },
@@ -70592,7 +70686,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 590 */
+/* 591 */
 /***/ ((module) => {
 
 "use strict";
@@ -70607,7 +70701,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce default parameters to be last",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/default-param-last"
     },
@@ -70618,9 +70711,8 @@ module.exports = {
   },
 
   create(context) {
-    // eslint-disable-next-line jsdoc/require-description
-
     /**
+     * Handler for function contexts.
      * @param {ASTNode} node function node
      * @returns {void}
      */
@@ -70654,7 +70746,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 591 */
+/* 592 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -70664,7 +70756,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -70674,7 +70766,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent newlines before and after dots",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/dot-location"
     },
@@ -70760,7 +70851,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 592 */
+/* 593 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -70772,9 +70863,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
-const keywords = __webpack_require__(593); //------------------------------------------------------------------------------
+const keywords = __webpack_require__(594); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -70787,7 +70878,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce dot notation whenever possible",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/dot-notation"
     },
@@ -70912,7 +71002,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 593 */
+/* 594 */
 /***/ ((module) => {
 
 "use strict";
@@ -70925,7 +71015,7 @@ module.exports = {
 module.exports = ["abstract", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "debugger", "default", "delete", "do", "double", "else", "enum", "export", "extends", "false", "final", "finally", "float", "for", "function", "goto", "if", "implements", "import", "in", "instanceof", "int", "interface", "long", "native", "new", "null", "package", "private", "protected", "public", "return", "short", "static", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "true", "try", "typeof", "var", "void", "volatile", "while", "with"];
 
 /***/ }),
-/* 594 */
+/* 595 */
 /***/ ((module) => {
 
 "use strict";
@@ -70942,7 +71032,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow newline at the end of files",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/eol-last"
     },
@@ -71008,10 +71097,20 @@ module.exports = {
 
           });
         } else if (mode === "never" && endsWithNewline) {
-          // File is newline-terminated, but shouldn't be
+          const secondLastLine = sourceCode.lines[sourceCode.lines.length - 2]; // File is newline-terminated, but shouldn't be
+
           context.report({
             node,
-            loc: location,
+            loc: {
+              start: {
+                line: sourceCode.lines.length - 1,
+                column: secondLastLine.length
+              },
+              end: {
+                line: sourceCode.lines.length,
+                column: 0
+              }
+            },
             messageId: "unexpected",
 
             fix(fixer) {
@@ -71031,7 +71130,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 595 */
+/* 596 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -71043,7 +71142,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -71053,7 +71152,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require the use of `===` and `!==`",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/eqeqeq"
     },
@@ -71095,7 +71193,7 @@ module.exports = {
     const enforceInverseRuleForNull = nullOption === "never";
     /**
      * Checks if an expression is a typeof expression
-     * @param  {ASTNode} node The node to check
+     * @param {ASTNode} node The node to check
      * @returns {boolean} if the node is a typeof expression
      */
 
@@ -71196,7 +71294,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 596 */
+/* 597 */
 /***/ ((module) => {
 
 "use strict";
@@ -71213,7 +71311,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "enforce \"for\" loop update clause moving the counter in the right direction.",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/for-direction"
     },
@@ -71330,7 +71427,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 597 */
+/* 598 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -71342,7 +71439,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -71352,7 +71449,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow spacing between function identifiers and their invocations",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/func-call-spacing"
     },
@@ -71556,7 +71652,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 598 */
+/* 599 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -71568,9 +71664,9 @@ module.exports = {
 // Requirements
 //--------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
-const esutils = __webpack_require__(559); //--------------------------------------------------------------------------
+const esutils = __webpack_require__(560); //--------------------------------------------------------------------------
 // Helpers
 //--------------------------------------------------------------------------
 
@@ -71635,7 +71731,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require function names to match the name of the variable or property to which they are assigned",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/func-name-matching"
     },
@@ -71755,21 +71850,21 @@ module.exports = {
         const isProp = node.left.type === "MemberExpression";
         const name = isProp ? astUtils.getStaticPropertyName(node.left) : node.left.name;
 
-        if (node.right.id && isIdentifier(name) && shouldWarn(name, node.right.id.name)) {
+        if (node.right.id && name && isIdentifier(name) && shouldWarn(name, node.right.id.name)) {
           report(node, name, node.right.id.name, isProp);
         }
       },
 
-      Property(node) {
-        if (node.value.type !== "FunctionExpression" || !node.value.id || node.computed && !isStringLiteral(node.key)) {
+      "Property, PropertyDefinition[value]"(node) {
+        if (!(node.value.type === "FunctionExpression" && node.value.id)) {
           return;
         }
 
-        if (node.key.type === "Identifier") {
+        if (node.key.type === "Identifier" && !node.computed) {
           const functionName = node.value.id.name;
           let propertyName = node.key.name;
 
-          if (considerPropertyDescriptor && propertyName === "value") {
+          if (considerPropertyDescriptor && propertyName === "value" && node.parent.type === "ObjectExpression") {
             if (isPropertyCall("Object", "defineProperty", node.parent.parent) || isPropertyCall("Reflect", "defineProperty", node.parent.parent)) {
               const property = node.parent.parent.arguments[1];
 
@@ -71809,7 +71904,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 599 */
+/* 600 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -71821,7 +71916,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 /**
  * Checks whether or not a given variable is a function name.
  * @param {eslint-scope.Variable} variable A variable to check.
@@ -71841,7 +71936,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require or disallow named `function` expressions",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/func-names"
     },
@@ -71984,7 +72078,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 600 */
+/* 601 */
 /***/ ((module) => {
 
 "use strict";
@@ -72001,7 +72095,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce the consistent use of either `function` declarations or expressions",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/func-style"
     },
@@ -72090,7 +72183,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 601 */
+/* 602 */
 /***/ ((module) => {
 
 "use strict";
@@ -72107,7 +72200,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce line breaks between arguments of a function call",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/function-call-argument-newline"
     },
@@ -72205,7 +72297,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 602 */
+/* 603 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -72217,7 +72309,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -72227,7 +72319,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent line breaks inside function parentheses",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/function-paren-newline"
     },
@@ -72384,6 +72475,7 @@ module.exports = {
     /**
      * Gets the left paren and right paren tokens of a node.
      * @param {ASTNode} node The node with parens
+     * @throws {TypeError} Unexecpted node type.
      * @returns {Object} An object with keys `leftParen` for the left paren token, and `rightParen` for the right paren token.
      * Can also return `null` if an expression has no parens (e.g. a NewExpression with no arguments, or an ArrowFunctionExpression
      * with a single parameter)
@@ -72482,7 +72574,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 603 */
+/* 604 */
 /***/ ((module) => {
 
 "use strict";
@@ -72515,7 +72607,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing around `*` operators in generator functions",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/generator-star-spacing"
     },
@@ -72697,7 +72788,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 604 */
+/* 605 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -72709,7 +72800,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -72733,7 +72824,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "enforce `return` statements in getters",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/getter-return"
     },
@@ -72862,13 +72952,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 605 */
+/* 606 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Rule for disallowing require() outside of the top-level module context
  * @author Jamund Ferguson
+ * @deprecated in ESLint v7.0.0
  */
 
 
@@ -72910,7 +73001,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require `require()` calls to be placed at top-level module scope",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/global-require"
     },
@@ -72943,7 +73033,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 606 */
+/* 607 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -72955,7 +73045,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Typedefs
 //------------------------------------------------------------------------------
 
@@ -73040,7 +73130,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require grouped accessor pairs in object literals and classes",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/grouped-accessor-pairs"
     },
@@ -73164,7 +73253,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 607 */
+/* 608 */
 /***/ ((module) => {
 
 "use strict";
@@ -73181,7 +73270,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require `for-in` loops to include an `if` statement",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/guard-for-in"
     },
@@ -73241,13 +73329,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 608 */
+/* 609 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Ensure handling of errors when we know they exist.
  * @author Jamund Ferguson
+ * @deprecated in ESLint v7.0.0
  */
  //------------------------------------------------------------------------------
 // Rule Definition
@@ -73260,7 +73349,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require error handling in callbacks",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/handle-callback-err"
     },
@@ -73341,7 +73429,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 609 */
+/* 610 */
 /***/ ((module) => {
 
 "use strict";
@@ -73349,6 +73437,7 @@ module.exports = {
  * @fileoverview Rule that warns when identifier names that are
  * specified in the configuration are used.
  * @author Keith Cirkel (http://keithcirkel.co.uk)
+ * @deprecated in ESLint v7.5.0
  */
  //------------------------------------------------------------------------------
 // Helpers
@@ -73419,7 +73508,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow specified identifiers",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/id-blacklist"
     },
@@ -73529,7 +73617,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 610 */
+/* 611 */
 /***/ ((module) => {
 
 "use strict";
@@ -73594,7 +73682,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow specified identifiers",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/id-denylist"
     },
@@ -73706,7 +73793,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 611 */
+/* 612 */
 /***/ ((module) => {
 
 "use strict";
@@ -73724,7 +73811,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce minimum and maximum identifier lengths",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/id-length"
     },
@@ -73867,7 +73953,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 612 */
+/* 613 */
 /***/ ((module) => {
 
 "use strict";
@@ -73884,7 +73970,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require identifiers to match a specified regular expression",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/id-match"
     },
@@ -74109,7 +74194,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 613 */
+/* 614 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -74122,7 +74207,7 @@ module.exports = {
 const {
   isCommentToken,
   isNotOpeningParenToken
-} = __webpack_require__(558); //------------------------------------------------------------------------------
+} = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -74132,7 +74217,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce the location of arrow function bodies",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/implicit-arrow-linebreak"
     },
@@ -74200,7 +74284,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 614 */
+/* 615 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -74215,9 +74299,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const createTree = __webpack_require__(615);
+const createTree = __webpack_require__(616);
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -74252,7 +74336,7 @@ class BinarySearchTree {
   /**
    * Inserts an entry into the tree.
    * @param {number} key The entry's key
-   * @param {*} value The entry's value
+   * @param {any} value The entry's value
    * @returns {void}
    */
 
@@ -74310,8 +74394,6 @@ class BinarySearchTree {
 
 
 class TokenInfo {
-  // eslint-disable-next-line jsdoc/require-description
-
   /**
    * @param {SourceCode} sourceCode A SourceCode object
    */
@@ -74367,8 +74449,6 @@ class TokenInfo {
 
 
 class OffsetStorage {
-  // eslint-disable-next-line jsdoc/require-description
-
   /**
    * @param {TokenInfo} tokenInfo a TokenInfo instance
    * @param {number} indentSize The desired size of each indentation level
@@ -74396,7 +74476,7 @@ class OffsetStorage {
   }
   /**
    * Sets the offset column of token B to match the offset column of token A.
-   * **WARNING**: This matches a *column*, even if baseToken is not the first token on its line. In
+   * - **WARNING**: This matches a *column*, even if baseToken is not the first token on its line. In
    * most cases, `setDesiredOffset` should be used instead.
    * @param {Token} baseToken The first token
    * @param {Token} offsetToken The second token, whose offset should be matched to the first token
@@ -74486,11 +74566,11 @@ class OffsetStorage {
    * Instead, the offset tree is represented as a collection of contiguous offset ranges in a file. For example, the following
    * list could represent the state of the offset tree at a given point:
    *
-   * * Tokens starting in the interval [0, 15) are aligned with the beginning of the file
-   * * Tokens starting in the interval [15, 30) are offset by 1 indent level from the `bar` token
-   * * Tokens starting in the interval [30, 43) are offset by 1 indent level from the `foo` token
-   * * Tokens starting in the interval [43, 820) are offset by 2 indent levels from the `bar` token
-   * * Tokens starting in the interval [820, ∞) are offset by 1 indent level from the `baz` token
+   * - Tokens starting in the interval [0, 15) are aligned with the beginning of the file
+   * - Tokens starting in the interval [15, 30) are offset by 1 indent level from the `bar` token
+   * - Tokens starting in the interval [30, 43) are offset by 1 indent level from the `foo` token
+   * - Tokens starting in the interval [43, 820) are offset by 2 indent levels from the `bar` token
+   * - Tokens starting in the interval [820, ∞) are offset by 1 indent level from the `baz` token
    *
    * The `setDesiredOffsets` methods inserts ranges like the ones above. The third line above would be inserted by using:
    * `setDesiredOffsets([30, 43], fooToken, 1);`
@@ -74623,7 +74703,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent indentation",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/indent"
     },
@@ -75774,7 +75853,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 615 */
+/* 616 */
 /***/ ((module) => {
 
 "use strict";
@@ -76930,7 +77009,7 @@ function createRBTree(compare) {
 }
 
 /***/ }),
-/* 616 */
+/* 617 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -76940,12 +77019,13 @@ function createRBTree(compare) {
  * This rule has been ported and modified from nodeca.
  * @author Vitaly Puzrin
  * @author Gyandeep Singh
+ * @deprecated in ESLint v4.0.0
  */
  //------------------------------------------------------------------------------
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -76957,7 +77037,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent indentation",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/indent-legacy"
     },
@@ -77961,7 +78040,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 617 */
+/* 618 */
 /***/ ((module) => {
 
 "use strict";
@@ -78012,7 +78091,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require or disallow initialization in variable declarations",
-      category: "Variables",
       recommended: false,
       url: "https://eslint.org/docs/rules/init-declarations"
     },
@@ -78091,7 +78169,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 618 */
+/* 619 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -78103,7 +78181,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
 
@@ -78136,7 +78214,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce the consistent use of either double or single quotes in JSX attributes",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/jsx-quotes"
     },
@@ -78189,7 +78266,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 619 */
+/* 620 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -78201,7 +78278,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -78331,7 +78408,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing between keys and values in object literal properties",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/key-spacing"
     },
@@ -78707,8 +78783,8 @@ module.exports = {
     }
     /**
      * Creates groups of properties.
-     * @param  {ASTNode} node ObjectExpression node being evaluated.
-     * @returns {Array.<ASTNode[]>} Groups of property AST node lists.
+     * @param {ASTNode} node ObjectExpression node being evaluated.
+     * @returns {Array<ASTNode[]>} Groups of property AST node lists.
      */
 
 
@@ -78783,7 +78859,7 @@ module.exports = {
     }
     /**
      * Verifies spacing of property conforms to specified options.
-     * @param  {ASTNode} node Property node being evaluated.
+     * @param {ASTNode} node Property node being evaluated.
      * @param {Object} lineOptions Configured singleLine or multiLine options
      * @returns {void}
      */
@@ -78815,7 +78891,7 @@ module.exports = {
     }
     /**
      * Verifies vertical alignment, taking into account groups of properties.
-     * @param  {ASTNode} node ObjectExpression node being evaluated.
+     * @param {ASTNode} node ObjectExpression node being evaluated.
      * @returns {void}
      */
 
@@ -78861,7 +78937,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 620 */
+/* 621 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -78873,8 +78949,8 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558),
-      keywords = __webpack_require__(593); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559),
+      keywords = __webpack_require__(594); //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
 
@@ -78929,7 +79005,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing before and after keywords",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/keyword-spacing"
     },
@@ -79274,7 +79349,14 @@ module.exports = {
 
     function checkSpacingForForInStatement(node) {
       checkSpacingAroundFirstToken(node);
-      checkSpacingAroundTokenBefore(node.right);
+      const inToken = sourceCode.getTokenBefore(node.right, astUtils.isNotOpeningParenToken);
+      const previousToken = sourceCode.getTokenBefore(inToken);
+
+      if (previousToken.type !== "PrivateIdentifier") {
+        checkSpacingBefore(inToken);
+      }
+
+      checkSpacingAfter(inToken);
     }
     /**
      * Reports `for` and `of` keywords of a given node if usage of spacing
@@ -79292,7 +79374,14 @@ module.exports = {
         checkSpacingAroundFirstToken(node);
       }
 
-      checkSpacingAround(sourceCode.getTokenBefore(node.right, astUtils.isNotOpeningParenToken));
+      const ofToken = sourceCode.getTokenBefore(node.right, astUtils.isNotOpeningParenToken);
+      const previousToken = sourceCode.getTokenBefore(ofToken);
+
+      if (previousToken.type !== "PrivateIdentifier") {
+        checkSpacingBefore(ofToken);
+      }
+
+      checkSpacingAfter(ofToken);
     }
     /**
      * Reports `import`, `export`, `as`, and `from` keywords of a given node if
@@ -79343,6 +79432,7 @@ module.exports = {
      * Reports `static`, `get`, and `set` keywords of a given node if usage of
      * spacing around those keywords is invalid.
      * @param {ASTNode} node A node to report.
+     * @throws {Error} If unable to find token get, set, or async beside method name.
      * @returns {void}
      */
 
@@ -79433,7 +79523,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 621 */
+/* 622 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -79443,7 +79533,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -79453,7 +79543,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce position of line comments",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/line-comment-position"
     },
@@ -79552,7 +79641,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 622 */
+/* 623 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -79564,7 +79653,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -79574,7 +79663,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent linebreak style",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/linebreak-style"
     },
@@ -79652,7 +79740,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 623 */
+/* 624 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -79664,7 +79752,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -79707,7 +79795,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require empty lines around comments",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/lines-around-comment"
     },
@@ -80057,18 +80144,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 624 */
+/* 625 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 /**
  * @fileoverview Require or disallow newlines around directives.
  * @author Kai Cataldo
- * @deprecated
+ * @deprecated in ESLint v4.0.0
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -80078,7 +80165,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow newlines around directives",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/lines-around-directive"
     },
@@ -80256,7 +80342,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 625 */
+/* 626 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -80266,7 +80352,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -80276,7 +80362,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow an empty line between class members",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/lines-between-class-members"
     },
@@ -80399,7 +80484,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 626 */
+/* 627 */
 /***/ ((module) => {
 
 "use strict";
@@ -80419,7 +80504,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce a maximum number of classes per file",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/max-classes-per-file"
     },
@@ -80463,7 +80547,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 627 */
+/* 628 */
 /***/ ((module) => {
 
 "use strict";
@@ -80480,7 +80564,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce a maximum depth that blocks can be nested",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/max-depth"
     },
@@ -80618,7 +80701,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 628 */
+/* 629 */
 /***/ ((module) => {
 
 "use strict";
@@ -80683,7 +80766,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce a maximum line length",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/max-len"
     },
@@ -80814,7 +80896,7 @@ module.exports = {
      * Ensure that an array exists at [key] on `object`, and add `value` to it.
      * @param {Object} object the object to mutate
      * @param {string} key the object's key
-     * @param {*} value the value to add
+     * @param {any} value the value to add
      * @returns {void}
      * @private
      */
@@ -81018,7 +81100,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 629 */
+/* 630 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -81030,7 +81112,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -81054,7 +81136,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce a maximum number of lines per file",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/max-lines"
     },
@@ -81201,7 +81282,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 630 */
+/* 631 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -81213,11 +81294,11 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const {
   upperCaseFirst
-} = __webpack_require__(582); //------------------------------------------------------------------------------
+} = __webpack_require__(583); //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
 
@@ -81250,7 +81331,7 @@ const OPTIONS_OR_INTEGER_SCHEMA = {
 /**
  * Given a list of comment nodes, return a map with numeric keys (source code line numbers) and comment token values.
  * @param {Array} comments An array of comment nodes.
- * @returns {Map.<string,Node>} A map with numeric keys (source code line numbers) and comment token values.
+ * @returns {Map<string, Node>} A map with numeric keys (source code line numbers) and comment token values.
  */
 
 function getCommentLineNumbers(comments) {
@@ -81271,7 +81352,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce a maximum number of lines of code in a function",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/max-lines-per-function"
     },
@@ -81416,7 +81496,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 631 */
+/* 632 */
 /***/ ((module) => {
 
 "use strict";
@@ -81433,7 +81513,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce a maximum depth that callbacks can be nested",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/max-nested-callbacks"
     },
@@ -81529,7 +81608,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 632 */
+/* 633 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -81541,11 +81620,11 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const {
   upperCaseFirst
-} = __webpack_require__(582); //------------------------------------------------------------------------------
+} = __webpack_require__(583); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -81555,7 +81634,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce a maximum number of parameters in function definitions",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/max-params"
     },
@@ -81628,7 +81706,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 633 */
+/* 634 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -81640,11 +81718,11 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const {
   upperCaseFirst
-} = __webpack_require__(582); //------------------------------------------------------------------------------
+} = __webpack_require__(583); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -81654,7 +81732,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce a maximum number of statements allowed in function blocks",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/max-statements"
     },
@@ -81801,7 +81878,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 634 */
+/* 635 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -81813,7 +81890,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -81823,7 +81900,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce a maximum number of statements allowed per line",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/max-statements-per-line"
     },
@@ -81992,7 +82068,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 635 */
+/* 636 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -82002,7 +82078,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -82012,7 +82088,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce a particular style for multiline comments",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/multiline-comment-style"
     },
@@ -82447,7 +82522,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 636 */
+/* 637 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -82457,7 +82532,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -82467,7 +82542,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce newlines between operands of ternary expressions",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/multiline-ternary"
     },
@@ -82601,7 +82675,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 637 */
+/* 638 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -82613,7 +82687,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -82623,7 +82697,8 @@ const CAPS_ALLOWED = ["Array", "Boolean", "Date", "Error", "Function", "Number",
  * Ensure that if the key is provided, it must be an array.
  * @param {Object} obj Object to check with `key`.
  * @param {string} key Object key to check on `obj`.
- * @param {*} fallback If obj[key] is not present, this will be returned.
+ * @param {any} fallback If obj[key] is not present, this will be returned.
+ * @throws {TypeError} If key is not an own array type property of `obj`.
  * @returns {string[]} Returns obj[key] if it's an Array, otherwise `fallback`
  */
 
@@ -82672,7 +82747,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require constructor names to begin with a capital letter",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/new-cap"
     },
@@ -82856,7 +82930,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 638 */
+/* 639 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -82868,7 +82942,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -82881,7 +82955,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce or disallow parentheses when invoking a constructor with no arguments",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/new-parens"
     },
@@ -82943,20 +83016,20 @@ module.exports = {
 };
 
 /***/ }),
-/* 639 */
+/* 640 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 /**
  * @fileoverview Rule to check empty newline after "var" statement
  * @author Gopal Venkatesan
- * @deprecated
+ * @deprecated in ESLint v4.0.0
  */
  //------------------------------------------------------------------------------
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -82966,7 +83039,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow an empty line after variable declarations",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/newline-after-var"
     },
@@ -83082,9 +83154,9 @@ module.exports = {
     }
     /**
      * Determine if a token starts more than one line after a comment ends
-     * @param  {token}   token            The token being checked
-     * @param {integer}  commentStartLine The line number on which the comment starts
-     * @returns {boolean}                 True if `token` does not start immediately after a comment
+     * @param {token} token The token being checked
+     * @param {integer} commentStartLine The line number on which the comment starts
+     * @returns {boolean} True if `token` does not start immediately after a comment
      */
 
 
@@ -83195,14 +83267,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 640 */
+/* 641 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Rule to require newlines before `return` statement
  * @author Kai Cataldo
- * @deprecated
+ * @deprecated in ESLint v4.0.0
  */
  //------------------------------------------------------------------------------
 // Rule Definition
@@ -83213,7 +83285,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require an empty line before `return` statements",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/newline-before-return"
     },
@@ -83330,7 +83401,7 @@ module.exports = {
       if (tokenBefore) {
         lineNumTokenBefore = tokenBefore.loc.end.line;
       } else {
-        lineNumTokenBefore = 0; // Global return at beginning of script
+        lineNumTokenBefore = 0; // global return at beginning of script
       }
 
       return lineNumTokenBefore;
@@ -83417,7 +83488,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 641 */
+/* 642 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -83428,7 +83499,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -83438,7 +83509,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require a newline after each call in a method chain",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/newline-per-chained-call"
     },
@@ -83468,7 +83538,7 @@ module.exports = {
      * Get the prefix of a given MemberExpression node.
      * If the MemberExpression node is a computed value it returns a
      * left bracket. If not it returns a period.
-     * @param  {ASTNode} node A MemberExpression node to get
+     * @param {ASTNode} node A MemberExpression node to get
      * @returns {string} The prefix of the node.
      */
 
@@ -83545,7 +83615,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 642 */
+/* 643 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -83561,7 +83631,7 @@ const {
   getStaticPropertyName: getPropertyName,
   getVariableByName,
   skipChainExpression
-} = __webpack_require__(558); //------------------------------------------------------------------------------
+} = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -83632,7 +83702,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of `alert`, `confirm`, and `prompt`",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-alert"
     },
@@ -83681,7 +83750,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 643 */
+/* 644 */
 /***/ ((module) => {
 
 "use strict";
@@ -83698,7 +83767,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `Array` constructors",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-array-constructor"
     },
@@ -83733,7 +83801,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 644 */
+/* 645 */
 /***/ ((module) => {
 
 "use strict";
@@ -83750,7 +83818,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow using an async function as a Promise executor",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-async-promise-executor"
     },
@@ -83776,7 +83843,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 645 */
+/* 646 */
 /***/ ((module) => {
 
 "use strict";
@@ -83826,7 +83893,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow `await` inside of loops",
-      category: "Possible Errors",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-await-in-loop"
     },
@@ -83873,7 +83939,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 646 */
+/* 647 */
 /***/ ((module) => {
 
 "use strict";
@@ -83897,7 +83963,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow bitwise operators",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-bitwise"
     },
@@ -83929,7 +83994,7 @@ module.exports = {
     const int32Hint = options.int32Hint === true;
     /**
      * Reports an unexpected use of a bitwise operator.
-     * @param   {ASTNode} node Node which contains the bitwise operator.
+     * @param {ASTNode} node Node which contains the bitwise operator.
      * @returns {void}
      */
 
@@ -83944,7 +84009,7 @@ module.exports = {
     }
     /**
      * Checks if the given node has a bitwise operator.
-     * @param   {ASTNode} node The node to check.
+     * @param {ASTNode} node The node to check.
      * @returns {boolean} Whether or not the node has a bitwise operator.
      */
 
@@ -83954,7 +84019,7 @@ module.exports = {
     }
     /**
      * Checks if exceptions were provided, e.g. `{ allow: ['~', '|'] }`.
-     * @param   {ASTNode} node The node to check.
+     * @param {ASTNode} node The node to check.
      * @returns {boolean} Whether or not the node has a bitwise operator.
      */
 
@@ -83964,7 +84029,7 @@ module.exports = {
     }
     /**
      * Checks if the given bitwise operator is used for integer typecasting, i.e. "|0"
-     * @param   {ASTNode} node The node to check.
+     * @param {ASTNode} node The node to check.
      * @returns {boolean} whether the node is used in integer typecasting.
      */
 
@@ -83974,7 +84039,7 @@ module.exports = {
     }
     /**
      * Report if the given node contains a bitwise operator.
-     * @param   {ASTNode} node The node to check.
+     * @param {ASTNode} node The node to check.
      * @returns {void}
      */
 
@@ -83995,13 +84060,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 647 */
+/* 648 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview disallow use of the Buffer() constructor
  * @author Teddy Katz
+ * @deprecated in ESLint v7.0.0
  */
  //------------------------------------------------------------------------------
 // Rule Definition
@@ -84014,7 +84080,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow use of the `Buffer()` constructor",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-buffer-constructor"
     },
@@ -84045,7 +84110,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 648 */
+/* 649 */
 /***/ ((module) => {
 
 "use strict";
@@ -84062,7 +84127,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of `arguments.caller` or `arguments.callee`",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-caller"
     },
@@ -84095,7 +84159,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 649 */
+/* 650 */
 /***/ ((module) => {
 
 "use strict";
@@ -84112,7 +84176,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow lexical declarations in case clauses",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-case-declarations"
     },
@@ -84162,7 +84225,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 650 */
+/* 651 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -84175,7 +84238,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -84185,7 +84248,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `catch` clause parameters from shadowing variables in the outer scope",
-      category: "Variables",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-catch-shadow"
     },
@@ -84244,7 +84306,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 651 */
+/* 652 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -84254,7 +84316,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -84264,7 +84326,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow reassigning class members",
-      category: "ECMAScript 6",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-class-assign"
     },
@@ -84311,7 +84372,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 652 */
+/* 653 */
 /***/ ((module) => {
 
 "use strict";
@@ -84328,7 +84389,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow comparing against -0",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-compare-neg-zero"
     },
@@ -84375,7 +84435,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 653 */
+/* 654 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -84387,7 +84447,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -84407,7 +84467,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow assignment operators in conditional expressions",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-cond-assign"
     },
@@ -84517,7 +84576,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 654 */
+/* 655 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -84528,7 +84587,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -84551,7 +84610,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow arrow functions where they could be confused with comparisons",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-confusing-arrow"
     },
@@ -84606,7 +84664,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 655 */
+/* 656 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -84618,7 +84676,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -84628,7 +84686,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of `console`",
-      category: "Possible Errors",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-console"
     },
@@ -84730,7 +84787,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 656 */
+/* 657 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -84740,7 +84797,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -84750,7 +84807,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow reassigning `const` variables",
-      category: "ECMAScript 6",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-const-assign"
     },
@@ -84791,7 +84847,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 657 */
+/* 658 */
 /***/ ((module) => {
 
 "use strict";
@@ -84811,7 +84867,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow constant expressions in conditions",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-constant-condition"
     },
@@ -85078,7 +85133,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 658 */
+/* 659 */
 /***/ ((module) => {
 
 "use strict";
@@ -85095,7 +85150,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow returning value from constructor",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-constructor-return"
     },
@@ -85138,7 +85192,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 659 */
+/* 660 */
 /***/ ((module) => {
 
 "use strict";
@@ -85155,7 +85209,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `continue` statements",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-continue"
     },
@@ -85180,7 +85233,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 660 */
+/* 661 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -85190,7 +85243,7 @@ module.exports = {
  */
 
 
-const RegExpValidator = __webpack_require__(661).RegExpValidator;
+const RegExpValidator = __webpack_require__(662).RegExpValidator;
 
 const collector = new class {
   constructor() {
@@ -85230,7 +85283,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow control characters in regular expressions",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-control-regex"
     },
@@ -85284,7 +85336,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 661 */
+/* 662 */
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -87729,7 +87781,7 @@ exports.validateRegExpLiteral = validateRegExpLiteral;
 exports.visitRegExpAST = visitRegExpAST;
 
 /***/ }),
-/* 662 */
+/* 663 */
 /***/ ((module) => {
 
 "use strict";
@@ -87746,7 +87798,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow the use of `debugger`",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-debugger"
     },
@@ -87772,7 +87823,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 663 */
+/* 664 */
 /***/ ((module) => {
 
 "use strict";
@@ -87789,7 +87840,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow deleting variables",
-      category: "Variables",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-delete-var"
     },
@@ -87816,7 +87866,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 664 */
+/* 665 */
 /***/ ((module) => {
 
 "use strict";
@@ -87833,7 +87883,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow division operators explicitly at the beginning of regular expressions",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-div-regex"
     },
@@ -87869,7 +87918,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 665 */
+/* 666 */
 /***/ ((module) => {
 
 "use strict";
@@ -87886,7 +87935,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow duplicate arguments in `function` definitions",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-dupe-args"
     },
@@ -87949,7 +87997,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 666 */
+/* 667 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -87959,7 +88007,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -87969,7 +88017,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow duplicate class members",
-      category: "ECMAScript 6",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-dupe-class-members"
     },
@@ -88069,7 +88116,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 667 */
+/* 668 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -88081,7 +88128,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -88123,7 +88170,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow duplicate conditions in if-else-if chains",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-dupe-else-if"
     },
@@ -88184,7 +88230,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 668 */
+/* 669 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -88196,7 +88242,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -88208,8 +88254,6 @@ const SET_KIND = /^(?:init|set)$/u;
  */
 
 class ObjectInfo {
-  // eslint-disable-next-line jsdoc/require-description
-
   /**
    * @param {ObjectInfo|null} upper The information of the outer object.
    * @param {ASTNode} node The ObjectExpression node of this information.
@@ -88278,7 +88322,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow duplicate keys in object literals",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-dupe-keys"
     },
@@ -88333,7 +88376,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 669 */
+/* 670 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -88346,7 +88389,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -88356,7 +88399,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow duplicate case labels",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-duplicate-case"
     },
@@ -88409,7 +88451,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 670 */
+/* 671 */
 /***/ ((module) => {
 
 "use strict";
@@ -88631,7 +88673,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow duplicate module imports",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-duplicate-imports"
     },
@@ -88671,7 +88712,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 671 */
+/* 672 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -88683,9 +88724,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
-const FixTracker = __webpack_require__(672); //------------------------------------------------------------------------------
+const FixTracker = __webpack_require__(673); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -88695,7 +88736,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `else` blocks after `return` statements in `if` statements",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-else-return"
     },
@@ -89090,7 +89130,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 672 */
+/* 673 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -89102,7 +89142,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------
 
@@ -89203,7 +89243,7 @@ class FixTracker {
 module.exports = FixTracker;
 
 /***/ }),
-/* 673 */
+/* 674 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -89215,7 +89255,7 @@ module.exports = FixTracker;
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -89225,7 +89265,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow empty block statements",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-empty"
     },
@@ -89296,7 +89335,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 674 */
+/* 675 */
 /***/ ((module) => {
 
 "use strict";
@@ -89327,7 +89366,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow empty character classes in regular expressions",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-empty-character-class"
     },
@@ -89354,7 +89392,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 675 */
+/* 676 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -89366,7 +89404,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -89442,7 +89480,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow empty functions",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-empty-function"
     },
@@ -89510,7 +89547,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 676 */
+/* 677 */
 /***/ ((module) => {
 
 "use strict";
@@ -89527,7 +89564,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow empty destructuring patterns",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-empty-pattern"
     },
@@ -89569,7 +89605,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 677 */
+/* 678 */
 /***/ ((module) => {
 
 "use strict";
@@ -89587,7 +89623,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `null` comparisons without type-checking operators",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-eq-null"
     },
@@ -89616,7 +89651,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 678 */
+/* 679 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -89628,7 +89663,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -89655,7 +89690,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of `eval()`",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-eval"
     },
@@ -89875,7 +89909,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 679 */
+/* 680 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -89885,7 +89919,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -89895,7 +89929,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow reassigning exceptions in `catch` clauses",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-ex-assign"
     },
@@ -89931,7 +89964,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 680 */
+/* 681 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -89943,9 +89976,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
-const globals = __webpack_require__(503); //------------------------------------------------------------------------------
+const globals = __webpack_require__(504); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -89955,7 +89988,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow extending native types",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-extend-native"
     },
@@ -90084,7 +90116,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 681 */
+/* 682 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -90096,7 +90128,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -90110,7 +90142,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary calls to `.bind()`",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-extra-bind"
     },
@@ -90273,7 +90304,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 682 */
+/* 683 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -90285,9 +90316,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
-const eslintUtils = __webpack_require__(511);
+const eslintUtils = __webpack_require__(512);
 
 const precedence = astUtils.getPrecedence; //------------------------------------------------------------------------------
 // Rule Definition
@@ -90298,7 +90329,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary boolean casts",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-extra-boolean-cast"
     },
@@ -90397,6 +90427,7 @@ module.exports = {
      * For example, if the parent is `ConditionalExpression`, `previousNode` must be its `test` child.
      * @param {ASTNode} previousNode Previous node.
      * @param {ASTNode} node The node to check.
+     * @throws {Error} (Unreachable.)
      * @returns {boolean} `true` if the node needs to be parenthesized.
      */
 
@@ -90562,7 +90593,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 683 */
+/* 684 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -90574,7 +90605,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -90584,7 +90615,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary labels",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-extra-label"
     },
@@ -90718,7 +90748,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 684 */
+/* 685 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -90732,16 +90762,15 @@ module.exports = {
 
 const {
   isParenthesized: isParenthesizedRaw
-} = __webpack_require__(511);
+} = __webpack_require__(512);
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 module.exports = {
   meta: {
     type: "layout",
     docs: {
       description: "disallow unnecessary parentheses",
-      category: "Possible Errors",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-extra-parens"
     },
@@ -91865,7 +91894,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 685 */
+/* 686 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -91877,9 +91906,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const FixTracker = __webpack_require__(672);
+const FixTracker = __webpack_require__(673);
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -91889,7 +91918,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary semicolons",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-extra-semi"
     },
@@ -91979,7 +92007,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 686 */
+/* 687 */
 /***/ ((module) => {
 
 "use strict";
@@ -92046,7 +92074,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow fallthrough of `case` statements",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-fallthrough"
     },
@@ -92127,7 +92154,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 687 */
+/* 688 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -92139,7 +92166,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -92149,7 +92176,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow leading or trailing decimal points in numeric literals",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-floating-decimal"
     },
@@ -92196,7 +92222,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 688 */
+/* 689 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -92206,7 +92232,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -92216,7 +92242,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow reassigning `function` declarations",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-func-assign"
     },
@@ -92275,7 +92300,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 689 */
+/* 690 */
 /***/ ((module) => {
 
 "use strict";
@@ -92292,7 +92317,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow assignments to native objects or read-only global variables",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-global-assign"
     },
@@ -92363,7 +92387,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 690 */
+/* 691 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -92373,7 +92397,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -92523,7 +92547,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow shorthand type conversions",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-implicit-coercion"
     },
@@ -92701,7 +92724,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 691 */
+/* 692 */
 /***/ ((module) => {
 
 "use strict";
@@ -92718,7 +92741,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow declarations in the global scope",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-implicit-globals"
     },
@@ -92826,7 +92848,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 692 */
+/* 693 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -92838,11 +92860,11 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const {
   getStaticValue
-} = __webpack_require__(511); //------------------------------------------------------------------------------
+} = __webpack_require__(512); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -92852,7 +92874,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of `eval()`-like methods",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-implied-eval"
     },
@@ -92957,7 +92978,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 693 */
+/* 694 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -92971,9 +92992,9 @@ module.exports = {
 
 const {
   findVariable
-} = __webpack_require__(511);
+} = __webpack_require__(512);
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const WellKnownMutationFunctions = {
   Object: /^(?:assign|definePropert(?:y|ies)|freeze|setPrototypeOf)$/u,
@@ -93093,7 +93114,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow assigning to imported bindings",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-import-assign"
     },
@@ -93154,7 +93174,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 694 */
+/* 695 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -93164,7 +93184,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -93174,7 +93194,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow inline comments after code",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-inline-comments"
     },
@@ -93259,7 +93278,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 695 */
+/* 696 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -93271,7 +93290,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -93283,7 +93302,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow variable or `function` declarations in nested blocks",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-inner-declarations"
     },
@@ -93338,7 +93356,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 696 */
+/* 697 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -93350,7 +93368,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const RegExpValidator = __webpack_require__(661).RegExpValidator;
+const RegExpValidator = __webpack_require__(662).RegExpValidator;
 
 const validator = new RegExpValidator();
 const validFlags = /[dgimsuy]/gu;
@@ -93363,7 +93381,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow invalid regular expression strings in `RegExp` constructors",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-invalid-regexp"
     },
@@ -93494,7 +93511,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 697 */
+/* 698 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -93506,7 +93523,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -93516,7 +93533,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `this` keywords outside of classes or class-like objects",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-invalid-this"
     },
@@ -93635,7 +93651,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 698 */
+/* 699 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -93648,7 +93664,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
 
@@ -93665,7 +93681,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow irregular whitespace",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-irregular-whitespace"
     },
@@ -93886,7 +93901,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 699 */
+/* 700 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -93900,7 +93915,7 @@ module.exports = {
 
 const {
   getStaticPropertyName
-} = __webpack_require__(558); //------------------------------------------------------------------------------
+} = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -93910,7 +93925,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of the `__iterator__` property",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-iterator"
     },
@@ -93937,7 +93951,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 700 */
+/* 701 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -93949,7 +93963,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -93959,7 +93973,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow labels that share a name with a variable",
-      category: "Variables",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-label-var"
     },
@@ -94011,7 +94024,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 701 */
+/* 702 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -94023,7 +94036,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -94033,7 +94046,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow labeled statements",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-labels"
     },
@@ -94169,7 +94181,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 702 */
+/* 703 */
 /***/ ((module) => {
 
 "use strict";
@@ -94186,7 +94198,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary nested blocks",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-lone-blocks"
     },
@@ -94294,7 +94305,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 703 */
+/* 704 */
 /***/ ((module) => {
 
 "use strict";
@@ -94311,7 +94322,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `if` statements as the only statement in `else` blocks",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-lonely-if"
     },
@@ -94369,7 +94379,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 704 */
+/* 705 */
 /***/ ((module) => {
 
 "use strict";
@@ -94514,7 +94524,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow function declarations that contain unsafe references inside loop statements",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-loop-func"
     },
@@ -94531,7 +94540,7 @@ module.exports = {
      * - has a loop node in ancestors.
      * - has any references which refers to an unsafe variable.
      * @param {ASTNode} node The AST node to check.
-     * @returns {boolean} Whether or not the node is within a loop.
+     * @returns {void}
      */
     function checkForLoops(node) {
       const loopNode = getContainingLoopNode(node);
@@ -94564,7 +94573,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 705 */
+/* 706 */
 /***/ ((module) => {
 
 "use strict";
@@ -94581,7 +94590,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow literal numbers that lose precision",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-loss-of-precision"
     },
@@ -94772,7 +94780,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 706 */
+/* 707 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -94782,7 +94790,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); // Maximum array length by the ECMAScript Specification.
+const astUtils = __webpack_require__(559); // Maximum array length by the ECMAScript Specification.
 
 
 const MAX_ARRAY_LENGTH = 2 ** 32 - 1; //------------------------------------------------------------------------------
@@ -94808,7 +94816,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow magic numbers",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-magic-numbers"
     },
@@ -94987,7 +94994,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 707 */
+/* 708 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -95001,19 +95008,19 @@ const {
   CONSTRUCT,
   ReferenceTracker,
   getStringIfConstant
-} = __webpack_require__(511);
+} = __webpack_require__(512);
 
 const {
   RegExpParser,
   visitRegExpAST
-} = __webpack_require__(661);
+} = __webpack_require__(662);
 
 const {
   isCombiningCharacter,
   isEmojiModifier,
   isRegionalIndicatorSymbol,
   isSurrogatePair
-} = __webpack_require__(708); //------------------------------------------------------------------------------
+} = __webpack_require__(709); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -95090,7 +95097,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow characters which are made with multiple code points in character class syntax",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-misleading-character-class"
     },
@@ -95191,7 +95197,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 708 */
+/* 709 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -95201,14 +95207,14 @@ module.exports = {
 
 
 module.exports = {
-  isCombiningCharacter: __webpack_require__(709),
-  isEmojiModifier: __webpack_require__(710),
-  isRegionalIndicatorSymbol: __webpack_require__(711),
-  isSurrogatePair: __webpack_require__(712)
+  isCombiningCharacter: __webpack_require__(710),
+  isEmojiModifier: __webpack_require__(711),
+  isRegionalIndicatorSymbol: __webpack_require__(712),
+  isSurrogatePair: __webpack_require__(713)
 };
 
 /***/ }),
-/* 709 */
+/* 710 */
 /***/ ((module) => {
 
 "use strict";
@@ -95227,7 +95233,7 @@ module.exports = function isCombiningCharacter(codePoint) {
 };
 
 /***/ }),
-/* 710 */
+/* 711 */
 /***/ ((module) => {
 
 "use strict";
@@ -95246,7 +95252,7 @@ module.exports = function isEmojiModifier(code) {
 };
 
 /***/ }),
-/* 711 */
+/* 712 */
 /***/ ((module) => {
 
 "use strict";
@@ -95265,7 +95271,7 @@ module.exports = function isRegionalIndicatorSymbol(code) {
 };
 
 /***/ }),
-/* 712 */
+/* 713 */
 /***/ ((module) => {
 
 "use strict";
@@ -95285,7 +95291,7 @@ module.exports = function isSurrogatePair(lead, tail) {
 };
 
 /***/ }),
-/* 713 */
+/* 714 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -95297,7 +95303,7 @@ module.exports = function isSurrogatePair(lead, tail) {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -95329,7 +95335,7 @@ function normalizeOptions(options = {}) {
 }
 /**
  * Checks whether any group which includes both given operator exists or not.
- * @param {Array.<string[]>} groups A list of groups to check.
+ * @param {Array<string[]>} groups A list of groups to check.
  * @param {string} left An operator.
  * @param {string} right Another operator.
  * @returns {boolean} `true` if such group existed.
@@ -95360,7 +95366,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow mixed binary operators",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-mixed-operators"
     },
@@ -95485,13 +95490,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 714 */
+/* 715 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Rule to enforce grouped require statements for Node.JS
  * @author Raphael Pigulla
+ * @deprecated in ESLint v7.0.0
  */
  //------------------------------------------------------------------------------
 // Rule Definition
@@ -95504,7 +95510,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `require` calls to be mixed with regular variable declarations",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-mixed-requires"
     },
@@ -95687,7 +95692,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 715 */
+/* 716 */
 /***/ ((module) => {
 
 "use strict";
@@ -95704,7 +95709,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "disallow mixed spaces and tabs for indentation",
-      category: "Stylistic Issues",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-mixed-spaces-and-tabs"
     },
@@ -95798,7 +95802,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 716 */
+/* 717 */
 /***/ ((module) => {
 
 "use strict";
@@ -95815,7 +95819,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow use of chained assignment expressions",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-multi-assign"
     },
@@ -95861,7 +95864,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 717 */
+/* 718 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -95871,7 +95874,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -95881,7 +95884,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "disallow multiple spaces",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-multi-spaces"
     },
@@ -95993,7 +95995,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 718 */
+/* 719 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -96005,7 +96007,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -96015,7 +96017,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow multiline strings",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-multi-str"
     },
@@ -96055,7 +96056,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 719 */
+/* 720 */
 /***/ ((module) => {
 
 "use strict";
@@ -96073,7 +96074,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "disallow multiple empty lines",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-multiple-empty-lines"
     },
@@ -96208,7 +96208,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 720 */
+/* 721 */
 /***/ ((module) => {
 
 "use strict";
@@ -96226,7 +96226,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow assignments to native objects or read-only global variables",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-native-reassign"
     },
@@ -96297,7 +96296,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 721 */
+/* 722 */
 /***/ ((module) => {
 
 "use strict";
@@ -96314,7 +96313,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow negated conditions",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-negated-condition"
     },
@@ -96397,7 +96395,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 722 */
+/* 723 */
 /***/ ((module) => {
 
 "use strict";
@@ -96415,7 +96413,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow negating the left operand in `in` expressions",
-      category: "Possible Errors",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-negated-in-lhs"
     },
@@ -96444,7 +96441,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 723 */
+/* 724 */
 /***/ ((module) => {
 
 "use strict";
@@ -96461,7 +96458,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow nested ternary expressions",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-nested-ternary"
     },
@@ -96488,7 +96484,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 724 */
+/* 725 */
 /***/ ((module) => {
 
 "use strict";
@@ -96506,7 +96502,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `new` operators outside of assignments or comparisons",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-new"
     },
@@ -96531,7 +96526,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 725 */
+/* 726 */
 /***/ ((module) => {
 
 "use strict";
@@ -96548,7 +96543,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `new` operators with the `Function` object",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-new-func"
     },
@@ -96587,7 +96581,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 726 */
+/* 727 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -96599,7 +96593,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -96609,7 +96603,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `Object` constructors",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-new-object"
     },
@@ -96642,13 +96635,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 727 */
+/* 728 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Rule to disallow use of new operator with the `require` function
  * @author Wil Moore III
+ * @deprecated in ESLint v7.0.0
  */
  //------------------------------------------------------------------------------
 // Rule Definition
@@ -96661,7 +96655,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `new` operators with calls to `require`",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-new-require"
     },
@@ -96688,7 +96681,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 728 */
+/* 729 */
 /***/ ((module) => {
 
 "use strict";
@@ -96705,7 +96698,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow `new` operators with the `Symbol` object",
-      category: "ECMAScript 6",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-new-symbol"
     },
@@ -96742,7 +96734,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 729 */
+/* 730 */
 /***/ ((module) => {
 
 "use strict";
@@ -96759,7 +96751,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `new` operators with the `String`, `Number`, and `Boolean` objects",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-new-wrappers"
     },
@@ -96791,7 +96782,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 730 */
+/* 731 */
 /***/ ((module) => {
 
 "use strict";
@@ -96822,7 +96813,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `\\8` and `\\9` escape sequences in string literals",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-nonoctal-decimal-escape"
     },
@@ -96921,7 +96911,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 731 */
+/* 732 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -96937,9 +96927,9 @@ const {
   CALL,
   CONSTRUCT,
   ReferenceTracker
-} = __webpack_require__(511);
+} = __webpack_require__(512);
 
-const getPropertyName = __webpack_require__(558).getStaticPropertyName; //------------------------------------------------------------------------------
+const getPropertyName = __webpack_require__(559).getStaticPropertyName; //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -96971,7 +96961,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow calling global object properties as functions",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-obj-calls"
     },
@@ -97020,7 +97009,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 732 */
+/* 733 */
 /***/ ((module) => {
 
 "use strict";
@@ -97037,7 +97026,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow octal literals",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-octal"
     },
@@ -97064,7 +97052,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 733 */
+/* 734 */
 /***/ ((module) => {
 
 "use strict";
@@ -97081,7 +97069,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow octal escape sequences in string literals",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-octal-escape"
     },
@@ -97118,7 +97105,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 734 */
+/* 735 */
 /***/ ((module) => {
 
 "use strict";
@@ -97136,7 +97123,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow reassigning `function` parameters",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-param-reassign"
     },
@@ -97340,13 +97326,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 735 */
+/* 736 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Disallow string concatenation when using __dirname and __filename
  * @author Nicholas C. Zakas
+ * @deprecated in ESLint v7.0.0
  */
  //------------------------------------------------------------------------------
 // Rule Definition
@@ -97359,7 +97346,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow string concatenation with `__dirname` and `__filename`",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-path-concat"
     },
@@ -97393,7 +97379,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 736 */
+/* 737 */
 /***/ ((module) => {
 
 "use strict";
@@ -97446,7 +97432,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the unary operators `++` and `--`",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-plusplus"
     },
@@ -97494,13 +97479,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 737 */
+/* 738 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Disallow the use of process.env()
  * @author Vignesh Anand
+ * @deprecated in ESLint v7.0.0
  */
  //------------------------------------------------------------------------------
 // Rule Definition
@@ -97513,7 +97499,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of `process.env`",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-process-env"
     },
@@ -97543,13 +97528,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 738 */
+/* 739 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Disallow the use of process.exit()
  * @author Nicholas C. Zakas
+ * @deprecated in ESLint v7.0.0
  */
  //------------------------------------------------------------------------------
 // Rule Definition
@@ -97562,7 +97548,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of `process.exit()`",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-process-exit"
     },
@@ -97590,7 +97575,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 739 */
+/* 740 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -97604,7 +97589,7 @@ module.exports = {
 
 const {
   findVariable
-} = __webpack_require__(511); //------------------------------------------------------------------------------
+} = __webpack_require__(512); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -97658,7 +97643,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow returning values from Promise executor functions",
-      category: "Possible Errors",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-promise-executor-return"
     },
@@ -97711,7 +97695,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 740 */
+/* 741 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -97725,7 +97709,7 @@ module.exports = {
 
 const {
   getStaticPropertyName
-} = __webpack_require__(558); //------------------------------------------------------------------------------
+} = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -97735,7 +97719,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of the `__proto__` property",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-proto"
     },
@@ -97762,7 +97745,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 741 */
+/* 742 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -97774,7 +97757,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -97784,7 +97767,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow calling some `Object.prototype` methods directly on objects",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-prototype-builtins"
     },
@@ -97831,7 +97813,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 742 */
+/* 743 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -97843,7 +97825,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -97853,7 +97835,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow variable redeclaration",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-redeclare"
     },
@@ -97997,7 +97978,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 743 */
+/* 744 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -98009,9 +97990,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
-const regexpp = __webpack_require__(661); //------------------------------------------------------------------------------
+const regexpp = __webpack_require__(662); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -98037,7 +98018,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow multiple spaces in regular expressions",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-regex-spaces"
     },
@@ -98168,7 +98148,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 744 */
+/* 745 */
 /***/ ((module) => {
 
 "use strict";
@@ -98185,7 +98165,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow specified names in exports",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-restricted-exports"
     },
@@ -98257,7 +98236,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 745 */
+/* 746 */
 /***/ ((module) => {
 
 "use strict";
@@ -98274,7 +98253,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow specified global variables",
-      category: "Variables",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-restricted-globals"
     },
@@ -98302,7 +98280,7 @@ module.exports = {
     },
     messages: {
       defaultMessage: "Unexpected use of '{{name}}'.",
-      // eslint-disable-next-line eslint-plugin/report-message-format
+      // eslint-disable-next-line eslint-plugin/report-message-format -- Custom message might not end in a period
       customMessage: "Unexpected use of '{{name}}'. {{customMessage}}"
     }
   },
@@ -98377,7 +98355,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 746 */
+/* 747 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -98389,7 +98367,7 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
-const ignore = __webpack_require__(747);
+const ignore = __webpack_require__(748);
 
 const arrayOfStringsOrObjects = {
   type: "array",
@@ -98455,22 +98433,21 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow specified modules when loaded by `import`",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-restricted-imports"
     },
     messages: {
       path: "'{{importSource}}' import is restricted from being used.",
-      // eslint-disable-next-line eslint-plugin/report-message-format
+      // eslint-disable-next-line eslint-plugin/report-message-format -- Custom message might not end in a period
       pathWithCustomMessage: "'{{importSource}}' import is restricted from being used. {{customMessage}}",
       patterns: "'{{importSource}}' import is restricted from being used by a pattern.",
-      // eslint-disable-next-line eslint-plugin/report-message-format
+      // eslint-disable-next-line eslint-plugin/report-message-format -- Custom message might not end in a period
       patternWithCustomMessage: "'{{importSource}}' import is restricted from being used by a pattern. {{customMessage}}",
       everything: "* import is invalid because '{{importNames}}' from '{{importSource}}' is restricted.",
-      // eslint-disable-next-line eslint-plugin/report-message-format
+      // eslint-disable-next-line eslint-plugin/report-message-format -- Custom message might not end in a period
       everythingWithCustomMessage: "* import is invalid because '{{importNames}}' from '{{importSource}}' is restricted. {{customMessage}}",
       importName: "'{{importName}}' import from '{{importSource}}' is restricted.",
-      // eslint-disable-next-line eslint-plugin/report-message-format
+      // eslint-disable-next-line eslint-plugin/report-message-format -- Custom message might not end in a period
       importNameWithCustomMessage: "'{{importName}}' import from '{{importSource}}' is restricted. {{customMessage}}"
     },
     schema: {
@@ -98518,7 +98495,7 @@ module.exports = {
     }) => ({
       matcher: ignore().add(group),
       customMessage: message
-    })); // if no imports are restricted we don"t need to check
+    })); // if no imports are restricted we don't need to check
 
     if (Object.keys(restrictedPaths).length === 0 && restrictedPatternGroups.length === 0) {
       return {};
@@ -98684,10 +98661,10 @@ module.exports = {
 };
 
 /***/ }),
-/* 747 */
+/* 748 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-/* provided dependency */ var process = __webpack_require__(405);
+/* provided dependency */ var process = __webpack_require__(406);
 // A simple implementation of make-array
 function make_array(subject) {
   return Array.isArray(subject) ? subject : [subject];
@@ -99000,19 +98977,20 @@ typeof process !== 'undefined' && (process.env && process.env.IGNORE_TEST_WIN32 
 module.exports = options => new IgnoreBase(options);
 
 /***/ }),
-/* 748 */
+/* 749 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 /**
  * @fileoverview Restrict usage of specified node modules.
  * @author Christian Schulz
+ * @deprecated in ESLint v7.0.0
  */
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
-const ignore = __webpack_require__(747);
+const ignore = __webpack_require__(748);
 
 const arrayOfStrings = {
   type: "array",
@@ -99050,7 +99028,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow specified modules when loaded by `require`",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-restricted-modules"
     },
@@ -99070,7 +99047,7 @@ module.exports = {
     },
     messages: {
       defaultMessage: "'{{name}}' module is restricted from being used.",
-      // eslint-disable-next-line eslint-plugin/report-message-format
+      // eslint-disable-next-line eslint-plugin/report-message-format -- Custom message might not end in a period
       customMessage: "'{{name}}' module is restricted from being used. {{customMessage}}",
       patternMessage: "'{{name}}' module is restricted from being used by a pattern."
     }
@@ -99089,7 +99066,7 @@ module.exports = {
       }
 
       return memo;
-    }, {}); // if no imports are restricted we don"t need to check
+    }, {}); // if no imports are restricted we don't need to check
 
     if (Object.keys(restrictedPaths).length === 0 && restrictedPatterns.length === 0) {
       return {};
@@ -99209,7 +99186,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 749 */
+/* 750 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -99219,7 +99196,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -99229,7 +99206,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow certain properties on certain objects",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-restricted-properties"
     },
@@ -99272,9 +99248,9 @@ module.exports = {
       uniqueItems: true
     },
     messages: {
-      // eslint-disable-next-line eslint-plugin/report-message-format
+      // eslint-disable-next-line eslint-plugin/report-message-format -- Custom message might not end in a period
       restrictedObjectProperty: "'{{objectName}}.{{propertyName}}' is restricted from being used.{{message}}",
-      // eslint-disable-next-line eslint-plugin/report-message-format
+      // eslint-disable-next-line eslint-plugin/report-message-format -- Custom message might not end in a period
       restrictedProperty: "'{{propertyName}}' is restricted from being used.{{message}}"
     }
   },
@@ -99395,7 +99371,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 750 */
+/* 751 */
 /***/ ((module) => {
 
 "use strict";
@@ -99412,7 +99388,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow specified syntax",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-restricted-syntax"
     },
@@ -99439,7 +99414,7 @@ module.exports = {
       minItems: 0
     },
     messages: {
-      // eslint-disable-next-line eslint-plugin/report-message-format
+      // eslint-disable-next-line eslint-plugin/report-message-format -- Custom message might not end in a period
       restrictedSyntax: "{{message}}"
     }
   },
@@ -99468,7 +99443,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 751 */
+/* 752 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -99480,7 +99455,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -99494,7 +99469,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow assignment operators in `return` statements",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-return-assign"
     },
@@ -99544,7 +99518,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 752 */
+/* 753 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -99554,7 +99528,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -99564,7 +99538,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary `return await`",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-return-await"
     },
@@ -99655,7 +99628,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 753 */
+/* 754 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -99664,12 +99637,10 @@ module.exports = {
  * @author Ilya Volodin
  */
 
-/* jshint scripturl: true */
-
-/* eslint no-script-url: 0 */
+/* eslint no-script-url: 0 -- Code is checking to report such URLs */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -99679,7 +99650,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `javascript:` urls",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-script-url"
     },
@@ -99726,7 +99696,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 754 */
+/* 755 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -99738,7 +99708,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -99818,7 +99788,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow assignments where both sides are exactly the same",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-self-assign"
     },
@@ -99871,7 +99840,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 755 */
+/* 756 */
 /***/ ((module) => {
 
 "use strict";
@@ -99889,7 +99858,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow comparisons where both sides are exactly the same",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-self-compare"
     },
@@ -99932,7 +99900,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 756 */
+/* 757 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -99944,7 +99912,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -99960,7 +99928,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow comma operators",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-sequences"
     },
@@ -100067,7 +100034,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 757 */
+/* 758 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -100079,11 +100046,11 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const {
   findVariable
-} = __webpack_require__(511); //------------------------------------------------------------------------------
+} = __webpack_require__(512); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -100188,7 +100155,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow returning values from setters",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-setter-return"
     },
@@ -100273,7 +100239,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 758 */
+/* 759 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -100285,7 +100251,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -100295,7 +100261,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow variable declarations from shadowing variables declared in the outer scope",
-      category: "Variables",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-shadow"
     },
@@ -100333,7 +100298,7 @@ module.exports = {
     };
     /**
      * Check if variable name is allowed.
-     * @param  {ASTNode} variable The variable to check.
+     * @param {ASTNode} variable The variable to check.
      * @returns {boolean} Whether or not the variable name is allowed.
      */
 
@@ -100483,7 +100448,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 759 */
+/* 760 */
 /***/ ((module) => {
 
 "use strict";
@@ -100512,7 +100477,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow identifiers from shadowing restricted names",
-      category: "Variables",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-shadow-restricted-names"
     },
@@ -100545,7 +100509,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 760 */
+/* 761 */
 /***/ ((module) => {
 
 "use strict";
@@ -100563,7 +100527,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "disallow spacing between function identifiers and their applications (deprecated)",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-spaced-func"
     },
@@ -100619,7 +100582,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 761 */
+/* 762 */
 /***/ ((module) => {
 
 "use strict";
@@ -100636,7 +100599,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow sparse arrays",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-sparse-arrays"
     },
@@ -100668,16 +100630,15 @@ module.exports = {
 };
 
 /***/ }),
-/* 762 */
+/* 763 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Rule to check for properties whose identifier ends with the string Sync
  * @author Matt DuVall<http://mattduvall.com/>
+ * @deprecated in ESLint v7.0.0
  */
-
-/* jshint node:true */
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
@@ -100689,7 +100650,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow synchronous methods",
-      category: "Node.js and CommonJS",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-sync"
     },
@@ -100727,7 +100687,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 763 */
+/* 764 */
 /***/ ((module) => {
 
 "use strict";
@@ -100749,7 +100709,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "disallow all tabs",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-tabs"
     },
@@ -100805,7 +100764,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 764 */
+/* 765 */
 /***/ ((module) => {
 
 "use strict";
@@ -100822,7 +100781,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow template literal placeholder syntax in regular strings",
-      category: "Possible Errors",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-template-curly-in-string"
     },
@@ -100850,7 +100808,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 765 */
+/* 766 */
 /***/ ((module) => {
 
 "use strict";
@@ -100867,7 +100825,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow ternary operators",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-ternary"
     },
@@ -100892,7 +100849,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 766 */
+/* 767 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -100904,7 +100861,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -100929,7 +100886,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow `this`/`super` before calling `super()` in constructors",
-      category: "ECMAScript 6",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-this-before-super"
     },
@@ -101180,7 +101136,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 767 */
+/* 768 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -101190,7 +101146,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -101200,7 +101156,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow throwing literals as exceptions",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-throw-literal"
     },
@@ -101235,7 +101190,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 768 */
+/* 769 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -101247,7 +101202,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -101257,7 +101212,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "disallow trailing whitespace at the end of lines",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-trailing-spaces"
     },
@@ -101410,7 +101364,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 769 */
+/* 770 */
 /***/ ((module) => {
 
 "use strict";
@@ -101441,7 +101395,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow the use of undeclared variables unless mentioned in `/*global */` comments",
-      category: "Variables",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-undef"
     },
@@ -101487,7 +101440,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 770 */
+/* 771 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -101497,7 +101450,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -101507,7 +101460,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow initializing variables to `undefined`",
-      category: "Variables",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-undef-init"
     },
@@ -101523,6 +101475,7 @@ module.exports = {
     /**
      * Get the node of init target.
      * @param {ASTNode} node The node to get.
+     * @throws {Error} (Unreachable.)
      * @returns {ASTNode} The node of init target.
      */
 
@@ -101541,6 +101494,7 @@ module.exports = {
     /**
      * Get the node of init value.
      * @param {ASTNode} node The node to get.
+     * @throws {Error} (Unreachable.)
      * @returns {ASTNode} The node of init value.
      */
 
@@ -101560,6 +101514,7 @@ module.exports = {
     /**
      * Get the parent kind of the node.
      * @param {ASTNode} node The node to get.
+     * @throws {Error} (Unreachable.)
      * @returns {string} The parent kind.
      */
 
@@ -101624,7 +101579,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 771 */
+/* 772 */
 /***/ ((module) => {
 
 "use strict";
@@ -101641,7 +101596,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of `undefined` as an identifier",
-      category: "Variables",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-undefined"
     },
@@ -101703,7 +101657,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 772 */
+/* 773 */
 /***/ ((module) => {
 
 "use strict";
@@ -101720,7 +101674,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow dangling underscores in identifiers",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-underscore-dangle"
     },
@@ -101979,7 +101932,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 773 */
+/* 774 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -101991,7 +101944,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -102001,7 +101954,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow confusing multiline expressions",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-unexpected-multiline"
     },
@@ -102096,7 +102048,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 774 */
+/* 775 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -102108,8 +102060,8 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const Traverser = __webpack_require__(505),
-      astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const Traverser = __webpack_require__(506),
+      astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -102257,7 +102209,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow unmodified loop conditions",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-unmodified-loop-condition"
     },
@@ -102451,7 +102402,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 775 */
+/* 776 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -102461,7 +102412,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); // Operators that always result in a boolean value
+const astUtils = __webpack_require__(559); // Operators that always result in a boolean value
 
 
 const BOOLEAN_OPERATORS = new Set(["==", "===", "!=", "!==", ">", ">=", "<", "<=", "in", "instanceof"]);
@@ -102484,7 +102435,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow ternary operators when simpler alternatives exist",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-unneeded-ternary"
     },
@@ -102606,7 +102556,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 776 */
+/* 777 */
 /***/ ((module) => {
 
 "use strict";
@@ -102619,9 +102569,8 @@ module.exports = {
 //------------------------------------------------------------------------------
 
 /**
- * @typedef {Object} ClassInfo
- * @property {ClassInfo | null} upper The class info that encloses this class.
- * @property {boolean} hasConstructor The flag about having user-defined constructor.
+ * @typedef {Object} ConstructorInfo
+ * @property {ConstructorInfo | null} upper Info about the constructor that encloses this constructor.
  * @property {boolean} hasSuperCall The flag about having `super()` expressions.
  */
 
@@ -102727,7 +102676,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow unreachable code after `return`, `throw`, `continue`, and `break` statements",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-unreachable"
     },
@@ -102739,9 +102687,9 @@ module.exports = {
 
   create(context) {
     let currentCodePath = null;
-    /** @type {ClassInfo | null} */
+    /** @type {ConstructorInfo | null} */
 
-    let classInfo = null;
+    let constructorInfo = null;
     /** @type {ConsecutiveRange} */
 
     const range = new ConsecutiveRange(context.getSourceCode());
@@ -102837,41 +102785,41 @@ module.exports = {
         reportIfUnreachable();
       },
 
-      // Address class fields.
-      "ClassDeclaration, ClassExpression"() {
-        classInfo = {
-          upper: classInfo,
-          hasConstructor: false,
+      /*
+       * Instance fields defined in a subclass are never created if the constructor of the subclass
+       * doesn't call `super()`, so their definitions are unreachable code.
+       */
+      "MethodDefinition[kind='constructor']"() {
+        constructorInfo = {
+          upper: constructorInfo,
           hasSuperCall: false
         };
       },
 
-      "ClassDeclaration, ClassExpression:exit"(node) {
+      "MethodDefinition[kind='constructor']:exit"(node) {
         const {
-          hasConstructor,
           hasSuperCall
-        } = classInfo;
-        const hasExtends = Boolean(node.superClass);
-        classInfo = classInfo.upper;
+        } = constructorInfo;
+        constructorInfo = constructorInfo.upper; // skip typescript constructors without the body
 
-        if (hasConstructor && hasExtends && !hasSuperCall) {
-          for (const element of node.body.body) {
-            if (element.type === "PropertyDefinition") {
+        if (!node.value.body) {
+          return;
+        }
+
+        const classDefinition = node.parent.parent;
+
+        if (classDefinition.superClass && !hasSuperCall) {
+          for (const element of classDefinition.body.body) {
+            if (element.type === "PropertyDefinition" && !element.static) {
               reportIfUnreachable(element);
             }
           }
         }
       },
 
-      "MethodDefinition[kind='constructor']"() {
-        if (classInfo) {
-          classInfo.hasConstructor = true;
-        }
-      },
-
       "CallExpression > Super.callee"() {
-        if (classInfo) {
-          classInfo.hasSuperCall = true;
+        if (constructorInfo) {
+          constructorInfo.hasSuperCall = true;
         }
       }
 
@@ -102881,7 +102829,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 777 */
+/* 778 */
 /***/ ((module) => {
 
 "use strict";
@@ -102944,7 +102892,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow loops with a body that allows only one iteration",
-      category: "Possible Errors",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-unreachable-loop"
     },
@@ -103031,7 +102978,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 778 */
+/* 779 */
 /***/ ((module) => {
 
 "use strict";
@@ -103054,7 +103001,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow control flow statements in `finally` blocks",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-unsafe-finally"
     },
@@ -103141,7 +103087,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 779 */
+/* 780 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -103153,7 +103099,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -103196,7 +103142,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow negating the left operand of relational operators",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-unsafe-negation"
     },
@@ -103267,7 +103212,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 780 */
+/* 781 */
 /***/ ((module) => {
 
 "use strict";
@@ -103295,7 +103240,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow use of optional chaining in contexts where the `undefined` value is not allowed",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-unsafe-optional-chaining"
     },
@@ -103490,7 +103434,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 781 */
+/* 782 */
 /***/ ((module) => {
 
 "use strict";
@@ -103525,7 +103469,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unused expressions",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-unused-expressions"
     },
@@ -103561,18 +103504,18 @@ module.exports = {
           allowShortCircuit = config.allowShortCircuit || false,
           allowTernary = config.allowTernary || false,
           allowTaggedTemplates = config.allowTaggedTemplates || false,
-          enforceForJSX = config.enforceForJSX || false; // eslint-disable-next-line jsdoc/require-description
-
+          enforceForJSX = config.enforceForJSX || false;
     /**
+     * Has AST suggesting a directive.
      * @param {ASTNode} node any node
      * @returns {boolean} whether the given node structurally represents a directive
      */
 
     function looksLikeDirective(node) {
       return node.type === "ExpressionStatement" && node.expression.type === "Literal" && typeof node.expression.value === "string";
-    } // eslint-disable-next-line jsdoc/require-description
-
+    }
     /**
+     * Gets the leading sequence of members in a list that pass the predicate.
      * @param {Function} predicate ([a] -> Boolean) the function used to make the determination
      * @param {a[]} list the input list
      * @returns {a[]} the leading sequence of members in the given list that pass the given predicate
@@ -103587,9 +103530,9 @@ module.exports = {
       }
 
       return list.slice();
-    } // eslint-disable-next-line jsdoc/require-description
-
+    }
     /**
+     * Gets leading directives nodes in a Node body.
      * @param {ASTNode} node a Program or BlockStatement node
      * @returns {ASTNode[]} the leading sequence of directive nodes in the given node's body
      */
@@ -103597,9 +103540,9 @@ module.exports = {
 
     function directives(node) {
       return takeWhile(looksLikeDirective, node.body);
-    } // eslint-disable-next-line jsdoc/require-description
-
+    }
     /**
+     * Detect if a Node is a directive.
      * @param {ASTNode} node any node
      * @param {ASTNode[]} ancestors the given node's ancestors
      * @returns {boolean} whether the given node is considered a directive in its current position
@@ -103694,7 +103637,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 782 */
+/* 783 */
 /***/ ((module) => {
 
 "use strict";
@@ -103711,7 +103654,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unused labels",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-unused-labels"
     },
@@ -103811,7 +103753,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 783 */
+/* 784 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -103823,7 +103765,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Typedefs
 //------------------------------------------------------------------------------
 
@@ -103844,7 +103786,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow unused variables",
-      category: "Variables",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-unused-vars"
     },
@@ -104093,6 +104034,33 @@ module.exports = {
       return inner.range[0] >= outer.range[0] && inner.range[1] <= outer.range[1];
     }
     /**
+     * Checks whether a given node is unused expression or not.
+     * @param {ASTNode} node The node itself
+     * @returns {boolean} The node is an unused expression.
+     * @private
+     */
+
+
+    function isUnusedExpression(node) {
+      const parent = node.parent;
+
+      if (parent.type === "ExpressionStatement") {
+        return true;
+      }
+
+      if (parent.type === "SequenceExpression") {
+        const isLastExpression = parent.expressions[parent.expressions.length - 1] === node;
+
+        if (!isLastExpression) {
+          return true;
+        }
+
+        return isUnusedExpression(parent);
+      }
+
+      return false;
+    }
+    /**
      * If a given reference is left-hand side of an assignment, this gets
      * the right-hand side node of the assignment.
      *
@@ -104112,7 +104080,6 @@ module.exports = {
     function getRhsNode(ref, prevRhsNode) {
       const id = ref.identifier;
       const parent = id.parent;
-      const grandparent = parent.parent;
       const refScope = ref.from.variableScope;
       const varScope = ref.resolved.scope.variableScope;
       const canBeUsedLater = refScope !== varScope || astUtils.isInLoop(id);
@@ -104125,7 +104092,7 @@ module.exports = {
         return prevRhsNode;
       }
 
-      if (parent.type === "AssignmentExpression" && grandparent.type === "ExpressionStatement" && id === parent.left && !canBeUsedLater) {
+      if (parent.type === "AssignmentExpression" && isUnusedExpression(parent) && id === parent.left && !canBeUsedLater) {
         return parent.right;
       }
 
@@ -104202,33 +104169,6 @@ module.exports = {
     function isInsideOfStorableFunction(id, rhsNode) {
       const funcNode = astUtils.getUpperFunction(id);
       return funcNode && isInside(funcNode, rhsNode) && isStorableFunction(funcNode, rhsNode);
-    }
-    /**
-     * Checks whether a given node is unused expression or not.
-     * @param {ASTNode} node The node itself
-     * @returns {boolean} The node is an unused expression.
-     * @private
-     */
-
-
-    function isUnusedExpression(node) {
-      const parent = node.parent;
-
-      if (parent.type === "ExpressionStatement") {
-        return true;
-      }
-
-      if (parent.type === "SequenceExpression") {
-        const isLastExpression = parent.expressions[parent.expressions.length - 1] === node;
-
-        if (!isLastExpression) {
-          return true;
-        }
-
-        return isUnusedExpression(parent);
-      }
-
-      return false;
     }
     /**
      * Checks whether a given reference is a read to update itself or not.
@@ -104447,7 +104387,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 784 */
+/* 785 */
 /***/ ((module) => {
 
 "use strict";
@@ -104586,7 +104526,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow the use of variables before they are defined",
-      category: "Variables",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-use-before-define"
     },
@@ -104683,7 +104622,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 785 */
+/* 786 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -104700,12 +104639,12 @@ const {
   CONSTRUCT,
   ReferenceTracker,
   getStringIfConstant
-} = __webpack_require__(511);
+} = __webpack_require__(512);
 
 const {
   RegExpParser,
   visitRegExpAST
-} = __webpack_require__(661); //------------------------------------------------------------------------------
+} = __webpack_require__(662); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -104757,7 +104696,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow useless backreferences in regular expressions",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-useless-backreference"
     },
@@ -104883,7 +104821,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 786 */
+/* 787 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -104893,7 +104831,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -104933,7 +104871,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary calls to `.call()` and `.apply()`",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-useless-call"
     },
@@ -104973,7 +104910,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 787 */
+/* 788 */
 /***/ ((module) => {
 
 "use strict";
@@ -104990,7 +104927,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary `catch` clauses",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-useless-catch"
     },
@@ -105025,7 +104961,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 788 */
+/* 789 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -105037,7 +104973,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -105063,6 +104999,7 @@ const astUtils = __webpack_require__(558); //-----------------------------------
  *   - class C { static ["prototype"]() {} } produces a runtime error (doesn't break the whole script)
  *     class C { static "prototype"() {} } produces a parsing error (breaks the whole script)
  * @param {ASTNode} node The node to check. It can be `Property`, `PropertyDefinition` or `MethodDefinition`.
+ * @throws {Error} (Unreachable.)
  * @returns {void} `true` if the node has useless computed key.
  */
 
@@ -105121,7 +105058,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary computed property keys in objects and classes",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-useless-computed-key"
     },
@@ -105199,7 +105135,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 789 */
+/* 790 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -105211,7 +105147,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -105276,7 +105212,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary concatenation of literals or template literals",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-useless-concat"
     },
@@ -105315,7 +105250,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 790 */
+/* 791 */
 /***/ ((module) => {
 
 "use strict";
@@ -105435,7 +105370,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary constructors",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-useless-constructor"
     },
@@ -105485,7 +105419,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 791 */
+/* 792 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -105495,7 +105429,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -105523,16 +105457,17 @@ const REGEX_NON_CHARCLASS_ESCAPES = union(REGEX_GENERAL_ESCAPES, new Set("^/.$*+
  * @returns {Object[]} A list of characters, each with info on escaping and whether they're in a character class.
  * @example
  *
- * parseRegExp('a\\b[cd-]')
+ * parseRegExp("a\\b[cd-]");
  *
- * returns:
+ * // returns:
  * [
- *   {text: 'a', index: 0, escaped: false, inCharClass: false, startsCharClass: false, endsCharClass: false},
- *   {text: 'b', index: 2, escaped: true, inCharClass: false, startsCharClass: false, endsCharClass: false},
- *   {text: 'c', index: 4, escaped: false, inCharClass: true, startsCharClass: true, endsCharClass: false},
- *   {text: 'd', index: 5, escaped: false, inCharClass: true, startsCharClass: false, endsCharClass: false},
- *   {text: '-', index: 6, escaped: false, inCharClass: true, startsCharClass: false, endsCharClass: false}
- * ]
+ *     { text: "a", index: 0, escaped: false, inCharClass: false, startsCharClass: false, endsCharClass: false },
+ *     { text: "b", index: 2, escaped: true, inCharClass: false, startsCharClass: false, endsCharClass: false },
+ *     { text: "c", index: 4, escaped: false, inCharClass: true, startsCharClass: true, endsCharClass: false },
+ *     { text: "d", index: 5, escaped: false, inCharClass: true, startsCharClass: false, endsCharClass: false },
+ *     { text: "-", index: 6, escaped: false, inCharClass: true, startsCharClass: false, endsCharClass: false }
+ * ];
+ *
  */
 
 function parseRegExp(regExpText) {
@@ -105589,7 +105524,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow unnecessary escape characters",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-useless-escape"
     },
@@ -105745,7 +105679,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 792 */
+/* 793 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -105757,7 +105691,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -105767,7 +105701,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow renaming import, export, and destructured assignments to the same name",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-useless-rename"
     },
@@ -105914,7 +105847,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 793 */
+/* 794 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -105926,8 +105859,8 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558),
-      FixTracker = __webpack_require__(672); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559),
+      FixTracker = __webpack_require__(673); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -105981,7 +105914,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow redundant return statements",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-useless-return"
     },
@@ -106205,7 +106137,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 794 */
+/* 795 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -106217,7 +106149,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -106389,7 +106321,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require `let` or `const` instead of `var`",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-var"
     },
@@ -106530,7 +106461,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 795 */
+/* 796 */
 /***/ ((module) => {
 
 "use strict";
@@ -106547,7 +106478,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `void` operators",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-void"
     },
@@ -106589,7 +106519,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 796 */
+/* 797 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -106599,9 +106529,9 @@ module.exports = {
  */
 
 
-const escapeRegExp = __webpack_require__(535);
+const escapeRegExp = __webpack_require__(536);
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const CHAR_LIMIT = 40; //------------------------------------------------------------------------------
 // Rule Definition
@@ -106612,7 +106542,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow specified warning terms in comments",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-warning-comments"
     },
@@ -106767,7 +106696,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 797 */
+/* 798 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -106779,7 +106708,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -106789,7 +106718,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "disallow whitespace before properties",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/no-whitespace-before-property"
     },
@@ -106881,7 +106809,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 798 */
+/* 799 */
 /***/ ((module) => {
 
 "use strict";
@@ -106898,7 +106826,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `with` statements",
-      category: "Best Practices",
       recommended: true,
       url: "https://eslint.org/docs/rules/no-with"
     },
@@ -106923,7 +106850,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 799 */
+/* 800 */
 /***/ ((module) => {
 
 "use strict";
@@ -106943,7 +106870,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce the location of single-line statements",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/nonblock-statement-body-position"
     },
@@ -107046,7 +106972,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 800 */
+/* 801 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -107058,7 +106984,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 // Schema objects.
@@ -107198,7 +107124,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent line breaks after opening and before closing braces",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/object-curly-newline"
     },
@@ -107356,7 +107281,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 801 */
+/* 802 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -107366,7 +107291,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -107376,7 +107301,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing inside braces",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/object-curly-spacing"
     },
@@ -107683,7 +107607,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 802 */
+/* 803 */
 /***/ ((module) => {
 
 "use strict";
@@ -107700,7 +107624,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce placing object properties on separate lines",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/object-property-newline"
     },
@@ -107778,7 +107701,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 803 */
+/* 804 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -107799,7 +107722,7 @@ const OPTIONS = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -107809,7 +107732,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require or disallow method and property shorthand syntax for object literals",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/object-shorthand"
     },
@@ -107909,7 +107831,6 @@ module.exports = {
      * @param {ASTNode} property Property AST node
      * @returns {boolean} True if the property can have a shorthand form
      * @private
-     *
      */
 
 
@@ -107918,7 +107839,7 @@ module.exports = {
     }
     /**
      * Checks whether a node is a string literal.
-     * @param   {ASTNode} node Any AST node.
+     * @param {ASTNode} node Any AST node.
      * @returns {boolean} `true` if it is a string literal.
      */
 
@@ -107931,7 +107852,6 @@ module.exports = {
      * @param {ASTNode} property Property AST node
      * @returns {boolean} True if the property is considered shorthand, false if not.
      * @private
-     *
      */
 
 
@@ -107944,7 +107864,6 @@ module.exports = {
      * @param {ASTNode} property Property AST node
      * @returns {boolean} True if the key and value are named equally, false if not.
      * @private
-     *
      */
 
 
@@ -107963,10 +107882,9 @@ module.exports = {
     }
     /**
      * Ensures that an object's properties are consistently shorthand, or not shorthand at all.
-     * @param   {ASTNode} node Property AST node
-     * @param   {boolean} checkRedundancy Whether to check longform redundancy
+     * @param {ASTNode} node Property AST node
+     * @param {boolean} checkRedundancy Whether to check longform redundancy
      * @returns {void}
-     *
      */
 
 
@@ -108264,7 +108182,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 804 */
+/* 805 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -108276,7 +108194,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -108299,7 +108217,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce variables to be declared either together or separately in functions",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/one-var"
     },
@@ -108497,7 +108414,7 @@ module.exports = {
     }
     /**
      * Determines the current scope (function or block)
-     * @param  {string} statementType node.kind, one of: "var", "let", or "const"
+     * @param {string} statementType node.kind, one of: "var", "let", or "const"
      * @returns {Object} The scope associated with statementType
      */
 
@@ -108856,7 +108773,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 805 */
+/* 806 */
 /***/ ((module) => {
 
 "use strict";
@@ -108873,7 +108790,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require or disallow newlines around variable declarations",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/one-var-declaration-per-line"
     },
@@ -108943,7 +108859,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 806 */
+/* 807 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -108955,15 +108871,15 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
 /**
  * Checks whether an operator is commutative and has an operator assignment
  * shorthand form.
- * @param   {string}  operator Operator to check.
- * @returns {boolean}          True if the operator is commutative and has a
+ * @param {string} operator Operator to check.
+ * @returns {boolean} True if the operator is commutative and has a
  *     shorthand form.
  */
 
@@ -108974,8 +108890,8 @@ function isCommutativeOperatorWithShorthand(operator) {
 /**
  * Checks whether an operator is not commutative and has an operator assignment
  * shorthand form.
- * @param   {string}  operator Operator to check.
- * @returns {boolean}          True if the operator is not commutative and has
+ * @param {string} operator Operator to check.
+ * @returns {boolean} True if the operator is not commutative and has
  *     a shorthand form.
  */
 
@@ -109003,7 +108919,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require or disallow assignment operator shorthand where possible",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/operator-assignment"
     },
@@ -109030,7 +108945,7 @@ module.exports = {
     }
     /**
      * Ensures that an assignment uses the shorthand form where possible.
-     * @param   {ASTNode} node An AssignmentExpression node.
+     * @param {ASTNode} node An AssignmentExpression node.
      * @returns {void}
      */
 
@@ -109089,7 +109004,7 @@ module.exports = {
     }
     /**
      * Warns if an assignment expression uses operator assignment shorthand.
-     * @param   {ASTNode} node An AssignmentExpression node.
+     * @param {ASTNode} node An AssignmentExpression node.
      * @returns {void}
      */
 
@@ -109155,7 +109070,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 807 */
+/* 808 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -109167,7 +109082,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -109177,7 +109092,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent linebreak style for operators",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/operator-linebreak"
     },
@@ -109388,7 +109302,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 808 */
+/* 809 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -109400,7 +109314,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -109410,7 +109324,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow padding within blocks",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/padded-blocks"
     },
@@ -109555,6 +109468,7 @@ module.exports = {
     /**
      * Checks if a node should be padded, according to the rule config.
      * @param {ASTNode} node The AST node to check.
+     * @throws {Error} (Unreachable)
      * @returns {boolean} True if the node should be padded, false otherwise.
      */
 
@@ -109706,7 +109620,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 809 */
+/* 810 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -109718,7 +109632,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -110105,7 +110019,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow padding lines between statements",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/padding-line-between-statements"
     },
@@ -110311,7 +110224,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 810 */
+/* 811 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -110321,7 +110234,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -110377,6 +110290,7 @@ function getVariableOfArguments(scope) {
 /**
  * Checks whether or not a given node is a callback.
  * @param {ASTNode} node A node to check.
+ * @throws {Error} (Unreachable.)
  * @returns {Object}
  *   {boolean} retv.isCallback - `true` if the node is a callback.
  *   {boolean} retv.isLexicalThis - `true` if the node is with `.bind(this)`.
@@ -110464,7 +110378,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require using arrow functions for callbacks",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-arrow-callback"
     },
@@ -110685,7 +110598,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 811 */
+/* 812 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -110697,9 +110610,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const FixTracker = __webpack_require__(672);
+const FixTracker = __webpack_require__(673);
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -111002,7 +110915,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require `const` declarations for variables that are never reassigned after declared",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-const"
     },
@@ -111147,7 +111059,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 812 */
+/* 813 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -111159,7 +111071,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -111175,7 +111087,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require destructuring from arrays and/or objects",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-destructuring"
     },
@@ -111262,9 +111173,9 @@ module.exports = {
     } //--------------------------------------------------------------------------
     // Helpers
     //--------------------------------------------------------------------------
-    // eslint-disable-next-line jsdoc/require-description
 
     /**
+     * Checks if destructuring type should be checked.
      * @param {string} nodeType "AssignmentExpression" or "VariableDeclarator"
      * @param {string} destructuringType "array" or "object"
      * @returns {boolean} `true` if the destructuring type should be checked for the given node
@@ -111436,7 +111347,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 813 */
+/* 814 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -111448,12 +111359,12 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const {
   CALL,
   ReferenceTracker
-} = __webpack_require__(511); //------------------------------------------------------------------------------
+} = __webpack_require__(512); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -111518,7 +111429,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow the use of `Math.pow` in favor of the `**` operator",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-exponentiation-operator"
     },
@@ -111611,7 +111521,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 814 */
+/* 815 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -111628,9 +111538,9 @@ const {
   CONSTRUCT,
   ReferenceTracker,
   getStringIfConstant
-} = __webpack_require__(511);
+} = __webpack_require__(512);
 
-const regexpp = __webpack_require__(661); //------------------------------------------------------------------------------
+const regexpp = __webpack_require__(662); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -111644,7 +111554,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce using named capture group in regular expression",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-named-capture-group"
     },
@@ -111723,7 +111632,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 815 */
+/* 816 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -111735,7 +111644,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -111770,7 +111679,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow `parseInt()` and `Number.parseInt()` in favor of binary, octal, and hexadecimal literals",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-numeric-literals"
     },
@@ -111856,7 +111764,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 816 */
+/* 817 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -111870,14 +111778,14 @@ module.exports = {
 const {
   CALL,
   ReferenceTracker
-} = __webpack_require__(511);
+} = __webpack_require__(512);
 
 const {
   isCommaToken,
   isOpeningParenToken,
   isClosingParenToken,
   isParenthesised
-} = __webpack_require__(558);
+} = __webpack_require__(559);
 
 const ANY_SPACE = /\s/u;
 /**
@@ -112102,7 +112010,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow using Object.assign with an object literal as the first argument and prefer the use of object spread instead.",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-object-spread"
     },
@@ -112149,7 +112056,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 817 */
+/* 818 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -112159,7 +112066,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -112169,7 +112076,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require using Error objects as Promise rejection reasons",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-promise-reject-errors"
     },
@@ -112265,7 +112171,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 818 */
+/* 819 */
 /***/ ((module) => {
 
 "use strict";
@@ -112283,7 +112189,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require `Reflect` methods where applicable",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-reflect"
     },
@@ -112378,7 +112283,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 819 */
+/* 820 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -112390,14 +112295,14 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
 const {
   CALL,
   CONSTRUCT,
   ReferenceTracker,
   findVariable
-} = __webpack_require__(511); //------------------------------------------------------------------------------
+} = __webpack_require__(512); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -112440,7 +112345,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow use of the `RegExp` constructor in favor of regular expression literals",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-regex-literals"
     },
@@ -112575,7 +112479,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 820 */
+/* 821 */
 /***/ ((module) => {
 
 "use strict";
@@ -112638,7 +112542,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require rest parameters instead of `arguments`",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-rest-params"
     },
@@ -112684,7 +112587,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 821 */
+/* 822 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -112694,7 +112597,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -112733,7 +112636,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require spread operators instead of `.apply()`",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-spread"
     },
@@ -112770,7 +112672,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 822 */
+/* 823 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -112782,7 +112684,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -112907,7 +112809,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require template literals instead of string concatenation",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/prefer-template"
     },
@@ -113051,7 +112952,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 823 */
+/* 824 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -113063,11 +112964,11 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const espree = __webpack_require__(449);
+const espree = __webpack_require__(450);
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
-const keywords = __webpack_require__(593); //------------------------------------------------------------------------------
+const keywords = __webpack_require__(594); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -113077,7 +112978,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require quotes around object literal property names",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/quote-props"
     },
@@ -113132,7 +113032,7 @@ module.exports = {
           sourceCode = context.getSourceCode();
     /**
      * Checks whether a certain string constitutes an ES3 token
-     * @param   {string} tokenStr The string to be checked.
+     * @param {string} tokenStr The string to be checked.
      * @returns {boolean} `true` if it is an ES3 token.
      */
 
@@ -113141,9 +113041,9 @@ module.exports = {
     }
     /**
      * Checks if an espree-tokenized key has redundant quotes (i.e. whether quotes are unnecessary)
-     * @param   {string} rawKey The raw key value from the source
-     * @param   {espreeTokens} tokens The espree-tokenized node key
-     * @param   {boolean} [skipNumberLiterals=false] Indicates whether number literals should be checked
+     * @param {string} rawKey The raw key value from the source
+     * @param {espreeTokens} tokens The espree-tokenized node key
+     * @param {boolean} [skipNumberLiterals=false] Indicates whether number literals should be checked
      * @returns {boolean} Whether or not a key has redundant quotes.
      * @private
      */
@@ -113180,7 +113080,7 @@ module.exports = {
     }
     /**
      * Ensures that a property's key is quoted only when necessary
-     * @param   {ASTNode} node Property AST node
+     * @param {ASTNode} node Property AST node
      * @returns {void}
      */
 
@@ -113243,7 +113143,7 @@ module.exports = {
     }
     /**
      * Ensures that a property's key is quoted
-     * @param   {ASTNode} node Property AST node
+     * @param {ASTNode} node Property AST node
      * @returns {void}
      */
 
@@ -113264,8 +113164,8 @@ module.exports = {
     }
     /**
      * Ensures that an object's keys are consistently quoted, optionally checks for redundancy of quotes
-     * @param   {ASTNode} node Property AST node
-     * @param   {boolean} checkQuotesRedundancy Whether to check quotes' redundancy
+     * @param {ASTNode} node Property AST node
+     * @param {boolean} checkQuotesRedundancy Whether to check quotes' redundancy
      * @returns {void}
      */
 
@@ -113366,7 +113266,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 824 */
+/* 825 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -113378,7 +113278,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
 
@@ -113446,7 +113346,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce the consistent use of either backticks, double, or single quotes",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/quotes"
     },
@@ -113688,7 +113587,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 825 */
+/* 826 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -113700,7 +113599,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -113764,7 +113663,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce the consistent use of the radix argument when using `parseInt()`",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/radix"
     },
@@ -113881,7 +113779,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 826 */
+/* 827 */
 /***/ ((module) => {
 
 "use strict";
@@ -113968,6 +113866,10 @@ function isLocalVariableWithoutEscape(variable, isMemberAccess) {
   const functionScope = variable.scope.variableScope;
   return variable.references.every(reference => reference.from.variableScope === functionScope);
 }
+/**
+ * Represents segment information.
+ */
+
 
 class SegmentInfo {
   constructor() {
@@ -114064,7 +113966,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "disallow assignments that can lead to race conditions due to usage of `await` or `yield`",
-      category: "Possible Errors",
       recommended: false,
       url: "https://eslint.org/docs/rules/require-atomic-updates"
     },
@@ -114185,7 +114086,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 827 */
+/* 828 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -114197,7 +114098,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -114220,7 +114121,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "disallow async functions which have no `await` expression",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/require-await"
     },
@@ -114299,13 +114199,14 @@ module.exports = {
 };
 
 /***/ }),
-/* 828 */
+/* 829 */
 /***/ ((module) => {
 
 "use strict";
 /**
  * @fileoverview Rule to check for jsdoc presence.
  * @author Gyandeep Singh
+ * @deprecated in ESLint v5.10.0
  */
 
 
@@ -114314,7 +114215,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require JSDoc comments",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/require-jsdoc"
     },
@@ -114426,7 +114326,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 829 */
+/* 830 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -114443,7 +114343,7 @@ const {
   CONSTRUCT,
   ReferenceTracker,
   getStringIfConstant
-} = __webpack_require__(511); //------------------------------------------------------------------------------
+} = __webpack_require__(512); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -114453,7 +114353,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce the use of `u` flag on RegExp",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/require-unicode-regexp"
     },
@@ -114507,7 +114406,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 830 */
+/* 831 */
 /***/ ((module) => {
 
 "use strict";
@@ -114524,7 +114423,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require generator functions to contain `yield`",
-      category: "ECMAScript 6",
       recommended: true,
       url: "https://eslint.org/docs/rules/require-yield"
     },
@@ -114590,7 +114488,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 831 */
+/* 832 */
 /***/ ((module) => {
 
 "use strict";
@@ -114607,7 +114505,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce spacing between rest and spread operators and their expressions",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/rest-spread-spacing"
     },
@@ -114718,7 +114615,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 832 */
+/* 833 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -114730,9 +114627,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const FixTracker = __webpack_require__(672);
+const FixTracker = __webpack_require__(673);
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -114742,7 +114639,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow semicolons instead of ASI",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/semi"
     },
@@ -115039,7 +114935,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 833 */
+/* 834 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -115049,7 +114945,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -115059,7 +114955,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing before and after semicolons",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/semi-spacing"
     },
@@ -115287,7 +115182,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 834 */
+/* 835 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -115299,7 +115194,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -115355,7 +115250,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce location of semicolons",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/semi-style"
     },
@@ -115439,7 +115333,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 835 */
+/* 836 */
 /***/ ((module) => {
 
 "use strict";
@@ -115456,7 +115350,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce sorted import declarations within modules",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/sort-imports"
     },
@@ -115665,7 +115558,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 836 */
+/* 837 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -115677,8 +115570,8 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558),
-      naturalCompare = __webpack_require__(837); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559),
+      naturalCompare = __webpack_require__(838); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -115755,7 +115648,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require object keys to be sorted",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/sort-keys"
     },
@@ -115853,7 +115745,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 837 */
+/* 838 */
 /***/ ((module) => {
 
 /*
@@ -115908,7 +115800,7 @@ try {
 }
 
 /***/ }),
-/* 838 */
+/* 839 */
 /***/ ((module) => {
 
 "use strict";
@@ -115925,7 +115817,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require variables within the same declaration block to be sorted",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/sort-vars"
     },
@@ -115997,7 +115888,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 839 */
+/* 840 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -116009,7 +115900,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -116033,7 +115924,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing before blocks",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/space-before-blocks"
     },
@@ -116180,7 +116070,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 840 */
+/* 841 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -116192,7 +116082,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -116202,7 +116092,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing before `function` definition opening parenthesis",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/space-before-function-paren"
     },
@@ -116331,7 +116220,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 841 */
+/* 842 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -116341,7 +116230,7 @@ module.exports = {
  */
 
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -116351,7 +116240,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing inside parentheses",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/space-in-parens"
     },
@@ -116632,7 +116520,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 842 */
+/* 843 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -116644,7 +116532,7 @@ module.exports = {
 
 const {
   isEqToken
-} = __webpack_require__(558); //------------------------------------------------------------------------------
+} = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -116654,7 +116542,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require spacing around infix operators",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/space-infix-ops"
     },
@@ -116831,7 +116718,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 843 */
+/* 844 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -116843,7 +116730,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -116853,7 +116740,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce consistent spacing before or after unary operators",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/space-unary-ops"
     },
@@ -117170,7 +117056,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 844 */
+/* 845 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -117180,9 +117066,9 @@ module.exports = {
  */
 
 
-const escapeRegExp = __webpack_require__(535);
+const escapeRegExp = __webpack_require__(536);
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -117325,7 +117211,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce consistent spacing after the `//` or `/*` in a comment",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/spaced-comment"
     },
@@ -117550,7 +117435,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 845 */
+/* 846 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -117562,7 +117447,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -117618,7 +117503,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require or disallow strict mode directives",
-      category: "Strict Mode",
       recommended: false,
       url: "https://eslint.org/docs/rules/strict"
     },
@@ -117857,7 +117741,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 846 */
+/* 847 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -117869,7 +117753,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -117879,7 +117763,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "enforce spacing around colons of switch statements",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/switch-colon-spacing"
     },
@@ -118005,7 +117888,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 847 */
+/* 848 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -118017,7 +117900,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -118027,7 +117910,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require symbol descriptions",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/symbol-description"
     },
@@ -118076,7 +117958,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 848 */
+/* 849 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -118088,7 +117970,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -118098,7 +117980,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow spacing around embedded expressions of template strings",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/template-curly-spacing"
     },
@@ -118222,7 +118103,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 849 */
+/* 850 */
 /***/ ((module) => {
 
 "use strict";
@@ -118239,7 +118120,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow spacing between template tags and their literals",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/template-tag-spacing"
     },
@@ -118313,7 +118193,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 850 */
+/* 851 */
 /***/ ((module) => {
 
 "use strict";
@@ -118330,7 +118210,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow Unicode byte order mark (BOM)",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/unicode-bom"
     },
@@ -118387,7 +118266,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 851 */
+/* 852 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -118399,7 +118278,7 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //------------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -118422,7 +118301,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "require calls to `isNaN()` when checking for `NaN`",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/use-isnan"
     },
@@ -118532,19 +118410,20 @@ module.exports = {
 };
 
 /***/ }),
-/* 852 */
+/* 853 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 /**
  * @fileoverview Validates JSDoc comments are syntactically correct
  * @author Nicholas C. Zakas
+ * @deprecated in ESLint v5.10.0
  */
  //------------------------------------------------------------------------------
 // Requirements
 //------------------------------------------------------------------------------
 
-const doctrine = __webpack_require__(853); //------------------------------------------------------------------------------
+const doctrine = __webpack_require__(854); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -118554,7 +118433,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "enforce valid JSDoc comments",
-      category: "Possible Errors",
       recommended: false,
       url: "https://eslint.org/docs/rules/valid-jsdoc"
     },
@@ -119060,7 +118938,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 853 */
+/* 854 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 /*
@@ -119073,9 +118951,9 @@ module.exports = {
   'use strict';
 
   var typed, utility, jsdoc, esutils, hasOwnProperty;
-  esutils = __webpack_require__(559);
-  typed = __webpack_require__(854);
-  utility = __webpack_require__(855);
+  esutils = __webpack_require__(560);
+  typed = __webpack_require__(855);
+  utility = __webpack_require__(856);
 
   function sliceSource(source, index, last) {
     return source.slice(index, last);
@@ -120043,7 +119921,7 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 854 */
+/* 855 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 /*
@@ -120057,8 +119935,8 @@ module.exports = {
   'use strict';
 
   var Syntax, Token, source, length, index, previous, token, value, esutils, utility, rangeOffset, addRange;
-  esutils = __webpack_require__(559);
-  utility = __webpack_require__(855);
+  esutils = __webpack_require__(560);
+  utility = __webpack_require__(856);
   Syntax = {
     NullableLiteral: 'NullableLiteral',
     AllLiteral: 'AllLiteral',
@@ -121516,7 +121394,7 @@ module.exports = {
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 855 */
+/* 856 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 /*
@@ -121527,7 +121405,7 @@ module.exports = {
   'use strict';
 
   var VERSION;
-  VERSION = __webpack_require__(856).version;
+  VERSION = __webpack_require__(857).version;
   exports.VERSION = VERSION;
 
   function DoctrineError(message) {
@@ -121550,19 +121428,19 @@ module.exports = {
   }
 
   exports.throwError = throwError;
-  exports.assert = __webpack_require__(407);
+  exports.assert = __webpack_require__(408);
 })();
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /***/ }),
-/* 856 */
+/* 857 */
 /***/ ((module) => {
 
 "use strict";
 module.exports = JSON.parse('{"name":"doctrine","description":"JSDoc parser","homepage":"https://github.com/eslint/doctrine","main":"lib/doctrine.js","version":"3.0.0","engines":{"node":">=6.0.0"},"directories":{"lib":"./lib"},"files":["lib"],"maintainers":[{"name":"Nicholas C. Zakas","email":"nicholas+npm@nczconsulting.com","web":"https://www.nczonline.net"},{"name":"Yusuke Suzuki","email":"utatane.tea@gmail.com","web":"https://github.com/Constellation"}],"repository":"eslint/doctrine","devDependencies":{"coveralls":"^3.0.1","dateformat":"^1.0.11","eslint":"^1.10.3","eslint-release":"^1.0.0","linefix":"^0.1.1","mocha":"^3.4.2","npm-license":"^0.3.1","nyc":"^10.3.2","semver":"^5.0.3","shelljs":"^0.5.3","shelljs-nodecli":"^0.1.1","should":"^5.0.1"},"license":"Apache-2.0","scripts":{"pretest":"npm run lint","test":"nyc mocha","coveralls":"nyc report --reporter=text-lcov | coveralls","lint":"eslint lib/","generate-release":"eslint-generate-release","generate-alpharelease":"eslint-generate-prerelease alpha","generate-betarelease":"eslint-generate-prerelease beta","generate-rcrelease":"eslint-generate-prerelease rc","publish-release":"eslint-publish-release"},"dependencies":{"esutils":"^2.0.2"}}');
 
 /***/ }),
-/* 857 */
+/* 858 */
 /***/ ((module) => {
 
 "use strict";
@@ -121579,7 +121457,6 @@ module.exports = {
     type: "problem",
     docs: {
       description: "enforce comparing `typeof` expressions against valid strings",
-      category: "Possible Errors",
       recommended: true,
       url: "https://eslint.org/docs/rules/valid-typeof"
     },
@@ -121649,7 +121526,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 858 */
+/* 859 */
 /***/ ((module) => {
 
 "use strict";
@@ -121667,7 +121544,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: "require `var` declarations be placed at the top of their containing scope",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/vars-on-top"
     },
@@ -121681,9 +121557,9 @@ module.exports = {
     //--------------------------------------------------------------------------
     // Helpers
     //--------------------------------------------------------------------------
-    // eslint-disable-next-line jsdoc/require-description
 
     /**
+     * Has AST suggesting a directive.
      * @param {ASTNode} node any node
      * @returns {boolean} whether the given node structurally represents a directive
      */
@@ -121794,7 +121670,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 859 */
+/* 860 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -121806,9 +121682,9 @@ module.exports = {
 // Requirements
 //------------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558);
+const astUtils = __webpack_require__(559);
 
-const eslintUtils = __webpack_require__(511); //----------------------------------------------------------------------
+const eslintUtils = __webpack_require__(512); //----------------------------------------------------------------------
 // Helpers
 //----------------------------------------------------------------------
 
@@ -121833,7 +121709,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require parentheses around immediate `function` invocations",
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/wrap-iife"
     },
@@ -121977,7 +121852,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 860 */
+/* 861 */
 /***/ ((module) => {
 
 "use strict";
@@ -121994,7 +121869,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require parenthesis around regex literals",
-      category: "Stylistic Issues",
       recommended: false,
       url: "https://eslint.org/docs/rules/wrap-regex"
     },
@@ -122034,7 +121908,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 861 */
+/* 862 */
 /***/ ((module) => {
 
 "use strict";
@@ -122051,7 +121925,6 @@ module.exports = {
     type: "layout",
     docs: {
       description: "require or disallow spacing around the `*` in `yield*` expressions",
-      category: "ECMAScript 6",
       recommended: false,
       url: "https://eslint.org/docs/rules/yield-star-spacing"
     },
@@ -122178,7 +122051,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 862 */
+/* 863 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -122190,7 +122063,7 @@ module.exports = {
 // Requirements
 //--------------------------------------------------------------------------
 
-const astUtils = __webpack_require__(558); //--------------------------------------------------------------------------
+const astUtils = __webpack_require__(559); //--------------------------------------------------------------------------
 // Helpers
 //--------------------------------------------------------------------------
 
@@ -122302,7 +122175,6 @@ module.exports = {
     type: "suggestion",
     docs: {
       description: 'require or disallow "Yoda" conditions',
-      category: "Best Practices",
       recommended: false,
       url: "https://eslint.org/docs/rules/yoda"
     },
@@ -122482,7 +122354,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 863 */
+/* 864 */
 /***/ ((module) => {
 
 function webpackEmptyContext(req) {
@@ -122492,11 +122364,11 @@ function webpackEmptyContext(req) {
 }
 webpackEmptyContext.keys = () => ([]);
 webpackEmptyContext.resolve = webpackEmptyContext;
-webpackEmptyContext.id = 863;
+webpackEmptyContext.id = 864;
 module.exports = webpackEmptyContext;
 
 /***/ }),
-/* 864 */
+/* 865 */
 /***/ ((module) => {
 
 "use strict";
@@ -122511,8 +122383,8 @@ module.exports = webpackEmptyContext;
 /**
  * An event emitter
  * @typedef {Object} SafeEmitter
- * @property {function(eventName: string, listenerFunc: Function): void} on Adds a listener for a given event name
- * @property {function(eventName: string, arg1?: any, arg2?: any, arg3?: any)} emit Emits an event with a given name.
+ * @property {(eventName: string, listenerFunc: Function) => void} on Adds a listener for a given event name
+ * @property {(eventName: string, arg1?: any, arg2?: any, arg3?: any) => void} emit Emits an event with a given name.
  * This calls all the listeners that were listening for that name, with `arg1`, `arg2`, and `arg3` as arguments.
  * @property {function(): string[]} eventNames Gets the list of event names that have registered listeners.
  */
@@ -122554,7 +122426,7 @@ module.exports = () => {
 };
 
 /***/ }),
-/* 865 */
+/* 866 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
@@ -122566,7 +122438,7 @@ module.exports = () => {
 // Requirements
 //------------------------------------------------------------------------------
 
-const debug = __webpack_require__(506)("eslint:source-code-fixer"); //------------------------------------------------------------------------------
+const debug = __webpack_require__(507)("eslint:source-code-fixer"); //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
 
@@ -122638,8 +122510,8 @@ SourceCodeFixer.applyFixes = function (sourceText, messages, shouldFix) {
       output = bom;
   /**
    * Try to use the 'fix' from a problem.
-   * @param   {Message} problem The message object to apply fixes from
-   * @returns {boolean}         Whether fix was successfully applied
+   * @param {Message} problem The message object to apply fixes from
+   * @returns {boolean} Whether fix was successfully applied
    */
 
   function attemptFix(problem) {
@@ -122709,12 +122581,12 @@ SourceCodeFixer.applyFixes = function (sourceText, messages, shouldFix) {
 module.exports = SourceCodeFixer;
 
 /***/ }),
-/* 866 */
+/* 867 */
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* provided dependency */ var process = __webpack_require__(405);
-/* provided dependency */ var console = __webpack_require__(410);
+/* provided dependency */ var process = __webpack_require__(406);
+/* provided dependency */ var console = __webpack_require__(411);
 /**
  * @fileoverview Tracks performance of individual rules.
  * @author Brandon Mills
@@ -122817,7 +122689,7 @@ function display(data) {
     const extraAlignment = index !== 0 && index !== widths.length - 1 ? 2 : 1;
     return ALIGN[index](":", width + extraAlignment, "-");
   }).join("|"));
-  console.log(table.join("\n")); // eslint-disable-line no-console
+  console.log(table.join("\n")); // eslint-disable-line no-console -- Debugging function
 }
 /* istanbul ignore next */
 
@@ -122826,7 +122698,7 @@ module.exports = function () {
   const data = Object.create(null);
   /**
    * Time the run
-   * @param {*} key key from the data object
+   * @param {any} key key from the data object
    * @param {Function} fn function to be called
    * @returns {Function} function to be executed
    * @private
@@ -122859,7 +122731,7 @@ module.exports = function () {
 }();
 
 /***/ }),
-/* 867 */
+/* 868 */
 /***/ ((module) => {
 
 "use strict";
@@ -122928,8 +122800,8 @@ module.exports = JSON.parse('{"rules":{"generator-star":["generator-star-spacing
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module used 'module' so it can't be inlined
 /******/ 	__webpack_require__(0);
-/******/ 	__webpack_require__(402);
-/******/ 	var __webpack_exports__ = __webpack_require__(403);
+/******/ 	__webpack_require__(403);
+/******/ 	var __webpack_exports__ = __webpack_require__(404);
 /******/ 	
 /******/ 	return __webpack_exports__;
 /******/ })()
