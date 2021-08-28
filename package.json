@@ -22,14 +22,14 @@
 		"@types/eslint": "^7.28.0",
 		"@types/estree": "0.0.50",
 		"@types/mocha": "^9.0.0",
-		"@types/node": "^16.6.1",
-		"@typescript-eslint/eslint-plugin": "^4.29.1",
-		"@typescript-eslint/parser": "^4.29.1",
+		"@types/node": "^16.7.4",
+		"@typescript-eslint/eslint-plugin": "^4.29.3",
+		"@typescript-eslint/parser": "^4.29.3",
 		"eslint": "^7.32.0",
-		"mocha": "^9.0.3",
-		"rollup": "^2.56.2",
+		"mocha": "^9.1.0",
+		"rollup": "^2.56.3",
 		"rollup-plugin-copy": "^3.4.0",
 		"serve": "^12.0.0",
-		"typescript": "^4.3.5"
+		"typescript": "^4.4.2"
 	}
 }
