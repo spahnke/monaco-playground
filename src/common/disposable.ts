@@ -1,4 +1,6 @@
 export class Disposable implements monaco.IDisposable {
+	static readonly None = Object.freeze<monaco.IDisposable>({ dispose() { } });
+
 	private disposables = new Set<monaco.IDisposable>();
 
 	/**
