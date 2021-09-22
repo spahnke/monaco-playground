@@ -8,6 +8,11 @@ export function registerJavascriptLanguageExtensions(): void {
 	monaco.languages.onLanguage("javascript", () => {
 		setCompilerOptions(["esnext"]);
 		setDiagnosticOptions();
+		// @ts-ignore
+		monaco.languages.typescript.javascriptDefaults.setInlayHintsOptions({
+			includeInlayParameterNameHints: "literals",
+			includeInlayEnumMemberValueHints: true
+		});
 
 		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("languages/javascript/snippets.json")));
 		if (eslintEnabled)
