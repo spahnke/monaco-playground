@@ -39,6 +39,8 @@ export class CodeEditor extends Disposable {
 		await loadMonaco();
 		return new CodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
+			// @ts-ignore
+			"bracketPairColorization.enabled": true,
 			fixedOverflowWidgets: true,
 			fontLigatures: true,
 			fontSize: 13,
