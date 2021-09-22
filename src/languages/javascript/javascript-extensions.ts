@@ -11,7 +11,6 @@ export function registerJavascriptLanguageExtensions(): void {
 
 		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("languages/javascript/snippets.json")));
 		if (eslintEnabled)
-			// @ts-ignore TODO remove after https://github.com/microsoft/vscode/pull/131254 has merged and released
 			monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("languages/javascript/eslintrc.json"), { providedCodeActionKinds: EsLintDiagnostics.providedCodeActionKinds });
 	});
 }
