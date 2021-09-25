@@ -17907,10 +17907,28 @@ function runRules(sourceCode, configuredRules, ruleMapper, parserOptions, parser
       }
 
     }));
-    const ruleListeners = createRuleListeners(rule, ruleContext); // add all the selectors from the rule as listeners
+    const ruleListeners = createRuleListeners(rule, ruleContext);
+    /**
+     * Include `ruleId` in error logs
+     * @param {Function} ruleListener A rule method that listens for a node.
+     * @returns {Function} ruleListener wrapped in error handler
+     */
+
+    function addRuleErrorHandler(ruleListener) {
+      return function ruleErrorHandler(...listenerArgs) {
+        try {
+          return ruleListener(...listenerArgs);
+        } catch (e) {
+          e.ruleId = ruleId;
+          throw e;
+        }
+      };
+    } // add all the selectors from the rule as listeners
+
 
     Object.keys(ruleListeners).forEach(selector => {
-      emitter.on(selector, timing.enabled ? timing.time(ruleId, ruleListeners[selector]) : ruleListeners[selector]);
+      const ruleListener = timing.enabled ? timing.time(ruleId, ruleListeners[selector]) : ruleListeners[selector];
+      emitter.on(selector, addRuleErrorHandler(ruleListener));
     });
   }); // only run code path analyzer if the top level node is "Program", skip otherwise
 
@@ -18156,6 +18174,11 @@ class Linter {
       debug("Parser Options:", parserOptions);
       debug("Parser Path:", parserName);
       debug("Settings:", settings);
+
+      if (err.ruleId) {
+        err.message += `\nRule: "${err.ruleId}"`;
+      }
+
       throw err;
     }
 
@@ -38656,7 +38679,7 @@ module.exports = merge;
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"eslint","version":"8.0.0-beta.2","author":"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>","description":"An AST-based pattern checker for JavaScript.","bin":{"eslint":"./bin/eslint.js"},"main":"./lib/api.js","exports":{"./package.json":"./package.json",".":"./lib/api.js","./use-at-your-own-risk":"./lib/unsupported-api.js"},"scripts":{"test":"node Makefile.js test","test:cli":"mocha","lint":"node Makefile.js lint","fix":"node Makefile.js lint -- fix","fuzz":"node Makefile.js fuzz","generate-release":"node Makefile.js generateRelease","generate-alpharelease":"node Makefile.js generatePrerelease -- alpha","generate-betarelease":"node Makefile.js generatePrerelease -- beta","generate-rcrelease":"node Makefile.js generatePrerelease -- rc","publish-release":"node Makefile.js publishRelease","gensite":"node Makefile.js gensite","webpack":"node Makefile.js webpack","perf":"node Makefile.js perf"},"gitHooks":{"pre-commit":"lint-staged"},"lint-staged":{"*.js":"eslint --fix","*.md":"markdownlint"},"files":["LICENSE","README.md","bin","conf","lib","messages"],"repository":"eslint/eslint","funding":"https://opencollective.com/eslint","homepage":"https://eslint.org","bugs":"https://github.com/eslint/eslint/issues/","dependencies":{"@eslint/eslintrc":"^1.0.1","@humanwhocodes/config-array":"^0.6.0","ajv":"^6.10.0","chalk":"^4.0.0","cross-spawn":"^7.0.2","debug":"^4.3.2","doctrine":"^3.0.0","enquirer":"^2.3.5","escape-string-regexp":"^4.0.0","eslint-scope":"^6.0.0","eslint-utils":"^3.0.0","eslint-visitor-keys":"^3.0.0","espree":"^9.0.0","esquery":"^1.4.0","esutils":"^2.0.2","fast-deep-equal":"^3.1.3","file-entry-cache":"^6.0.1","functional-red-black-tree":"^1.0.1","glob-parent":"^6.0.1","globals":"^13.6.0","ignore":"^4.0.6","import-fresh":"^3.0.0","imurmurhash":"^0.1.4","is-glob":"^4.0.0","js-yaml":"^4.1.0","json-stable-stringify-without-jsonify":"^1.0.1","levn":"^0.4.1","lodash.merge":"^4.6.2","minimatch":"^3.0.4","natural-compare":"^1.4.0","optionator":"^0.9.1","progress":"^2.0.0","regexpp":"^3.2.0","semver":"^7.2.1","strip-ansi":"^6.0.0","strip-json-comments":"^3.1.0","text-table":"^0.2.0","v8-compile-cache":"^2.0.3"},"devDependencies":{"@babel/core":"^7.4.3","@babel/preset-env":"^7.4.3","babel-loader":"^8.0.5","chai":"^4.0.1","cheerio":"^0.22.0","common-tags":"^1.8.0","core-js":"^3.1.3","dateformat":"^4.5.1","ejs":"^3.0.2","eslint":"file:.","eslint-config-eslint":"file:packages/eslint-config-eslint","eslint-plugin-eslint-comments":"^3.2.0","eslint-plugin-eslint-plugin":"^3.5.3","eslint-plugin-internal-rules":"file:tools/internal-rules","eslint-plugin-jsdoc":"^36.0.6","eslint-plugin-node":"^11.1.0","eslint-release":"^3.1.2","eslump":"^3.0.0","esprima":"^4.0.1","fs-teardown":"^0.1.3","glob":"^7.1.6","jsdoc":"^3.5.5","karma":"^6.1.1","karma-chrome-launcher":"^3.1.0","karma-mocha":"^2.0.1","karma-mocha-reporter":"^2.2.5","karma-webpack":"^5.0.0","lint-staged":"^11.0.0","load-perf":"^0.2.0","markdownlint":"^0.23.1","markdownlint-cli":"^0.28.1","memfs":"^3.0.1","mocha":"^8.3.2","mocha-junit-reporter":"^2.0.0","node-polyfill-webpack-plugin":"^1.0.3","npm-license":"^0.3.3","nyc":"^15.0.1","proxyquire":"^2.0.1","puppeteer":"^9.1.1","recast":"^0.20.4","regenerator-runtime":"^0.13.2","shelljs":"^0.8.2","sinon":"^11.0.0","temp":"^0.9.0","webpack":"^5.23.0","webpack-cli":"^4.5.0","yorkie":"^2.0.0"},"keywords":["ast","lint","javascript","ecmascript","espree"],"license":"MIT","engines":{"node":"^12.22.0 || ^14.17.0 || >=16.0.0"}}');
+module.exports = JSON.parse('{"name":"eslint","version":"8.0.0-rc.0","author":"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>","description":"An AST-based pattern checker for JavaScript.","bin":{"eslint":"./bin/eslint.js"},"main":"./lib/api.js","exports":{"./package.json":"./package.json",".":"./lib/api.js","./use-at-your-own-risk":"./lib/unsupported-api.js"},"scripts":{"test":"node Makefile.js test","test:cli":"mocha","lint":"node Makefile.js lint","fix":"node Makefile.js lint -- fix","fuzz":"node Makefile.js fuzz","generate-release":"node Makefile.js generateRelease","generate-alpharelease":"node Makefile.js generatePrerelease -- alpha","generate-betarelease":"node Makefile.js generatePrerelease -- beta","generate-rcrelease":"node Makefile.js generatePrerelease -- rc","publish-release":"node Makefile.js publishRelease","gensite":"node Makefile.js gensite","webpack":"node Makefile.js webpack","perf":"node Makefile.js perf"},"gitHooks":{"pre-commit":"lint-staged"},"lint-staged":{"*.js":"eslint --fix","*.md":"markdownlint"},"files":["LICENSE","README.md","bin","conf","lib","messages"],"repository":"eslint/eslint","funding":"https://opencollective.com/eslint","homepage":"https://eslint.org","bugs":"https://github.com/eslint/eslint/issues/","dependencies":{"@eslint/eslintrc":"^1.0.1","@humanwhocodes/config-array":"^0.6.0","ajv":"^6.10.0","chalk":"^4.0.0","cross-spawn":"^7.0.2","debug":"^4.3.2","doctrine":"^3.0.0","enquirer":"^2.3.5","escape-string-regexp":"^4.0.0","eslint-scope":"^6.0.0","eslint-utils":"^3.0.0","eslint-visitor-keys":"^3.0.0","espree":"^9.0.0","esquery":"^1.4.0","esutils":"^2.0.2","fast-deep-equal":"^3.1.3","file-entry-cache":"^6.0.1","functional-red-black-tree":"^1.0.1","glob-parent":"^6.0.1","globals":"^13.6.0","ignore":"^4.0.6","import-fresh":"^3.0.0","imurmurhash":"^0.1.4","is-glob":"^4.0.0","js-yaml":"^4.1.0","json-stable-stringify-without-jsonify":"^1.0.1","levn":"^0.4.1","lodash.merge":"^4.6.2","minimatch":"^3.0.4","natural-compare":"^1.4.0","optionator":"^0.9.1","progress":"^2.0.0","regexpp":"^3.2.0","semver":"^7.2.1","strip-ansi":"^6.0.0","strip-json-comments":"^3.1.0","text-table":"^0.2.0","v8-compile-cache":"^2.0.3"},"devDependencies":{"@babel/core":"^7.4.3","@babel/preset-env":"^7.4.3","babel-loader":"^8.0.5","chai":"^4.0.1","cheerio":"^0.22.0","common-tags":"^1.8.0","core-js":"^3.1.3","dateformat":"^4.5.1","ejs":"^3.0.2","eslint":"file:.","eslint-config-eslint":"file:packages/eslint-config-eslint","eslint-plugin-eslint-comments":"^3.2.0","eslint-plugin-eslint-plugin":"^3.5.3","eslint-plugin-internal-rules":"file:tools/internal-rules","eslint-plugin-jsdoc":"^36.0.6","eslint-plugin-node":"^11.1.0","eslint-release":"^3.1.2","eslump":"^3.0.0","esprima":"^4.0.1","fs-teardown":"^0.1.3","glob":"^7.1.6","jsdoc":"^3.5.5","karma":"^6.1.1","karma-chrome-launcher":"^3.1.0","karma-mocha":"^2.0.1","karma-mocha-reporter":"^2.2.5","karma-webpack":"^5.0.0","lint-staged":"^11.0.0","load-perf":"^0.2.0","markdownlint":"^0.23.1","markdownlint-cli":"^0.28.1","memfs":"^3.0.1","mocha":"^8.3.2","mocha-junit-reporter":"^2.0.0","node-polyfill-webpack-plugin":"^1.0.3","npm-license":"^0.3.3","nyc":"^15.0.1","proxyquire":"^2.0.1","puppeteer":"^9.1.1","recast":"^0.20.4","regenerator-runtime":"^0.13.2","shelljs":"^0.8.2","sinon":"^11.0.0","temp":"^0.9.0","webpack":"^5.23.0","webpack-cli":"^4.5.0","yorkie":"^2.0.0"},"keywords":["ast","lint","javascript","ecmascript","espree"],"license":"MIT","engines":{"node":"^12.22.0 || ^14.17.0 || >=16.0.0"}}');
 
 /***/ }),
 /* 461 */
@@ -56152,23 +56175,86 @@ function groupByParentComment(directives) {
 
 
 function createIndividualDirectivesRemoval(directives, commentToken) {
-  const listOffset = /^\s*\S+\s+/u.exec(commentToken.value)[0].length;
-  const listText = commentToken.value.slice(listOffset) // remove eslint-*
-  .split(/\s-{2,}\s/u)[0] // remove -- directive comment
-  .trimRight();
-  const listStart = commentToken.range[0] + 2 + listOffset;
+  /*
+   * `commentToken.value` starts right after `//` or `/*`.
+   * All calculated offsets will be relative to this index.
+   */
+  const commentValueStart = commentToken.range[0] + "//".length; // Find where the list of rules starts. `\S+` matches with the directive name (e.g. `eslint-disable-line`)
+
+  const listStartOffset = /^\s*\S+\s+/u.exec(commentToken.value)[0].length;
+  /*
+   * Get the list text without any surrounding whitespace. In order to preserve the original
+   * formatting, we don't want to change that whitespace.
+   *
+   *     // eslint-disable-line rule-one , rule-two , rule-three -- comment
+   *                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   */
+
+  const listText = commentToken.value.slice(listStartOffset) // remove directive name and all whitespace before the list
+  .split(/\s-{2,}\s/u)[0] // remove `-- comment`, if it exists
+  .trimRight(); // remove all whitespace after the list
+
+  /*
+   * We can assume that `listText` contains multiple elements.
+   * Otherwise, this function wouldn't be called - if there is
+   * only one rule in the list, then the whole comment must be removed.
+   */
+
   return directives.map(directive => {
     const {
       ruleId
     } = directive;
-    const match = new RegExp(String.raw`(?:^|,)\s*${escapeRegExp(ruleId)}\s*(?:$|,)`, "u").exec(listText);
-    const ruleOffset = match.index;
-    const ruleEndOffset = ruleOffset + match[0].length;
-    const ruleText = listText.slice(ruleOffset, ruleEndOffset);
+    const regex = new RegExp(String.raw`(?:^|\s*,\s*)${escapeRegExp(ruleId)}(?:\s*,\s*|$)`, "u");
+    const match = regex.exec(listText);
+    const matchedText = match[0];
+    const matchStartOffset = listStartOffset + match.index;
+    const matchEndOffset = matchStartOffset + matchedText.length;
+    const firstIndexOfComma = matchedText.indexOf(",");
+    const lastIndexOfComma = matchedText.lastIndexOf(",");
+    let removalStartOffset, removalEndOffset;
+
+    if (firstIndexOfComma !== lastIndexOfComma) {
+      /*
+       * Since there are two commas, this must one of the elements in the middle of the list.
+       * Matched range starts where the previous rule name ends, and ends where the next rule name starts.
+       *
+       *     // eslint-disable-line rule-one , rule-two , rule-three -- comment
+       *                                    ^^^^^^^^^^^^^^
+       *
+       * We want to remove only the content between the two commas, and also one of the commas.
+       *
+       *     // eslint-disable-line rule-one , rule-two , rule-three -- comment
+       *                                     ^^^^^^^^^^^
+       */
+      removalStartOffset = matchStartOffset + firstIndexOfComma;
+      removalEndOffset = matchStartOffset + lastIndexOfComma;
+    } else {
+      /*
+       * This is either the first element or the last element.
+       *
+       * If this is the first element, matched range starts where the first rule name starts
+       * and ends where the second rule name starts. This is exactly the range we want
+       * to remove so that the second rule name will start where the first one was starting
+       * and thus preserve the original formatting.
+       *
+       *     // eslint-disable-line rule-one , rule-two , rule-three -- comment
+       *                            ^^^^^^^^^^^
+       *
+       * Similarly, if this is the last element, we've already matched the range we want to
+       * remove. The previous rule name will end where the last one was ending, relative
+       * to the content on the right side.
+       *
+       *     // eslint-disable-line rule-one , rule-two , rule-three -- comment
+       *                                               ^^^^^^^^^^^^^
+       */
+      removalStartOffset = matchStartOffset;
+      removalEndOffset = matchEndOffset;
+    }
+
     return {
       description: `'${ruleId}'`,
       fix: {
-        range: [listStart + ruleOffset + (ruleText.startsWith(",") && ruleText.endsWith(",") ? 1 : 0), listStart + ruleEndOffset],
+        range: [commentValueStart + removalStartOffset, commentValueStart + removalEndOffset],
         text: ""
       },
       position: directive.unprocessedDirective
@@ -63560,6 +63646,21 @@ function isMixedLogicalAndCoalesceExpressions(left, right) {
 
 function isLogicalAssignmentOperator(operator) {
   return LOGICAL_ASSIGNMENT_OPERATORS.has(operator);
+}
+/**
+ * Get the colon token of the given SwitchCase node.
+ * @param {ASTNode} node The SwitchCase node to get.
+ * @param {SourceCode} sourceCode The source code object to get tokens.
+ * @returns {Token} The colon token of the node.
+ */
+
+
+function getSwitchCaseColonToken(node, sourceCode) {
+  if (node.test) {
+    return sourceCode.getTokenAfter(node.test, isColonToken);
+  }
+
+  return sourceCode.getFirstToken(node, 1);
 } //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------
@@ -64623,7 +64724,8 @@ module.exports = {
   isSpecificMemberAccess,
   equalLiteralValue,
   isSameReference,
-  isLogicalAssignmentOperator
+  isLogicalAssignmentOperator,
+  getSwitchCaseColonToken
 };
 
 /***/ }),
@@ -96844,7 +96946,7 @@ module.exports = {
 
 /***/ }),
 /* 731 */
-/***/ ((module) => {
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
 /**
@@ -96852,6 +96954,15 @@ module.exports = {
  * @author Ilya Volodin
  */
  //------------------------------------------------------------------------------
+// Requirements
+//------------------------------------------------------------------------------
+
+const astUtils = __webpack_require__(564); //------------------------------------------------------------------------------
+// Helpers
+//------------------------------------------------------------------------------
+
+
+const callMethods = new Set(["apply", "bind", "call"]); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
@@ -96881,10 +96992,23 @@ module.exports = {
             const {
               parent
             } = node;
+            let evalNode;
 
-            if (parent && (parent.type === "NewExpression" || parent.type === "CallExpression") && node === parent.callee) {
+            if (parent) {
+              if (node === parent.callee && (parent.type === "NewExpression" || parent.type === "CallExpression")) {
+                evalNode = parent;
+              } else if (parent.type === "MemberExpression" && node === parent.object && callMethods.has(astUtils.getStaticPropertyName(parent))) {
+                const maybeCallee = parent.parent.type === "ChainExpression" ? parent.parent : parent;
+
+                if (maybeCallee.parent.type === "CallExpression" && maybeCallee.parent.callee === maybeCallee) {
+                  evalNode = maybeCallee.parent;
+                }
+              }
+            }
+
+            if (evalNode) {
               context.report({
-                node: parent,
+                node: evalNode,
                 messageId: "noFunctionConstructor"
               });
             }
@@ -116287,6 +116411,7 @@ module.exports = {
      * Checks whether the spacing before the given block is already controlled by another rule:
      * - `arrow-spacing` checks spaces after `=>`.
      * - `keyword-spacing` checks spaces after keywords in certain contexts.
+     * - `switch-colon-spacing` checks spaces after `:` of switch cases.
      * @param {Token} precedingToken first token before the block.
      * @param {ASTNode|Token} node `BlockStatement` node or `{` token of a `SwitchStatement` node.
      * @returns {boolean} `true` if requiring or disallowing spaces before the given block could produce conflicts with other rules.
@@ -116294,7 +116419,7 @@ module.exports = {
 
 
     function isConflicted(precedingToken, node) {
-      return astUtils.isArrowToken(precedingToken) || astUtils.isKeywordToken(precedingToken) && !isFunctionBody(node);
+      return astUtils.isArrowToken(precedingToken) || astUtils.isKeywordToken(precedingToken) && !isFunctionBody(node) || astUtils.isColonToken(precedingToken) && node.parent && node.parent.type === "SwitchCase" && precedingToken === astUtils.getSwitchCaseColonToken(node.parent, sourceCode);
     }
     /**
      * Checks the given BlockStatement node has a preceding space if it doesn’t start on a new line.
@@ -118102,26 +118227,12 @@ module.exports = {
     const afterSpacing = options.after !== false; // true by default
 
     /**
-     * Get the colon token of the given SwitchCase node.
-     * @param {ASTNode} node The SwitchCase node to get.
-     * @returns {Token} The colon token of the node.
-     */
-
-    function getColonToken(node) {
-      if (node.test) {
-        return sourceCode.getTokenAfter(node.test, astUtils.isColonToken);
-      }
-
-      return sourceCode.getFirstToken(node, 1);
-    }
-    /**
      * Check whether the spacing between the given 2 tokens is valid or not.
      * @param {Token} left The left token to check.
      * @param {Token} right The right token to check.
      * @param {boolean} expected The expected spacing to check. `true` if there should be a space.
      * @returns {boolean} `true` if the spacing between the tokens is valid.
      */
-
 
     function isValidSpacing(left, right, expected) {
       return astUtils.isClosingBraceToken(right) || !astUtils.isTokenOnSameLine(left, right) || sourceCode.isSpaceBetweenTokens(left, right) === expected;
@@ -118164,7 +118275,7 @@ module.exports = {
 
     return {
       SwitchCase(node) {
-        const colonToken = getColonToken(node);
+        const colonToken = astUtils.getSwitchCaseColonToken(node, sourceCode);
         const beforeToken = sourceCode.getTokenBefore(colonToken);
         const afterToken = sourceCode.getTokenAfter(colonToken);
 
