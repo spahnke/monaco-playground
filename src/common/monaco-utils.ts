@@ -95,7 +95,7 @@ export function isComment(model: monaco.editor.ITextModel, line: number): boolea
 
 /** CAUTION: Uses an internal unofficial API to determine if the range is in a comment. Tries to wait until tokenization is complete. */
 export async function isInComment(model: monaco.editor.ITextModel, range: monaco.IRange): Promise<boolean> {
-	if (model.getModeId() === "plaintext")
+	if (model.getLanguageId() === "plaintext")
 		return false;
 
 	if (monaco.Range.spansMultipleLines(range))
@@ -180,16 +180,16 @@ export function patchKeybinding(editor: monaco.editor.IStandaloneCodeEditor, id:
  */
 export function patchKeybindings(editor: monaco.editor.IStandaloneCodeEditor): monaco.IDisposable {
 	const disposable = new Disposable();
-	disposable.register(patchKeybinding(editor, "editor.action.addSelectionToNextFindMatch", monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.US_DOT)); // default is Ctrl+D
-	disposable.register(patchKeybinding(editor, "editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL)); // no default
-	disposable.register(patchKeybinding(editor, "editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS)); // no default
-	disposable.register(patchKeybinding(editor, "editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_0)); // no default
+	disposable.register(patchKeybinding(editor, "editor.action.addSelectionToNextFindMatch", monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.Period)); // default is Ctrl+D
+	disposable.register(patchKeybinding(editor, "editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal)); // no default
+	disposable.register(patchKeybinding(editor, "editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus)); // no default
+	disposable.register(patchKeybinding(editor, "editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit0)); // no default
 	disposable.register(patchKeybinding(editor, "editor.action.marker.nextInFiles")); // default F8 (jumps between files/models which is not desirable)
 	disposable.register(patchKeybinding(editor, "editor.action.marker.prevInFiles")); // default Shift+F8 (jumps between files/models which is not desirable)
 	disposable.register(patchKeybinding(editor, "editor.action.autoFix", monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.Enter)); // default is Shift+Alt+.
 	disposable.register(patchKeybinding(editor, "editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter)); // default is Ctrl+.
-	disposable.register(patchKeybinding(editor, "editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_O)); // default is Ctrl+Shift+O
-	disposable.register(patchKeybinding(editor, "editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R))); // default is F2
+	disposable.register(patchKeybinding(editor, "editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyO)); // default is Ctrl+Shift+O
+	disposable.register(patchKeybinding(editor, "editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR))); // default is F2
 	return disposable;
 }
 

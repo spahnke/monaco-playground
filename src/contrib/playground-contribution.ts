@@ -38,7 +38,7 @@ export class PlaygroundContribution extends Disposable {
 		this.register(this.editor.editor.addAction({
 			id: "toggle_readonly",
 			label: "Toggle Readonly State",
-			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_R)],
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyR)],
 			contextMenuGroupId,
 			run: () => this.editor.setReadonly(!this.editor.isReadonly())
 		}));
@@ -46,7 +46,7 @@ export class PlaygroundContribution extends Disposable {
 		this.register(this.editor.editor.addAction({
 			id: "dispose",
 			label: "Dispose (refresh afterwards)",
-			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_D)],
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyD)],
 			contextMenuGroupId,
 			run: () => this.editor.dispose()
 		}));
@@ -54,7 +54,7 @@ export class PlaygroundContribution extends Disposable {
 		this.register(this.editor.editor.addAction({
 			id: "dump_keybindings",
 			label: "Dump keybindings",
-			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_K)],
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyK)],
 			contextMenuGroupId,
 			run: (editor: monaco.editor.IStandaloneCodeEditor) => console.log(JSON.stringify(getKeybindings(editor)))
 		}));
@@ -62,7 +62,7 @@ export class PlaygroundContribution extends Disposable {
 		this.register(this.editor.editor.addAction({
 			id: "todo_test_code",
 			label: "Add TODO test code",
-			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_T)],
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyT)],
 			contextMenuGroupId,
 			run: () => this.editor.appendLine(todoTestCode)
 		}));
@@ -70,7 +70,7 @@ export class PlaygroundContribution extends Disposable {
 		this.register(this.editor.editor.addAction({
 			id: "linq_test_code",
 			label: "Add LINQ test code",
-			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_L)],
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyL)],
 			contextMenuGroupId,
 			run: () => this.editor.appendLine(linqTestCode)
 		}));
@@ -79,7 +79,7 @@ export class PlaygroundContribution extends Disposable {
 		this.register(this.editor.editor.addAction({
 			id: "toggle_top_level_return",
 			label: "Toggle Top Level Return",
-			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_R)],
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR)],
 			contextMenuGroupId,
 			run: () => {
 				if (topLevelReturn) {
@@ -95,7 +95,7 @@ export class PlaygroundContribution extends Disposable {
 		this.register(this.editor.editor.addAction({
 			id: "toggle_browser_completion",
 			label: "Toggle Browser Completion",
-			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_B)],
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyB)],
 			contextMenuGroupId,
 			run: () => {
 				if (browserCompletion) {
@@ -111,7 +111,7 @@ export class PlaygroundContribution extends Disposable {
 		this.register(this.editor.editor.addAction({
 			id: "toggle_inlay_hint_example",
 			label: "Toggle Inlay Hint Example",
-			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_D, monaco.KeyCode.KEY_I)],
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyI)],
 			contextMenuGroupId,
 			run: editor => {
 				if (inlayHintProvider) {

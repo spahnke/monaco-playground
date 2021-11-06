@@ -57,7 +57,7 @@ export function enableJavaScriptBrowserCompletion(): monaco.IDisposable {
 }
 
 export async function getJavaScriptWorker(model: monaco.editor.ITextModel): Promise<monaco.languages.typescript.TypeScriptWorker | null> {
-	if (model.getModeId() !== "javascript")
+	if (model.getLanguageId() !== "javascript")
 		return null;
 	const worker = await monaco.languages.typescript.getJavaScriptWorker();
 	return worker(model.uri);

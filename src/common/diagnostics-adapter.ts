@@ -20,7 +20,7 @@ export abstract class DiagnosticsAdapter extends Disposable {
 	 */
 	protected startValidation(): void {
 		const onModelAdd = (model: monaco.editor.IModel): void => {
-			if (this.languageId !== allLanguages && model.getModeId() !== this.languageId)
+			if (this.languageId !== allLanguages && model.getLanguageId() !== this.languageId)
 				return;
 
 			let handle: number;
