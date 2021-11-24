@@ -18588,7 +18588,7 @@ function analyzeScope(ast, parserOptions, visitorKeys) {
     ignoreEval: true,
     nodejsScope: ecmaFeatures.globalReturn,
     impliedStrict: ecmaFeatures.impliedStrict,
-    ecmaVersion,
+    ecmaVersion: typeof ecmaVersion === "number" ? ecmaVersion : 6,
     sourceType: parserOptions.sourceType || "script",
     childVisitorKeys: visitorKeys || evk.KEYS,
     fallback: Traverser.getKeys
@@ -20598,7 +20598,7 @@ class ParameterDefinition extends Definition {
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-const { Syntax: Syntax$2 } = estraverse__default['default'];
+const { Syntax: Syntax$2 } = estraverse__default["default"];
 
 /**
  * Test if scope is struct
@@ -20723,7 +20723,8 @@ class Scope {
     constructor(scopeManager, type, upperScope, block, isMethodDefinition) {
 
         /**
-         * One of 'module', 'block', 'switch', 'function', 'catch', 'with', 'function', 'class', 'global'.
+         * One of "global", "module", "function", "function-expression-name", "block", "switch", "catch", "with", "for",
+         * "class", "class-field-initializer", "class-static-block".
          * @member {string} Scope#type
          */
         this.type = type;
@@ -20791,7 +20792,13 @@ class Scope {
          * @member {Scope} Scope#variableScope
          */
         this.variableScope =
-            (this.type === "global" || this.type === "function" || this.type === "module" || this.type === "class-field-initializer") ? this : upperScope.variableScope;
+            this.type === "global" ||
+            this.type === "module" ||
+            this.type === "function" ||
+            this.type === "class-field-initializer" ||
+            this.type === "class-static-block"
+                ? this
+                : upperScope.variableScope;
 
         /**
          * Whether this scope is created by a FunctionExpression.
@@ -21035,8 +21042,8 @@ class Scope {
     resolve(ident) {
         let ref, i, iz;
 
-        assert__default['default'](this.__isClosed(), "Scope should be closed.");
-        assert__default['default'](ident.type === Syntax$2.Identifier, "Target should be identifier.");
+        assert__default["default"](this.__isClosed(), "Scope should be closed.");
+        assert__default["default"](ident.type === Syntax$2.Identifier, "Target should be identifier.");
         for (i = 0, iz = this.references.length; i < iz; ++i) {
             ref = this.references[i];
             if (ref.identifier === ident) {
@@ -21240,7 +21247,7 @@ class FunctionScope extends Scope {
 
         const variable = this.set.get("arguments");
 
-        assert__default['default'](variable, "Always have arguments variable.");
+        assert__default["default"](variable, "Always have arguments variable.");
         return variable.tainted || variable.references.length !== 0;
     }
 
@@ -21304,6 +21311,12 @@ class ClassFieldInitializerScope extends Scope {
     }
 }
 
+class ClassStaticBlockScope extends Scope {
+    constructor(scopeManager, upperScope, block) {
+        super(scopeManager, "class-static-block", upperScope, block, true);
+    }
+}
+
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 /*
@@ -21356,7 +21369,7 @@ class ScopeManager {
     }
 
     __isNodejsScope() {
-        return this.__options.nodejsScope;
+        return this.__options.nodejsScope || this.__options.sourceType === "commonjs";
     }
 
     isModule() {
@@ -21480,7 +21493,7 @@ class ScopeManager {
 
     __nestScope(scope) {
         if (scope instanceof GlobalScope) {
-            assert__default['default'](this.__currentScope === null);
+            assert__default["default"](this.__currentScope === null);
             this.globalScope = scope;
         }
         this.__currentScope = scope;
@@ -21517,6 +21530,10 @@ class ScopeManager {
 
     __nestClassFieldInitializerScope(node) {
         return this.__nestScope(new ClassFieldInitializerScope(this, this.__currentScope, node));
+    }
+
+    __nestClassStaticBlockScope(node) {
+        return this.__nestScope(new ClassStaticBlockScope(this, this.__currentScope, node));
     }
 
     __nestSwitchScope(node) {
@@ -21562,7 +21579,7 @@ class ScopeManager {
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-const { Syntax: Syntax$1 } = estraverse__default['default'];
+const { Syntax: Syntax$1 } = estraverse__default["default"];
 
 /**
  * Get last array element
@@ -21573,7 +21590,7 @@ function getLast(xs) {
     return xs[xs.length - 1] || null;
 }
 
-class PatternVisitor extends esrecurse__default['default'].Visitor {
+class PatternVisitor extends esrecurse__default["default"].Visitor {
     static isPattern(node) {
         const nodeType = node.type;
 
@@ -21709,7 +21726,7 @@ class PatternVisitor extends esrecurse__default['default'].Visitor {
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-const { Syntax } = estraverse__default['default'];
+const { Syntax } = estraverse__default["default"];
 
 /**
  * Traverse identifier in pattern
@@ -21738,7 +21755,7 @@ function traverseIdentifierInPattern(options, rootPattern, referencer, callback)
 // FIXME: Now, we don't create module environment, because the context is
 // implementation dependent.
 
-class Importer extends esrecurse__default['default'].Visitor {
+class Importer extends esrecurse__default["default"].Visitor {
     constructor(declaration, referencer) {
         super(null, referencer.options);
         this.declaration = declaration;
@@ -21785,7 +21802,7 @@ class Importer extends esrecurse__default['default'].Visitor {
 }
 
 // Referencing variables and creating bindings.
-class Referencer extends esrecurse__default['default'].Visitor {
+class Referencer extends esrecurse__default["default"].Visitor {
     constructor(options, scopeManager) {
         super(null, options);
         this.options = options;
@@ -22146,6 +22163,14 @@ class Referencer extends esrecurse__default['default'].Visitor {
         }
     }
 
+    StaticBlock(node) {
+        this.scopeManager.__nestClassStaticBlockScope(node);
+
+        this.visitChildren(node);
+
+        this.close(node);
+    }
+
     MethodDefinition(node) {
         this.visitProperty(node);
     }
@@ -22267,7 +22292,7 @@ class Referencer extends esrecurse__default['default'].Visitor {
     }
 
     ImportDeclaration(node) {
-        assert__default['default'](this.scopeManager.__isES6() && this.scopeManager.isModule(), "ImportDeclaration should appear when the mode is ES6 and in the module context.");
+        assert__default["default"](this.scopeManager.__isES6() && this.scopeManager.isModule(), "ImportDeclaration should appear when the mode is ES6 and in the module context.");
 
         const importer = new Importer(node, this);
 
@@ -22319,7 +22344,7 @@ class Referencer extends esrecurse__default['default'].Visitor {
 
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-const version = "6.0.0";
+const version = "7.1.0";
 
 /*
   Copyright (C) 2012-2014 Yusuke Suzuki <utatane.tea@gmail.com>
@@ -22357,7 +22382,7 @@ function defaultOptions() {
         directive: false,
         nodejsScope: false,
         impliedStrict: false,
-        sourceType: "script", // one of ['script', 'module']
+        sourceType: "script", // one of ['script', 'module', 'commonjs']
         ecmaVersion: 5,
         childVisitorKeys: null,
         fallback: "iteration"
@@ -22413,7 +22438,7 @@ function updateDeeply(target, override) {
  * a function scope immediately following the global scope.
  * @param {boolean} [providedOptions.impliedStrict=false] implied strict mode
  * (if ecmaVersion >= 5).
- * @param {string} [providedOptions.sourceType='script'] the source type of the script. one of 'script' and 'module'
+ * @param {string} [providedOptions.sourceType='script'] the source type of the script. one of 'script', 'module', and 'commonjs'
  * @param {number} [providedOptions.ecmaVersion=5] which ECMAScript version is considered
  * @param {Object} [providedOptions.childVisitorKeys=null] Additional known visitor keys. See [esrecurse](https://github.com/estools/esrecurse)'s the `childVisitorKeys` option.
  * @param {string} [providedOptions.fallback='iteration'] A kind of the fallback in order to encounter with unknown node. See [esrecurse](https://github.com/estools/esrecurse)'s the `fallback` option.
@@ -22426,7 +22451,7 @@ function analyze(tree, providedOptions) {
 
     referencer.visit(tree);
 
-    assert__default['default'](scopeManager.__currentScope === null, "currentScope should be null.");
+    assert__default["default"](scopeManager.__currentScope === null, "currentScope should be null.");
 
     return scopeManager;
 }
@@ -28589,6 +28614,9 @@ const KEYS = {
     SpreadElement: [
         "argument"
     ],
+    StaticBlock: [
+        "body"
+    ],
     Super: [],
     SwitchStatement: [
         "discriminant",
@@ -28738,14 +28766,12 @@ function _interopNamespace(e) {
                 var d = Object.getOwnPropertyDescriptor(e, k);
                 Object.defineProperty(n, k, d.get ? d : {
                     enumerable: true,
-                    get: function () {
-                        return e[k];
-                    }
+                    get: function () { return e[k]; }
                 });
             }
         });
     }
-    n['default'] = e;
+    n["default"] = e;
     return Object.freeze(n);
 }
 
@@ -29183,6 +29209,11 @@ function normalizeSourceType(sourceType = "script") {
     if (sourceType === "script" || sourceType === "module") {
         return sourceType;
     }
+
+    if (sourceType === "commonjs") {
+        return "script";
+    }
+
     throw new Error("Invalid sourceType.");
 }
 
@@ -29198,16 +29229,21 @@ function normalizeOptions(options) {
     const ranges = options.range === true;
     const locations = options.loc === true;
     const allowReserved = ecmaVersion === 3 ? "never" : false;
+    const ecmaFeatures = options.ecmaFeatures || {};
+    const allowReturnOutsideFunction = options.sourceType === "commonjs" ||
+        Boolean(ecmaFeatures.globalReturn);
 
     if (sourceType === "module" && ecmaVersion < 6) {
         throw new Error("sourceType 'module' is not supported when ecmaVersion < 2015. Consider adding `{ ecmaVersion: 2015 }` to the parser options.");
     }
+
     return Object.assign({}, options, {
         ecmaVersion,
         sourceType,
         ranges,
         locations,
-        allowReserved
+        allowReserved,
+        allowReturnOutsideFunction
     });
 }
 
@@ -29267,6 +29303,8 @@ var espree = () => Parser => {
                 code = String(code);
             }
 
+            // save original source type in case of commonjs
+            const originalSourceType = opts.sourceType;
             const options = normalizeOptions(opts);
             const ecmaFeatures = options.ecmaFeatures || {};
             const tokenTranslator =
@@ -29285,7 +29323,7 @@ var espree = () => Parser => {
                 allowReserved: options.allowReserved,
 
                 // Truthy value is true for backward compatibility.
-                allowReturnOutsideFunction: Boolean(ecmaFeatures.globalReturn),
+                allowReturnOutsideFunction: options.allowReturnOutsideFunction,
 
                 // Collect tokens
                 onToken: token => {
@@ -29309,8 +29347,13 @@ var espree = () => Parser => {
                 }
             }, code);
 
-            // Initialize internal state.
+            /*
+             * Data that is unique to Espree and is not represented internally in
+             * Acorn. We put all of this data into a symbol property as a way to
+             * avoid potential naming conflicts with future versions of Acorn.
+             */
             this[STATE] = {
+                originalSourceType: originalSourceType || options.sourceType,
                 tokens: tokenTranslator ? [] : null,
                 comments: options.comment === true ? [] : null,
                 impliedStrict: ecmaFeatures.impliedStrict === true && this.options.ecmaVersion >= 5,
@@ -29355,7 +29398,7 @@ var espree = () => Parser => {
             const extra = this[STATE];
             const program = super.parse();
 
-            program.sourceType = this.options.sourceType;
+            program.sourceType = extra.originalSourceType;
 
             if (extra.comments) {
                 program.comments = extra.comments;
@@ -29531,7 +29574,7 @@ var espree = () => Parser => {
     };
 };
 
-const version$1 = "9.0.0";
+const version$1 = "9.1.0";
 
 /**
  * @fileoverview Main Espree file that converts Acorn into Esprima output.
@@ -29605,7 +29648,7 @@ const parsers = {
 
     get jsx() {
         if (this._jsx === null) {
-            this._jsx = acorn__namespace.Parser.extend(jsx__default['default'](), espree());
+            this._jsx = acorn__namespace.Parser.extend(jsx__default["default"](), espree());
         }
         return this._jsx;
     },
@@ -29729,7 +29772,7 @@ exports.version = version;
   }; // And the keywords
 
   var ecma5AndLessKeywords = "break case catch continue debugger default do else finally for function if return switch throw try var while with null true false instanceof typeof void delete new in this";
-  var keywords = {
+  var keywords$1 = {
     5: ecma5AndLessKeywords,
     "5module": ecma5AndLessKeywords + " export import",
     6: ecma5AndLessKeywords + " const class extends export import super"
@@ -29889,15 +29932,15 @@ exports.version = version;
     startsExpr: true
   }; // Map keyword names to token types.
 
-  var keywords$1 = {}; // Succinct definitions of keyword token types
+  var keywords = {}; // Succinct definitions of keyword token types
 
   function kw(name, options) {
     if (options === void 0) options = {};
     options.keyword = name;
-    return keywords$1[name] = new TokenType(name, options);
+    return keywords[name] = new TokenType(name, options);
   }
 
-  var types = {
+  var types$1 = {
     num: new TokenType("num", startsExpr),
     regexp: new TokenType("regexp", startsExpr),
     string: new TokenType("string", startsExpr),
@@ -30305,7 +30348,7 @@ exports.version = version;
   var Parser = function Parser(options, input, startPos) {
     this.options = options = getOptions(options);
     this.sourceFile = options.sourceFile;
-    this.keywords = wordsRegexp(keywords[options.ecmaVersion >= 6 ? 6 : options.sourceType === "module" ? "5module" : 5]);
+    this.keywords = wordsRegexp(keywords$1[options.ecmaVersion >= 6 ? 6 : options.sourceType === "module" ? "5module" : 5]);
     var reserved = "";
 
     if (options.allowReserved !== true) {
@@ -30338,7 +30381,7 @@ exports.version = version;
     // Its type
 
 
-    this.type = types.eof; // For tokens that include more information than their type, the value
+    this.type = types$1.eof; // For tokens that include more information than their type, the value
 
     this.value = null; // Its start and end offset
 
@@ -30502,11 +30545,11 @@ exports.version = version;
   };
 
   Object.defineProperties(Parser.prototype, prototypeAccessors);
-  var pp = Parser.prototype; // ## Parser utilities
+  var pp$9 = Parser.prototype; // ## Parser utilities
 
   var literal = /^(?:'((?:\\.|[^'\\])*?)'|"((?:\\.|[^"\\])*?)")/;
 
-  pp.strictDirective = function (start) {
+  pp$9.strictDirective = function (start) {
     for (;;) {
       // Try to find string literal.
       skipWhiteSpace.lastIndex = start;
@@ -30538,7 +30581,7 @@ exports.version = version;
   // type, and if yes, consumes it as a side effect.
 
 
-  pp.eat = function (type) {
+  pp$9.eat = function (type) {
     if (this.type === type) {
       this.next();
       return true;
@@ -30548,12 +30591,12 @@ exports.version = version;
   }; // Tests whether parsed token is a contextual keyword.
 
 
-  pp.isContextual = function (name) {
-    return this.type === types.name && this.value === name && !this.containsEsc;
+  pp$9.isContextual = function (name) {
+    return this.type === types$1.name && this.value === name && !this.containsEsc;
   }; // Consumes contextual keyword if possible.
 
 
-  pp.eatContextual = function (name) {
+  pp$9.eatContextual = function (name) {
     if (!this.isContextual(name)) {
       return false;
     }
@@ -30563,18 +30606,18 @@ exports.version = version;
   }; // Asserts that following token is given contextual keyword.
 
 
-  pp.expectContextual = function (name) {
+  pp$9.expectContextual = function (name) {
     if (!this.eatContextual(name)) {
       this.unexpected();
     }
   }; // Test whether a semicolon can be inserted at the current position.
 
 
-  pp.canInsertSemicolon = function () {
-    return this.type === types.eof || this.type === types.braceR || lineBreak.test(this.input.slice(this.lastTokEnd, this.start));
+  pp$9.canInsertSemicolon = function () {
+    return this.type === types$1.eof || this.type === types$1.braceR || lineBreak.test(this.input.slice(this.lastTokEnd, this.start));
   };
 
-  pp.insertSemicolon = function () {
+  pp$9.insertSemicolon = function () {
     if (this.canInsertSemicolon()) {
       if (this.options.onInsertedSemicolon) {
         this.options.onInsertedSemicolon(this.lastTokEnd, this.lastTokEndLoc);
@@ -30586,13 +30629,13 @@ exports.version = version;
   // pretend that there is a semicolon at this position.
 
 
-  pp.semicolon = function () {
-    if (!this.eat(types.semi) && !this.insertSemicolon()) {
+  pp$9.semicolon = function () {
+    if (!this.eat(types$1.semi) && !this.insertSemicolon()) {
       this.unexpected();
     }
   };
 
-  pp.afterTrailingComma = function (tokType, notNext) {
+  pp$9.afterTrailingComma = function (tokType, notNext) {
     if (this.type === tokType) {
       if (this.options.onTrailingComma) {
         this.options.onTrailingComma(this.lastTokStart, this.lastTokStartLoc);
@@ -30608,12 +30651,12 @@ exports.version = version;
   // raise an unexpected token error.
 
 
-  pp.expect = function (type) {
+  pp$9.expect = function (type) {
     this.eat(type) || this.unexpected();
   }; // Raise an unexpected token error.
 
 
-  pp.unexpected = function (pos) {
+  pp$9.unexpected = function (pos) {
     this.raise(pos != null ? pos : this.start, "Unexpected token");
   };
 
@@ -30621,7 +30664,7 @@ exports.version = version;
     this.shorthandAssign = this.trailingComma = this.parenthesizedAssign = this.parenthesizedBind = this.doubleProto = -1;
   }
 
-  pp.checkPatternErrors = function (refDestructuringErrors, isAssign) {
+  pp$9.checkPatternErrors = function (refDestructuringErrors, isAssign) {
     if (!refDestructuringErrors) {
       return;
     }
@@ -30637,7 +30680,7 @@ exports.version = version;
     }
   };
 
-  pp.checkExpressionErrors = function (refDestructuringErrors, andThrow) {
+  pp$9.checkExpressionErrors = function (refDestructuringErrors, andThrow) {
     if (!refDestructuringErrors) {
       return false;
     }
@@ -30658,7 +30701,7 @@ exports.version = version;
     }
   };
 
-  pp.checkYieldAwaitInDefaultParams = function () {
+  pp$9.checkYieldAwaitInDefaultParams = function () {
     if (this.yieldPos && (!this.awaitPos || this.yieldPos < this.awaitPos)) {
       this.raise(this.yieldPos, "Yield expression cannot be a default value");
     }
@@ -30668,7 +30711,7 @@ exports.version = version;
     }
   };
 
-  pp.isSimpleAssignTarget = function (expr) {
+  pp$9.isSimpleAssignTarget = function (expr) {
     if (expr.type === "ParenthesizedExpression") {
       return this.isSimpleAssignTarget(expr.expression);
     }
@@ -30676,20 +30719,20 @@ exports.version = version;
     return expr.type === "Identifier" || expr.type === "MemberExpression";
   };
 
-  var pp$1 = Parser.prototype; // ### Statement parsing
+  var pp$8 = Parser.prototype; // ### Statement parsing
   // Parse a program. Initializes the parser, reads any number of
   // statements, and wraps them in a Program node.  Optionally takes a
   // `program` argument.  If present, the statements will be appended
   // to its body instead of creating a new node.
 
-  pp$1.parseTopLevel = function (node) {
+  pp$8.parseTopLevel = function (node) {
     var exports = Object.create(null);
 
     if (!node.body) {
       node.body = [];
     }
 
-    while (this.type !== types.eof) {
+    while (this.type !== types$1.eof) {
       var stmt = this.parseStatement(null, true, exports);
       node.body.push(stmt);
     }
@@ -30714,7 +30757,7 @@ exports.version = version;
     kind: "switch"
   };
 
-  pp$1.isLet = function (context) {
+  pp$8.isLet = function (context) {
     if (this.options.ecmaVersion < 6 || !this.isContextual("let")) {
       return false;
     }
@@ -30765,7 +30808,7 @@ exports.version = version;
   // - 'async /*\n*/ function' is invalid.
 
 
-  pp$1.isAsyncFunction = function () {
+  pp$8.isAsyncFunction = function () {
     if (this.options.ecmaVersion < 8 || !this.isContextual("async")) {
       return false;
     }
@@ -30783,13 +30826,13 @@ exports.version = version;
   // does not help.
 
 
-  pp$1.parseStatement = function (context, topLevel, exports) {
+  pp$8.parseStatement = function (context, topLevel, exports) {
     var starttype = this.type,
         node = this.startNode(),
         kind;
 
     if (this.isLet(context)) {
-      starttype = types._var;
+      starttype = types$1._var;
       kind = "let";
     } // Most types of statements are recognized by the keyword they
     // start with. Many are trivial to parse, some require a bit of
@@ -30797,20 +30840,20 @@ exports.version = version;
 
 
     switch (starttype) {
-      case types._break:
-      case types._continue:
+      case types$1._break:
+      case types$1._continue:
         return this.parseBreakContinueStatement(node, starttype.keyword);
 
-      case types._debugger:
+      case types$1._debugger:
         return this.parseDebuggerStatement(node);
 
-      case types._do:
+      case types$1._do:
         return this.parseDoStatement(node);
 
-      case types._for:
+      case types$1._for:
         return this.parseForStatement(node);
 
-      case types._function:
+      case types$1._function:
         // Function as sole body of either an if statement or a labeled statement
         // works, but not when it is part of a labeled statement that is the sole
         // body of an if statement.
@@ -30820,30 +30863,30 @@ exports.version = version;
 
         return this.parseFunctionStatement(node, false, !context);
 
-      case types._class:
+      case types$1._class:
         if (context) {
           this.unexpected();
         }
 
         return this.parseClass(node, true);
 
-      case types._if:
+      case types$1._if:
         return this.parseIfStatement(node);
 
-      case types._return:
+      case types$1._return:
         return this.parseReturnStatement(node);
 
-      case types._switch:
+      case types$1._switch:
         return this.parseSwitchStatement(node);
 
-      case types._throw:
+      case types$1._throw:
         return this.parseThrowStatement(node);
 
-      case types._try:
+      case types$1._try:
         return this.parseTryStatement(node);
 
-      case types._const:
-      case types._var:
+      case types$1._const:
+      case types$1._var:
         kind = kind || this.value;
 
         if (context && kind !== "var") {
@@ -30852,21 +30895,21 @@ exports.version = version;
 
         return this.parseVarStatement(node, kind);
 
-      case types._while:
+      case types$1._while:
         return this.parseWhileStatement(node);
 
-      case types._with:
+      case types$1._with:
         return this.parseWithStatement(node);
 
-      case types.braceL:
+      case types$1.braceL:
         return this.parseBlock(true, node);
 
-      case types.semi:
+      case types$1.semi:
         return this.parseEmptyStatement(node);
 
-      case types._export:
-      case types._import:
-        if (this.options.ecmaVersion > 10 && starttype === types._import) {
+      case types$1._export:
+      case types$1._import:
+        if (this.options.ecmaVersion > 10 && starttype === types$1._import) {
           skipWhiteSpace.lastIndex = this.pos;
           var skip = skipWhiteSpace.exec(this.input);
           var next = this.pos + skip[0].length,
@@ -30888,7 +30931,7 @@ exports.version = version;
           }
         }
 
-        return starttype === types._import ? this.parseImport(node) : this.parseExport(node, exports);
+        return starttype === types$1._import ? this.parseImport(node) : this.parseExport(node, exports);
       // If the statement does not start with a statement keyword or a
       // brace, it's an ExpressionStatement or LabeledStatement. We
       // simply start parsing an expression, and afterwards, if the
@@ -30908,7 +30951,7 @@ exports.version = version;
         var maybeName = this.value,
             expr = this.parseExpression();
 
-        if (starttype === types.name && expr.type === "Identifier" && this.eat(types.colon)) {
+        if (starttype === types$1.name && expr.type === "Identifier" && this.eat(types$1.colon)) {
           return this.parseLabeledStatement(node, maybeName, expr, context);
         } else {
           return this.parseExpressionStatement(node, expr);
@@ -30917,13 +30960,13 @@ exports.version = version;
     }
   };
 
-  pp$1.parseBreakContinueStatement = function (node, keyword) {
+  pp$8.parseBreakContinueStatement = function (node, keyword) {
     var isBreak = keyword === "break";
     this.next();
 
-    if (this.eat(types.semi) || this.insertSemicolon()) {
+    if (this.eat(types$1.semi) || this.insertSemicolon()) {
       node.label = null;
-    } else if (this.type !== types.name) {
+    } else if (this.type !== types$1.name) {
       this.unexpected();
     } else {
       node.label = this.parseIdent();
@@ -30955,22 +30998,22 @@ exports.version = version;
     return this.finishNode(node, isBreak ? "BreakStatement" : "ContinueStatement");
   };
 
-  pp$1.parseDebuggerStatement = function (node) {
+  pp$8.parseDebuggerStatement = function (node) {
     this.next();
     this.semicolon();
     return this.finishNode(node, "DebuggerStatement");
   };
 
-  pp$1.parseDoStatement = function (node) {
+  pp$8.parseDoStatement = function (node) {
     this.next();
     this.labels.push(loopLabel);
     node.body = this.parseStatement("do");
     this.labels.pop();
-    this.expect(types._while);
+    this.expect(types$1._while);
     node.test = this.parseParenExpression();
 
     if (this.options.ecmaVersion >= 6) {
-      this.eat(types.semi);
+      this.eat(types$1.semi);
     } else {
       this.semicolon();
     }
@@ -30985,14 +31028,14 @@ exports.version = version;
   // is a regular `for` loop.
 
 
-  pp$1.parseForStatement = function (node) {
+  pp$8.parseForStatement = function (node) {
     this.next();
     var awaitAt = this.options.ecmaVersion >= 9 && this.canAwait && this.eatContextual("await") ? this.lastTokStart : -1;
     this.labels.push(loopLabel);
     this.enterScope(0);
-    this.expect(types.parenL);
+    this.expect(types$1.parenL);
 
-    if (this.type === types.semi) {
+    if (this.type === types$1.semi) {
       if (awaitAt > -1) {
         this.unexpected(awaitAt);
       }
@@ -31002,16 +31045,16 @@ exports.version = version;
 
     var isLet = this.isLet();
 
-    if (this.type === types._var || this.type === types._const || isLet) {
+    if (this.type === types$1._var || this.type === types$1._const || isLet) {
       var init$1 = this.startNode(),
           kind = isLet ? "let" : this.value;
       this.next();
       this.parseVar(init$1, true, kind);
       this.finishNode(init$1, "VariableDeclaration");
 
-      if ((this.type === types._in || this.options.ecmaVersion >= 6 && this.isContextual("of")) && init$1.declarations.length === 1) {
+      if ((this.type === types$1._in || this.options.ecmaVersion >= 6 && this.isContextual("of")) && init$1.declarations.length === 1) {
         if (this.options.ecmaVersion >= 9) {
-          if (this.type === types._in) {
+          if (this.type === types$1._in) {
             if (awaitAt > -1) {
               this.unexpected(awaitAt);
             }
@@ -31035,9 +31078,9 @@ exports.version = version;
     var refDestructuringErrors = new DestructuringErrors();
     var init = this.parseExpression(awaitAt > -1 ? "await" : true, refDestructuringErrors);
 
-    if (this.type === types._in || (isForOf = this.options.ecmaVersion >= 6 && this.isContextual("of"))) {
+    if (this.type === types$1._in || (isForOf = this.options.ecmaVersion >= 6 && this.isContextual("of"))) {
       if (this.options.ecmaVersion >= 9) {
-        if (this.type === types._in) {
+        if (this.type === types$1._in) {
           if (awaitAt > -1) {
             this.unexpected(awaitAt);
           }
@@ -31064,21 +31107,21 @@ exports.version = version;
     return this.parseFor(node, init);
   };
 
-  pp$1.parseFunctionStatement = function (node, isAsync, declarationPosition) {
+  pp$8.parseFunctionStatement = function (node, isAsync, declarationPosition) {
     this.next();
     return this.parseFunction(node, FUNC_STATEMENT | (declarationPosition ? 0 : FUNC_HANGING_STATEMENT), false, isAsync);
   };
 
-  pp$1.parseIfStatement = function (node) {
+  pp$8.parseIfStatement = function (node) {
     this.next();
     node.test = this.parseParenExpression(); // allow function declarations in branches, but only in non-strict mode
 
     node.consequent = this.parseStatement("if");
-    node.alternate = this.eat(types._else) ? this.parseStatement("if") : null;
+    node.alternate = this.eat(types$1._else) ? this.parseStatement("if") : null;
     return this.finishNode(node, "IfStatement");
   };
 
-  pp$1.parseReturnStatement = function (node) {
+  pp$8.parseReturnStatement = function (node) {
     if (!this.inFunction && !this.options.allowReturnOutsideFunction) {
       this.raise(this.start, "'return' outside of function");
     }
@@ -31087,7 +31130,7 @@ exports.version = version;
     // optional arguments, we eagerly look for a semicolon or the
     // possibility to insert one.
 
-    if (this.eat(types.semi) || this.insertSemicolon()) {
+    if (this.eat(types$1.semi) || this.insertSemicolon()) {
       node.argument = null;
     } else {
       node.argument = this.parseExpression();
@@ -31097,11 +31140,11 @@ exports.version = version;
     return this.finishNode(node, "ReturnStatement");
   };
 
-  pp$1.parseSwitchStatement = function (node) {
+  pp$8.parseSwitchStatement = function (node) {
     this.next();
     node.discriminant = this.parseParenExpression();
     node.cases = [];
-    this.expect(types.braceL);
+    this.expect(types$1.braceL);
     this.labels.push(switchLabel);
     this.enterScope(0); // Statements under must be grouped (by label) in SwitchCase
     // nodes. `cur` is used to keep the node that we are currently
@@ -31109,9 +31152,9 @@ exports.version = version;
 
     var cur;
 
-    for (var sawDefault = false; this.type !== types.braceR;) {
-      if (this.type === types._case || this.type === types._default) {
-        var isCase = this.type === types._case;
+    for (var sawDefault = false; this.type !== types$1.braceR;) {
+      if (this.type === types$1._case || this.type === types$1._default) {
+        var isCase = this.type === types$1._case;
 
         if (cur) {
           this.finishNode(cur, "SwitchCase");
@@ -31132,7 +31175,7 @@ exports.version = version;
           cur.test = null;
         }
 
-        this.expect(types.colon);
+        this.expect(types$1.colon);
       } else {
         if (!cur) {
           this.unexpected();
@@ -31154,7 +31197,7 @@ exports.version = version;
     return this.finishNode(node, "SwitchStatement");
   };
 
-  pp$1.parseThrowStatement = function (node) {
+  pp$8.parseThrowStatement = function (node) {
     this.next();
 
     if (lineBreak.test(this.input.slice(this.lastTokEnd, this.start))) {
@@ -31167,23 +31210,23 @@ exports.version = version;
   }; // Reused empty array added for node fields that are always empty.
 
 
-  var empty = [];
+  var empty$1 = [];
 
-  pp$1.parseTryStatement = function (node) {
+  pp$8.parseTryStatement = function (node) {
     this.next();
     node.block = this.parseBlock();
     node.handler = null;
 
-    if (this.type === types._catch) {
+    if (this.type === types$1._catch) {
       var clause = this.startNode();
       this.next();
 
-      if (this.eat(types.parenL)) {
+      if (this.eat(types$1.parenL)) {
         clause.param = this.parseBindingAtom();
         var simple = clause.param.type === "Identifier";
         this.enterScope(simple ? SCOPE_SIMPLE_CATCH : 0);
         this.checkLValPattern(clause.param, simple ? BIND_SIMPLE_CATCH : BIND_LEXICAL);
-        this.expect(types.parenR);
+        this.expect(types$1.parenR);
       } else {
         if (this.options.ecmaVersion < 10) {
           this.unexpected();
@@ -31198,7 +31241,7 @@ exports.version = version;
       node.handler = this.finishNode(clause, "CatchClause");
     }
 
-    node.finalizer = this.eat(types._finally) ? this.parseBlock() : null;
+    node.finalizer = this.eat(types$1._finally) ? this.parseBlock() : null;
 
     if (!node.handler && !node.finalizer) {
       this.raise(node.start, "Missing catch or finally clause");
@@ -31207,14 +31250,14 @@ exports.version = version;
     return this.finishNode(node, "TryStatement");
   };
 
-  pp$1.parseVarStatement = function (node, kind) {
+  pp$8.parseVarStatement = function (node, kind) {
     this.next();
     this.parseVar(node, false, kind);
     this.semicolon();
     return this.finishNode(node, "VariableDeclaration");
   };
 
-  pp$1.parseWhileStatement = function (node) {
+  pp$8.parseWhileStatement = function (node) {
     this.next();
     node.test = this.parseParenExpression();
     this.labels.push(loopLabel);
@@ -31223,7 +31266,7 @@ exports.version = version;
     return this.finishNode(node, "WhileStatement");
   };
 
-  pp$1.parseWithStatement = function (node) {
+  pp$8.parseWithStatement = function (node) {
     if (this.strict) {
       this.raise(this.start, "'with' in strict mode");
     }
@@ -31234,12 +31277,12 @@ exports.version = version;
     return this.finishNode(node, "WithStatement");
   };
 
-  pp$1.parseEmptyStatement = function (node) {
+  pp$8.parseEmptyStatement = function (node) {
     this.next();
     return this.finishNode(node, "EmptyStatement");
   };
 
-  pp$1.parseLabeledStatement = function (node, maybeName, expr, context) {
+  pp$8.parseLabeledStatement = function (node, maybeName, expr, context) {
     for (var i$1 = 0, list = this.labels; i$1 < list.length; i$1 += 1) {
       var label = list[i$1];
 
@@ -31248,7 +31291,7 @@ exports.version = version;
       }
     }
 
-    var kind = this.type.isLoop ? "loop" : this.type === types._switch ? "switch" : null;
+    var kind = this.type.isLoop ? "loop" : this.type === types$1._switch ? "switch" : null;
 
     for (var i = this.labels.length - 1; i >= 0; i--) {
       var label$1 = this.labels[i];
@@ -31273,7 +31316,7 @@ exports.version = version;
     return this.finishNode(node, "LabeledStatement");
   };
 
-  pp$1.parseExpressionStatement = function (node, expr) {
+  pp$8.parseExpressionStatement = function (node, expr) {
     node.expression = expr;
     this.semicolon();
     return this.finishNode(node, "ExpressionStatement");
@@ -31282,17 +31325,17 @@ exports.version = version;
   // function bodies).
 
 
-  pp$1.parseBlock = function (createNewLexicalScope, node, exitStrict) {
+  pp$8.parseBlock = function (createNewLexicalScope, node, exitStrict) {
     if (createNewLexicalScope === void 0) createNewLexicalScope = true;
     if (node === void 0) node = this.startNode();
     node.body = [];
-    this.expect(types.braceL);
+    this.expect(types$1.braceL);
 
     if (createNewLexicalScope) {
       this.enterScope(0);
     }
 
-    while (this.type !== types.braceR) {
+    while (this.type !== types$1.braceR) {
       var stmt = this.parseStatement(null);
       node.body.push(stmt);
     }
@@ -31313,13 +31356,13 @@ exports.version = version;
   // expression.
 
 
-  pp$1.parseFor = function (node, init) {
+  pp$8.parseFor = function (node, init) {
     node.init = init;
-    this.expect(types.semi);
-    node.test = this.type === types.semi ? null : this.parseExpression();
-    this.expect(types.semi);
-    node.update = this.type === types.parenR ? null : this.parseExpression();
-    this.expect(types.parenR);
+    this.expect(types$1.semi);
+    node.test = this.type === types$1.semi ? null : this.parseExpression();
+    this.expect(types$1.semi);
+    node.update = this.type === types$1.parenR ? null : this.parseExpression();
+    this.expect(types$1.parenR);
     node.body = this.parseStatement("for");
     this.exitScope();
     this.labels.pop();
@@ -31328,8 +31371,8 @@ exports.version = version;
   // same from parser's perspective.
 
 
-  pp$1.parseForIn = function (node, init) {
-    var isForIn = this.type === types._in;
+  pp$8.parseForIn = function (node, init) {
+    var isForIn = this.type === types$1._in;
     this.next();
 
     if (init.type === "VariableDeclaration" && init.declarations[0].init != null && (!isForIn || this.options.ecmaVersion < 8 || this.strict || init.kind !== "var" || init.declarations[0].id.type !== "Identifier")) {
@@ -31338,7 +31381,7 @@ exports.version = version;
 
     node.left = init;
     node.right = isForIn ? this.parseExpression() : this.parseMaybeAssign();
-    this.expect(types.parenR);
+    this.expect(types$1.parenR);
     node.body = this.parseStatement("for");
     this.exitScope();
     this.labels.pop();
@@ -31346,7 +31389,7 @@ exports.version = version;
   }; // Parse a list of variable declarations.
 
 
-  pp$1.parseVar = function (node, isFor, kind) {
+  pp$8.parseVar = function (node, isFor, kind) {
     node.declarations = [];
     node.kind = kind;
 
@@ -31354,11 +31397,11 @@ exports.version = version;
       var decl = this.startNode();
       this.parseVarId(decl, kind);
 
-      if (this.eat(types.eq)) {
+      if (this.eat(types$1.eq)) {
         decl.init = this.parseMaybeAssign(isFor);
-      } else if (kind === "const" && !(this.type === types._in || this.options.ecmaVersion >= 6 && this.isContextual("of"))) {
+      } else if (kind === "const" && !(this.type === types$1._in || this.options.ecmaVersion >= 6 && this.isContextual("of"))) {
         this.unexpected();
-      } else if (decl.id.type !== "Identifier" && !(isFor && (this.type === types._in || this.isContextual("of")))) {
+      } else if (decl.id.type !== "Identifier" && !(isFor && (this.type === types$1._in || this.isContextual("of")))) {
         this.raise(this.lastTokEnd, "Complex binding patterns require an initialization value");
       } else {
         decl.init = null;
@@ -31366,7 +31409,7 @@ exports.version = version;
 
       node.declarations.push(this.finishNode(decl, "VariableDeclarator"));
 
-      if (!this.eat(types.comma)) {
+      if (!this.eat(types$1.comma)) {
         break;
       }
     }
@@ -31374,7 +31417,7 @@ exports.version = version;
     return node;
   };
 
-  pp$1.parseVarId = function (decl, kind) {
+  pp$8.parseVarId = function (decl, kind) {
     decl.id = this.parseBindingAtom();
     this.checkLValPattern(decl.id, kind === "var" ? BIND_VAR : BIND_LEXICAL, false);
   };
@@ -31385,15 +31428,15 @@ exports.version = version;
   // `statement & FUNC_STATEMENT`).
   // Remove `allowExpressionBody` for 7.0.0, as it is only called with false
 
-  pp$1.parseFunction = function (node, statement, allowExpressionBody, isAsync, forInit) {
+  pp$8.parseFunction = function (node, statement, allowExpressionBody, isAsync, forInit) {
     this.initFunction(node);
 
     if (this.options.ecmaVersion >= 9 || this.options.ecmaVersion >= 6 && !isAsync) {
-      if (this.type === types.star && statement & FUNC_HANGING_STATEMENT) {
+      if (this.type === types$1.star && statement & FUNC_HANGING_STATEMENT) {
         this.unexpected();
       }
 
-      node.generator = this.eat(types.star);
+      node.generator = this.eat(types$1.star);
     }
 
     if (this.options.ecmaVersion >= 8) {
@@ -31401,7 +31444,7 @@ exports.version = version;
     }
 
     if (statement & FUNC_STATEMENT) {
-      node.id = statement & FUNC_NULLABLE_ID && this.type !== types.name ? null : this.parseIdent();
+      node.id = statement & FUNC_NULLABLE_ID && this.type !== types$1.name ? null : this.parseIdent();
 
       if (node.id && !(statement & FUNC_HANGING_STATEMENT)) // If it is a regular function declaration in sloppy mode, then it is
         // subject to Annex B semantics (BIND_FUNCTION). Otherwise, the binding
@@ -31421,7 +31464,7 @@ exports.version = version;
     this.enterScope(functionFlags(node.async, node.generator));
 
     if (!(statement & FUNC_STATEMENT)) {
-      node.id = this.type === types.name ? this.parseIdent() : null;
+      node.id = this.type === types$1.name ? this.parseIdent() : null;
     }
 
     this.parseFunctionParams(node);
@@ -31432,15 +31475,15 @@ exports.version = version;
     return this.finishNode(node, statement & FUNC_STATEMENT ? "FunctionDeclaration" : "FunctionExpression");
   };
 
-  pp$1.parseFunctionParams = function (node) {
-    this.expect(types.parenL);
-    node.params = this.parseBindingList(types.parenR, false, this.options.ecmaVersion >= 8);
+  pp$8.parseFunctionParams = function (node) {
+    this.expect(types$1.parenL);
+    node.params = this.parseBindingList(types$1.parenR, false, this.options.ecmaVersion >= 8);
     this.checkYieldAwaitInDefaultParams();
   }; // Parse a class declaration or literal (depending on the
   // `isStatement` parameter).
 
 
-  pp$1.parseClass = function (node, isStatement) {
+  pp$8.parseClass = function (node, isStatement) {
     this.next(); // ecma-262 14.6 Class Definitions
     // A class definition is always strict mode code.
 
@@ -31452,9 +31495,9 @@ exports.version = version;
     var classBody = this.startNode();
     var hadConstructor = false;
     classBody.body = [];
-    this.expect(types.braceL);
+    this.expect(types$1.braceL);
 
-    while (this.type !== types.braceR) {
+    while (this.type !== types$1.braceR) {
       var element = this.parseClassElement(node.superClass !== null);
 
       if (element) {
@@ -31479,8 +31522,8 @@ exports.version = version;
     return this.finishNode(node, isStatement ? "ClassDeclaration" : "ClassExpression");
   };
 
-  pp$1.parseClassElement = function (constructorAllowsSuper) {
-    if (this.eat(types.semi)) {
+  pp$8.parseClassElement = function (constructorAllowsSuper) {
+    if (this.eat(types$1.semi)) {
       return null;
     }
 
@@ -31494,12 +31537,12 @@ exports.version = version;
 
     if (this.eatContextual("static")) {
       // Parse static init block
-      if (ecmaVersion >= 13 && this.eat(types.braceL)) {
+      if (ecmaVersion >= 13 && this.eat(types$1.braceL)) {
         this.parseClassStaticBlock(node);
         return node;
       }
 
-      if (this.isClassElementNameStart() || this.type === types.star) {
+      if (this.isClassElementNameStart() || this.type === types$1.star) {
         isStatic = true;
       } else {
         keyName = "static";
@@ -31509,14 +31552,14 @@ exports.version = version;
     node.static = isStatic;
 
     if (!keyName && ecmaVersion >= 8 && this.eatContextual("async")) {
-      if ((this.isClassElementNameStart() || this.type === types.star) && !this.canInsertSemicolon()) {
+      if ((this.isClassElementNameStart() || this.type === types$1.star) && !this.canInsertSemicolon()) {
         isAsync = true;
       } else {
         keyName = "async";
       }
     }
 
-    if (!keyName && (ecmaVersion >= 9 || !isAsync) && this.eat(types.star)) {
+    if (!keyName && (ecmaVersion >= 9 || !isAsync) && this.eat(types$1.star)) {
       isGenerator = true;
     }
 
@@ -31545,7 +31588,7 @@ exports.version = version;
     } // Parse element value
 
 
-    if (ecmaVersion < 13 || this.type === types.parenL || kind !== "method" || isGenerator || isAsync) {
+    if (ecmaVersion < 13 || this.type === types$1.parenL || kind !== "method" || isGenerator || isAsync) {
       var isConstructor = !node.static && checkKeyName(node, "constructor");
       var allowsDirectSuper = isConstructor && constructorAllowsSuper; // Couldn't move this check into the 'parseClassMethod' method for backward compatibility.
 
@@ -31562,12 +31605,12 @@ exports.version = version;
     return node;
   };
 
-  pp$1.isClassElementNameStart = function () {
-    return this.type === types.name || this.type === types.privateId || this.type === types.num || this.type === types.string || this.type === types.bracketL || this.type.keyword;
+  pp$8.isClassElementNameStart = function () {
+    return this.type === types$1.name || this.type === types$1.privateId || this.type === types$1.num || this.type === types$1.string || this.type === types$1.bracketL || this.type.keyword;
   };
 
-  pp$1.parseClassElementName = function (element) {
-    if (this.type === types.privateId) {
+  pp$8.parseClassElementName = function (element) {
+    if (this.type === types$1.privateId) {
       if (this.value === "constructor") {
         this.raise(this.start, "Classes can't have an element named '#constructor'");
       }
@@ -31579,7 +31622,7 @@ exports.version = version;
     }
   };
 
-  pp$1.parseClassMethod = function (method, isGenerator, isAsync, allowsDirectSuper) {
+  pp$8.parseClassMethod = function (method, isGenerator, isAsync, allowsDirectSuper) {
     // Check key and flags
     var key = method.key;
 
@@ -31613,14 +31656,14 @@ exports.version = version;
     return this.finishNode(method, "MethodDefinition");
   };
 
-  pp$1.parseClassField = function (field) {
+  pp$8.parseClassField = function (field) {
     if (checkKeyName(field, "constructor")) {
       this.raise(field.key.start, "Classes can't have a field named 'constructor'");
     } else if (field.static && checkKeyName(field, "prototype")) {
       this.raise(field.key.start, "Classes can't have a static field named 'prototype'");
     }
 
-    if (this.eat(types.eq)) {
+    if (this.eat(types$1.eq)) {
       // To raise SyntaxError if 'arguments' exists in the initializer.
       var scope = this.currentThisScope();
       var inClassFieldInit = scope.inClassFieldInit;
@@ -31635,13 +31678,13 @@ exports.version = version;
     return this.finishNode(field, "PropertyDefinition");
   };
 
-  pp$1.parseClassStaticBlock = function (node) {
+  pp$8.parseClassStaticBlock = function (node) {
     node.body = [];
     var oldLabels = this.labels;
     this.labels = [];
     this.enterScope(SCOPE_CLASS_STATIC_BLOCK | SCOPE_SUPER);
 
-    while (this.type !== types.braceR) {
+    while (this.type !== types$1.braceR) {
       var stmt = this.parseStatement(null);
       node.body.push(stmt);
     }
@@ -31652,8 +31695,8 @@ exports.version = version;
     return this.finishNode(node, "StaticBlock");
   };
 
-  pp$1.parseClassId = function (node, isStatement) {
-    if (this.type === types.name) {
+  pp$8.parseClassId = function (node, isStatement) {
+    if (this.type === types$1.name) {
       node.id = this.parseIdent();
 
       if (isStatement) {
@@ -31668,11 +31711,11 @@ exports.version = version;
     }
   };
 
-  pp$1.parseClassSuper = function (node) {
-    node.superClass = this.eat(types._extends) ? this.parseExprSubscripts(false) : null;
+  pp$8.parseClassSuper = function (node) {
+    node.superClass = this.eat(types$1._extends) ? this.parseExprSubscripts(false) : null;
   };
 
-  pp$1.enterClassBody = function () {
+  pp$8.enterClassBody = function () {
     var element = {
       declared: Object.create(null),
       used: []
@@ -31681,7 +31724,7 @@ exports.version = version;
     return element.declared;
   };
 
-  pp$1.exitClassBody = function () {
+  pp$8.exitClassBody = function () {
     var ref = this.privateNameStack.pop();
     var declared = ref.declared;
     var used = ref.used;
@@ -31729,10 +31772,10 @@ exports.version = version;
   } // Parses module export declaration.
 
 
-  pp$1.parseExport = function (node, exports) {
+  pp$8.parseExport = function (node, exports) {
     this.next(); // export * from '...'
 
-    if (this.eat(types.star)) {
+    if (this.eat(types$1.star)) {
       if (this.options.ecmaVersion >= 11) {
         if (this.eatContextual("as")) {
           node.exported = this.parseIdent(true);
@@ -31744,7 +31787,7 @@ exports.version = version;
 
       this.expectContextual("from");
 
-      if (this.type !== types.string) {
+      if (this.type !== types$1.string) {
         this.unexpected();
       }
 
@@ -31753,12 +31796,12 @@ exports.version = version;
       return this.finishNode(node, "ExportAllDeclaration");
     }
 
-    if (this.eat(types._default)) {
+    if (this.eat(types$1._default)) {
       // export default ...
       this.checkExport(exports, "default", this.lastTokStart);
       var isAsync;
 
-      if (this.type === types._function || (isAsync = this.isAsyncFunction())) {
+      if (this.type === types$1._function || (isAsync = this.isAsyncFunction())) {
         var fNode = this.startNode();
         this.next();
 
@@ -31767,7 +31810,7 @@ exports.version = version;
         }
 
         node.declaration = this.parseFunction(fNode, FUNC_STATEMENT | FUNC_NULLABLE_ID, false, isAsync);
-      } else if (this.type === types._class) {
+      } else if (this.type === types$1._class) {
         var cNode = this.startNode();
         node.declaration = this.parseClass(cNode, "nullableID");
       } else {
@@ -31796,7 +31839,7 @@ exports.version = version;
       node.specifiers = this.parseExportSpecifiers(exports);
 
       if (this.eatContextual("from")) {
-        if (this.type !== types.string) {
+        if (this.type !== types$1.string) {
           this.unexpected();
         }
 
@@ -31819,7 +31862,7 @@ exports.version = version;
     return this.finishNode(node, "ExportNamedDeclaration");
   };
 
-  pp$1.checkExport = function (exports, name, pos) {
+  pp$8.checkExport = function (exports, name, pos) {
     if (!exports) {
       return;
     }
@@ -31831,7 +31874,7 @@ exports.version = version;
     exports[name] = true;
   };
 
-  pp$1.checkPatternExport = function (exports, pat) {
+  pp$8.checkPatternExport = function (exports, pat) {
     var type = pat.type;
 
     if (type === "Identifier") {
@@ -31860,7 +31903,7 @@ exports.version = version;
     }
   };
 
-  pp$1.checkVariableExport = function (exports, decls) {
+  pp$8.checkVariableExport = function (exports, decls) {
     if (!exports) {
       return;
     }
@@ -31871,22 +31914,22 @@ exports.version = version;
     }
   };
 
-  pp$1.shouldParseExportStatement = function () {
+  pp$8.shouldParseExportStatement = function () {
     return this.type.keyword === "var" || this.type.keyword === "const" || this.type.keyword === "class" || this.type.keyword === "function" || this.isLet() || this.isAsyncFunction();
   }; // Parses a comma-separated list of module exports.
 
 
-  pp$1.parseExportSpecifiers = function (exports) {
+  pp$8.parseExportSpecifiers = function (exports) {
     var nodes = [],
         first = true; // export { x, y as z } [from '...']
 
-    this.expect(types.braceL);
+    this.expect(types$1.braceL);
 
-    while (!this.eat(types.braceR)) {
+    while (!this.eat(types$1.braceR)) {
       if (!first) {
-        this.expect(types.comma);
+        this.expect(types$1.comma);
 
-        if (this.afterTrailingComma(types.braceR)) {
+        if (this.afterTrailingComma(types$1.braceR)) {
           break;
         }
       } else {
@@ -31904,16 +31947,16 @@ exports.version = version;
   }; // Parses import declaration.
 
 
-  pp$1.parseImport = function (node) {
+  pp$8.parseImport = function (node) {
     this.next(); // import '...'
 
-    if (this.type === types.string) {
-      node.specifiers = empty;
+    if (this.type === types$1.string) {
+      node.specifiers = empty$1;
       node.source = this.parseExprAtom();
     } else {
       node.specifiers = this.parseImportSpecifiers();
       this.expectContextual("from");
-      node.source = this.type === types.string ? this.parseExprAtom() : this.unexpected();
+      node.source = this.type === types$1.string ? this.parseExprAtom() : this.unexpected();
     }
 
     this.semicolon();
@@ -31921,23 +31964,23 @@ exports.version = version;
   }; // Parses a comma-separated list of module imports.
 
 
-  pp$1.parseImportSpecifiers = function () {
+  pp$8.parseImportSpecifiers = function () {
     var nodes = [],
         first = true;
 
-    if (this.type === types.name) {
+    if (this.type === types$1.name) {
       // import defaultObj, { x, y as z } from '...'
       var node = this.startNode();
       node.local = this.parseIdent();
       this.checkLValSimple(node.local, BIND_LEXICAL);
       nodes.push(this.finishNode(node, "ImportDefaultSpecifier"));
 
-      if (!this.eat(types.comma)) {
+      if (!this.eat(types$1.comma)) {
         return nodes;
       }
     }
 
-    if (this.type === types.star) {
+    if (this.type === types$1.star) {
       var node$1 = this.startNode();
       this.next();
       this.expectContextual("as");
@@ -31947,13 +31990,13 @@ exports.version = version;
       return nodes;
     }
 
-    this.expect(types.braceL);
+    this.expect(types$1.braceL);
 
-    while (!this.eat(types.braceR)) {
+    while (!this.eat(types$1.braceR)) {
       if (!first) {
-        this.expect(types.comma);
+        this.expect(types$1.comma);
 
-        if (this.afterTrailingComma(types.braceR)) {
+        if (this.afterTrailingComma(types$1.braceR)) {
           break;
         }
       } else {
@@ -31978,21 +32021,21 @@ exports.version = version;
   }; // Set `ExpressionStatement#directive` property for directive prologues.
 
 
-  pp$1.adaptDirectivePrologue = function (statements) {
+  pp$8.adaptDirectivePrologue = function (statements) {
     for (var i = 0; i < statements.length && this.isDirectiveCandidate(statements[i]); ++i) {
       statements[i].directive = statements[i].expression.raw.slice(1, -1);
     }
   };
 
-  pp$1.isDirectiveCandidate = function (statement) {
+  pp$8.isDirectiveCandidate = function (statement) {
     return statement.type === "ExpressionStatement" && statement.expression.type === "Literal" && typeof statement.expression.value === "string" && ( // Reject parenthesized strings.
     this.input[statement.start] === "\"" || this.input[statement.start] === "'");
   };
 
-  var pp$2 = Parser.prototype; // Convert existing expression atom to assignable pattern
+  var pp$7 = Parser.prototype; // Convert existing expression atom to assignable pattern
   // if possible.
 
-  pp$2.toAssignable = function (node, isBinding, refDestructuringErrors) {
+  pp$7.toAssignable = function (node, isBinding, refDestructuringErrors) {
     if (this.options.ecmaVersion >= 6 && node) {
       switch (node.type) {
         case "Identifier":
@@ -32093,7 +32136,7 @@ exports.version = version;
   }; // Convert list of expression atoms to binding list.
 
 
-  pp$2.toAssignableList = function (exprList, isBinding) {
+  pp$7.toAssignableList = function (exprList, isBinding) {
     var end = exprList.length;
 
     for (var i = 0; i < end; i++) {
@@ -32116,18 +32159,18 @@ exports.version = version;
   }; // Parses spread element.
 
 
-  pp$2.parseSpread = function (refDestructuringErrors) {
+  pp$7.parseSpread = function (refDestructuringErrors) {
     var node = this.startNode();
     this.next();
     node.argument = this.parseMaybeAssign(false, refDestructuringErrors);
     return this.finishNode(node, "SpreadElement");
   };
 
-  pp$2.parseRestBinding = function () {
+  pp$7.parseRestBinding = function () {
     var node = this.startNode();
     this.next(); // RestElement inside of a function parameter must be an identifier
 
-    if (this.options.ecmaVersion === 6 && this.type !== types.name) {
+    if (this.options.ecmaVersion === 6 && this.type !== types$1.name) {
       this.unexpected();
     }
 
@@ -32136,16 +32179,16 @@ exports.version = version;
   }; // Parses lvalue (assignable) atom.
 
 
-  pp$2.parseBindingAtom = function () {
+  pp$7.parseBindingAtom = function () {
     if (this.options.ecmaVersion >= 6) {
       switch (this.type) {
-        case types.bracketL:
+        case types$1.bracketL:
           var node = this.startNode();
           this.next();
-          node.elements = this.parseBindingList(types.bracketR, true, true);
+          node.elements = this.parseBindingList(types$1.bracketR, true, true);
           return this.finishNode(node, "ArrayPattern");
 
-        case types.braceL:
+        case types$1.braceL:
           return this.parseObj(true);
       }
     }
@@ -32153,7 +32196,7 @@ exports.version = version;
     return this.parseIdent();
   };
 
-  pp$2.parseBindingList = function (close, allowEmpty, allowTrailingComma) {
+  pp$7.parseBindingList = function (close, allowEmpty, allowTrailingComma) {
     var elts = [],
         first = true;
 
@@ -32161,19 +32204,19 @@ exports.version = version;
       if (first) {
         first = false;
       } else {
-        this.expect(types.comma);
+        this.expect(types$1.comma);
       }
 
-      if (allowEmpty && this.type === types.comma) {
+      if (allowEmpty && this.type === types$1.comma) {
         elts.push(null);
       } else if (allowTrailingComma && this.afterTrailingComma(close)) {
         break;
-      } else if (this.type === types.ellipsis) {
+      } else if (this.type === types$1.ellipsis) {
         var rest = this.parseRestBinding();
         this.parseBindingListItem(rest);
         elts.push(rest);
 
-        if (this.type === types.comma) {
+        if (this.type === types$1.comma) {
           this.raise(this.start, "Comma is not permitted after the rest element");
         }
 
@@ -32189,15 +32232,15 @@ exports.version = version;
     return elts;
   };
 
-  pp$2.parseBindingListItem = function (param) {
+  pp$7.parseBindingListItem = function (param) {
     return param;
   }; // Parses assignment pattern around given atom if possible.
 
 
-  pp$2.parseMaybeDefault = function (startPos, startLoc, left) {
+  pp$7.parseMaybeDefault = function (startPos, startLoc, left) {
     left = left || this.parseBindingAtom();
 
-    if (this.options.ecmaVersion < 6 || !this.eat(types.eq)) {
+    if (this.options.ecmaVersion < 6 || !this.eat(types$1.eq)) {
       return left;
     }
 
@@ -32270,7 +32313,7 @@ exports.version = version;
   // is an assignment (i.e., bindingType is BIND_NONE).
 
 
-  pp$2.checkLValSimple = function (expr, bindingType, checkClashes) {
+  pp$7.checkLValSimple = function (expr, bindingType, checkClashes) {
     if (bindingType === void 0) bindingType = BIND_NONE;
     var isBind = bindingType !== BIND_NONE;
 
@@ -32323,7 +32366,7 @@ exports.version = version;
     }
   };
 
-  pp$2.checkLValPattern = function (expr, bindingType, checkClashes) {
+  pp$7.checkLValPattern = function (expr, bindingType, checkClashes) {
     if (bindingType === void 0) bindingType = BIND_NONE;
 
     switch (expr.type) {
@@ -32351,7 +32394,7 @@ exports.version = version;
     }
   };
 
-  pp$2.checkLValInnerPattern = function (expr, bindingType, checkClashes) {
+  pp$7.checkLValInnerPattern = function (expr, bindingType, checkClashes) {
     if (bindingType === void 0) bindingType = BIND_NONE;
 
     switch (expr.type) {
@@ -32382,7 +32425,7 @@ exports.version = version;
     this.generator = !!generator;
   };
 
-  var types$1 = {
+  var types = {
     b_stat: new TokContext("{", false),
     b_expr: new TokContext("{", true),
     b_tmpl: new TokContext("${", false),
@@ -32396,50 +32439,50 @@ exports.version = version;
     f_expr_gen: new TokContext("function", true, false, null, true),
     f_gen: new TokContext("function", false, false, null, true)
   };
-  var pp$3 = Parser.prototype;
+  var pp$6 = Parser.prototype;
 
-  pp$3.initialContext = function () {
-    return [types$1.b_stat];
+  pp$6.initialContext = function () {
+    return [types.b_stat];
   };
 
-  pp$3.curContext = function () {
+  pp$6.curContext = function () {
     return this.context[this.context.length - 1];
   };
 
-  pp$3.braceIsBlock = function (prevType) {
+  pp$6.braceIsBlock = function (prevType) {
     var parent = this.curContext();
 
-    if (parent === types$1.f_expr || parent === types$1.f_stat) {
+    if (parent === types.f_expr || parent === types.f_stat) {
       return true;
     }
 
-    if (prevType === types.colon && (parent === types$1.b_stat || parent === types$1.b_expr)) {
+    if (prevType === types$1.colon && (parent === types.b_stat || parent === types.b_expr)) {
       return !parent.isExpr;
     } // The check for `tt.name && exprAllowed` detects whether we are
     // after a `yield` or `of` construct. See the `updateContext` for
     // `tt.name`.
 
 
-    if (prevType === types._return || prevType === types.name && this.exprAllowed) {
+    if (prevType === types$1._return || prevType === types$1.name && this.exprAllowed) {
       return lineBreak.test(this.input.slice(this.lastTokEnd, this.start));
     }
 
-    if (prevType === types._else || prevType === types.semi || prevType === types.eof || prevType === types.parenR || prevType === types.arrow) {
+    if (prevType === types$1._else || prevType === types$1.semi || prevType === types$1.eof || prevType === types$1.parenR || prevType === types$1.arrow) {
       return true;
     }
 
-    if (prevType === types.braceL) {
-      return parent === types$1.b_stat;
+    if (prevType === types$1.braceL) {
+      return parent === types.b_stat;
     }
 
-    if (prevType === types._var || prevType === types._const || prevType === types.name) {
+    if (prevType === types$1._var || prevType === types$1._const || prevType === types$1.name) {
       return false;
     }
 
     return !this.exprAllowed;
   };
 
-  pp$3.inGeneratorContext = function () {
+  pp$6.inGeneratorContext = function () {
     for (var i = this.context.length - 1; i >= 1; i--) {
       var context = this.context[i];
 
@@ -32451,11 +32494,11 @@ exports.version = version;
     return false;
   };
 
-  pp$3.updateContext = function (prevType) {
+  pp$6.updateContext = function (prevType) {
     var update,
         type = this.type;
 
-    if (type.keyword && prevType === types.dot) {
+    if (type.keyword && prevType === types$1.dot) {
       this.exprAllowed = false;
     } else if (update = type.updateContext) {
       update.call(this, prevType);
@@ -32465,14 +32508,14 @@ exports.version = version;
   }; // Used to handle egde case when token context could not be inferred correctly in tokenize phase
 
 
-  pp$3.overrideContext = function (tokenCtx) {
+  pp$6.overrideContext = function (tokenCtx) {
     if (this.curContext() !== tokenCtx) {
       this.context[this.context.length - 1] = tokenCtx;
     }
   }; // Token-specific context update code
 
 
-  types.parenR.updateContext = types.braceR.updateContext = function () {
+  types$1.parenR.updateContext = types$1.braceR.updateContext = function () {
     if (this.context.length === 1) {
       this.exprAllowed = true;
       return;
@@ -32480,70 +32523,70 @@ exports.version = version;
 
     var out = this.context.pop();
 
-    if (out === types$1.b_stat && this.curContext().token === "function") {
+    if (out === types.b_stat && this.curContext().token === "function") {
       out = this.context.pop();
     }
 
     this.exprAllowed = !out.isExpr;
   };
 
-  types.braceL.updateContext = function (prevType) {
-    this.context.push(this.braceIsBlock(prevType) ? types$1.b_stat : types$1.b_expr);
+  types$1.braceL.updateContext = function (prevType) {
+    this.context.push(this.braceIsBlock(prevType) ? types.b_stat : types.b_expr);
     this.exprAllowed = true;
   };
 
-  types.dollarBraceL.updateContext = function () {
-    this.context.push(types$1.b_tmpl);
+  types$1.dollarBraceL.updateContext = function () {
+    this.context.push(types.b_tmpl);
     this.exprAllowed = true;
   };
 
-  types.parenL.updateContext = function (prevType) {
-    var statementParens = prevType === types._if || prevType === types._for || prevType === types._with || prevType === types._while;
-    this.context.push(statementParens ? types$1.p_stat : types$1.p_expr);
+  types$1.parenL.updateContext = function (prevType) {
+    var statementParens = prevType === types$1._if || prevType === types$1._for || prevType === types$1._with || prevType === types$1._while;
+    this.context.push(statementParens ? types.p_stat : types.p_expr);
     this.exprAllowed = true;
   };
 
-  types.incDec.updateContext = function () {// tokExprAllowed stays unchanged
+  types$1.incDec.updateContext = function () {// tokExprAllowed stays unchanged
   };
 
-  types._function.updateContext = types._class.updateContext = function (prevType) {
-    if (prevType.beforeExpr && prevType !== types._else && !(prevType === types.semi && this.curContext() !== types$1.p_stat) && !(prevType === types._return && lineBreak.test(this.input.slice(this.lastTokEnd, this.start))) && !((prevType === types.colon || prevType === types.braceL) && this.curContext() === types$1.b_stat)) {
-      this.context.push(types$1.f_expr);
+  types$1._function.updateContext = types$1._class.updateContext = function (prevType) {
+    if (prevType.beforeExpr && prevType !== types$1._else && !(prevType === types$1.semi && this.curContext() !== types.p_stat) && !(prevType === types$1._return && lineBreak.test(this.input.slice(this.lastTokEnd, this.start))) && !((prevType === types$1.colon || prevType === types$1.braceL) && this.curContext() === types.b_stat)) {
+      this.context.push(types.f_expr);
     } else {
-      this.context.push(types$1.f_stat);
+      this.context.push(types.f_stat);
     }
 
     this.exprAllowed = false;
   };
 
-  types.backQuote.updateContext = function () {
-    if (this.curContext() === types$1.q_tmpl) {
+  types$1.backQuote.updateContext = function () {
+    if (this.curContext() === types.q_tmpl) {
       this.context.pop();
     } else {
-      this.context.push(types$1.q_tmpl);
+      this.context.push(types.q_tmpl);
     }
 
     this.exprAllowed = false;
   };
 
-  types.star.updateContext = function (prevType) {
-    if (prevType === types._function) {
+  types$1.star.updateContext = function (prevType) {
+    if (prevType === types$1._function) {
       var index = this.context.length - 1;
 
-      if (this.context[index] === types$1.f_expr) {
-        this.context[index] = types$1.f_expr_gen;
+      if (this.context[index] === types.f_expr) {
+        this.context[index] = types.f_expr_gen;
       } else {
-        this.context[index] = types$1.f_gen;
+        this.context[index] = types.f_gen;
       }
     }
 
     this.exprAllowed = true;
   };
 
-  types.name.updateContext = function (prevType) {
+  types$1.name.updateContext = function (prevType) {
     var allowed = false;
 
-    if (this.options.ecmaVersion >= 6 && prevType !== types.dot) {
+    if (this.options.ecmaVersion >= 6 && prevType !== types$1.dot) {
       if (this.value === "of" && !this.exprAllowed || this.value === "yield" && this.inGeneratorContext()) {
         allowed = true;
       }
@@ -32553,12 +32596,12 @@ exports.version = version;
   }; // A recursive descent parser operates by defining functions for all
 
 
-  var pp$4 = Parser.prototype; // Check if property name clashes with already added.
+  var pp$5 = Parser.prototype; // Check if property name clashes with already added.
   // Object/class getters and setters are not allowed to clash —
   // either with each other or with an init property — and in
   // strict mode, init properties are also not allowed to be repeated.
 
-  pp$4.checkPropClash = function (prop, propHash, refDestructuringErrors) {
+  pp$5.checkPropClash = function (prop, propHash, refDestructuringErrors) {
     if (this.options.ecmaVersion >= 9 && prop.type === "SpreadElement") {
       return;
     }
@@ -32591,8 +32634,7 @@ exports.version = version;
           if (refDestructuringErrors) {
             if (refDestructuringErrors.doubleProto < 0) {
               refDestructuringErrors.doubleProto = key.start;
-            } // Backwards-compat kludge. Can be removed in version 6.0
-
+            }
           } else {
             this.raiseRecoverable(key.start, "Redefinition of __proto__ property");
           }
@@ -32642,16 +32684,16 @@ exports.version = version;
   // delayed syntax error at correct position).
 
 
-  pp$4.parseExpression = function (forInit, refDestructuringErrors) {
+  pp$5.parseExpression = function (forInit, refDestructuringErrors) {
     var startPos = this.start,
         startLoc = this.startLoc;
     var expr = this.parseMaybeAssign(forInit, refDestructuringErrors);
 
-    if (this.type === types.comma) {
+    if (this.type === types$1.comma) {
       var node = this.startNodeAt(startPos, startLoc);
       node.expressions = [expr];
 
-      while (this.eat(types.comma)) {
+      while (this.eat(types$1.comma)) {
         node.expressions.push(this.parseMaybeAssign(forInit, refDestructuringErrors));
       }
 
@@ -32663,7 +32705,7 @@ exports.version = version;
   // operators like `+=`.
 
 
-  pp$4.parseMaybeAssign = function (forInit, refDestructuringErrors, afterLeftParse) {
+  pp$5.parseMaybeAssign = function (forInit, refDestructuringErrors, afterLeftParse) {
     if (this.isContextual("yield")) {
       if (this.inGenerator) {
         return this.parseYield(forInit);
@@ -32676,11 +32718,13 @@ exports.version = version;
 
     var ownDestructuringErrors = false,
         oldParenAssign = -1,
-        oldTrailingComma = -1;
+        oldTrailingComma = -1,
+        oldDoubleProto = -1;
 
     if (refDestructuringErrors) {
       oldParenAssign = refDestructuringErrors.parenthesizedAssign;
       oldTrailingComma = refDestructuringErrors.trailingComma;
+      oldDoubleProto = refDestructuringErrors.doubleProto;
       refDestructuringErrors.parenthesizedAssign = refDestructuringErrors.trailingComma = -1;
     } else {
       refDestructuringErrors = new DestructuringErrors();
@@ -32690,7 +32734,7 @@ exports.version = version;
     var startPos = this.start,
         startLoc = this.startLoc;
 
-    if (this.type === types.parenL || this.type === types.name) {
+    if (this.type === types$1.parenL || this.type === types$1.name) {
       this.potentialArrowAt = this.start;
       this.potentialArrowInForAwait = forInit === "await";
     }
@@ -32705,7 +32749,7 @@ exports.version = version;
       var node = this.startNodeAt(startPos, startLoc);
       node.operator = this.value;
 
-      if (this.type === types.eq) {
+      if (this.type === types$1.eq) {
         left = this.toAssignable(left, false, refDestructuringErrors);
       }
 
@@ -32718,7 +32762,7 @@ exports.version = version;
       } // reset because shorthand default was used correctly
 
 
-      if (this.type === types.eq) {
+      if (this.type === types$1.eq) {
         this.checkLValPattern(left);
       } else {
         this.checkLValSimple(left);
@@ -32727,6 +32771,11 @@ exports.version = version;
       node.left = left;
       this.next();
       node.right = this.parseMaybeAssign(forInit);
+
+      if (oldDoubleProto > -1) {
+        refDestructuringErrors.doubleProto = oldDoubleProto;
+      }
+
       return this.finishNode(node, "AssignmentExpression");
     } else {
       if (ownDestructuringErrors) {
@@ -32746,7 +32795,7 @@ exports.version = version;
   }; // Parse a ternary conditional (`?:`) operator.
 
 
-  pp$4.parseMaybeConditional = function (forInit, refDestructuringErrors) {
+  pp$5.parseMaybeConditional = function (forInit, refDestructuringErrors) {
     var startPos = this.start,
         startLoc = this.startLoc;
     var expr = this.parseExprOps(forInit, refDestructuringErrors);
@@ -32755,11 +32804,11 @@ exports.version = version;
       return expr;
     }
 
-    if (this.eat(types.question)) {
+    if (this.eat(types$1.question)) {
       var node = this.startNodeAt(startPos, startLoc);
       node.test = expr;
       node.consequent = this.parseMaybeAssign();
-      this.expect(types.colon);
+      this.expect(types$1.colon);
       node.alternate = this.parseMaybeAssign(forInit);
       return this.finishNode(node, "ConditionalExpression");
     }
@@ -32768,7 +32817,7 @@ exports.version = version;
   }; // Start the precedence parser.
 
 
-  pp$4.parseExprOps = function (forInit, refDestructuringErrors) {
+  pp$5.parseExprOps = function (forInit, refDestructuringErrors) {
     var startPos = this.start,
         startLoc = this.startLoc;
     var expr = this.parseMaybeUnary(refDestructuringErrors, false, false, forInit);
@@ -32785,18 +32834,18 @@ exports.version = version;
   // operator that has a lower precedence than the set it is parsing.
 
 
-  pp$4.parseExprOp = function (left, leftStartPos, leftStartLoc, minPrec, forInit) {
+  pp$5.parseExprOp = function (left, leftStartPos, leftStartLoc, minPrec, forInit) {
     var prec = this.type.binop;
 
-    if (prec != null && (!forInit || this.type !== types._in)) {
+    if (prec != null && (!forInit || this.type !== types$1._in)) {
       if (prec > minPrec) {
-        var logical = this.type === types.logicalOR || this.type === types.logicalAND;
-        var coalesce = this.type === types.coalesce;
+        var logical = this.type === types$1.logicalOR || this.type === types$1.logicalAND;
+        var coalesce = this.type === types$1.coalesce;
 
         if (coalesce) {
           // Handle the precedence of `tt.coalesce` as equal to the range of logical expressions.
           // In other words, `node.right` shouldn't contain logical expressions in order to check the mixed error.
-          prec = types.logicalAND.binop;
+          prec = types$1.logicalAND.binop;
         }
 
         var op = this.value;
@@ -32806,7 +32855,7 @@ exports.version = version;
         var right = this.parseExprOp(this.parseMaybeUnary(null, false, false, forInit), startPos, startLoc, prec, forInit);
         var node = this.buildBinary(leftStartPos, leftStartLoc, left, right, op, logical || coalesce);
 
-        if (logical && this.type === types.coalesce || coalesce && (this.type === types.logicalOR || this.type === types.logicalAND)) {
+        if (logical && this.type === types$1.coalesce || coalesce && (this.type === types$1.logicalOR || this.type === types$1.logicalAND)) {
           this.raiseRecoverable(this.start, "Logical expressions and coalesce expressions cannot be mixed. Wrap either by parentheses");
         }
 
@@ -32817,7 +32866,11 @@ exports.version = version;
     return left;
   };
 
-  pp$4.buildBinary = function (startPos, startLoc, left, right, op, logical) {
+  pp$5.buildBinary = function (startPos, startLoc, left, right, op, logical) {
+    if (right.type === "PrivateIdentifier") {
+      this.raise(right.start, "Private identifier can only be left side of binary expression");
+    }
+
     var node = this.startNodeAt(startPos, startLoc);
     node.left = left;
     node.operator = op;
@@ -32826,7 +32879,7 @@ exports.version = version;
   }; // Parse unary operators, both prefix and postfix.
 
 
-  pp$4.parseMaybeUnary = function (refDestructuringErrors, sawUnary, incDec, forInit) {
+  pp$5.parseMaybeUnary = function (refDestructuringErrors, sawUnary, incDec, forInit) {
     var startPos = this.start,
         startLoc = this.startLoc,
         expr;
@@ -32836,7 +32889,7 @@ exports.version = version;
       sawUnary = true;
     } else if (this.type.prefix) {
       var node = this.startNode(),
-          update = this.type === types.incDec;
+          update = this.type === types$1.incDec;
       node.operator = this.value;
       node.prefix = true;
       this.next();
@@ -32854,6 +32907,16 @@ exports.version = version;
       }
 
       expr = this.finishNode(node, update ? "UpdateExpression" : "UnaryExpression");
+    } else if (!sawUnary && this.type === types$1.privateId) {
+      if (forInit || this.privateNameStack.length === 0) {
+        this.unexpected();
+      }
+
+      expr = this.parsePrivateIdent(); // only could be private fields in 'in', such as #x in obj
+
+      if (this.type !== types$1._in) {
+        this.unexpected();
+      }
     } else {
       expr = this.parseExprSubscripts(refDestructuringErrors, forInit);
 
@@ -32872,7 +32935,7 @@ exports.version = version;
       }
     }
 
-    if (!incDec && this.eat(types.starstar)) {
+    if (!incDec && this.eat(types$1.starstar)) {
       if (sawUnary) {
         this.unexpected(this.lastTokStart);
       } else {
@@ -32888,7 +32951,7 @@ exports.version = version;
   } // Parse call, dot, and `[]`-subscript expressions.
 
 
-  pp$4.parseExprSubscripts = function (refDestructuringErrors, forInit) {
+  pp$5.parseExprSubscripts = function (refDestructuringErrors, forInit) {
     var startPos = this.start,
         startLoc = this.startLoc;
     var expr = this.parseExprAtom(refDestructuringErrors, forInit);
@@ -32916,7 +32979,7 @@ exports.version = version;
     return result;
   };
 
-  pp$4.parseSubscripts = function (base, startPos, startLoc, noCalls, forInit) {
+  pp$5.parseSubscripts = function (base, startPos, startLoc, noCalls, forInit) {
     var maybeAsyncArrow = this.options.ecmaVersion >= 8 && base.type === "Identifier" && base.name === "async" && this.lastTokEnd === base.end && !this.canInsertSemicolon() && base.end - base.start === 5 && this.potentialArrowAt === base.start;
     var optionalChained = false;
 
@@ -32941,24 +33004,24 @@ exports.version = version;
     }
   };
 
-  pp$4.parseSubscript = function (base, startPos, startLoc, noCalls, maybeAsyncArrow, optionalChained, forInit) {
+  pp$5.parseSubscript = function (base, startPos, startLoc, noCalls, maybeAsyncArrow, optionalChained, forInit) {
     var optionalSupported = this.options.ecmaVersion >= 11;
-    var optional = optionalSupported && this.eat(types.questionDot);
+    var optional = optionalSupported && this.eat(types$1.questionDot);
 
     if (noCalls && optional) {
       this.raise(this.lastTokStart, "Optional chaining cannot appear in the callee of new expressions");
     }
 
-    var computed = this.eat(types.bracketL);
+    var computed = this.eat(types$1.bracketL);
 
-    if (computed || optional && this.type !== types.parenL && this.type !== types.backQuote || this.eat(types.dot)) {
+    if (computed || optional && this.type !== types$1.parenL && this.type !== types$1.backQuote || this.eat(types$1.dot)) {
       var node = this.startNodeAt(startPos, startLoc);
       node.object = base;
 
       if (computed) {
         node.property = this.parseExpression();
-        this.expect(types.bracketR);
-      } else if (this.type === types.privateId && base.type !== "Super") {
+        this.expect(types$1.bracketR);
+      } else if (this.type === types$1.privateId && base.type !== "Super") {
         node.property = this.parsePrivateIdent();
       } else {
         node.property = this.parseIdent(this.options.allowReserved !== "never");
@@ -32971,7 +33034,7 @@ exports.version = version;
       }
 
       base = this.finishNode(node, "MemberExpression");
-    } else if (!noCalls && this.eat(types.parenL)) {
+    } else if (!noCalls && this.eat(types$1.parenL)) {
       var refDestructuringErrors = new DestructuringErrors(),
           oldYieldPos = this.yieldPos,
           oldAwaitPos = this.awaitPos,
@@ -32979,9 +33042,9 @@ exports.version = version;
       this.yieldPos = 0;
       this.awaitPos = 0;
       this.awaitIdentPos = 0;
-      var exprList = this.parseExprList(types.parenR, this.options.ecmaVersion >= 8, false, refDestructuringErrors);
+      var exprList = this.parseExprList(types$1.parenR, this.options.ecmaVersion >= 8, false, refDestructuringErrors);
 
-      if (maybeAsyncArrow && !optional && !this.canInsertSemicolon() && this.eat(types.arrow)) {
+      if (maybeAsyncArrow && !optional && !this.canInsertSemicolon() && this.eat(types$1.arrow)) {
         this.checkPatternErrors(refDestructuringErrors, false);
         this.checkYieldAwaitInDefaultParams();
 
@@ -33008,7 +33071,7 @@ exports.version = version;
       }
 
       base = this.finishNode(node$1, "CallExpression");
-    } else if (this.type === types.backQuote) {
+    } else if (this.type === types$1.backQuote) {
       if (optional || optionalChained) {
         this.raise(this.start, "Optional chaining cannot appear in the tag of tagged template expressions");
       }
@@ -33028,10 +33091,10 @@ exports.version = version;
   // or `{}`.
 
 
-  pp$4.parseExprAtom = function (refDestructuringErrors, forInit) {
+  pp$5.parseExprAtom = function (refDestructuringErrors, forInit) {
     // If a division operator appears in an expression position, the
     // tokenizer got confused, and we force it to read a regexp instead.
-    if (this.type === types.slash) {
+    if (this.type === types$1.slash) {
       this.readRegexp();
     }
 
@@ -33039,7 +33102,7 @@ exports.version = version;
         canBeArrow = this.potentialArrowAt === this.start;
 
     switch (this.type) {
-      case types._super:
+      case types$1._super:
         if (!this.allowSuper) {
           this.raise(this.start, "'super' keyword outside a method");
         }
@@ -33047,7 +33110,7 @@ exports.version = version;
         node = this.startNode();
         this.next();
 
-        if (this.type === types.parenL && !this.allowDirectSuper) {
+        if (this.type === types$1.parenL && !this.allowDirectSuper) {
           this.raise(node.start, "super() call outside constructor of a subclass");
         } // The `super` keyword can appear at below:
         // SuperProperty:
@@ -33057,37 +33120,37 @@ exports.version = version;
         //     super ( Arguments )
 
 
-        if (this.type !== types.dot && this.type !== types.bracketL && this.type !== types.parenL) {
+        if (this.type !== types$1.dot && this.type !== types$1.bracketL && this.type !== types$1.parenL) {
           this.unexpected();
         }
 
         return this.finishNode(node, "Super");
 
-      case types._this:
+      case types$1._this:
         node = this.startNode();
         this.next();
         return this.finishNode(node, "ThisExpression");
 
-      case types.name:
+      case types$1.name:
         var startPos = this.start,
             startLoc = this.startLoc,
             containsEsc = this.containsEsc;
         var id = this.parseIdent(false);
 
-        if (this.options.ecmaVersion >= 8 && !containsEsc && id.name === "async" && !this.canInsertSemicolon() && this.eat(types._function)) {
-          this.overrideContext(types$1.f_expr);
+        if (this.options.ecmaVersion >= 8 && !containsEsc && id.name === "async" && !this.canInsertSemicolon() && this.eat(types$1._function)) {
+          this.overrideContext(types.f_expr);
           return this.parseFunction(this.startNodeAt(startPos, startLoc), 0, false, true, forInit);
         }
 
         if (canBeArrow && !this.canInsertSemicolon()) {
-          if (this.eat(types.arrow)) {
+          if (this.eat(types$1.arrow)) {
             return this.parseArrowExpression(this.startNodeAt(startPos, startLoc), [id], false, forInit);
           }
 
-          if (this.options.ecmaVersion >= 8 && id.name === "async" && this.type === types.name && !containsEsc && (!this.potentialArrowInForAwait || this.value !== "of" || this.containsEsc)) {
+          if (this.options.ecmaVersion >= 8 && id.name === "async" && this.type === types$1.name && !containsEsc && (!this.potentialArrowInForAwait || this.value !== "of" || this.containsEsc)) {
             id = this.parseIdent(false);
 
-            if (this.canInsertSemicolon() || !this.eat(types.arrow)) {
+            if (this.canInsertSemicolon() || !this.eat(types$1.arrow)) {
               this.unexpected();
             }
 
@@ -33097,7 +33160,7 @@ exports.version = version;
 
         return id;
 
-      case types.regexp:
+      case types$1.regexp:
         var value = this.value;
         node = this.parseLiteral(value.value);
         node.regex = {
@@ -33106,20 +33169,20 @@ exports.version = version;
         };
         return node;
 
-      case types.num:
-      case types.string:
+      case types$1.num:
+      case types$1.string:
         return this.parseLiteral(this.value);
 
-      case types._null:
-      case types._true:
-      case types._false:
+      case types$1._null:
+      case types$1._true:
+      case types$1._false:
         node = this.startNode();
-        node.value = this.type === types._null ? null : this.type === types._true;
+        node.value = this.type === types$1._null ? null : this.type === types$1._true;
         node.raw = this.type.keyword;
         this.next();
         return this.finishNode(node, "Literal");
 
-      case types.parenL:
+      case types$1.parenL:
         var start = this.start,
             expr = this.parseParenAndDistinguishExpression(canBeArrow, forInit);
 
@@ -33135,31 +33198,31 @@ exports.version = version;
 
         return expr;
 
-      case types.bracketL:
+      case types$1.bracketL:
         node = this.startNode();
         this.next();
-        node.elements = this.parseExprList(types.bracketR, true, true, refDestructuringErrors);
+        node.elements = this.parseExprList(types$1.bracketR, true, true, refDestructuringErrors);
         return this.finishNode(node, "ArrayExpression");
 
-      case types.braceL:
-        this.overrideContext(types$1.b_expr);
+      case types$1.braceL:
+        this.overrideContext(types.b_expr);
         return this.parseObj(false, refDestructuringErrors);
 
-      case types._function:
+      case types$1._function:
         node = this.startNode();
         this.next();
         return this.parseFunction(node, 0);
 
-      case types._class:
+      case types$1._class:
         return this.parseClass(this.startNode(), false);
 
-      case types._new:
+      case types$1._new:
         return this.parseNew();
 
-      case types.backQuote:
+      case types$1.backQuote:
         return this.parseTemplate();
 
-      case types._import:
+      case types$1._import:
         if (this.options.ecmaVersion >= 11) {
           return this.parseExprImport();
         } else {
@@ -33171,7 +33234,7 @@ exports.version = version;
     }
   };
 
-  pp$4.parseExprImport = function () {
+  pp$5.parseExprImport = function () {
     var node = this.startNode(); // Consume `import` as an identifier for `import.meta`.
     // Because `this.parseIdent(true)` doesn't check escape sequences, it needs the check of `this.containsEsc`.
 
@@ -33182,10 +33245,10 @@ exports.version = version;
     var meta = this.parseIdent(true);
 
     switch (this.type) {
-      case types.parenL:
+      case types$1.parenL:
         return this.parseDynamicImport(node);
 
-      case types.dot:
+      case types$1.dot:
         node.meta = meta;
         return this.parseImportMeta(node);
 
@@ -33194,16 +33257,16 @@ exports.version = version;
     }
   };
 
-  pp$4.parseDynamicImport = function (node) {
+  pp$5.parseDynamicImport = function (node) {
     this.next(); // skip `(`
     // Parse node.source.
 
     node.source = this.parseMaybeAssign(); // Verify ending.
 
-    if (!this.eat(types.parenR)) {
+    if (!this.eat(types$1.parenR)) {
       var errorPos = this.start;
 
-      if (this.eat(types.comma) && this.eat(types.parenR)) {
+      if (this.eat(types$1.comma) && this.eat(types$1.parenR)) {
         this.raiseRecoverable(errorPos, "Trailing comma is not allowed in import()");
       } else {
         this.unexpected(errorPos);
@@ -33213,7 +33276,7 @@ exports.version = version;
     return this.finishNode(node, "ImportExpression");
   };
 
-  pp$4.parseImportMeta = function (node) {
+  pp$5.parseImportMeta = function (node) {
     this.next(); // skip `.`
 
     var containsEsc = this.containsEsc;
@@ -33234,7 +33297,7 @@ exports.version = version;
     return this.finishNode(node, "MetaProperty");
   };
 
-  pp$4.parseLiteral = function (value) {
+  pp$5.parseLiteral = function (value) {
     var node = this.startNode();
     node.value = value;
     node.raw = this.input.slice(this.start, this.end);
@@ -33247,14 +33310,14 @@ exports.version = version;
     return this.finishNode(node, "Literal");
   };
 
-  pp$4.parseParenExpression = function () {
-    this.expect(types.parenL);
+  pp$5.parseParenExpression = function () {
+    this.expect(types$1.parenL);
     var val = this.parseExpression();
-    this.expect(types.parenR);
+    this.expect(types$1.parenR);
     return val;
   };
 
-  pp$4.parseParenAndDistinguishExpression = function (canBeArrow, forInit) {
+  pp$5.parseParenAndDistinguishExpression = function (canBeArrow, forInit) {
     var startPos = this.start,
         startLoc = this.startLoc,
         val,
@@ -33274,17 +33337,17 @@ exports.version = version;
       this.yieldPos = 0;
       this.awaitPos = 0; // Do not save awaitIdentPos to allow checking awaits nested in parameters
 
-      while (this.type !== types.parenR) {
-        first ? first = false : this.expect(types.comma);
+      while (this.type !== types$1.parenR) {
+        first ? first = false : this.expect(types$1.comma);
 
-        if (allowTrailingComma && this.afterTrailingComma(types.parenR, true)) {
+        if (allowTrailingComma && this.afterTrailingComma(types$1.parenR, true)) {
           lastIsComma = true;
           break;
-        } else if (this.type === types.ellipsis) {
+        } else if (this.type === types$1.ellipsis) {
           spreadStart = this.start;
           exprList.push(this.parseParenItem(this.parseRestBinding()));
 
-          if (this.type === types.comma) {
+          if (this.type === types$1.comma) {
             this.raise(this.start, "Comma is not permitted after the rest element");
           }
 
@@ -33296,9 +33359,9 @@ exports.version = version;
 
       var innerEndPos = this.lastTokEnd,
           innerEndLoc = this.lastTokEndLoc;
-      this.expect(types.parenR);
+      this.expect(types$1.parenR);
 
-      if (canBeArrow && !this.canInsertSemicolon() && this.eat(types.arrow)) {
+      if (canBeArrow && !this.canInsertSemicolon() && this.eat(types$1.arrow)) {
         this.checkPatternErrors(refDestructuringErrors, false);
         this.checkYieldAwaitInDefaultParams();
         this.yieldPos = oldYieldPos;
@@ -33338,12 +33401,12 @@ exports.version = version;
     }
   };
 
-  pp$4.parseParenItem = function (item) {
+  pp$5.parseParenItem = function (item) {
     return item;
   };
 
-  pp$4.parseParenArrowList = function (startPos, startLoc, exprList, forInit) {
-    return this.parseArrowExpression(this.startNodeAt(startPos, startLoc), exprList, forInit);
+  pp$5.parseParenArrowList = function (startPos, startLoc, exprList, forInit) {
+    return this.parseArrowExpression(this.startNodeAt(startPos, startLoc), exprList, false, forInit);
   }; // New's precedence is slightly tricky. It must allow its argument to
   // be a `[]` or dot subscript expression, but not a call — at least,
   // not without wrapping it in parentheses. Thus, it uses the noCalls
@@ -33351,9 +33414,9 @@ exports.version = version;
   // argument list.
 
 
-  var empty$1 = [];
+  var empty = [];
 
-  pp$4.parseNew = function () {
+  pp$5.parseNew = function () {
     if (this.containsEsc) {
       this.raiseRecoverable(this.start, "Escape sequence in keyword new");
     }
@@ -33361,7 +33424,7 @@ exports.version = version;
     var node = this.startNode();
     var meta = this.parseIdent(true);
 
-    if (this.options.ecmaVersion >= 6 && this.eat(types.dot)) {
+    if (this.options.ecmaVersion >= 6 && this.eat(types$1.dot)) {
       node.meta = meta;
       var containsEsc = this.containsEsc;
       node.property = this.parseIdent(true);
@@ -33383,28 +33446,28 @@ exports.version = version;
 
     var startPos = this.start,
         startLoc = this.startLoc,
-        isImport = this.type === types._import;
+        isImport = this.type === types$1._import;
     node.callee = this.parseSubscripts(this.parseExprAtom(), startPos, startLoc, true, false);
 
     if (isImport && node.callee.type === "ImportExpression") {
       this.raise(startPos, "Cannot use new with import()");
     }
 
-    if (this.eat(types.parenL)) {
-      node.arguments = this.parseExprList(types.parenR, this.options.ecmaVersion >= 8, false);
+    if (this.eat(types$1.parenL)) {
+      node.arguments = this.parseExprList(types$1.parenR, this.options.ecmaVersion >= 8, false);
     } else {
-      node.arguments = empty$1;
+      node.arguments = empty;
     }
 
     return this.finishNode(node, "NewExpression");
   }; // Parse template expression.
 
 
-  pp$4.parseTemplateElement = function (ref) {
+  pp$5.parseTemplateElement = function (ref) {
     var isTagged = ref.isTagged;
     var elem = this.startNode();
 
-    if (this.type === types.invalidTemplate) {
+    if (this.type === types$1.invalidTemplate) {
       if (!isTagged) {
         this.raiseRecoverable(this.start, "Bad escape sequence in untagged template literal");
       }
@@ -33421,11 +33484,11 @@ exports.version = version;
     }
 
     this.next();
-    elem.tail = this.type === types.backQuote;
+    elem.tail = this.type === types$1.backQuote;
     return this.finishNode(elem, "TemplateElement");
   };
 
-  pp$4.parseTemplate = function (ref) {
+  pp$5.parseTemplate = function (ref) {
     if (ref === void 0) ref = {};
     var isTagged = ref.isTagged;
     if (isTagged === void 0) isTagged = false;
@@ -33438,13 +33501,13 @@ exports.version = version;
     node.quasis = [curElt];
 
     while (!curElt.tail) {
-      if (this.type === types.eof) {
+      if (this.type === types$1.eof) {
         this.raise(this.pos, "Unterminated template literal");
       }
 
-      this.expect(types.dollarBraceL);
+      this.expect(types$1.dollarBraceL);
       node.expressions.push(this.parseExpression());
-      this.expect(types.braceR);
+      this.expect(types$1.braceR);
       node.quasis.push(curElt = this.parseTemplateElement({
         isTagged: isTagged
       }));
@@ -33454,23 +33517,23 @@ exports.version = version;
     return this.finishNode(node, "TemplateLiteral");
   };
 
-  pp$4.isAsyncProp = function (prop) {
-    return !prop.computed && prop.key.type === "Identifier" && prop.key.name === "async" && (this.type === types.name || this.type === types.num || this.type === types.string || this.type === types.bracketL || this.type.keyword || this.options.ecmaVersion >= 9 && this.type === types.star) && !lineBreak.test(this.input.slice(this.lastTokEnd, this.start));
+  pp$5.isAsyncProp = function (prop) {
+    return !prop.computed && prop.key.type === "Identifier" && prop.key.name === "async" && (this.type === types$1.name || this.type === types$1.num || this.type === types$1.string || this.type === types$1.bracketL || this.type.keyword || this.options.ecmaVersion >= 9 && this.type === types$1.star) && !lineBreak.test(this.input.slice(this.lastTokEnd, this.start));
   }; // Parse an object literal or binding pattern.
 
 
-  pp$4.parseObj = function (isPattern, refDestructuringErrors) {
+  pp$5.parseObj = function (isPattern, refDestructuringErrors) {
     var node = this.startNode(),
         first = true,
         propHash = {};
     node.properties = [];
     this.next();
 
-    while (!this.eat(types.braceR)) {
+    while (!this.eat(types$1.braceR)) {
       if (!first) {
-        this.expect(types.comma);
+        this.expect(types$1.comma);
 
-        if (this.options.ecmaVersion >= 5 && this.afterTrailingComma(types.braceR)) {
+        if (this.options.ecmaVersion >= 5 && this.afterTrailingComma(types$1.braceR)) {
           break;
         }
       } else {
@@ -33489,18 +33552,18 @@ exports.version = version;
     return this.finishNode(node, isPattern ? "ObjectPattern" : "ObjectExpression");
   };
 
-  pp$4.parseProperty = function (isPattern, refDestructuringErrors) {
+  pp$5.parseProperty = function (isPattern, refDestructuringErrors) {
     var prop = this.startNode(),
         isGenerator,
         isAsync,
         startPos,
         startLoc;
 
-    if (this.options.ecmaVersion >= 9 && this.eat(types.ellipsis)) {
+    if (this.options.ecmaVersion >= 9 && this.eat(types$1.ellipsis)) {
       if (isPattern) {
         prop.argument = this.parseIdent(false);
 
-        if (this.type === types.comma) {
+        if (this.type === types$1.comma) {
           this.raise(this.start, "Comma is not permitted after the rest element");
         }
 
@@ -33508,7 +33571,7 @@ exports.version = version;
       } // To disallow parenthesized identifier via `this.toAssignable()`.
 
 
-      if (this.type === types.parenL && refDestructuringErrors) {
+      if (this.type === types$1.parenL && refDestructuringErrors) {
         if (refDestructuringErrors.parenthesizedAssign < 0) {
           refDestructuringErrors.parenthesizedAssign = this.start;
         }
@@ -33521,7 +33584,7 @@ exports.version = version;
 
       prop.argument = this.parseMaybeAssign(false, refDestructuringErrors); // To disallow trailing comma via `this.toAssignable()`.
 
-      if (this.type === types.comma && refDestructuringErrors && refDestructuringErrors.trailingComma < 0) {
+      if (this.type === types$1.comma && refDestructuringErrors && refDestructuringErrors.trailingComma < 0) {
         refDestructuringErrors.trailingComma = this.start;
       } // Finish
 
@@ -33539,7 +33602,7 @@ exports.version = version;
       }
 
       if (!isPattern) {
-        isGenerator = this.eat(types.star);
+        isGenerator = this.eat(types$1.star);
       }
     }
 
@@ -33548,7 +33611,7 @@ exports.version = version;
 
     if (!isPattern && !containsEsc && this.options.ecmaVersion >= 8 && !isGenerator && this.isAsyncProp(prop)) {
       isAsync = true;
-      isGenerator = this.options.ecmaVersion >= 9 && this.eat(types.star);
+      isGenerator = this.options.ecmaVersion >= 9 && this.eat(types$1.star);
       this.parsePropertyName(prop, refDestructuringErrors);
     } else {
       isAsync = false;
@@ -33558,15 +33621,15 @@ exports.version = version;
     return this.finishNode(prop, "Property");
   };
 
-  pp$4.parsePropertyValue = function (prop, isPattern, isGenerator, isAsync, startPos, startLoc, refDestructuringErrors, containsEsc) {
-    if ((isGenerator || isAsync) && this.type === types.colon) {
+  pp$5.parsePropertyValue = function (prop, isPattern, isGenerator, isAsync, startPos, startLoc, refDestructuringErrors, containsEsc) {
+    if ((isGenerator || isAsync) && this.type === types$1.colon) {
       this.unexpected();
     }
 
-    if (this.eat(types.colon)) {
+    if (this.eat(types$1.colon)) {
       prop.value = isPattern ? this.parseMaybeDefault(this.start, this.startLoc) : this.parseMaybeAssign(false, refDestructuringErrors);
       prop.kind = "init";
-    } else if (this.options.ecmaVersion >= 6 && this.type === types.parenL) {
+    } else if (this.options.ecmaVersion >= 6 && this.type === types$1.parenL) {
       if (isPattern) {
         this.unexpected();
       }
@@ -33574,7 +33637,7 @@ exports.version = version;
       prop.kind = "init";
       prop.method = true;
       prop.value = this.parseMethod(isGenerator, isAsync);
-    } else if (!isPattern && !containsEsc && this.options.ecmaVersion >= 5 && !prop.computed && prop.key.type === "Identifier" && (prop.key.name === "get" || prop.key.name === "set") && this.type !== types.comma && this.type !== types.braceR && this.type !== types.eq) {
+    } else if (!isPattern && !containsEsc && this.options.ecmaVersion >= 5 && !prop.computed && prop.key.type === "Identifier" && (prop.key.name === "get" || prop.key.name === "set") && this.type !== types$1.comma && this.type !== types$1.braceR && this.type !== types$1.eq) {
       if (isGenerator || isAsync) {
         this.unexpected();
       }
@@ -33612,7 +33675,7 @@ exports.version = version;
 
       if (isPattern) {
         prop.value = this.parseMaybeDefault(startPos, startLoc, this.copyNode(prop.key));
-      } else if (this.type === types.eq && refDestructuringErrors) {
+      } else if (this.type === types$1.eq && refDestructuringErrors) {
         if (refDestructuringErrors.shorthandAssign < 0) {
           refDestructuringErrors.shorthandAssign = this.start;
         }
@@ -33628,23 +33691,23 @@ exports.version = version;
     }
   };
 
-  pp$4.parsePropertyName = function (prop) {
+  pp$5.parsePropertyName = function (prop) {
     if (this.options.ecmaVersion >= 6) {
-      if (this.eat(types.bracketL)) {
+      if (this.eat(types$1.bracketL)) {
         prop.computed = true;
         prop.key = this.parseMaybeAssign();
-        this.expect(types.bracketR);
+        this.expect(types$1.bracketR);
         return prop.key;
       } else {
         prop.computed = false;
       }
     }
 
-    return prop.key = this.type === types.num || this.type === types.string ? this.parseExprAtom() : this.parseIdent(this.options.allowReserved !== "never");
+    return prop.key = this.type === types$1.num || this.type === types$1.string ? this.parseExprAtom() : this.parseIdent(this.options.allowReserved !== "never");
   }; // Initialize empty function node.
 
 
-  pp$4.initFunction = function (node) {
+  pp$5.initFunction = function (node) {
     node.id = null;
 
     if (this.options.ecmaVersion >= 6) {
@@ -33657,7 +33720,7 @@ exports.version = version;
   }; // Parse object or class method.
 
 
-  pp$4.parseMethod = function (isGenerator, isAsync, allowDirectSuper) {
+  pp$5.parseMethod = function (isGenerator, isAsync, allowDirectSuper) {
     var node = this.startNode(),
         oldYieldPos = this.yieldPos,
         oldAwaitPos = this.awaitPos,
@@ -33676,8 +33739,8 @@ exports.version = version;
     this.awaitPos = 0;
     this.awaitIdentPos = 0;
     this.enterScope(functionFlags(isAsync, node.generator) | SCOPE_SUPER | (allowDirectSuper ? SCOPE_DIRECT_SUPER : 0));
-    this.expect(types.parenL);
-    node.params = this.parseBindingList(types.parenR, false, this.options.ecmaVersion >= 8);
+    this.expect(types$1.parenL);
+    node.params = this.parseBindingList(types$1.parenR, false, this.options.ecmaVersion >= 8);
     this.checkYieldAwaitInDefaultParams();
     this.parseFunctionBody(node, false, true, false);
     this.yieldPos = oldYieldPos;
@@ -33687,7 +33750,7 @@ exports.version = version;
   }; // Parse arrow function expression with given parameters.
 
 
-  pp$4.parseArrowExpression = function (node, params, isAsync, forInit) {
+  pp$5.parseArrowExpression = function (node, params, isAsync, forInit) {
     var oldYieldPos = this.yieldPos,
         oldAwaitPos = this.awaitPos,
         oldAwaitIdentPos = this.awaitIdentPos;
@@ -33710,8 +33773,8 @@ exports.version = version;
   }; // Parse function body and check parameters.
 
 
-  pp$4.parseFunctionBody = function (node, isArrowFunction, isMethod, forInit) {
-    var isExpression = isArrowFunction && this.type !== types.braceL;
+  pp$5.parseFunctionBody = function (node, isArrowFunction, isMethod, forInit) {
+    var isExpression = isArrowFunction && this.type !== types$1.braceL;
     var oldStrict = this.strict,
         useStrict = false;
 
@@ -33758,7 +33821,7 @@ exports.version = version;
     this.exitScope();
   };
 
-  pp$4.isSimpleParamList = function (params) {
+  pp$5.isSimpleParamList = function (params) {
     for (var i = 0, list = params; i < list.length; i += 1) {
       var param = list[i];
 
@@ -33772,7 +33835,7 @@ exports.version = version;
   // or "arguments" and duplicate parameters.
 
 
-  pp$4.checkParams = function (node, allowDuplicates) {
+  pp$5.checkParams = function (node, allowDuplicates) {
     var nameHash = Object.create(null);
 
     for (var i = 0, list = node.params; i < list.length; i += 1) {
@@ -33786,13 +33849,13 @@ exports.version = version;
   // for array literals).
 
 
-  pp$4.parseExprList = function (close, allowTrailingComma, allowEmpty, refDestructuringErrors) {
+  pp$5.parseExprList = function (close, allowTrailingComma, allowEmpty, refDestructuringErrors) {
     var elts = [],
         first = true;
 
     while (!this.eat(close)) {
       if (!first) {
-        this.expect(types.comma);
+        this.expect(types$1.comma);
 
         if (allowTrailingComma && this.afterTrailingComma(close)) {
           break;
@@ -33803,12 +33866,12 @@ exports.version = version;
 
       var elt = void 0;
 
-      if (allowEmpty && this.type === types.comma) {
+      if (allowEmpty && this.type === types$1.comma) {
         elt = null;
-      } else if (this.type === types.ellipsis) {
+      } else if (this.type === types$1.ellipsis) {
         elt = this.parseSpread(refDestructuringErrors);
 
-        if (refDestructuringErrors && this.type === types.comma && refDestructuringErrors.trailingComma < 0) {
+        if (refDestructuringErrors && this.type === types$1.comma && refDestructuringErrors.trailingComma < 0) {
           refDestructuringErrors.trailingComma = this.start;
         }
       } else {
@@ -33821,7 +33884,7 @@ exports.version = version;
     return elts;
   };
 
-  pp$4.checkUnreserved = function (ref) {
+  pp$5.checkUnreserved = function (ref) {
     var start = ref.start;
     var end = ref.end;
     var name = ref.name;
@@ -33864,10 +33927,10 @@ exports.version = version;
   // identifiers.
 
 
-  pp$4.parseIdent = function (liberal, isBinding) {
+  pp$5.parseIdent = function (liberal, isBinding) {
     var node = this.startNode();
 
-    if (this.type === types.name) {
+    if (this.type === types$1.name) {
       node.name = this.value;
     } else if (this.type.keyword) {
       node.name = this.type.keyword; // To fix https://github.com/acornjs/acorn/issues/575
@@ -33896,10 +33959,10 @@ exports.version = version;
     return node;
   };
 
-  pp$4.parsePrivateIdent = function () {
+  pp$5.parsePrivateIdent = function () {
     var node = this.startNode();
 
-    if (this.type === types.privateId) {
+    if (this.type === types$1.privateId) {
       node.name = this.value;
     } else {
       this.unexpected();
@@ -33918,7 +33981,7 @@ exports.version = version;
   }; // Parses yield expression inside generator.
 
 
-  pp$4.parseYield = function (forInit) {
+  pp$5.parseYield = function (forInit) {
     if (!this.yieldPos) {
       this.yieldPos = this.start;
     }
@@ -33926,18 +33989,18 @@ exports.version = version;
     var node = this.startNode();
     this.next();
 
-    if (this.type === types.semi || this.canInsertSemicolon() || this.type !== types.star && !this.type.startsExpr) {
+    if (this.type === types$1.semi || this.canInsertSemicolon() || this.type !== types$1.star && !this.type.startsExpr) {
       node.delegate = false;
       node.argument = null;
     } else {
-      node.delegate = this.eat(types.star);
+      node.delegate = this.eat(types$1.star);
       node.argument = this.parseMaybeAssign(forInit);
     }
 
     return this.finishNode(node, "YieldExpression");
   };
 
-  pp$4.parseAwait = function (forInit) {
+  pp$5.parseAwait = function (forInit) {
     if (!this.awaitPos) {
       this.awaitPos = this.start;
     }
@@ -33948,13 +34011,13 @@ exports.version = version;
     return this.finishNode(node, "AwaitExpression");
   };
 
-  var pp$5 = Parser.prototype; // This function is used to raise exceptions on parse errors. It
+  var pp$4 = Parser.prototype; // This function is used to raise exceptions on parse errors. It
   // takes an offset integer (into the current `input`) to indicate
   // the location of the error, attaches the position to the end
   // of the error message, and then raises a `SyntaxError` with that
   // message.
 
-  pp$5.raise = function (pos, message) {
+  pp$4.raise = function (pos, message) {
     var loc = getLineInfo(this.input, pos);
     message += " (" + loc.line + ":" + loc.column + ")";
     var err = new SyntaxError(message);
@@ -33964,15 +34027,15 @@ exports.version = version;
     throw err;
   };
 
-  pp$5.raiseRecoverable = pp$5.raise;
+  pp$4.raiseRecoverable = pp$4.raise;
 
-  pp$5.curPosition = function () {
+  pp$4.curPosition = function () {
     if (this.options.locations) {
       return new Position(this.curLine, this.pos - this.lineStart);
     }
   };
 
-  var pp$6 = Parser.prototype;
+  var pp$3 = Parser.prototype;
 
   var Scope = function Scope(flags) {
     this.flags = flags; // A list of var-declared names in the current lexical scope
@@ -33987,22 +34050,22 @@ exports.version = version;
   }; // The functions in this module keep track of declared variables in the current scope in order to detect duplicate variable names.
 
 
-  pp$6.enterScope = function (flags) {
+  pp$3.enterScope = function (flags) {
     this.scopeStack.push(new Scope(flags));
   };
 
-  pp$6.exitScope = function () {
+  pp$3.exitScope = function () {
     this.scopeStack.pop();
   }; // The spec says:
   // > At the top level of a function, or script, function declarations are
   // > treated like var declarations rather than like lexical declarations.
 
 
-  pp$6.treatFunctionsAsVarInScope = function (scope) {
+  pp$3.treatFunctionsAsVarInScope = function (scope) {
     return scope.flags & SCOPE_FUNCTION || !this.inModule && scope.flags & SCOPE_TOP;
   };
 
-  pp$6.declareName = function (name, bindingType, pos) {
+  pp$3.declareName = function (name, bindingType, pos) {
     var redeclared = false;
 
     if (bindingType === BIND_LEXICAL) {
@@ -34052,18 +34115,18 @@ exports.version = version;
     }
   };
 
-  pp$6.checkLocalExport = function (id) {
+  pp$3.checkLocalExport = function (id) {
     // scope.functions must be empty as Module code is always strict.
     if (this.scopeStack[0].lexical.indexOf(id.name) === -1 && this.scopeStack[0].var.indexOf(id.name) === -1) {
       this.undefinedExports[id.name] = id;
     }
   };
 
-  pp$6.currentScope = function () {
+  pp$3.currentScope = function () {
     return this.scopeStack[this.scopeStack.length - 1];
   };
 
-  pp$6.currentVarScope = function () {
+  pp$3.currentVarScope = function () {
     for (var i = this.scopeStack.length - 1;; i--) {
       var scope = this.scopeStack[i];
 
@@ -34074,7 +34137,7 @@ exports.version = version;
   }; // Could be useful for `this`, `new.target`, `super()`, `super.property`, and `super[property]`.
 
 
-  pp$6.currentThisScope = function () {
+  pp$3.currentThisScope = function () {
     for (var i = this.scopeStack.length - 1;; i--) {
       var scope = this.scopeStack[i];
 
@@ -34103,13 +34166,13 @@ exports.version = version;
   }; // Start an AST node, attaching a start offset.
 
 
-  var pp$7 = Parser.prototype;
+  var pp$2 = Parser.prototype;
 
-  pp$7.startNode = function () {
+  pp$2.startNode = function () {
     return new Node(this, this.start, this.startLoc);
   };
 
-  pp$7.startNodeAt = function (pos, loc) {
+  pp$2.startNodeAt = function (pos, loc) {
     return new Node(this, pos, loc);
   }; // Finish an AST node, adding `type` and `end` properties.
 
@@ -34129,16 +34192,16 @@ exports.version = version;
     return node;
   }
 
-  pp$7.finishNode = function (node, type) {
+  pp$2.finishNode = function (node, type) {
     return finishNodeAt.call(this, node, type, this.lastTokEnd, this.lastTokEndLoc);
   }; // Finish node at given position
 
 
-  pp$7.finishNodeAt = function (node, type, pos, loc) {
+  pp$2.finishNodeAt = function (node, type, pos, loc) {
     return finishNodeAt.call(this, node, type, pos, loc);
   };
 
-  pp$7.copyNode = function (node) {
+  pp$2.copyNode = function (node) {
     var newNode = new Node(this, node.start, this.startLoc);
 
     for (var prop in node) {
@@ -34195,7 +34258,7 @@ exports.version = version;
   buildUnicodeData(10);
   buildUnicodeData(11);
   buildUnicodeData(12);
-  var pp$8 = Parser.prototype;
+  var pp$1 = Parser.prototype;
 
   var RegExpValidationState = function RegExpValidationState(parser) {
     this.parser = parser;
@@ -34295,7 +34358,7 @@ exports.version = version;
     return false;
   };
 
-  function codePointToString(ch) {
+  function codePointToString$1(ch) {
     if (ch <= 0xFFFF) {
       return String.fromCharCode(ch);
     }
@@ -34311,7 +34374,7 @@ exports.version = version;
    */
 
 
-  pp$8.validateRegExpFlags = function (state) {
+  pp$1.validateRegExpFlags = function (state) {
     var validFlags = state.validFlags;
     var flags = state.flags;
 
@@ -34335,7 +34398,7 @@ exports.version = version;
    */
 
 
-  pp$8.validateRegExpPattern = function (state) {
+  pp$1.validateRegExpPattern = function (state) {
     this.regexp_pattern(state); // The goal symbol for the parse is |Pattern[~U, ~N]|. If the result of
     // parsing contains a |GroupName|, reparse with the goal symbol
     // |Pattern[~U, +N]| and use this result instead. Throw a *SyntaxError*
@@ -34349,7 +34412,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-Pattern
 
 
-  pp$8.regexp_pattern = function (state) {
+  pp$1.regexp_pattern = function (state) {
     state.pos = 0;
     state.lastIntValue = 0;
     state.lastStringValue = "";
@@ -34391,7 +34454,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-Disjunction
 
 
-  pp$8.regexp_disjunction = function (state) {
+  pp$1.regexp_disjunction = function (state) {
     this.regexp_alternative(state);
 
     while (state.eat(0x7C
@@ -34413,12 +34476,12 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-Alternative
 
 
-  pp$8.regexp_alternative = function (state) {
+  pp$1.regexp_alternative = function (state) {
     while (state.pos < state.source.length && this.regexp_eatTerm(state)) {}
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-annexB-Term
 
 
-  pp$8.regexp_eatTerm = function (state) {
+  pp$1.regexp_eatTerm = function (state) {
     if (this.regexp_eatAssertion(state)) {
       // Handle `QuantifiableAssertion Quantifier` alternative.
       // `state.lastAssertionIsQuantifiable` is true if the last eaten Assertion
@@ -34442,7 +34505,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-annexB-Assertion
 
 
-  pp$8.regexp_eatAssertion = function (state) {
+  pp$1.regexp_eatAssertion = function (state) {
     var start = state.pos;
     state.lastAssertionIsQuantifiable = false; // ^, $
 
@@ -34506,7 +34569,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-Quantifier
 
 
-  pp$8.regexp_eatQuantifier = function (state, noError) {
+  pp$1.regexp_eatQuantifier = function (state, noError) {
     if (noError === void 0) noError = false;
 
     if (this.regexp_eatQuantifierPrefix(state, noError)) {
@@ -34520,7 +34583,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-QuantifierPrefix
 
 
-  pp$8.regexp_eatQuantifierPrefix = function (state, noError) {
+  pp$1.regexp_eatQuantifierPrefix = function (state, noError) {
     return state.eat(0x2A
     /* * */
     ) || state.eat(0x2B
@@ -34530,7 +34593,7 @@ exports.version = version;
     ) || this.regexp_eatBracedQuantifier(state, noError);
   };
 
-  pp$8.regexp_eatBracedQuantifier = function (state, noError) {
+  pp$1.regexp_eatBracedQuantifier = function (state, noError) {
     var start = state.pos;
 
     if (state.eat(0x7B
@@ -34571,13 +34634,13 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-Atom
 
 
-  pp$8.regexp_eatAtom = function (state) {
+  pp$1.regexp_eatAtom = function (state) {
     return this.regexp_eatPatternCharacters(state) || state.eat(0x2E
     /* . */
     ) || this.regexp_eatReverseSolidusAtomEscape(state) || this.regexp_eatCharacterClass(state) || this.regexp_eatUncapturingGroup(state) || this.regexp_eatCapturingGroup(state);
   };
 
-  pp$8.regexp_eatReverseSolidusAtomEscape = function (state) {
+  pp$1.regexp_eatReverseSolidusAtomEscape = function (state) {
     var start = state.pos;
 
     if (state.eat(0x5C
@@ -34593,7 +34656,7 @@ exports.version = version;
     return false;
   };
 
-  pp$8.regexp_eatUncapturingGroup = function (state) {
+  pp$1.regexp_eatUncapturingGroup = function (state) {
     var start = state.pos;
 
     if (state.eat(0x28
@@ -34621,7 +34684,7 @@ exports.version = version;
     return false;
   };
 
-  pp$8.regexp_eatCapturingGroup = function (state) {
+  pp$1.regexp_eatCapturingGroup = function (state) {
     if (state.eat(0x28
     /* ( */
     )) {
@@ -34649,14 +34712,14 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-annexB-ExtendedAtom
 
 
-  pp$8.regexp_eatExtendedAtom = function (state) {
+  pp$1.regexp_eatExtendedAtom = function (state) {
     return state.eat(0x2E
     /* . */
     ) || this.regexp_eatReverseSolidusAtomEscape(state) || this.regexp_eatCharacterClass(state) || this.regexp_eatUncapturingGroup(state) || this.regexp_eatCapturingGroup(state) || this.regexp_eatInvalidBracedQuantifier(state) || this.regexp_eatExtendedPatternCharacter(state);
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-annexB-InvalidBracedQuantifier
 
 
-  pp$8.regexp_eatInvalidBracedQuantifier = function (state) {
+  pp$1.regexp_eatInvalidBracedQuantifier = function (state) {
     if (this.regexp_eatBracedQuantifier(state, true)) {
       state.raise("Nothing to repeat");
     }
@@ -34665,7 +34728,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-SyntaxCharacter
 
 
-  pp$8.regexp_eatSyntaxCharacter = function (state) {
+  pp$1.regexp_eatSyntaxCharacter = function (state) {
     var ch = state.current();
 
     if (isSyntaxCharacter(ch)) {
@@ -34701,7 +34764,7 @@ exports.version = version;
   // But eat eager.
 
 
-  pp$8.regexp_eatPatternCharacters = function (state) {
+  pp$1.regexp_eatPatternCharacters = function (state) {
     var start = state.pos;
     var ch = 0;
 
@@ -34713,7 +34776,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-annexB-ExtendedPatternCharacter
 
 
-  pp$8.regexp_eatExtendedPatternCharacter = function (state) {
+  pp$1.regexp_eatExtendedPatternCharacter = function (state) {
     var ch = state.current();
 
     if (ch !== -1 && ch !== 0x24
@@ -34743,7 +34806,7 @@ exports.version = version;
   //   `?` GroupName
 
 
-  pp$8.regexp_groupSpecifier = function (state) {
+  pp$1.regexp_groupSpecifier = function (state) {
     if (state.eat(0x3F
     /* ? */
     )) {
@@ -34763,7 +34826,7 @@ exports.version = version;
   // Note: this updates `state.lastStringValue` property with the eaten name.
 
 
-  pp$8.regexp_eatGroupName = function (state) {
+  pp$1.regexp_eatGroupName = function (state) {
     state.lastStringValue = "";
 
     if (state.eat(0x3C
@@ -34785,14 +34848,14 @@ exports.version = version;
   // Note: this updates `state.lastStringValue` property with the eaten name.
 
 
-  pp$8.regexp_eatRegExpIdentifierName = function (state) {
+  pp$1.regexp_eatRegExpIdentifierName = function (state) {
     state.lastStringValue = "";
 
     if (this.regexp_eatRegExpIdentifierStart(state)) {
-      state.lastStringValue += codePointToString(state.lastIntValue);
+      state.lastStringValue += codePointToString$1(state.lastIntValue);
 
       while (this.regexp_eatRegExpIdentifierPart(state)) {
-        state.lastStringValue += codePointToString(state.lastIntValue);
+        state.lastStringValue += codePointToString$1(state.lastIntValue);
       }
 
       return true;
@@ -34806,7 +34869,7 @@ exports.version = version;
   //   `\` RegExpUnicodeEscapeSequence[+U]
 
 
-  pp$8.regexp_eatRegExpIdentifierStart = function (state) {
+  pp$1.regexp_eatRegExpIdentifierStart = function (state) {
     var start = state.pos;
     var forceU = this.options.ecmaVersion >= 11;
     var ch = state.current(forceU);
@@ -34841,7 +34904,7 @@ exports.version = version;
   //   <ZWJ>
 
 
-  pp$8.regexp_eatRegExpIdentifierPart = function (state) {
+  pp$1.regexp_eatRegExpIdentifierPart = function (state) {
     var start = state.pos;
     var forceU = this.options.ecmaVersion >= 11;
     var ch = state.current(forceU);
@@ -34874,7 +34937,7 @@ exports.version = version;
   } // https://www.ecma-international.org/ecma-262/8.0/#prod-annexB-AtomEscape
 
 
-  pp$8.regexp_eatAtomEscape = function (state) {
+  pp$1.regexp_eatAtomEscape = function (state) {
     if (this.regexp_eatBackReference(state) || this.regexp_eatCharacterClassEscape(state) || this.regexp_eatCharacterEscape(state) || state.switchN && this.regexp_eatKGroupName(state)) {
       return true;
     }
@@ -34893,7 +34956,7 @@ exports.version = version;
     return false;
   };
 
-  pp$8.regexp_eatBackReference = function (state) {
+  pp$1.regexp_eatBackReference = function (state) {
     var start = state.pos;
 
     if (this.regexp_eatDecimalEscape(state)) {
@@ -34918,7 +34981,7 @@ exports.version = version;
     return false;
   };
 
-  pp$8.regexp_eatKGroupName = function (state) {
+  pp$1.regexp_eatKGroupName = function (state) {
     if (state.eat(0x6B
     /* k */
     )) {
@@ -34934,11 +34997,11 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-annexB-CharacterEscape
 
 
-  pp$8.regexp_eatCharacterEscape = function (state) {
+  pp$1.regexp_eatCharacterEscape = function (state) {
     return this.regexp_eatControlEscape(state) || this.regexp_eatCControlLetter(state) || this.regexp_eatZero(state) || this.regexp_eatHexEscapeSequence(state) || this.regexp_eatRegExpUnicodeEscapeSequence(state, false) || !state.switchU && this.regexp_eatLegacyOctalEscapeSequence(state) || this.regexp_eatIdentityEscape(state);
   };
 
-  pp$8.regexp_eatCControlLetter = function (state) {
+  pp$1.regexp_eatCControlLetter = function (state) {
     var start = state.pos;
 
     if (state.eat(0x63
@@ -34954,7 +35017,7 @@ exports.version = version;
     return false;
   };
 
-  pp$8.regexp_eatZero = function (state) {
+  pp$1.regexp_eatZero = function (state) {
     if (state.current() === 0x30
     /* 0 */
     && !isDecimalDigit(state.lookahead())) {
@@ -34967,7 +35030,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-ControlEscape
 
 
-  pp$8.regexp_eatControlEscape = function (state) {
+  pp$1.regexp_eatControlEscape = function (state) {
     var ch = state.current();
 
     if (ch === 0x74
@@ -35024,7 +35087,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-ControlLetter
 
 
-  pp$8.regexp_eatControlLetter = function (state) {
+  pp$1.regexp_eatControlLetter = function (state) {
     var ch = state.current();
 
     if (isControlLetter(ch)) {
@@ -35049,7 +35112,7 @@ exports.version = version;
   } // https://www.ecma-international.org/ecma-262/8.0/#prod-RegExpUnicodeEscapeSequence
 
 
-  pp$8.regexp_eatRegExpUnicodeEscapeSequence = function (state, forceU) {
+  pp$1.regexp_eatRegExpUnicodeEscapeSequence = function (state, forceU) {
     if (forceU === void 0) forceU = false;
     var start = state.pos;
     var switchU = forceU || state.switchU;
@@ -35106,7 +35169,7 @@ exports.version = version;
   } // https://www.ecma-international.org/ecma-262/8.0/#prod-annexB-IdentityEscape
 
 
-  pp$8.regexp_eatIdentityEscape = function (state) {
+  pp$1.regexp_eatIdentityEscape = function (state) {
     if (state.switchU) {
       if (this.regexp_eatSyntaxCharacter(state)) {
         return true;
@@ -35140,7 +35203,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-DecimalEscape
 
 
-  pp$8.regexp_eatDecimalEscape = function (state) {
+  pp$1.regexp_eatDecimalEscape = function (state) {
     state.lastIntValue = 0;
     var ch = state.current();
 
@@ -35167,7 +35230,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-CharacterClassEscape
 
 
-  pp$8.regexp_eatCharacterClassEscape = function (state) {
+  pp$1.regexp_eatCharacterClassEscape = function (state) {
     var ch = state.current();
 
     if (isCharacterClassEscape(ch)) {
@@ -35217,7 +35280,7 @@ exports.version = version;
   //   LoneUnicodePropertyNameOrValue
 
 
-  pp$8.regexp_eatUnicodePropertyValueExpression = function (state) {
+  pp$1.regexp_eatUnicodePropertyValueExpression = function (state) {
     var start = state.pos; // UnicodePropertyName `=` UnicodePropertyValue
 
     if (this.regexp_eatUnicodePropertyName(state) && state.eat(0x3D
@@ -35243,7 +35306,7 @@ exports.version = version;
     return false;
   };
 
-  pp$8.regexp_validateUnicodePropertyNameAndValue = function (state, name, value) {
+  pp$1.regexp_validateUnicodePropertyNameAndValue = function (state, name, value) {
     if (!has(state.unicodeProperties.nonBinary, name)) {
       state.raise("Invalid property name");
     }
@@ -35253,7 +35316,7 @@ exports.version = version;
     }
   };
 
-  pp$8.regexp_validateUnicodePropertyNameOrValue = function (state, nameOrValue) {
+  pp$1.regexp_validateUnicodePropertyNameOrValue = function (state, nameOrValue) {
     if (!state.unicodeProperties.binary.test(nameOrValue)) {
       state.raise("Invalid property name");
     }
@@ -35261,12 +35324,12 @@ exports.version = version;
   //   UnicodePropertyNameCharacters
 
 
-  pp$8.regexp_eatUnicodePropertyName = function (state) {
+  pp$1.regexp_eatUnicodePropertyName = function (state) {
     var ch = 0;
     state.lastStringValue = "";
 
     while (isUnicodePropertyNameCharacter(ch = state.current())) {
-      state.lastStringValue += codePointToString(ch);
+      state.lastStringValue += codePointToString$1(ch);
       state.advance();
     }
 
@@ -35280,12 +35343,12 @@ exports.version = version;
   //   UnicodePropertyValueCharacters
 
 
-  pp$8.regexp_eatUnicodePropertyValue = function (state) {
+  pp$1.regexp_eatUnicodePropertyValue = function (state) {
     var ch = 0;
     state.lastStringValue = "";
 
     while (isUnicodePropertyValueCharacter(ch = state.current())) {
-      state.lastStringValue += codePointToString(ch);
+      state.lastStringValue += codePointToString$1(ch);
       state.advance();
     }
 
@@ -35298,12 +35361,12 @@ exports.version = version;
   //   UnicodePropertyValueCharacters
 
 
-  pp$8.regexp_eatLoneUnicodePropertyNameOrValue = function (state) {
+  pp$1.regexp_eatLoneUnicodePropertyNameOrValue = function (state) {
     return this.regexp_eatUnicodePropertyValue(state);
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-CharacterClass
 
 
-  pp$8.regexp_eatCharacterClass = function (state) {
+  pp$1.regexp_eatCharacterClass = function (state) {
     if (state.eat(0x5B
     /* [ */
     )) {
@@ -35328,7 +35391,7 @@ exports.version = version;
   // https://www.ecma-international.org/ecma-262/8.0/#prod-NonemptyClassRangesNoDash
 
 
-  pp$8.regexp_classRanges = function (state) {
+  pp$1.regexp_classRanges = function (state) {
     while (this.regexp_eatClassAtom(state)) {
       var left = state.lastIntValue;
 
@@ -35350,7 +35413,7 @@ exports.version = version;
   // https://www.ecma-international.org/ecma-262/8.0/#prod-ClassAtomNoDash
 
 
-  pp$8.regexp_eatClassAtom = function (state) {
+  pp$1.regexp_eatClassAtom = function (state) {
     var start = state.pos;
 
     if (state.eat(0x5C
@@ -35390,7 +35453,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-annexB-ClassEscape
 
 
-  pp$8.regexp_eatClassEscape = function (state) {
+  pp$1.regexp_eatClassEscape = function (state) {
     var start = state.pos;
 
     if (state.eat(0x62
@@ -35425,7 +35488,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-annexB-ClassControlLetter
 
 
-  pp$8.regexp_eatClassControlLetter = function (state) {
+  pp$1.regexp_eatClassControlLetter = function (state) {
     var ch = state.current();
 
     if (isDecimalDigit(ch) || ch === 0x5F
@@ -35440,7 +35503,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-HexEscapeSequence
 
 
-  pp$8.regexp_eatHexEscapeSequence = function (state) {
+  pp$1.regexp_eatHexEscapeSequence = function (state) {
     var start = state.pos;
 
     if (state.eat(0x78
@@ -35461,7 +35524,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-DecimalDigits
 
 
-  pp$8.regexp_eatDecimalDigits = function (state) {
+  pp$1.regexp_eatDecimalDigits = function (state) {
     var start = state.pos;
     var ch = 0;
     state.lastIntValue = 0;
@@ -35484,7 +35547,7 @@ exports.version = version;
   } // https://www.ecma-international.org/ecma-262/8.0/#prod-HexDigits
 
 
-  pp$8.regexp_eatHexDigits = function (state) {
+  pp$1.regexp_eatHexDigits = function (state) {
     var start = state.pos;
     var ch = 0;
     state.lastIntValue = 0;
@@ -35540,7 +35603,7 @@ exports.version = version;
   // Allows only 0-377(octal) i.e. 0-255(decimal).
 
 
-  pp$8.regexp_eatLegacyOctalEscapeSequence = function (state) {
+  pp$1.regexp_eatLegacyOctalEscapeSequence = function (state) {
     if (this.regexp_eatOctalDigit(state)) {
       var n1 = state.lastIntValue;
 
@@ -35563,7 +35626,7 @@ exports.version = version;
   }; // https://www.ecma-international.org/ecma-262/8.0/#prod-OctalDigit
 
 
-  pp$8.regexp_eatOctalDigit = function (state) {
+  pp$1.regexp_eatOctalDigit = function (state) {
     var ch = state.current();
 
     if (isOctalDigit(ch)) {
@@ -35588,7 +35651,7 @@ exports.version = version;
   // And HexDigit HexDigit in https://www.ecma-international.org/ecma-262/8.0/#prod-HexEscapeSequence
 
 
-  pp$8.regexp_eatFixedHexDigits = function (state, length) {
+  pp$1.regexp_eatFixedHexDigits = function (state, length) {
     var start = state.pos;
     state.lastIntValue = 0;
 
@@ -35626,9 +35689,9 @@ exports.version = version;
   }; // ## Tokenizer
 
 
-  var pp$9 = Parser.prototype; // Move to the next token
+  var pp = Parser.prototype; // Move to the next token
 
-  pp$9.next = function (ignoreEscapeSequenceInKeyword) {
+  pp.next = function (ignoreEscapeSequenceInKeyword) {
     if (!ignoreEscapeSequenceInKeyword && this.type.keyword && this.containsEsc) {
       this.raiseRecoverable(this.start, "Escape sequence in keyword " + this.type.keyword);
     }
@@ -35644,20 +35707,20 @@ exports.version = version;
     this.nextToken();
   };
 
-  pp$9.getToken = function () {
+  pp.getToken = function () {
     this.next();
     return new Token(this);
   }; // If we're in an ES6 environment, make parsers iterable
 
 
   if (typeof Symbol !== "undefined") {
-    pp$9[Symbol.iterator] = function () {
-      var this$1 = this;
+    pp[Symbol.iterator] = function () {
+      var this$1$1 = this;
       return {
         next: function () {
-          var token = this$1.getToken();
+          var token = this$1$1.getToken();
           return {
-            done: token.type === types.eof,
+            done: token.type === types$1.eof,
             value: token
           };
         }
@@ -35669,7 +35732,7 @@ exports.version = version;
   // properties.
 
 
-  pp$9.nextToken = function () {
+  pp.nextToken = function () {
     var curContext = this.curContext();
 
     if (!curContext || !curContext.preserveSpace) {
@@ -35683,7 +35746,7 @@ exports.version = version;
     }
 
     if (this.pos >= this.input.length) {
-      return this.finishToken(types.eof);
+      return this.finishToken(types$1.eof);
     }
 
     if (curContext.override) {
@@ -35693,7 +35756,7 @@ exports.version = version;
     }
   };
 
-  pp$9.readToken = function (code) {
+  pp.readToken = function (code) {
     // Identifier or keyword. '\uXXXX' sequences are allowed in
     // identifiers, so '\' also dispatches to that.
     if (isIdentifierStart(code, this.options.ecmaVersion >= 6) || code === 92
@@ -35705,7 +35768,7 @@ exports.version = version;
     return this.getTokenFromCode(code);
   };
 
-  pp$9.fullCharCodeAtPos = function () {
+  pp.fullCharCodeAtPos = function () {
     var code = this.input.charCodeAt(this.pos);
 
     if (code <= 0xd7ff || code >= 0xdc00) {
@@ -35716,7 +35779,7 @@ exports.version = version;
     return next <= 0xdbff || next >= 0xe000 ? code : (code << 10) + next - 0x35fdc00;
   };
 
-  pp$9.skipBlockComment = function () {
+  pp.skipBlockComment = function () {
     var startLoc = this.options.onComment && this.curPosition();
     var start = this.pos,
         end = this.input.indexOf("*/", this.pos += 2);
@@ -35742,7 +35805,7 @@ exports.version = version;
     }
   };
 
-  pp$9.skipLineComment = function (startSkip) {
+  pp.skipLineComment = function (startSkip) {
     var start = this.pos;
     var startLoc = this.options.onComment && this.curPosition();
     var ch = this.input.charCodeAt(this.pos += startSkip);
@@ -35758,7 +35821,7 @@ exports.version = version;
   // whitespace and comments, and.
 
 
-  pp$9.skipSpace = function () {
+  pp.skipSpace = function () {
     loop: while (this.pos < this.input.length) {
       var ch = this.input.charCodeAt(this.pos);
 
@@ -35819,7 +35882,7 @@ exports.version = version;
   // right position.
 
 
-  pp$9.finishToken = function (type, val) {
+  pp.finishToken = function (type, val) {
     this.end = this.pos;
 
     if (this.options.locations) {
@@ -35840,7 +35903,7 @@ exports.version = version;
   //
 
 
-  pp$9.readToken_dot = function () {
+  pp.readToken_dot = function () {
     var next = this.input.charCodeAt(this.pos + 1);
 
     if (next >= 48 && next <= 57) {
@@ -35852,14 +35915,14 @@ exports.version = version;
     if (this.options.ecmaVersion >= 6 && next === 46 && next2 === 46) {
       // 46 = dot '.'
       this.pos += 3;
-      return this.finishToken(types.ellipsis);
+      return this.finishToken(types$1.ellipsis);
     } else {
       ++this.pos;
-      return this.finishToken(types.dot);
+      return this.finishToken(types$1.dot);
     }
   };
 
-  pp$9.readToken_slash = function () {
+  pp.readToken_slash = function () {
     // '/'
     var next = this.input.charCodeAt(this.pos + 1);
 
@@ -35869,32 +35932,32 @@ exports.version = version;
     }
 
     if (next === 61) {
-      return this.finishOp(types.assign, 2);
+      return this.finishOp(types$1.assign, 2);
     }
 
-    return this.finishOp(types.slash, 1);
+    return this.finishOp(types$1.slash, 1);
   };
 
-  pp$9.readToken_mult_modulo_exp = function (code) {
+  pp.readToken_mult_modulo_exp = function (code) {
     // '%*'
     var next = this.input.charCodeAt(this.pos + 1);
     var size = 1;
-    var tokentype = code === 42 ? types.star : types.modulo; // exponentiation operator ** and **=
+    var tokentype = code === 42 ? types$1.star : types$1.modulo; // exponentiation operator ** and **=
 
     if (this.options.ecmaVersion >= 7 && code === 42 && next === 42) {
       ++size;
-      tokentype = types.starstar;
+      tokentype = types$1.starstar;
       next = this.input.charCodeAt(this.pos + 2);
     }
 
     if (next === 61) {
-      return this.finishOp(types.assign, size + 1);
+      return this.finishOp(types$1.assign, size + 1);
     }
 
     return this.finishOp(tokentype, size);
   };
 
-  pp$9.readToken_pipe_amp = function (code) {
+  pp.readToken_pipe_amp = function (code) {
     // '|&'
     var next = this.input.charCodeAt(this.pos + 1);
 
@@ -35903,32 +35966,32 @@ exports.version = version;
         var next2 = this.input.charCodeAt(this.pos + 2);
 
         if (next2 === 61) {
-          return this.finishOp(types.assign, 3);
+          return this.finishOp(types$1.assign, 3);
         }
       }
 
-      return this.finishOp(code === 124 ? types.logicalOR : types.logicalAND, 2);
+      return this.finishOp(code === 124 ? types$1.logicalOR : types$1.logicalAND, 2);
     }
 
     if (next === 61) {
-      return this.finishOp(types.assign, 2);
+      return this.finishOp(types$1.assign, 2);
     }
 
-    return this.finishOp(code === 124 ? types.bitwiseOR : types.bitwiseAND, 1);
+    return this.finishOp(code === 124 ? types$1.bitwiseOR : types$1.bitwiseAND, 1);
   };
 
-  pp$9.readToken_caret = function () {
+  pp.readToken_caret = function () {
     // '^'
     var next = this.input.charCodeAt(this.pos + 1);
 
     if (next === 61) {
-      return this.finishOp(types.assign, 2);
+      return this.finishOp(types$1.assign, 2);
     }
 
-    return this.finishOp(types.bitwiseXOR, 1);
+    return this.finishOp(types$1.bitwiseXOR, 1);
   };
 
-  pp$9.readToken_plus_min = function (code) {
+  pp.readToken_plus_min = function (code) {
     // '+-'
     var next = this.input.charCodeAt(this.pos + 1);
 
@@ -35940,17 +36003,17 @@ exports.version = version;
         return this.nextToken();
       }
 
-      return this.finishOp(types.incDec, 2);
+      return this.finishOp(types$1.incDec, 2);
     }
 
     if (next === 61) {
-      return this.finishOp(types.assign, 2);
+      return this.finishOp(types$1.assign, 2);
     }
 
-    return this.finishOp(types.plusMin, 1);
+    return this.finishOp(types$1.plusMin, 1);
   };
 
-  pp$9.readToken_lt_gt = function (code) {
+  pp.readToken_lt_gt = function (code) {
     // '<>'
     var next = this.input.charCodeAt(this.pos + 1);
     var size = 1;
@@ -35959,10 +36022,10 @@ exports.version = version;
       size = code === 62 && this.input.charCodeAt(this.pos + 2) === 62 ? 3 : 2;
 
       if (this.input.charCodeAt(this.pos + size) === 61) {
-        return this.finishOp(types.assign, size + 1);
+        return this.finishOp(types$1.assign, size + 1);
       }
 
-      return this.finishOp(types.bitShift, size);
+      return this.finishOp(types$1.bitShift, size);
     }
 
     if (next === 33 && code === 60 && !this.inModule && this.input.charCodeAt(this.pos + 2) === 45 && this.input.charCodeAt(this.pos + 3) === 45) {
@@ -35976,27 +36039,27 @@ exports.version = version;
       size = 2;
     }
 
-    return this.finishOp(types.relational, size);
+    return this.finishOp(types$1.relational, size);
   };
 
-  pp$9.readToken_eq_excl = function (code) {
+  pp.readToken_eq_excl = function (code) {
     // '=!'
     var next = this.input.charCodeAt(this.pos + 1);
 
     if (next === 61) {
-      return this.finishOp(types.equality, this.input.charCodeAt(this.pos + 2) === 61 ? 3 : 2);
+      return this.finishOp(types$1.equality, this.input.charCodeAt(this.pos + 2) === 61 ? 3 : 2);
     }
 
     if (code === 61 && next === 62 && this.options.ecmaVersion >= 6) {
       // '=>'
       this.pos += 2;
-      return this.finishToken(types.arrow);
+      return this.finishToken(types$1.arrow);
     }
 
-    return this.finishOp(code === 61 ? types.eq : types.prefix, 1);
+    return this.finishOp(code === 61 ? types$1.eq : types$1.prefix, 1);
   };
 
-  pp$9.readToken_question = function () {
+  pp.readToken_question = function () {
     // '?'
     var ecmaVersion = this.options.ecmaVersion;
 
@@ -36007,7 +36070,7 @@ exports.version = version;
         var next2 = this.input.charCodeAt(this.pos + 2);
 
         if (next2 < 48 || next2 > 57) {
-          return this.finishOp(types.questionDot, 2);
+          return this.finishOp(types$1.questionDot, 2);
         }
       }
 
@@ -36016,18 +36079,18 @@ exports.version = version;
           var next2$1 = this.input.charCodeAt(this.pos + 2);
 
           if (next2$1 === 61) {
-            return this.finishOp(types.assign, 3);
+            return this.finishOp(types$1.assign, 3);
           }
         }
 
-        return this.finishOp(types.coalesce, 2);
+        return this.finishOp(types$1.coalesce, 2);
       }
     }
 
-    return this.finishOp(types.question, 1);
+    return this.finishOp(types$1.question, 1);
   };
 
-  pp$9.readToken_numberSign = function () {
+  pp.readToken_numberSign = function () {
     // '#'
     var ecmaVersion = this.options.ecmaVersion;
     var code = 35; // '#'
@@ -36039,14 +36102,14 @@ exports.version = version;
       if (isIdentifierStart(code, true) || code === 92
       /* '\' */
       ) {
-        return this.finishToken(types.privateId, this.readWord1());
+        return this.finishToken(types$1.privateId, this.readWord1());
       }
     }
 
-    this.raise(this.pos, "Unexpected character '" + codePointToString$1(code) + "'");
+    this.raise(this.pos, "Unexpected character '" + codePointToString(code) + "'");
   };
 
-  pp$9.getTokenFromCode = function (code) {
+  pp.getTokenFromCode = function (code) {
     switch (code) {
       // The interpretation of a dot depends on whether it is followed
       // by a digit or another two dots.
@@ -36057,39 +36120,39 @@ exports.version = version;
 
       case 40:
         ++this.pos;
-        return this.finishToken(types.parenL);
+        return this.finishToken(types$1.parenL);
 
       case 41:
         ++this.pos;
-        return this.finishToken(types.parenR);
+        return this.finishToken(types$1.parenR);
 
       case 59:
         ++this.pos;
-        return this.finishToken(types.semi);
+        return this.finishToken(types$1.semi);
 
       case 44:
         ++this.pos;
-        return this.finishToken(types.comma);
+        return this.finishToken(types$1.comma);
 
       case 91:
         ++this.pos;
-        return this.finishToken(types.bracketL);
+        return this.finishToken(types$1.bracketL);
 
       case 93:
         ++this.pos;
-        return this.finishToken(types.bracketR);
+        return this.finishToken(types$1.bracketR);
 
       case 123:
         ++this.pos;
-        return this.finishToken(types.braceL);
+        return this.finishToken(types$1.braceL);
 
       case 125:
         ++this.pos;
-        return this.finishToken(types.braceR);
+        return this.finishToken(types$1.braceR);
 
       case 58:
         ++this.pos;
-        return this.finishToken(types.colon);
+        return this.finishToken(types$1.colon);
 
       case 96:
         // '`'
@@ -36098,7 +36161,7 @@ exports.version = version;
         }
 
         ++this.pos;
-        return this.finishToken(types.backQuote);
+        return this.finishToken(types$1.backQuote);
 
       case 48:
         // '0'
@@ -36185,23 +36248,23 @@ exports.version = version;
 
       case 126:
         // '~'
-        return this.finishOp(types.prefix, 1);
+        return this.finishOp(types$1.prefix, 1);
 
       case 35:
         // '#'
         return this.readToken_numberSign();
     }
 
-    this.raise(this.pos, "Unexpected character '" + codePointToString$1(code) + "'");
+    this.raise(this.pos, "Unexpected character '" + codePointToString(code) + "'");
   };
 
-  pp$9.finishOp = function (type, size) {
+  pp.finishOp = function (type, size) {
     var str = this.input.slice(this.pos, this.pos + size);
     this.pos += size;
     return this.finishToken(type, str);
   };
 
-  pp$9.readRegexp = function () {
+  pp.readRegexp = function () {
     var escaped,
         inClass,
         start = this.pos;
@@ -36257,7 +36320,7 @@ exports.version = version;
       // https://github.com/estree/estree/blob/a27003adf4fd7bfad44de9cef372a2eacd527b1c/es5.md#regexpliteral
     }
 
-    return this.finishToken(types.regexp, {
+    return this.finishToken(types$1.regexp, {
       pattern: pattern,
       flags: flags,
       value: value
@@ -36267,7 +36330,7 @@ exports.version = version;
   // will return `null` unless the integer has exactly `len` digits.
 
 
-  pp$9.readInt = function (radix, len, maybeLegacyOctalNumericLiteral) {
+  pp.readInt = function (radix, len, maybeLegacyOctalNumericLiteral) {
     // `len` is used for character escape sequences. In that case, disallow separators.
     var allowSeparators = this.options.ecmaVersion >= 12 && len === undefined; // `maybeLegacyOctalNumericLiteral` is true if it doesn't have prefix (0x,0o,0b)
     // and isn't fraction part nor exponent part. In that case, if the first digit
@@ -36349,7 +36412,7 @@ exports.version = version;
     return BigInt(str.replace(/_/g, ""));
   }
 
-  pp$9.readRadixNumber = function (radix) {
+  pp.readRadixNumber = function (radix) {
     var start = this.pos;
     this.pos += 2; // 0x
 
@@ -36366,11 +36429,11 @@ exports.version = version;
       this.raise(this.pos, "Identifier directly after number");
     }
 
-    return this.finishToken(types.num, val);
+    return this.finishToken(types$1.num, val);
   }; // Read an integer, octal integer, or floating-point number.
 
 
-  pp$9.readNumber = function (startsWithDot) {
+  pp.readNumber = function (startsWithDot) {
     var start = this.pos;
 
     if (!startsWithDot && this.readInt(10, undefined, true) === null) {
@@ -36393,7 +36456,7 @@ exports.version = version;
         this.raise(this.pos, "Identifier directly after number");
       }
 
-      return this.finishToken(types.num, val$1);
+      return this.finishToken(types$1.num, val$1);
     }
 
     if (octal && /[89]/.test(this.input.slice(start, this.pos))) {
@@ -36426,11 +36489,11 @@ exports.version = version;
     }
 
     var val = stringToNumber(this.input.slice(start, this.pos), octal);
-    return this.finishToken(types.num, val);
+    return this.finishToken(types$1.num, val);
   }; // Read a string value, interpreting backslash-escapes.
 
 
-  pp$9.readCodePoint = function () {
+  pp.readCodePoint = function () {
     var ch = this.input.charCodeAt(this.pos),
         code;
 
@@ -36454,7 +36517,7 @@ exports.version = version;
     return code;
   };
 
-  function codePointToString$1(code) {
+  function codePointToString(code) {
     // UTF-16 Decoding
     if (code <= 0xFFFF) {
       return String.fromCharCode(code);
@@ -36464,7 +36527,7 @@ exports.version = version;
     return String.fromCharCode((code >> 10) + 0xD800, (code & 1023) + 0xDC00);
   }
 
-  pp$9.readString = function (quote) {
+  pp.readString = function (quote) {
     var out = "",
         chunkStart = ++this.pos;
 
@@ -36505,13 +36568,13 @@ exports.version = version;
     }
 
     out += this.input.slice(chunkStart, this.pos++);
-    return this.finishToken(types.string, out);
+    return this.finishToken(types$1.string, out);
   }; // Reads template string tokens.
 
 
   var INVALID_TEMPLATE_ESCAPE_ERROR = {};
 
-  pp$9.tryReadTemplateToken = function () {
+  pp.tryReadTemplateToken = function () {
     this.inTemplateElement = true;
 
     try {
@@ -36527,7 +36590,7 @@ exports.version = version;
     this.inTemplateElement = false;
   };
 
-  pp$9.invalidStringToken = function (position, message) {
+  pp.invalidStringToken = function (position, message) {
     if (this.inTemplateElement && this.options.ecmaVersion >= 9) {
       throw INVALID_TEMPLATE_ESCAPE_ERROR;
     } else {
@@ -36535,7 +36598,7 @@ exports.version = version;
     }
   };
 
-  pp$9.readTmplToken = function () {
+  pp.readTmplToken = function () {
     var out = "",
         chunkStart = this.pos;
 
@@ -36548,18 +36611,18 @@ exports.version = version;
 
       if (ch === 96 || ch === 36 && this.input.charCodeAt(this.pos + 1) === 123) {
         // '`', '${'
-        if (this.pos === this.start && (this.type === types.template || this.type === types.invalidTemplate)) {
+        if (this.pos === this.start && (this.type === types$1.template || this.type === types$1.invalidTemplate)) {
           if (ch === 36) {
             this.pos += 2;
-            return this.finishToken(types.dollarBraceL);
+            return this.finishToken(types$1.dollarBraceL);
           } else {
             ++this.pos;
-            return this.finishToken(types.backQuote);
+            return this.finishToken(types$1.backQuote);
           }
         }
 
         out += this.input.slice(chunkStart, this.pos);
-        return this.finishToken(types.template, out);
+        return this.finishToken(types$1.template, out);
       }
 
       if (ch === 92) {
@@ -36599,7 +36662,7 @@ exports.version = version;
   }; // Reads a template token to search for the end, without validating any escape sequences
 
 
-  pp$9.readInvalidTemplateToken = function () {
+  pp.readInvalidTemplateToken = function () {
     for (; this.pos < this.input.length; this.pos++) {
       switch (this.input[this.pos]) {
         case "\\":
@@ -36614,7 +36677,7 @@ exports.version = version;
         // falls through
 
         case "`":
-          return this.finishToken(types.invalidTemplate, this.input.slice(this.start, this.pos));
+          return this.finishToken(types$1.invalidTemplate, this.input.slice(this.start, this.pos));
         // no default
       }
     }
@@ -36623,7 +36686,7 @@ exports.version = version;
   }; // Used to read escaped characters
 
 
-  pp$9.readEscapedChar = function (inTemplate) {
+  pp.readEscapedChar = function (inTemplate) {
     var ch = this.input.charCodeAt(++this.pos);
     ++this.pos;
 
@@ -36641,7 +36704,7 @@ exports.version = version;
       // 'x'
 
       case 117:
-        return codePointToString$1(this.readCodePoint());
+        return codePointToString(this.readCodePoint());
       // 'u'
 
       case 116:
@@ -36719,7 +36782,7 @@ exports.version = version;
   }; // Used to read character escape sequences ('\x', '\u', '\U').
 
 
-  pp$9.readHexChar = function (len) {
+  pp.readHexChar = function (len) {
     var codePos = this.pos;
     var n = this.readInt(16, len);
 
@@ -36735,7 +36798,7 @@ exports.version = version;
   // as a micro-optimization.
 
 
-  pp$9.readWord1 = function () {
+  pp.readWord1 = function () {
     this.containsEsc = false;
     var word = "",
         first = true,
@@ -36765,7 +36828,7 @@ exports.version = version;
           this.invalidStringToken(escStart, "Invalid Unicode escape");
         }
 
-        word += codePointToString$1(esc);
+        word += codePointToString(esc);
         chunkStart = this.pos;
       } else {
         break;
@@ -36779,19 +36842,19 @@ exports.version = version;
   // words when necessary.
 
 
-  pp$9.readWord = function () {
+  pp.readWord = function () {
     var word = this.readWord1();
-    var type = types.name;
+    var type = types$1.name;
 
     if (this.keywords.test(word)) {
-      type = keywords$1[word];
+      type = keywords[word];
     }
 
     return this.finishToken(type, word);
   }; // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 
 
-  var version = "8.5.0";
+  var version = "8.6.0";
   Parser.acorn = {
     Parser: Parser,
     version: version,
@@ -36801,10 +36864,10 @@ exports.version = version;
     getLineInfo: getLineInfo,
     Node: Node,
     TokenType: TokenType,
-    tokTypes: types,
-    keywordTypes: keywords$1,
+    tokTypes: types$1,
+    keywordTypes: keywords,
     TokContext: TokContext,
-    tokContexts: types$1,
+    tokContexts: types,
     isIdentifierChar: isIdentifierChar,
     isIdentifierStart: isIdentifierStart,
     Token: Token,
@@ -36848,14 +36911,14 @@ exports.version = version;
   exports.isIdentifierChar = isIdentifierChar;
   exports.isIdentifierStart = isIdentifierStart;
   exports.isNewLine = isNewLine;
-  exports.keywordTypes = keywords$1;
+  exports.keywordTypes = keywords;
   exports.lineBreak = lineBreak;
   exports.lineBreakG = lineBreakG;
   exports.nonASCIIwhitespace = nonASCIIwhitespace;
   exports.parse = parse;
   exports.parseExpressionAt = parseExpressionAt;
-  exports.tokContexts = types$1;
-  exports.tokTypes = types;
+  exports.tokContexts = types;
+  exports.tokTypes = types$1;
   exports.tokenizer = tokenizer;
   exports.version = version;
   Object.defineProperty(exports, '__esModule', {
@@ -39687,7 +39750,7 @@ module.exports = merge;
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"eslint","version":"8.2.0","author":"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>","description":"An AST-based pattern checker for JavaScript.","bin":{"eslint":"./bin/eslint.js"},"main":"./lib/api.js","exports":{"./package.json":"./package.json",".":"./lib/api.js","./use-at-your-own-risk":"./lib/unsupported-api.js"},"scripts":{"test":"node Makefile.js test","test:cli":"mocha","lint":"node Makefile.js lint","fix":"node Makefile.js lint -- fix","fuzz":"node Makefile.js fuzz","generate-release":"node Makefile.js generateRelease","generate-alpharelease":"node Makefile.js generatePrerelease -- alpha","generate-betarelease":"node Makefile.js generatePrerelease -- beta","generate-rcrelease":"node Makefile.js generatePrerelease -- rc","publish-release":"node Makefile.js publishRelease","gensite":"node Makefile.js gensite","webpack":"node Makefile.js webpack","perf":"node Makefile.js perf"},"gitHooks":{"pre-commit":"lint-staged"},"lint-staged":{"*.js":"eslint --fix","*.md":"markdownlint"},"files":["LICENSE","README.md","bin","conf","lib","messages"],"repository":"eslint/eslint","funding":"https://opencollective.com/eslint","homepage":"https://eslint.org","bugs":"https://github.com/eslint/eslint/issues/","dependencies":{"@eslint/eslintrc":"^1.0.4","@humanwhocodes/config-array":"^0.6.0","ajv":"^6.10.0","chalk":"^4.0.0","cross-spawn":"^7.0.2","debug":"^4.3.2","doctrine":"^3.0.0","enquirer":"^2.3.5","escape-string-regexp":"^4.0.0","eslint-scope":"^6.0.0","eslint-utils":"^3.0.0","eslint-visitor-keys":"^3.0.0","espree":"^9.0.0","esquery":"^1.4.0","esutils":"^2.0.2","fast-deep-equal":"^3.1.3","file-entry-cache":"^6.0.1","functional-red-black-tree":"^1.0.1","glob-parent":"^6.0.1","globals":"^13.6.0","ignore":"^4.0.6","import-fresh":"^3.0.0","imurmurhash":"^0.1.4","is-glob":"^4.0.0","js-yaml":"^4.1.0","json-stable-stringify-without-jsonify":"^1.0.1","levn":"^0.4.1","lodash.merge":"^4.6.2","minimatch":"^3.0.4","natural-compare":"^1.4.0","optionator":"^0.9.1","progress":"^2.0.0","regexpp":"^3.2.0","semver":"^7.2.1","strip-ansi":"^6.0.1","strip-json-comments":"^3.1.0","text-table":"^0.2.0","v8-compile-cache":"^2.0.3"},"devDependencies":{"@babel/core":"^7.4.3","@babel/preset-env":"^7.4.3","babel-loader":"^8.0.5","chai":"^4.0.1","cheerio":"^0.22.0","common-tags":"^1.8.0","core-js":"^3.1.3","dateformat":"^4.5.1","ejs":"^3.0.2","eslint":"file:.","eslint-config-eslint":"file:packages/eslint-config-eslint","eslint-plugin-eslint-comments":"^3.2.0","eslint-plugin-eslint-plugin":"^4.0.1","eslint-plugin-internal-rules":"file:tools/internal-rules","eslint-plugin-jsdoc":"^37.0.0","eslint-plugin-node":"^11.1.0","eslint-release":"^3.2.0","eslump":"^3.0.0","esprima":"^4.0.1","fs-teardown":"^0.1.3","glob":"^7.1.6","jsdoc":"^3.5.5","karma":"^6.1.1","karma-chrome-launcher":"^3.1.0","karma-mocha":"^2.0.1","karma-mocha-reporter":"^2.2.5","karma-webpack":"^5.0.0","lint-staged":"^11.0.0","load-perf":"^0.2.0","markdownlint":"^0.23.1","markdownlint-cli":"^0.28.1","memfs":"^3.0.1","mocha":"^8.3.2","mocha-junit-reporter":"^2.0.0","node-polyfill-webpack-plugin":"^1.0.3","npm-license":"^0.3.3","nyc":"^15.0.1","proxyquire":"^2.0.1","puppeteer":"^9.1.1","recast":"^0.20.4","regenerator-runtime":"^0.13.2","shelljs":"^0.8.2","sinon":"^11.0.0","temp":"^0.9.0","webpack":"^5.23.0","webpack-cli":"^4.5.0","yorkie":"^2.0.0"},"keywords":["ast","lint","javascript","ecmascript","espree"],"license":"MIT","engines":{"node":"^12.22.0 || ^14.17.0 || >=16.0.0"}}');
+module.exports = JSON.parse('{"name":"eslint","version":"8.3.0","author":"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>","description":"An AST-based pattern checker for JavaScript.","bin":{"eslint":"./bin/eslint.js"},"main":"./lib/api.js","exports":{"./package.json":"./package.json",".":"./lib/api.js","./use-at-your-own-risk":"./lib/unsupported-api.js"},"scripts":{"test":"node Makefile.js test","test:cli":"mocha","lint":"node Makefile.js lint","fix":"node Makefile.js lint -- fix","fuzz":"node Makefile.js fuzz","generate-release":"node Makefile.js generateRelease","generate-alpharelease":"node Makefile.js generatePrerelease -- alpha","generate-betarelease":"node Makefile.js generatePrerelease -- beta","generate-rcrelease":"node Makefile.js generatePrerelease -- rc","publish-release":"node Makefile.js publishRelease","gensite":"node Makefile.js gensite","webpack":"node Makefile.js webpack","perf":"node Makefile.js perf"},"gitHooks":{"pre-commit":"lint-staged"},"lint-staged":{"*.js":"eslint --fix","*.md":"markdownlint"},"files":["LICENSE","README.md","bin","conf","lib","messages"],"repository":"eslint/eslint","funding":"https://opencollective.com/eslint","homepage":"https://eslint.org","bugs":"https://github.com/eslint/eslint/issues/","dependencies":{"@eslint/eslintrc":"^1.0.4","@humanwhocodes/config-array":"^0.6.0","ajv":"^6.10.0","chalk":"^4.0.0","cross-spawn":"^7.0.2","debug":"^4.3.2","doctrine":"^3.0.0","enquirer":"^2.3.5","escape-string-regexp":"^4.0.0","eslint-scope":"^7.1.0","eslint-utils":"^3.0.0","eslint-visitor-keys":"^3.1.0","espree":"^9.1.0","esquery":"^1.4.0","esutils":"^2.0.2","fast-deep-equal":"^3.1.3","file-entry-cache":"^6.0.1","functional-red-black-tree":"^1.0.1","glob-parent":"^6.0.1","globals":"^13.6.0","ignore":"^4.0.6","import-fresh":"^3.0.0","imurmurhash":"^0.1.4","is-glob":"^4.0.0","js-yaml":"^4.1.0","json-stable-stringify-without-jsonify":"^1.0.1","levn":"^0.4.1","lodash.merge":"^4.6.2","minimatch":"^3.0.4","natural-compare":"^1.4.0","optionator":"^0.9.1","progress":"^2.0.0","regexpp":"^3.2.0","semver":"^7.2.1","strip-ansi":"^6.0.1","strip-json-comments":"^3.1.0","text-table":"^0.2.0","v8-compile-cache":"^2.0.3"},"devDependencies":{"@babel/core":"^7.4.3","@babel/preset-env":"^7.4.3","babel-loader":"^8.0.5","chai":"^4.0.1","cheerio":"^0.22.0","common-tags":"^1.8.0","core-js":"^3.1.3","dateformat":"^4.5.1","ejs":"^3.0.2","eslint":"file:.","eslint-config-eslint":"file:packages/eslint-config-eslint","eslint-plugin-eslint-comments":"^3.2.0","eslint-plugin-eslint-plugin":"^4.0.1","eslint-plugin-internal-rules":"file:tools/internal-rules","eslint-plugin-jsdoc":"^37.0.0","eslint-plugin-node":"^11.1.0","eslint-release":"^3.2.0","eslump":"^3.0.0","esprima":"^4.0.1","fs-teardown":"^0.1.3","glob":"^7.1.6","jsdoc":"^3.5.5","karma":"^6.1.1","karma-chrome-launcher":"^3.1.0","karma-mocha":"^2.0.1","karma-mocha-reporter":"^2.2.5","karma-webpack":"^5.0.0","lint-staged":"^11.0.0","load-perf":"^0.2.0","markdownlint":"^0.23.1","markdownlint-cli":"^0.28.1","memfs":"^3.0.1","mocha":"^8.3.2","mocha-junit-reporter":"^2.0.0","node-polyfill-webpack-plugin":"^1.0.3","npm-license":"^0.3.3","nyc":"^15.0.1","proxyquire":"^2.0.1","puppeteer":"^9.1.1","recast":"^0.20.4","regenerator-runtime":"^0.13.2","shelljs":"^0.8.2","sinon":"^11.0.0","temp":"^0.9.0","webpack":"^5.23.0","webpack-cli":"^4.5.0","yorkie":"^2.0.0"},"keywords":["ast","lint","javascript","ecmascript","espree"],"license":"MIT","engines":{"node":"^12.22.0 || ^14.17.0 || >=16.0.0"}}');
 
 /***/ }),
 /* 479 */
@@ -54314,6 +54377,10 @@ function processCodePathToEnter(analyzer, node) {
       startCodePath("function");
       break;
 
+    case "StaticBlock":
+      startCodePath("class-static-block");
+      break;
+
     case "ChainExpression":
       state.pushChainContext();
       break;
@@ -54561,6 +54628,7 @@ function postprocess(analyzer, node) {
     case "FunctionDeclaration":
     case "FunctionExpression":
     case "ArrowFunctionExpression":
+    case "StaticBlock":
       {
         endCodePath();
         break;
@@ -54737,7 +54805,7 @@ class CodePath {
     this.id = id;
     /**
      * The reason that this code path was started. May be "program",
-     * "function", or "class-field-initializer".
+     * "function", "class-field-initializer", or "class-static-block".
      * @type {string}
      */
 
@@ -63712,6 +63780,8 @@ function isPropertyDescriptor(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -63984,7 +64054,7 @@ const thisTagPattern = /^[\s*]*@this/mu;
 const COMMENTS_IGNORE_PATTERN = /^\s*(?:eslint|jshint\s+|jslint\s+|istanbul\s+|globals?\s+|exported\s+|jscs)/u;
 const LINEBREAKS = new Set(["\r\n", "\r", "\n", "\u2028", "\u2029"]); // A set of node types that can contain a list of statements
 
-const STATEMENT_LIST_PARENTS = new Set(["Program", "BlockStatement", "SwitchCase"]);
+const STATEMENT_LIST_PARENTS = new Set(["Program", "BlockStatement", "StaticBlock", "SwitchCase"]);
 const DECIMAL_INTEGER_PATTERN = /^(?:0|0[0-7]*[89]\d*|[1-9](?:_?\d)*)$/u; // Tests the presence of at least one LegacyOctalEscapeSequence or NonOctalDecimalEscapeSequence in a raw string
 
 const OCTAL_OR_NON_OCTAL_DECIMAL_ESCAPE_PATTERN = /^(?:[^\\]|\\.)*\\(?:[1-9]|0[0-9])/su;
@@ -64882,6 +64952,8 @@ module.exports = {
    *
    * First, this checks the node:
    *
+   * - The given node is not in `PropertyDefinition#value` position.
+   * - The given node is not `StaticBlock`.
    * - The function name does not start with uppercase. It's a convention to capitalize the names
    *   of constructor functions. This check is not performed if `capIsConstructor` is set to `false`.
    * - The function does not have a JSDoc comment that has a @this tag.
@@ -64896,7 +64968,8 @@ module.exports = {
    * - The location is not on an ES2015 class.
    * - Its `bind`/`call`/`apply` method is not called directly.
    * - The function is not a callback of array methods (such as `.forEach()`) if `thisArg` is given.
-   * @param {ASTNode} node A function node to check.
+   * @param {ASTNode} node A function node to check. It also can be an implicit function, like `StaticBlock`
+   * or any expression that is `PropertyDefinition#value` node.
    * @param {SourceCode} sourceCode A SourceCode instance to get comments.
    * @param {boolean} [capIsConstructor = true] `false` disables the assumption that functions which name starts
    * with an uppercase or are assigned to a variable which name starts with an uppercase are constructors.
@@ -64912,7 +64985,12 @@ module.exports = {
      * Therefore, A expression node at `PropertyDefinition#value` is a function.
      * In this case, `this` is always not default binding.
      */
-    if (node && node.parent && node.parent.type === "PropertyDefinition" && node.value === node) {
+    if (node.parent.type === "PropertyDefinition" && node.parent.value === node) {
+      return false;
+    } // Class static blocks are implicit functions. In this case, `this` is always not default binding.
+
+
+    if (node.type === "StaticBlock") {
       return false;
     }
 
@@ -65742,6 +65820,10 @@ module.exports = {
       return true;
     }
 
+    if (rightToken.type === "PrivateIdentifier") {
+      return true;
+    }
+
     return false;
   },
 
@@ -66340,6 +66422,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -66600,6 +66684,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -66970,6 +67056,8 @@ function getArrayMethodName(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -67135,6 +67223,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -67433,6 +67523,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -67729,6 +67821,8 @@ function hasBlockBody(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -67885,6 +67979,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -68043,6 +68139,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -68147,6 +68245,8 @@ module.exports = {
       "SwitchStatement:exit": exitScope,
       CatchClause: enterScope,
       "CatchClause:exit": exitScope,
+      StaticBlock: enterScope,
+      "StaticBlock:exit": exitScope,
       // Finds and reports references which are outside of valid scope.
       VariableDeclaration: checkForVariables
     };
@@ -68168,6 +68268,8 @@ module.exports = {
 const util = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -68194,7 +68296,7 @@ module.exports = {
           sourceCode = context.getSourceCode();
     /**
      * Gets the open brace token from a given node.
-     * @param {ASTNode} node A BlockStatement/SwitchStatement node to get.
+     * @param {ASTNode} node A BlockStatement/StaticBlock/SwitchStatement node to get.
      * @returns {Token} The token of the open brace.
      */
 
@@ -68206,6 +68308,13 @@ module.exports = {
 
         return sourceCode.getLastToken(node, 1);
       }
+
+      if (node.type === "StaticBlock") {
+        return sourceCode.getFirstToken(node, {
+          skip: 1
+        }); // skip the `static` token
+      } // "BlockStatement"
+
 
       return sourceCode.getFirstToken(node);
     }
@@ -68226,8 +68335,8 @@ module.exports = {
       return !util.isTokenOnSameLine(left, right) || sourceCode.isSpaceBetweenTokens(left, right) === always;
     }
     /**
-     * Reports invalid spacing style inside braces.
-     * @param {ASTNode} node A BlockStatement/SwitchStatement node to get.
+     * Checks and reports invalid spacing style inside braces.
+     * @param {ASTNode} node A BlockStatement/StaticBlock/SwitchStatement node to check.
      * @returns {void}
      */
 
@@ -68316,6 +68425,7 @@ module.exports = {
 
     return {
       BlockStatement: checkSpacingInsideBraces,
+      StaticBlock: checkSpacingInsideBraces,
       SwitchStatement: checkSpacingInsideBraces
     };
   }
@@ -68336,6 +68446,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -68476,6 +68588,13 @@ module.exports = {
         }
       },
 
+      StaticBlock(node) {
+        validateCurlyPair(sourceCode.getFirstToken(node, {
+          skip: 1
+        }), // skip the `static` token
+        sourceCode.getLastToken(node));
+      },
+
       ClassBody(node) {
         validateCurlyPair(sourceCode.getFirstToken(node), sourceCode.getLastToken(node));
       },
@@ -68521,6 +68640,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -68700,6 +68821,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -69145,6 +69268,8 @@ function createRegExpForIgnorePatterns(normalizedOptions) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -69384,6 +69509,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -69534,8 +69661,17 @@ module.exports = {
       /*
        * Class field value are implicit functions.
        */
-      "PropertyDefinition:exit": popContext,
       "PropertyDefinition > *.key:exit": pushContext,
+      "PropertyDefinition:exit": popContext,
+
+      /*
+       * Class static blocks are implicit functions. They aren't required to use `this`,
+       * but we have to push context so that it captures any use of `this` in the static block
+       * separately from enclosing contexts, because static blocks have their own `this` and it
+       * shouldn't count as used `this` in enclosing contexts.
+       */
+      StaticBlock: pushContext,
+      "StaticBlock:exit": popContext,
       ThisExpression: markThisUsed,
       Super: markThisUsed,
       ...(enforceForClassFields && {
@@ -69615,6 +69751,8 @@ function normalizeOptions(optionValue, ecmaVersion) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -69912,6 +70050,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -70096,6 +70236,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -70396,6 +70538,8 @@ const {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -70487,16 +70631,26 @@ module.exports = {
         const complexity = complexities.pop();
         /*
          * This rule only evaluates complexity of functions, so "program" is excluded.
-         * Class field initializers are implicit functions. Therefore, they shouldn't contribute
-         * to the enclosing function's complexity, but their own complexity should be evaluated.
+         * Class field initializers and class static blocks are implicit functions. Therefore,
+         * they shouldn't contribute to the enclosing function's complexity, but their
+         * own complexity should be evaluated.
          */
 
-        if (codePath.origin !== "function" && codePath.origin !== "class-field-initializer") {
+        if (codePath.origin !== "function" && codePath.origin !== "class-field-initializer" && codePath.origin !== "class-static-block") {
           return;
         }
 
         if (complexity > THRESHOLD) {
-          const name = codePath.origin === "class-field-initializer" ? "class field initializer" : astUtils.getFunctionNameWithKind(node);
+          let name;
+
+          if (codePath.origin === "class-field-initializer") {
+            name = "class field initializer";
+          } else if (codePath.origin === "class-static-block") {
+            name = "class static block";
+          } else {
+            name = astUtils.getFunctionNameWithKind(node);
+          }
+
           context.report({
             node,
             messageId: "complex",
@@ -70556,6 +70710,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -70805,6 +70961,8 @@ function isClassConstructor(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -70951,6 +71109,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -71207,6 +71367,8 @@ function isPossibleConstructor(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -71512,6 +71674,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -71984,6 +72148,8 @@ const DEFAULT_COMMENT_PATTERN = /^no default$/iu; //----------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -72074,6 +72240,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -72118,6 +72286,7 @@ module.exports = {
  * @author Chiawen Chen
  */
 
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -72182,6 +72351,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -72296,6 +72467,8 @@ const keywords = __webpack_require__(617); //-----------------------------------
 const validIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/u; // `null` literal must be handled separately.
 
 const literalTypesToCheck = new Set(["string", "boolean"]);
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -72450,6 +72623,8 @@ module.exports = ["abstract", "boolean", "break", "byte", "case", "catch", "char
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -72568,6 +72743,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -72729,6 +72906,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -72865,6 +73044,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -73149,6 +73330,8 @@ const optionsObject = {
   },
   additionalProperties: false
 };
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -73353,6 +73536,8 @@ function isFunctionName(variable) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -73513,6 +73698,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -73617,6 +73804,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -73735,6 +73924,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -74025,6 +74216,8 @@ const OVERRIDE_SCHEMA = {
     additionalProperties: false
   }]
 };
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -74241,6 +74434,8 @@ function isReachable(segment) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -74416,6 +74611,8 @@ function isShadowed(scope, node) {
   const reference = findReference(scope, node);
   return reference && reference.resolved && reference.resolved.defs.length > 0;
 }
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -74546,6 +74743,8 @@ function isAccessorKind(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -74688,6 +74887,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -74764,6 +74965,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -74922,6 +75125,8 @@ function isShorthandPropertyDefinition(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -75099,6 +75304,8 @@ function isPropertyNameInDestructuring(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -75228,6 +75435,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -75388,6 +75597,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -75635,6 +75846,8 @@ const {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -75730,7 +75943,7 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 //------------------------------------------------------------------------------
 
 
-const KNOWN_NODES = new Set(["AssignmentExpression", "AssignmentPattern", "ArrayExpression", "ArrayPattern", "ArrowFunctionExpression", "AwaitExpression", "BlockStatement", "BinaryExpression", "BreakStatement", "CallExpression", "CatchClause", "ChainExpression", "ClassBody", "ClassDeclaration", "ClassExpression", "ConditionalExpression", "ContinueStatement", "DoWhileStatement", "DebuggerStatement", "EmptyStatement", "ExperimentalRestProperty", "ExperimentalSpreadProperty", "ExpressionStatement", "ForStatement", "ForInStatement", "ForOfStatement", "FunctionDeclaration", "FunctionExpression", "Identifier", "IfStatement", "Literal", "LabeledStatement", "LogicalExpression", "MemberExpression", "MetaProperty", "MethodDefinition", "NewExpression", "ObjectExpression", "ObjectPattern", "PrivateIdentifier", "Program", "Property", "PropertyDefinition", "RestElement", "ReturnStatement", "SequenceExpression", "SpreadElement", "Super", "SwitchCase", "SwitchStatement", "TaggedTemplateExpression", "TemplateElement", "TemplateLiteral", "ThisExpression", "ThrowStatement", "TryStatement", "UnaryExpression", "UpdateExpression", "VariableDeclaration", "VariableDeclarator", "WhileStatement", "WithStatement", "YieldExpression", "JSXFragment", "JSXOpeningFragment", "JSXClosingFragment", "JSXIdentifier", "JSXNamespacedName", "JSXMemberExpression", "JSXEmptyExpression", "JSXExpressionContainer", "JSXElement", "JSXClosingElement", "JSXOpeningElement", "JSXAttribute", "JSXSpreadAttribute", "JSXText", "ExportDefaultDeclaration", "ExportNamedDeclaration", "ExportAllDeclaration", "ExportSpecifier", "ImportDeclaration", "ImportSpecifier", "ImportDefaultSpecifier", "ImportNamespaceSpecifier", "ImportExpression"]);
+const KNOWN_NODES = new Set(["AssignmentExpression", "AssignmentPattern", "ArrayExpression", "ArrayPattern", "ArrowFunctionExpression", "AwaitExpression", "BlockStatement", "BinaryExpression", "BreakStatement", "CallExpression", "CatchClause", "ChainExpression", "ClassBody", "ClassDeclaration", "ClassExpression", "ConditionalExpression", "ContinueStatement", "DoWhileStatement", "DebuggerStatement", "EmptyStatement", "ExperimentalRestProperty", "ExperimentalSpreadProperty", "ExpressionStatement", "ForStatement", "ForInStatement", "ForOfStatement", "FunctionDeclaration", "FunctionExpression", "Identifier", "IfStatement", "Literal", "LabeledStatement", "LogicalExpression", "MemberExpression", "MetaProperty", "MethodDefinition", "NewExpression", "ObjectExpression", "ObjectPattern", "PrivateIdentifier", "Program", "Property", "PropertyDefinition", "RestElement", "ReturnStatement", "SequenceExpression", "SpreadElement", "StaticBlock", "Super", "SwitchCase", "SwitchStatement", "TaggedTemplateExpression", "TemplateElement", "TemplateLiteral", "ThisExpression", "ThrowStatement", "TryStatement", "UnaryExpression", "UpdateExpression", "VariableDeclaration", "VariableDeclarator", "WhileStatement", "WithStatement", "YieldExpression", "JSXFragment", "JSXOpeningFragment", "JSXClosingFragment", "JSXIdentifier", "JSXNamespacedName", "JSXMemberExpression", "JSXEmptyExpression", "JSXExpressionContainer", "JSXElement", "JSXClosingElement", "JSXOpeningElement", "JSXAttribute", "JSXSpreadAttribute", "JSXText", "ExportDefaultDeclaration", "ExportNamedDeclaration", "ExportAllDeclaration", "ExportSpecifier", "ImportDeclaration", "ImportSpecifier", "ImportDefaultSpecifier", "ImportNamespaceSpecifier", "ImportExpression"]);
 /*
  * General rule strategy:
  * 1. An OffsetStorage instance stores a map of desired offsets, where each token has a specified offset from another
@@ -76122,6 +76335,8 @@ const ELEMENT_LIST_SCHEMA = {
     enum: ["first", "off"]
   }]
 };
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -76195,6 +76410,16 @@ module.exports = {
           },
           additionalProperties: false
         },
+        StaticBlock: {
+          type: "object",
+          properties: {
+            body: {
+              type: "integer",
+              minimum: 0
+            }
+          },
+          additionalProperties: false
+        },
         CallExpression: {
           type: "object",
           properties: {
@@ -76254,6 +76479,9 @@ module.exports = {
       },
       FunctionExpression: {
         parameters: DEFAULT_PARAMETER_INDENT,
+        body: DEFAULT_FUNCTION_BODY_INDENT
+      },
+      StaticBlock: {
         body: DEFAULT_FUNCTION_BODY_INDENT
       },
       CallExpression: {
@@ -76969,6 +77197,15 @@ module.exports = {
         } else if (astUtils.isSemicolonToken(maybeSemicolonToken)) {
           offsets.setDesiredOffset(maybeSemicolonToken, keyLastToken, 1);
         }
+      },
+
+      StaticBlock(node) {
+        const openingCurly = sourceCode.getFirstToken(node, {
+          skip: 1
+        }); // skip the `static` token
+
+        const closingCurly = sourceCode.getLastToken(node);
+        addElementListIndent(node.body, openingCurly, closingCurly, options.StaticBlock.body);
       },
 
       SwitchStatement(node) {
@@ -78455,6 +78692,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 
 /* istanbul ignore next: this rule has known coverage issues, but it's deprecated and shouldn't be updated in the future anyway. */
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -79509,6 +79748,8 @@ function isInitialized(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -79632,6 +79873,8 @@ const QUOTE_SETTINGS = {
 }; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -79825,6 +80068,8 @@ function initOptions(toOptions, fromOptions) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -80424,6 +80669,8 @@ function isCloseParenOfTemplate(token) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -80943,6 +81190,7 @@ module.exports = {
       ImportNamespaceSpecifier: checkSpacingForImportNamespaceSpecifier,
       MethodDefinition: checkSpacingForProperty,
       PropertyDefinition: checkSpacingForProperty,
+      StaticBlock: checkSpacingAroundFirstToken,
       Property: checkSpacingForProperty,
 
       // To avoid conflicts with `space-infix-ops`, e.g. `a > this.b`
@@ -80970,6 +81218,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -81090,6 +81340,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -81223,6 +81475,8 @@ function getCommentLineNums(comments) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -81354,12 +81608,41 @@ module.exports = {
     /**
      * Returns the parent node that contains the given token.
      * @param {token} token The token to check.
-     * @returns {ASTNode} The parent node that contains the given token.
+     * @returns {ASTNode|null} The parent node that contains the given token.
      */
 
 
     function getParentNodeOfToken(token) {
-      return sourceCode.getNodeByRangeIndex(token.range[0]);
+      const node = sourceCode.getNodeByRangeIndex(token.range[0]);
+      /*
+       * For the purpose of this rule, the comment token is in a `StaticBlock` node only
+       * if it's inside the braces of that `StaticBlock` node.
+       *
+       * Example where this function returns `null`:
+       *
+       *   static
+       *   // comment
+       *   {
+       *   }
+       *
+       * Example where this function returns `StaticBlock` node:
+       *
+       *   static
+       *   {
+       *   // comment
+       *   }
+       *
+       */
+
+      if (node && node.type === "StaticBlock") {
+        const openingBrace = sourceCode.getFirstToken(node, {
+          skip: 1
+        }); // skip the `static` token
+
+        return token.range[0] >= openingBrace.range[0] ? node : null;
+      }
+
+      return node;
     }
     /**
      * Returns whether or not comments are at the parent start or not.
@@ -81371,7 +81654,16 @@ module.exports = {
 
     function isCommentAtParentStart(token, nodeType) {
       const parent = getParentNodeOfToken(token);
-      return parent && isParentNodeType(parent, nodeType) && token.loc.start.line - parent.loc.start.line === 1;
+
+      if (parent && isParentNodeType(parent, nodeType)) {
+        const parentStartNodeOrToken = parent.type === "StaticBlock" ? sourceCode.getFirstToken(parent, {
+          skip: 1
+        }) // opening brace of the static block
+        : parent;
+        return token.loc.start.line - parentStartNodeOrToken.loc.start.line === 1;
+      }
+
+      return false;
     }
     /**
      * Returns whether or not comments are at the parent end or not.
@@ -81383,7 +81675,7 @@ module.exports = {
 
     function isCommentAtParentEnd(token, nodeType) {
       const parent = getParentNodeOfToken(token);
-      return parent && isParentNodeType(parent, nodeType) && parent.loc.end.line - token.loc.end.line === 1;
+      return !!parent && isParentNodeType(parent, nodeType) && parent.loc.end.line - token.loc.end.line === 1;
     }
     /**
      * Returns whether or not comments are at the block start or not.
@@ -81393,7 +81685,7 @@ module.exports = {
 
 
     function isCommentAtBlockStart(token) {
-      return isCommentAtParentStart(token, "ClassBody") || isCommentAtParentStart(token, "BlockStatement") || isCommentAtParentStart(token, "SwitchCase");
+      return isCommentAtParentStart(token, "ClassBody") || isCommentAtParentStart(token, "BlockStatement") || isCommentAtParentStart(token, "StaticBlock") || isCommentAtParentStart(token, "SwitchCase");
     }
     /**
      * Returns whether or not comments are at the block end or not.
@@ -81403,7 +81695,7 @@ module.exports = {
 
 
     function isCommentAtBlockEnd(token) {
-      return isCommentAtParentEnd(token, "ClassBody") || isCommentAtParentEnd(token, "BlockStatement") || isCommentAtParentEnd(token, "SwitchCase") || isCommentAtParentEnd(token, "SwitchStatement");
+      return isCommentAtParentEnd(token, "ClassBody") || isCommentAtParentEnd(token, "BlockStatement") || isCommentAtParentEnd(token, "StaticBlock") || isCommentAtParentEnd(token, "SwitchCase") || isCommentAtParentEnd(token, "SwitchStatement");
     }
     /**
      * Returns whether or not comments are at the class start or not.
@@ -81592,6 +81884,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -81792,6 +82086,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -81982,6 +82278,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -82062,6 +82360,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -82171,6 +82471,7 @@ module.exports = {
       FunctionDeclaration: startFunction,
       FunctionExpression: startFunction,
       ArrowFunctionExpression: startFunction,
+      StaticBlock: startFunction,
 
       IfStatement(node) {
         if (node.parent.type !== "IfStatement") {
@@ -82198,6 +82499,7 @@ module.exports = {
       "FunctionDeclaration:exit": endFunction,
       "FunctionExpression:exit": endFunction,
       "ArrowFunctionExpression:exit": endFunction,
+      "StaticBlock:exit": endFunction,
       "Program:exit": endFunction
     };
   }
@@ -82264,6 +82566,8 @@ const OPTIONS_OR_INTEGER_SCHEMA = {
 }; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -82634,6 +82938,8 @@ function range(start, end) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -82850,6 +83156,8 @@ function getCommentLineNumbers(comments) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -83012,6 +83320,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -83132,6 +83442,8 @@ const {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -83229,6 +83541,8 @@ const {
 } = __webpack_require__(606); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -83330,6 +83644,14 @@ module.exports = {
 
     function endFunction(node) {
       const count = functionStack.pop();
+      /*
+       * This rule does not apply to class static blocks, but we have to track them so
+       * that stataments in them do not count as statements in the enclosing function.
+       */
+
+      if (node.type === "StaticBlock") {
+        return;
+      }
 
       if (ignoreTopLevelFunctions && functionStack.length === 0) {
         topLevelFunctions.push({
@@ -83359,10 +83681,12 @@ module.exports = {
       FunctionDeclaration: startFunction,
       FunctionExpression: startFunction,
       ArrowFunctionExpression: startFunction,
+      StaticBlock: startFunction,
       BlockStatement: countStatements,
       "FunctionDeclaration:exit": endFunction,
       "FunctionExpression:exit": endFunction,
       "ArrowFunctionExpression:exit": endFunction,
+      "StaticBlock:exit": endFunction,
 
       "Program:exit"() {
         if (topLevelFunctions.length === 1) {
@@ -83397,6 +83721,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -83585,6 +83911,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -84050,6 +84378,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -84254,6 +84584,8 @@ function calculateCapIsNewExceptions(config) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -84463,6 +84795,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -84546,6 +84880,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -84794,6 +85130,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -85017,6 +85355,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -85210,6 +85550,8 @@ function isGlobalThisReferenceOrGlobalWindow(scope, node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -85276,6 +85618,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -85326,6 +85670,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -85406,6 +85752,8 @@ function isLooped(node, parent) {
       return false;
   }
 }
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -85476,6 +85824,8 @@ module.exports = {
 const BITWISE_OPERATORS = ["^", "|", "&", "<<", ">>", ">>>", "^=", "|=", "&=", "<<=", ">>=", ">>>=", "~"]; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -85592,6 +85942,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     deprecated: true,
@@ -85641,6 +85993,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -85689,6 +86043,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -85760,6 +86116,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -85839,6 +86197,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -85902,6 +86262,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -85980,6 +86342,8 @@ const NODE_DESCRIPTIONS = {
 }; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -86123,6 +86487,8 @@ function isConditional(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -86198,6 +86564,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -86320,6 +86688,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -86380,6 +86750,8 @@ module.exports = {
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -86664,6 +87036,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -86722,6 +87096,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -86796,6 +87172,8 @@ const collector = new class {
 }(); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -89328,6 +89706,8 @@ exports.visitRegExpAST = visitRegExpAST;
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -89369,6 +89749,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -89412,6 +89794,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -89464,6 +89848,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -89545,6 +89931,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -89700,6 +90088,8 @@ const splitByAnd = splitByLogicalOperator.bind(null, "&&"); //------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -89851,6 +90241,8 @@ class ObjectInfo {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -89927,6 +90319,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -90211,6 +90605,8 @@ function handleImportsExports(context, modules, declarationType, includeExports)
     }
   };
 }
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -90273,6 +90669,8 @@ const astUtils = __webpack_require__(582);
 const FixTracker = __webpack_require__(696); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -90830,6 +91228,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -90931,6 +91331,8 @@ module.exports = {
 const regex = /^([^\\[]|\\.|\[([^\\\]]|\\.)+\])*$/u; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -91045,6 +91447,8 @@ function getKind(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -91130,6 +91534,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -91188,6 +91594,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -91254,6 +91662,8 @@ function isMember(node, name) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -91452,6 +91862,8 @@ module.exports = {
       "ArrowFunctionExpression:exit": exitVarScope,
       "PropertyDefinition > *.value": enterVarScope,
       "PropertyDefinition > *.value:exit": exitVarScope,
+      StaticBlock: enterVarScope,
+      "StaticBlock:exit": exitVarScope,
 
       ThisExpression(node) {
         if (!isMember(node.parent, "eval")) {
@@ -91493,6 +91905,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -91552,6 +91966,8 @@ const astUtils = __webpack_require__(582);
 const globals = __webpack_require__(527); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -91707,6 +92123,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 const SIDE_EFFECT_FREE_NODE_TYPES = new Set(["Literal", "Identifier", "ThisExpression", "FunctionExpression"]); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -91897,6 +92315,8 @@ const eslintUtils = __webpack_require__(535);
 const precedence = astUtils.getPrecedence; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -92184,6 +92604,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -92340,6 +92762,8 @@ const {
 } = __webpack_require__(535);
 
 const astUtils = __webpack_require__(582);
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -93494,6 +93918,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -93579,7 +94005,7 @@ module.exports = {
        * @param {Node} node A MethodDefinition node of the start point.
        * @returns {void}
        */
-      "MethodDefinition, PropertyDefinition"(node) {
+      "MethodDefinition, PropertyDefinition, StaticBlock"(node) {
         checkForPartOfClassBody(sourceCode.getTokenAfter(node));
       }
 
@@ -93649,6 +94075,8 @@ function hasBlankLinesBetween(node, token) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -93752,6 +94180,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -93817,6 +94247,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -93893,6 +94325,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -94128,6 +94562,8 @@ function getNonEmptyOperand(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -94323,6 +94759,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -94454,6 +94892,8 @@ const {
 } = __webpack_require__(535); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -94695,6 +95135,8 @@ function getWriteNode(id) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -94774,6 +95216,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -94882,8 +95326,38 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 //------------------------------------------------------------------------------
 
 
-const validParent = new Set(["Program", "ExportNamedDeclaration", "ExportDefaultDeclaration"]);
+const validParent = new Set(["Program", "StaticBlock", "ExportNamedDeclaration", "ExportDefaultDeclaration"]);
 const validBlockStatementParent = new Set(["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"]);
+/**
+ * Finds the nearest enclosing context where this rule allows declarations and returns its description.
+ * @param {ASTNode} node Node to search from.
+ * @returns {string} Description. One of "program", "function body", "class static block body".
+ */
+
+function getAllowedBodyDescription(node) {
+  let {
+    parent
+  } = node;
+
+  while (parent) {
+    if (parent.type === "StaticBlock") {
+      return "class static block body";
+    }
+
+    if (astUtils.isFunction(parent)) {
+      return "function body";
+    }
+
+    ({
+      parent
+    } = parent);
+  }
+
+  return "program";
+}
+/** @type {import('../shared/types').Rule} */
+
+
 module.exports = {
   meta: {
     type: "problem",
@@ -94917,13 +95391,12 @@ module.exports = {
         return;
       }
 
-      const upperFunction = astUtils.getUpperFunction(parent);
       context.report({
         node,
         messageId: "moveDeclToRoot",
         data: {
           type: node.type === "FunctionDeclaration" ? "function" : "variable",
-          body: upperFunction === null ? "program" : "function body"
+          body: getAllowedBodyDescription(node)
         }
       });
     }
@@ -94962,6 +95435,8 @@ const validFlags = /[dgimsuy]/gu;
 const undefined1 = void 0; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -95114,6 +95589,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -95219,6 +95696,9 @@ module.exports = {
       // Field initializers are implicit functions.
       "PropertyDefinition > *.value": enterFunction,
       "PropertyDefinition > *.value:exit": exitFunction,
+      // Class static blocks are implicit functions.
+      StaticBlock: enterFunction,
+      "StaticBlock:exit": exitFunction,
 
       // Reports if `this` of the current context is invalid.
       ThisExpression(node) {
@@ -95262,6 +95742,8 @@ const IRREGULAR_LINE_TERMINATORS = /[\u2028\u2029]/mgu;
 const LINE_BREAK = astUtils.createGlobalLinebreakMatcher(); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -95509,6 +95991,8 @@ const {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -95556,6 +96040,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -95629,6 +96115,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -95783,6 +96271,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -95809,7 +96299,7 @@ module.exports = {
      */
 
     function report(node) {
-      const messageId = node.parent.type === "BlockStatement" ? "redundantNestedBlock" : "redundantBlock";
+      const messageId = node.parent.type === "BlockStatement" || node.parent.type === "StaticBlock" ? "redundantNestedBlock" : "redundantBlock";
       context.report({
         node,
         messageId
@@ -95823,7 +96313,7 @@ module.exports = {
 
 
     function isLoneBlock(node) {
-      return node.parent.type === "BlockStatement" || node.parent.type === "Program" || // Don't report blocks in switch cases if the block is the only statement of the case.
+      return node.parent.type === "BlockStatement" || node.parent.type === "StaticBlock" || node.parent.type === "Program" || // Don't report blocks in switch cases if the block is the only statement of the case.
       node.parent.type === "SwitchCase" && !(node.parent.consequent[0] === node && node.parent.consequent.length === 1);
     }
     /**
@@ -95867,7 +96357,7 @@ module.exports = {
           if (loneBlocks.length > 0 && loneBlocks[loneBlocks.length - 1] === node) {
             loneBlocks.pop();
             report(node);
-          } else if (node.parent.type === "BlockStatement" && node.parent.body.length === 1) {
+          } else if ((node.parent.type === "BlockStatement" || node.parent.type === "StaticBlock") && node.parent.body.length === 1) {
             report(node);
           }
         }
@@ -95906,6 +96396,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -96108,6 +96600,8 @@ function isSafe(loopNode, reference) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -96174,6 +96668,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -96400,6 +96896,8 @@ function normalizeIgnoreValue(x) {
 
   return x;
 }
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -96682,6 +97180,8 @@ const kinds = Object.keys(hasCharacterSequence); //-----------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -96951,6 +97451,8 @@ function getChildNode(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -97093,6 +97595,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -97295,6 +97799,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -97405,6 +97911,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -97468,6 +97976,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -97602,6 +98112,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -97659,6 +98171,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -97812,6 +98326,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -97903,6 +98419,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -98004,6 +98522,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -98049,6 +98569,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -98092,6 +98614,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -98142,6 +98666,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 const callMethods = new Set(["apply", "bind", "call"]); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -98215,6 +98741,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -98266,6 +98794,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     deprecated: true,
@@ -98310,6 +98840,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -98363,6 +98895,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -98424,6 +98958,8 @@ function getUnicodeEscape(character) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -98573,6 +99109,8 @@ function getReportNodeName(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -98639,6 +99177,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -98681,6 +99221,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -98736,6 +99278,8 @@ module.exports = {
 //------------------------------------------------------------------------------
 
 const stopNodePattern = /(?:Statement|Declaration|Function(?:Expression)?|Program)$/u;
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -98962,6 +99506,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     deprecated: true,
@@ -99049,6 +99595,8 @@ function isForLoopAfterthought(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -99115,6 +99663,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     deprecated: true,
@@ -99163,6 +99713,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -99260,6 +99812,8 @@ function isPromiseExecutor(node, scope) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -99336,6 +99890,8 @@ const {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -99383,6 +99939,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -99451,6 +100009,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -99590,6 +100150,7 @@ module.exports = {
       FunctionDeclaration: checkForBlock,
       FunctionExpression: checkForBlock,
       ArrowFunctionExpression: checkForBlock,
+      StaticBlock: checkForBlock,
       BlockStatement: checkForBlock,
       ForStatement: checkForBlock,
       ForInStatement: checkForBlock,
@@ -99634,6 +100195,8 @@ function isString(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -99786,6 +100349,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -99873,6 +100438,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -100054,6 +100621,8 @@ const arrayOfStringsOrObjectPatterns = {
     uniqueItems: true
   }]
 };
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -100651,6 +101220,8 @@ const arrayOfStringsOrObjects = {
   },
   uniqueItems: true
 };
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     deprecated: true,
@@ -100829,6 +101400,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -101013,6 +101586,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -101094,6 +101669,8 @@ const SENTINEL_TYPE = /^(?:[a-zA-Z]+?Statement|ArrowFunctionExpression|FunctionE
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -101161,6 +101738,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -101273,6 +101852,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -101412,6 +101993,8 @@ function eachSelfAssignment(left, right, props, report) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -101483,6 +102066,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -101552,6 +102137,8 @@ const DEFAULT_OPTIONS = {
 }; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -101779,6 +102366,8 @@ function getOuterScope(scope) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -101884,6 +102473,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -102102,6 +102693,8 @@ function safelyShadowsUndefined(variable) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -102152,6 +102745,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -102225,6 +102820,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -102273,6 +102870,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -102334,6 +102933,8 @@ const tabRegex = /\t+/gu;
 const anyNonWhitespaceRegex = /\S/u; //------------------------------------------------------------------------------
 // Public Interface
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -102407,6 +103008,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -102450,6 +103053,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -102510,6 +103115,8 @@ function isConstructorFunction(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -102781,6 +103388,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -102836,6 +103445,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -103020,6 +103631,8 @@ function hasTypeOfOperator(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -103084,6 +103697,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -103158,6 +103773,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -103236,6 +103853,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -103516,6 +104135,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -103771,6 +104392,8 @@ function updateModifiedFlag(conditions, modifiers) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -103997,6 +104620,8 @@ const OR_PRECEDENCE = astUtils.getPrecedence({
 }); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -104238,6 +104863,8 @@ class ConsecutiveRange {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -104454,6 +105081,8 @@ function getDifference(arrA, arrB) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -104563,6 +105192,8 @@ const SENTINEL_NODE_TYPE_BREAK = /^(?:Program|(?:Function|Class)(?:Declaration|E
 const SENTINEL_NODE_TYPE_CONTINUE = /^(?:Program|(?:Function|Class)(?:Declaration|Expression)|ArrowFunctionExpression|DoWhileStatement|WhileStatement|ForOfStatement|ForInStatement|ForStatement)$/u; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -104704,6 +105335,8 @@ function isNegation(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -104802,6 +105435,8 @@ const UNSAFE_RELATIONAL_OPERATORS = new Set(["in", "instanceof"]);
 function isDestructuringPattern(node) {
   return node.type === "ObjectPattern" || node.type === "ArrayPattern";
 }
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -105031,6 +105666,8 @@ function alwaysTrue() {
 function alwaysFalse() {
   return false;
 }
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -105120,6 +105757,13 @@ module.exports = {
     function isDirective(node, ancestors) {
       const parent = ancestors[ancestors.length - 1],
             grandparent = ancestors[ancestors.length - 2];
+      /**
+       * https://tc39.es/ecma262/#directive-prologue
+       *
+       * Only `FunctionBody`, `ScriptBody` and `ModuleBody` can have directive prologue.
+       * Class static blocks do not have directive prologue.
+       */
+
       return (parent.type === "Program" || parent.type === "BlockStatement" && /Function/u.test(grandparent.type)) && directives(parent).indexOf(node) >= 0;
     }
     /**
@@ -105216,6 +105860,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -105332,6 +105978,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -105537,6 +106185,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -106198,6 +106848,7 @@ function isInRange(node, location) {
 }
 /**
  * Checks whether or not a given location is inside of the range of a class static initializer.
+ * Static initializers are static blocks and initializers of static fields.
  * @param {ASTNode} node `ClassBody` node to check static initializers.
  * @param {number} location A location to check.
  * @returns {boolean} `true` if the location is inside of a class static initializer.
@@ -106205,16 +106856,21 @@ function isInRange(node, location) {
 
 
 function isInClassStaticInitializerRange(node, location) {
-  return node.body.some(classMember => classMember.type === "PropertyDefinition" && classMember.static && classMember.value && isInRange(classMember.value, location));
+  return node.body.some(classMember => classMember.type === "StaticBlock" && isInRange(classMember, location) || classMember.type === "PropertyDefinition" && classMember.static && classMember.value && isInRange(classMember.value, location));
 }
 /**
- * Checks whether a given scope is the scope of a static class field initializer.
+ * Checks whether a given scope is the scope of a a class static initializer.
+ * Static initializers are static blocks and initializers of static fields.
  * @param {eslint-scope.Scope} scope A scope to check.
  * @returns {boolean} `true` if the scope is a class static initializer scope.
  */
 
 
 function isClassStaticInitializerScope(scope) {
+  if (scope.type === "class-static-block") {
+    return true;
+  }
+
   if (scope.type === "class-field-initializer") {
     // `scope.block` is PropertyDefinition#value node
     const propertyDefinition = scope.block.parent;
@@ -106230,7 +106886,8 @@ function isClassStaticInitializerScope(scope) {
  * - top-level
  * - functions
  * - class field initializers (implicit functions)
- * Static class field initializers are automatically run during the class definition evaluation,
+ * - class static blocks (implicit functions)
+ * Static class field initializers and class static blocks are automatically run during the class definition evaluation,
  * and therefore we'll consider them as a part of the parent execution context.
  * Example:
  *
@@ -106238,12 +106895,21 @@ function isClassStaticInitializerScope(scope) {
  *
  *   x; // returns `false`
  *   () => x; // returns `true`
+ *
  *   class C {
  *       field = x; // returns `true`
  *       static field = x; // returns `false`
  *
  *       method() {
  *           x; // returns `true`
+ *       }
+ *
+ *       static method() {
+ *           x; // returns `true`
+ *       }
+ *
+ *       static {
+ *           x; // returns `false`
  *       }
  *   }
  * @param {eslint-scope.Reference} reference A reference to check.
@@ -106275,8 +106941,9 @@ function isFromSeparateExecutionContext(reference) {
  *     var {a = a} = obj
  *     for (var a in a) {}
  *     for (var a of a) {}
- *     var C = class { [C]; }
- *     var C = class { static foo = C; }
+ *     var C = class { [C]; };
+ *     var C = class { static foo = C; };
+ *     var C = class { static { foo = C; } };
  *     class C extends C {}
  *     class C extends (class { static foo = C; }) {}
  *     class C { [C]; }
@@ -106303,7 +106970,7 @@ function isEvaluatedDuringInitialization(reference) {
     return isInRange(classDefinition, location) &&
     /*
      * Class binding is initialized before running static initializers.
-     * For example, `class C { static foo = C; }` is valid.
+     * For example, `class C { static foo = C; static { bar = C; } }` is valid.
      */
     !isInClassStaticInitializerRange(classDefinition.body, location);
   }
@@ -106336,6 +107003,8 @@ function isEvaluatedDuringInitialization(reference) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -106510,6 +107179,8 @@ function isNegativeLookaround(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -106686,6 +107357,8 @@ function isValidThisArg(expectedThis, thisArg, sourceCode) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -106742,6 +107415,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -106872,6 +107547,8 @@ function hasUselessComputedKey(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -107026,6 +107703,8 @@ function getRight(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -107185,6 +107864,8 @@ function isRedundantSuperCall(body, ctorParams) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -107339,6 +108020,8 @@ function parseRegExp(regExpText) {
   });
   return charList;
 }
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -107515,6 +108198,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -107728,6 +108413,8 @@ function isInFinally(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -108136,6 +108823,8 @@ function hasNameDisallowedForLetDeclarations(variable) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -108294,6 +108983,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -108357,6 +109048,8 @@ const astUtils = __webpack_require__(582);
 const CHAR_LIMIT = 40; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -108533,6 +109226,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -108642,6 +109337,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -108686,6 +109383,8 @@ module.exports = {
 const POSITION_SCHEMA = {
   enum: ["beside", "below", "any"]
 };
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -108939,6 +109638,8 @@ function areLineBreaksRequired(node, options, first, last) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -109115,6 +109816,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -109440,6 +110143,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -109546,6 +110251,8 @@ const OPTIONS = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -110031,6 +110738,8 @@ function isInStatementList(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -110573,6 +111282,8 @@ module.exports = {
       FunctionDeclaration: startFunction,
       FunctionExpression: startFunction,
       ArrowFunctionExpression: startFunction,
+      StaticBlock: startFunction,
+      // StaticBlock creates a new scope for `var` variables
       BlockStatement: startBlock,
       ForStatement: startBlock,
       ForInStatement: startBlock,
@@ -110587,7 +111298,8 @@ module.exports = {
       "Program:exit": endFunction,
       "FunctionDeclaration:exit": endFunction,
       "FunctionExpression:exit": endFunction,
-      "ArrowFunctionExpression:exit": endFunction
+      "ArrowFunctionExpression:exit": endFunction,
+      "StaticBlock:exit": endFunction
     };
   }
 
@@ -110605,6 +111317,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -110734,6 +111448,8 @@ function isNonCommutativeOperatorWithShorthand(operator) {
 function canBeFixed(node) {
   return node.type === "Identifier" || node.type === "MemberExpression" && (node.object.type === "Identifier" || node.object.type === "ThisExpression") && (!node.computed || node.property.type === "Literal");
 }
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -110906,6 +111622,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -111139,6 +111857,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -111223,6 +111943,13 @@ module.exports = {
         return sourceCode.getTokenBefore(node.cases[0]);
       }
 
+      if (node.type === "StaticBlock") {
+        return sourceCode.getFirstToken(node, {
+          skip: 1
+        }); // skip the `static` token
+      } // `BlockStatement` or `ClassBody`
+
+
       return sourceCode.getFirstToken(node);
     }
     /**
@@ -111297,6 +112024,7 @@ module.exports = {
     function requirePaddingFor(node) {
       switch (node.type) {
         case "BlockStatement":
+        case "StaticBlock":
           return options.blocks;
 
         case "SwitchStatement":
@@ -111423,6 +112151,8 @@ module.exports = {
 
         checkPadding(node);
       };
+
+      rule.StaticBlock = rule.BlockStatement;
     }
 
     if (Object.prototype.hasOwnProperty.call(options, "classes")) {
@@ -111839,6 +112569,8 @@ const StatementTypes = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -112037,9 +112769,11 @@ module.exports = {
       Program: enterScope,
       BlockStatement: enterScope,
       SwitchStatement: enterScope,
+      StaticBlock: enterScope,
       "Program:exit": exitScope,
       "BlockStatement:exit": exitScope,
       "SwitchStatement:exit": exitScope,
+      "StaticBlock:exit": exitScope,
       ":statement": verify,
       SwitchCase: verifyThenEnterScope,
       "SwitchCase:exit": exitScope
@@ -112196,6 +112930,8 @@ function hasDuplicateParams(paramsList) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -112443,7 +113179,7 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 
 
 const PATTERN_TYPE = /^(?:.+?Pattern|RestElement|SpreadProperty|ExperimentalRestProperty|Property)$/u;
-const DECLARATION_HOST_TYPE = /^(?:Program|BlockStatement|SwitchCase)$/u;
+const DECLARATION_HOST_TYPE = /^(?:Program|BlockStatement|StaticBlock|SwitchCase)$/u;
 const DESTRUCTURING_HOST_TYPE = /^(?:VariableDeclarator|AssignmentExpression)$/u;
 /**
  * Checks whether a given node is located at `ForStatement.init` or not.
@@ -112734,6 +113470,8 @@ function findUp(node, type, shouldStop) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -112907,6 +113645,8 @@ const PRECEDENCE_OF_ASSIGNMENT_EXPR = astUtils.getPrecedence({
 }); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -113249,6 +113989,8 @@ function parenthesizeIfShould(text, shouldParenthesize) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -113375,6 +114117,8 @@ const parser = new regexpp.RegExpParser(); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -113498,6 +114242,8 @@ function isParseInt(calleeNode) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -113830,6 +114576,8 @@ function defineFixer(node, sourceCode) {
     }
   };
 }
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -113895,6 +114643,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -114009,6 +114759,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -114164,6 +114916,8 @@ function isStaticTemplateLiteral(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -114362,6 +115116,8 @@ function isNotNormalMemberAccess(reference) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -114455,6 +115211,8 @@ function isValidThisArg(expectedThis, thisArg, context) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -114629,6 +115387,8 @@ function endsWithTemplateCurly(node) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -114797,6 +115557,8 @@ const astUtils = __webpack_require__(582);
 const keywords = __webpack_require__(617); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -115171,6 +115933,8 @@ const AVOID_ESCAPE = "avoid-escape"; //-----------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -115487,6 +116251,8 @@ function isDefaultRadix(radix) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -115792,6 +116558,8 @@ class SegmentInfo {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -115802,7 +116570,16 @@ module.exports = {
       url: "https://eslint.org/docs/rules/require-atomic-updates"
     },
     fixable: null,
-    schema: [],
+    schema: [{
+      type: "object",
+      properties: {
+        allowProperties: {
+          type: "boolean",
+          default: false
+        }
+      },
+      additionalProperties: false
+    }],
     messages: {
       nonAtomicUpdate: "Possible race condition: `{{value}}` might be reassigned based on an outdated value of `{{value}}`.",
       nonAtomicObjectUpdate: "Possible race condition: `{{value}}` might be assigned based on an outdated state of `{{object}}`."
@@ -115810,6 +116587,7 @@ module.exports = {
   },
 
   create(context) {
+    const allowProperties = !!context.options[0] && context.options[0].allowProperties;
     const sourceCode = context.getSourceCode();
     const assignmentReferences = new Map();
     const segmentInfo = new SegmentInfo();
@@ -115909,7 +116687,7 @@ module.exports = {
                     value: variable.name
                   }
                 });
-              } else {
+              } else if (!allowProperties) {
                 context.report({
                   node: node.parent,
                   messageId: "nonAtomicObjectUpdate",
@@ -115958,6 +116736,8 @@ function capitalizeFirstLetter(text) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -116053,6 +116833,7 @@ module.exports = {
  * @deprecated in ESLint v5.10.0
  */
 
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -116191,6 +116972,8 @@ const {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -116261,6 +117044,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -116343,6 +117128,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -116476,6 +117263,8 @@ const FixTracker = __webpack_require__(696);
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -116739,13 +117528,15 @@ module.exports = {
       return false;
     }
     /**
-     * Checks a node to see if it's in a one-liner block statement.
+     * Checks a node to see if it's the last item in a one-liner block.
+     * Block is any `BlockStatement` or `StaticBlock` node. Block is a one-liner if its
+     * braces (and consequently everything between them) are on the same line.
      * @param {ASTNode} node The node to check.
-     * @returns {boolean} whether the node is in a one-liner block statement.
+     * @returns {boolean} whether the node is the last item in a one-liner block.
      */
 
 
-    function isOneLinerBlock(node) {
+    function isLastInOneLinerBlock(node) {
       const parent = node.parent;
       const nextToken = sourceCode.getTokenAfter(node);
 
@@ -116753,7 +117544,19 @@ module.exports = {
         return false;
       }
 
-      return !!parent && parent.type === "BlockStatement" && parent.loc.start.line === parent.loc.end.line;
+      if (parent.type === "BlockStatement") {
+        return parent.loc.start.line === parent.loc.end.line;
+      }
+
+      if (parent.type === "StaticBlock") {
+        const openingBrace = sourceCode.getFirstToken(parent, {
+          skip: 1
+        }); // skip the `static` token
+
+        return openingBrace.loc.start.line === parent.loc.end.line;
+      }
+
+      return false;
     }
     /**
      * Checks a node to see if it's followed by a semicolon.
@@ -116772,7 +117575,7 @@ module.exports = {
           report(node);
         }
       } else {
-        const oneLinerBlock = exceptOneLine && isOneLinerBlock(node);
+        const oneLinerBlock = exceptOneLine && isLastInOneLinerBlock(node);
 
         if (isSemi && oneLinerBlock) {
           report(node, true);
@@ -116843,6 +117646,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -117097,7 +117902,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 const SELECTOR = ["BreakStatement", "ContinueStatement", "DebuggerStatement", "DoWhileStatement", "ExportAllDeclaration", "ExportDefaultDeclaration", "ExportNamedDeclaration", "ExpressionStatement", "ImportDeclaration", "ReturnStatement", "ThrowStatement", "VariableDeclaration", "PropertyDefinition"].join(",");
 /**
  * Get the child node list of a given node.
- * This returns `Program#body`, `BlockStatement#body`, or `SwitchCase#consequent`.
+ * This returns `BlockStatement#body`, `StaticBlock#body`, `Program#body`,
+ * `ClassBody#body`, or `SwitchCase#consequent`.
  * This is used to check whether a node is the first/last child.
  * @param {Node} node A node to get child node list.
  * @returns {Node[]|null} The child node list.
@@ -117106,7 +117912,7 @@ const SELECTOR = ["BreakStatement", "ContinueStatement", "DebuggerStatement", "D
 function getChildren(node) {
   const t = node.type;
 
-  if (t === "BlockStatement" || t === "Program" || t === "ClassBody") {
+  if (t === "BlockStatement" || t === "StaticBlock" || t === "Program" || t === "ClassBody") {
     return node.body;
   }
 
@@ -117139,6 +117945,8 @@ function isLastChild(node) {
   const nodeList = getChildren(node.parent);
   return nodeList !== null && nodeList[nodeList.length - 1] === node; // before `}` or etc.
 }
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -117239,6 +118047,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -117538,6 +118348,8 @@ const isValidOrders = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -117707,6 +118519,8 @@ try {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -117812,6 +118626,8 @@ function isFunctionBody(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -117982,6 +118798,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -118129,6 +118947,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -118432,6 +119252,8 @@ const {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -118629,6 +119451,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -119101,6 +119925,8 @@ function createNeverStylePattern(markers) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -119393,6 +120219,8 @@ function isSimpleParameterList(params) {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -119653,6 +120481,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -119786,6 +120616,8 @@ const astUtils = __webpack_require__(582); //-----------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 
 module.exports = {
   meta: {
@@ -119855,6 +120687,8 @@ module.exports = {
 const astUtils = __webpack_require__(582); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -119997,6 +120831,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -120087,6 +120923,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -120176,6 +121014,8 @@ function isNaNIdentifier(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -120308,6 +121148,8 @@ module.exports = {
 const doctrine = __webpack_require__(878); //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -123334,6 +124176,8 @@ module.exports = JSON.parse('{"name":"doctrine","description":"JSDoc parser","ho
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "problem",
@@ -123421,6 +124265,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "suggestion",
@@ -123478,11 +124324,13 @@ module.exports = {
 
     function isVarOnTop(node, statements) {
       const l = statements.length;
-      let i = 0; // skip over directives
+      let i = 0; // Skip over directives and imports. Static blocks don't have either.
 
-      for (; i < l; ++i) {
-        if (!looksLikeDirective(statements[i]) && !looksLikeImport(statements[i])) {
-          break;
+      if (node.parent.type !== "StaticBlock") {
+        for (; i < l; ++i) {
+          if (!looksLikeDirective(statements[i]) && !looksLikeImport(statements[i])) {
+            break;
+          }
         }
       }
 
@@ -123517,19 +124365,27 @@ module.exports = {
     /**
      * Checks whether variable is on top at functional block scope level
      * @param {ASTNode} node The node to check
-     * @param {ASTNode} parent Parent of the node
-     * @param {ASTNode} grandParent Parent of the node's parent
      * @returns {void}
      */
 
 
-    function blockScopeVarCheck(node, parent, grandParent) {
-      if (!(/Function/u.test(grandParent.type) && parent.type === "BlockStatement" && isVarOnTop(node, parent.body))) {
-        context.report({
-          node,
-          messageId: "top"
-        });
+    function blockScopeVarCheck(node) {
+      const {
+        parent
+      } = node;
+
+      if (parent.type === "BlockStatement" && /Function/u.test(parent.parent.type) && isVarOnTop(node, parent.body)) {
+        return;
       }
+
+      if (parent.type === "StaticBlock" && isVarOnTop(node, parent.body)) {
+        return;
+      }
+
+      context.report({
+        node,
+        messageId: "top"
+      });
     } //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
@@ -123542,7 +124398,7 @@ module.exports = {
         } else if (node.parent.type === "Program") {
           globalVarCheck(node, node.parent);
         } else {
-          blockScopeVarCheck(node, node.parent, node.parent.parent);
+          blockScopeVarCheck(node);
         }
       }
 
@@ -123584,6 +124440,8 @@ function isCalleeOfNewExpression(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
@@ -123746,6 +124604,8 @@ module.exports = {
 // Rule Definition
 //------------------------------------------------------------------------------
 
+/** @type {import('../shared/types').Rule} */
+
 module.exports = {
   meta: {
     type: "layout",
@@ -123801,6 +124661,8 @@ module.exports = {
  //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 module.exports = {
   meta: {
@@ -124050,6 +124912,8 @@ function getNormalizedLiteral(node) {
 } //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
+
+/** @type {import('../shared/types').Rule} */
 
 
 module.exports = {
