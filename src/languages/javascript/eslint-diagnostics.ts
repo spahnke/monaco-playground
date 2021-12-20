@@ -62,6 +62,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	/** Can contain rules with severity "info" or "hint" that aren't directly supported by ESLint. */
 	private config: EsLintConfig | undefined;
+	/** Defined if and only if `eslintWorker` has been awaited. */
 	private webWorker: monaco.editor.MonacoWebWorker<IEsLintWorker> | undefined;
 	private readonly eslintWorker: Promise<IEsLintWorker>;
 	private ruleToUrlMapping: Map<string, string> | undefined;
