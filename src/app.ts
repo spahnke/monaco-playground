@@ -8,8 +8,7 @@ async function main() {
 
 	editor.register(new TodoContribution());
 	editor.register(new PlaygroundContribution(editor));
-	const debug = editor.register(new DebugContribution(editor.editor));
-	debug.simulateDebugging();
+	editor.register(new DebugContribution(editor.editor));
 
 	editor.addLibrary({
 		contents: `

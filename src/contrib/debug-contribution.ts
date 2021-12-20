@@ -28,9 +28,19 @@ export class DebugContribution extends Disposable {
 			contextMenuOrder: 0,
 			run: () => this.toggleBreakpoint(),
 		}));
+		this.simulateDebugging();
 	}
 
-	simulateDebugging(): void {
+
+	override dispose(): void {
+		this.removeDebugLine();
+		this.hideBreakpointPreview();
+		for (const breakpoint of this.breakpointDecorations.values())
+			this.removeBreakpoint(breakpoint);
+		super.dispose();
+	}
+
+	private simulateDebugging(): void {
 		let currentLine = 1;
 		this.register(this.editor.addAction({
 			id: "debug_step",
@@ -68,7 +78,7 @@ export class DebugContribution extends Disposable {
 		}));
 	}
 
-	displayCurrentlyDebuggedLine(debugPosition: monaco.IRange): void {
+	private displayCurrentlyDebuggedLine(debugPosition: monaco.IRange): void {
 		if (debugPosition.startLineNumber < 1) {
 			this.removeDebugLine();
 			return;
@@ -89,17 +99,9 @@ export class DebugContribution extends Disposable {
 		this.editor.revealLineInCenterIfOutsideViewport(debugPosition.startLineNumber);
 	}
 
-	removeDebugLine(): void {
+	private removeDebugLine(): void {
 		this.editor.deltaDecorations(this.currentDebugLineDecorations, []);
 		this.currentDebugLineDecorations = [];
-	}
-
-	override dispose(): void {
-		this.removeDebugLine();
-		this.hideBreakpointPreview();
-		for (const breakpoint of this.breakpointDecorations.values())
-			this.removeBreakpoint(breakpoint);
-		super.dispose();
 	}
 
 	private enableGlyphMargin() {
