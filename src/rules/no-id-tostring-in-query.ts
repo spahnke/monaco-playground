@@ -18,7 +18,7 @@ export default new class implements Rule.RuleModule {
 			possibleConversion: "Possible conversion of `uniqueidentifier` to `string`. This could impact performance.",
 			convertToGuid: "Convert `string` to `Guid` instead",
 		},
-	} as any; // TODO remove any once we have the new types for ESLint 8
+	};
 
 	create(context: Rule.RuleContext): Rule.RuleListener {
 		this.reportedLocations = new Set();
