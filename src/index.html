@@ -5,64 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>Monaco Playground</title>
-	<style>
-		/* TODO remove workaround */
-		.codicon-debug-breakpoint::before {
-			content: '\ea71';
-		}
-
-		.codicon-debug-hint::before {
-			content: '\ea71';
-		}
-
-		.codicon-debug-stackframe::before {
-			content: '\eb8b';
-		}
-	</style>
-	<style>
-		:root {
-			--monaco-debug-breakpoint-color: #e50000;
-			--monaco-debug-stackframe-color: #ffcc00;
-			--monaco-todo-color: hsl(100, 75%, 30%);
-		}
-
-		.editor {
-			height: 95vh;
-		}
-
-		.codicon-debug-breakpoint,
-		.codicon-debug-hint {
-			color: var(--monaco-debug-breakpoint-color);
-			cursor: pointer;
-		}
-
-		.codicon-debug-hint:not([class*='codicon-debug-breakpoint']):not([class*='codicon-debug-stackframe']) {
-			opacity: 0.4 !important;
-		}
-
-		.codicon-debug-stackframe {
-			color: var(--monaco-debug-stackframe-color);
-			cursor: pointer;
-		}
-
-		.codicon-debug-breakpoint.codicon-debug-stackframe::after {
-			content: "\eb8a"; /* codicon-debug-stackframe-dot */
-			position: absolute;
-			color: var(--monaco-debug-breakpoint-color);
-		}
-
-		.monaco-debug-line {
-			background: var(--monaco-debug-stackframe-color);
-			opacity: 0.5;
-		}
-
-		.monaco-todo-line {
-			background-color: var(--monaco-todo-color);
-			border-radius: 3px;
-			color: #fff !important;
-			font-weight: bold;
-		}
-	</style>
+	<link rel="stylesheet" href="styles.css">
 	<script src="lib/monaco-editor/min/vs/loader.js"></script>
 	<script src="dist/app.js" type="module"></script>
 </head>

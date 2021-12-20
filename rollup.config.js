@@ -30,6 +30,7 @@ export default [
 					{ src: "node_modules/monaco-editor/", dest: "wwwroot/lib/" },
 					{ src: "src/languages/**/*.json", dest: "wwwroot/" },
 					{ src: "src/index.html", dest: "wwwroot/" },
+					{ src: "src/styles.css", dest: "wwwroot/" },
 				],
 			}),
 			...commonPlugins,
