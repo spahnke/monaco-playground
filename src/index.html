@@ -30,22 +30,22 @@
 			font-weight: bold;
 		}
 
-		.monacoBreakpointMargin {
+		.codicon-debug-breakpoint,
+		.codicon-debug-hint {
 			color: #e50000;
 			cursor: pointer;
 		}
 
-		.monacoBreakpointMarginPreview {
-			opacity: 0.25 !important;
+		.codicon-debug-hint:not([class*='codicon-debug-breakpoint']):not([class*='codicon-debug-stackframe']) {
+			opacity: 0.4 !important;
 		}
 
-		.monacoDebugLineMargin,
-		.monacoDebugLineAndBreakpointMargin {
+		.codicon-debug-stackframe {
 			color: #ffcc00;
 			cursor: pointer;
 		}
 
-		.monacoDebugLineAndBreakpointMargin::after {
+		.codicon-debug-breakpoint.codicon-debug-stackframe::after {
 			content: "\eb8a"; /* codicon-debug-stackframe-dot */
 			position: absolute;
 			color: #e50000;

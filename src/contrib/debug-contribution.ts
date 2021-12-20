@@ -1,10 +1,6 @@
 import { Disposable, toDisposable } from "../common/disposable.js";
 import { isComment } from "../common/monaco-utils.js";
 
-const breakPointMarginClassName = "codicon-debug-breakpoint monacoBreakpointMargin";
-const debugLineMarginClassName = "codicon-debug-stackframe monacoDebugLineMargin";
-const debugLineAndBreakpointMarginClassName = "codicon-debug-stackframe monacoDebugLineAndBreakpointMargin";
-const debugLineClassName = "monacoDebugLine";
 const contextMenuGroupId = "8_debug";
 
 /**
@@ -80,13 +76,12 @@ export class DebugContribution extends Disposable {
 			return;
 		}
 
-		const hasBreakpointOnCurrentLine = this.getBreakpointDecoration(debugPosition.startLineNumber) !== undefined;
 		this.currentDebugLineDecorations = this.editor.deltaDecorations(this.currentDebugLineDecorations, [
 			{
 				range: new monaco.Range(debugPosition.startLineNumber, debugPosition.startColumn, debugPosition.endLineNumber, debugPosition.endColumn),
 				options: {
-					className: debugLineClassName,
-					glyphMarginClassName: hasBreakpointOnCurrentLine ? debugLineAndBreakpointMarginClassName : debugLineMarginClassName,
+					className: "monacoDebugLine",
+					glyphMarginClassName: "codicon-debug-stackframe",
 				}
 			}
 		]);
@@ -131,7 +126,6 @@ export class DebugContribution extends Disposable {
 		} else {
 			this.removeBreakpoint(currentBreakpointDecoration);
 		}
-		this.updateCurrentDebugLineDecoration(line);
 	}
 
 	private addBreakpoint(line: number): void {
@@ -150,7 +144,7 @@ export class DebugContribution extends Disposable {
 			{
 				range: new monaco.Range(line, 1, line, 1),
 				options: {
-					glyphMarginClassName: breakPointMarginClassName,
+					glyphMarginClassName: "codicon-debug-breakpoint",
 					glyphMarginHoverMessage: { value: "Breakpoint", isTrusted: true },
 					stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
 				}
@@ -165,15 +159,6 @@ export class DebugContribution extends Disposable {
 		this.breakpointDecorations.delete(breakpointDecoration.id);
 	}
 
-	private updateCurrentDebugLineDecoration(line: number): void {
-		const currentDebugLineDecoration = this.getDebugLineDecoration(line);
-		if (currentDebugLineDecoration !== undefined) {
-			const currentClassName = currentDebugLineDecoration.options.glyphMarginClassName;
-			const newClassName = currentClassName === debugLineAndBreakpointMarginClassName ? debugLineMarginClassName : debugLineAndBreakpointMarginClassName;
-			currentDebugLineDecoration.options.glyphMarginClassName = newClassName;
-		}
-	}
-
 	private showBreakpointPreview(line: number): void {
 		const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
 		if (this.getBreakpointDecoration(line) === undefined && this.getDebugLineDecoration(line) === undefined) {
@@ -181,7 +166,7 @@ export class DebugContribution extends Disposable {
 			newDecorations.push({
 				range: new monaco.Range(line, 1, line, 1),
 				options: {
-					glyphMarginClassName: `${breakPointMarginClassName} monacoBreakpointMarginPreview`,
+					glyphMarginClassName: "codicon-debug-hint",
 					stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
 				}
 			});
