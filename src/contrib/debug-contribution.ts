@@ -28,19 +28,7 @@ export class DebugContribution extends Disposable {
 			contextMenuOrder: 0,
 			run: () => this.toggleBreakpoint(),
 		}));
-		this.simulateDebugging();
-	}
 
-
-	override dispose(): void {
-		this.removeDebugLine();
-		this.hideBreakpointPreview();
-		for (const breakpoint of this.breakpointDecorations.values())
-			this.removeBreakpoint(breakpoint);
-		super.dispose();
-	}
-
-	private simulateDebugging(): void {
 		let currentLine = 1;
 		this.register(this.editor.addAction({
 			id: "debug_step",
@@ -76,6 +64,14 @@ export class DebugContribution extends Disposable {
 				currentLine = 1;
 			},
 		}));
+	}
+
+	override dispose(): void {
+		this.removeDebugLine();
+		this.hideBreakpointPreview();
+		for (const breakpoint of this.breakpointDecorations.values())
+			this.removeBreakpoint(breakpoint);
+		super.dispose();
 	}
 
 	private displayCurrentlyDebuggedLine(debugPosition: monaco.IRange): void {
