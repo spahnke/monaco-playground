@@ -13,7 +13,7 @@
 /* workaround end */
 
 :root {
-	--monaco-debug-breakpoint-color: #e50000;
+	--monaco-debug-breakpoint-color: #e51400;
 	--monaco-debug-stackframe-color: #ffcc00;
 	--monaco-todo-color: hsl(100, 75%, 30%);
 }
