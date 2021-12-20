@@ -124,7 +124,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	private async computeDiagnostics(resource: monaco.Uri): Promise<void> {
 		const eslintWorker = await this.eslintWorker;
-		await this.webWorker?.withSyncedResources([resource]);
+		await this.webWorker!.withSyncedResources([resource]);
 		this.diagnostics.set(resource, await eslintWorker.lint(resource.toString()));
 	}
 
