@@ -1,6 +1,6 @@
 import { readdirSync } from "fs";
 import { join, resolve } from "path";
-import copy from "rollup-plugin-copy";
+import copy from "@guanghechen/rollup-plugin-copy";
 import typescript from "@rollup/plugin-typescript";
 
 const commonPlugins = [
@@ -28,6 +28,12 @@ export default [
 				flatten: false,
 				targets: [
 					{ src: "node_modules/monaco-editor/", dest: "wwwroot/lib/" },
+				],
+			}),
+			copy({
+				copyOnce: false,
+				flatten: false,
+				targets: [
 					{ src: "src/languages/**/*.json", dest: "wwwroot/" },
 					{ src: "src/index.html", dest: "wwwroot/" },
 					{ src: "src/styles.css", dest: "wwwroot/" },
