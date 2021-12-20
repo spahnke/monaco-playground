@@ -30,13 +30,6 @@
 			height: 95vh;
 		}
 
-		.monacoTodo {
-			background-color: var(--monaco-todo-color);
-			border-radius: 3px;
-			color: #fff !important;
-			font-weight: bold;
-		}
-
 		.codicon-debug-breakpoint,
 		.codicon-debug-hint {
 			color: var(--monaco-debug-breakpoint-color);
@@ -58,9 +51,16 @@
 			color: var(--monaco-debug-breakpoint-color);
 		}
 
-		.monacoDebugLine {
+		.monaco-debug-line {
 			background: var(--monaco-debug-stackframe-color);
 			opacity: 0.5;
+		}
+
+		.monaco-todo-line {
+			background-color: var(--monaco-todo-color);
+			border-radius: 3px;
+			color: #fff !important;
+			font-weight: bold;
 		}
 	</style>
 	<script src="lib/monaco-editor/min/vs/loader.js"></script>

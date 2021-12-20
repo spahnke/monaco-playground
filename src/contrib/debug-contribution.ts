@@ -80,7 +80,7 @@ export class DebugContribution extends Disposable {
 			{
 				range: new monaco.Range(debugPosition.startLineNumber, debugPosition.startColumn, debugPosition.endLineNumber, debugPosition.endColumn),
 				options: {
-					className: "monacoDebugLine",
+					className: "monaco-debug-line",
 					glyphMarginClassName: "codicon-debug-stackframe",
 				}
 			}

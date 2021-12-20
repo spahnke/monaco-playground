@@ -25,8 +25,8 @@ export class TodoContribution extends DiagnosticsAdapter {
 			decorations.push({
 				range,
 				options: {
-					className: "monacoTodo",
-					inlineClassName: "monacoTodo",
+					className: "monaco-todo-line",
+					inlineClassName: "monaco-todo-line",
 					overviewRuler: {
 						color: "hsl(100, 75%, 30%)",
 						position: monaco.editor.OverviewRulerLane.Center
