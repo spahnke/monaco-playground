@@ -15,7 +15,8 @@
 :root {
 	--monaco-debug-breakpoint-color: #e51400;
 	--monaco-debug-stackframe-color: #ffcc00;
-	--monaco-todo-color: hsl(100, 75%, 30%);
+	--monaco-todo-background-color: hsl(100, 75%, 30%);
+	--monaco-todo-color: #fff;
 }
 
 .editor {
@@ -49,8 +50,8 @@
 }
 
 .monaco-todo-line {
-	background-color: var(--monaco-todo-color);
+	background-color: var(--monaco-todo-background-color);
 	border-radius: 3px;
-	color: #fff !important;
+	color: var(--monaco-todo-color) !important;
 	font-weight: bold;
 }
