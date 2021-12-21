@@ -32,7 +32,7 @@
 
 .monaco-debug-line {
 	background: var(--monaco-debug-stackframe-color);
-	opacity: 0.5;
+	opacity: 0.4;
 }
 
 .monaco-todo-line {
