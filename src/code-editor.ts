@@ -222,7 +222,7 @@ export class CodeEditor extends Disposable {
 	 */
 	registerLinkOpener(opener: monaco.editor.ILinkOpener): monaco.IDisposable {
 		const linkDetector = this.editor.getContribution<monaco.editor.ILinkDetector>("editor.linkDetector");
-		let remove: (() => void) | undefined = linkDetector.openerService._openers.unshift({
+		let remove: (() => void) | undefined = linkDetector?.openerService._openers.unshift({
 			async open(resource: string | monaco.Uri) {
 				if (typeof resource === "string")
 					resource = monaco.Uri.parse(resource);

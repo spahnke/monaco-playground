@@ -105,7 +105,7 @@ class EditorOpenService {
 						// We get here in all other cases and show an error message (e.g. if a user clicks on a link inside a JS error message "x was also defined here").
 						const messageController = source.getContribution<monaco.editor.IMessageController>("editor.contrib.messageController");
 						const position = source.getPosition() ?? { lineNumber: 1, column: 1 };
-						messageController.showMessage(`Cannot open resource '${input.resource.path}'. If possible, try using a 'peek' action instead.`, position);
+						messageController?.showMessage(`Cannot open resource '${input.resource.path}'. If possible, try using a 'peek' action instead.`, position);
 					}
 				}
 			}
