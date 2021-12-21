@@ -140,7 +140,7 @@ export class DebugContribution extends Disposable {
 		if (isComment(model, line))
 			return;
 
-		const decorationId = this.editor.deltaDecorations([], [
+		const [decorationId] = this.editor.deltaDecorations([], [
 			{
 				range: new monaco.Range(line, 1, line, 1),
 				options: {
@@ -149,7 +149,7 @@ export class DebugContribution extends Disposable {
 					stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
 				}
 			}
-		])[0]; // there is only one new decoration
+		]);
 		const newDecoration = this.editor.getLineDecorations(line)!.find(x => x.id === decorationId)!;
 		this.breakpointDecorations.set(decorationId, newDecoration);
 	}
