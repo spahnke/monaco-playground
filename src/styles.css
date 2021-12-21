@@ -1,17 +1,3 @@
-/* TODO temporary workaround for https://github.com/microsoft/monaco-editor/issues/2842 */
-.codicon-debug-breakpoint::before {
-	content: '\ea71';
-}
-
-.codicon-debug-hint::before {
-	content: '\ea71';
-}
-
-.codicon-debug-stackframe::before {
-	content: '\eb8b';
-}
-/* workaround end */
-
 :root {
 	--monaco-debug-breakpoint-color: #e51400;
 	--monaco-debug-stackframe-color: #ffcc00;
