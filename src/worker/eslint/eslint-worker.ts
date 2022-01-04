@@ -1,8 +1,6 @@
 import { Linter, Rule } from "eslint";
 import { EsLintConfig, IEsLintWorker, IWorkerCreateData } from "../../languages/javascript/eslint-diagnostics.js";
 
-type Eslint = { Linter: typeof Linter; };
-
 class EsLintWorker implements IEsLintWorker {
 	private linter: Promise<Linter>;
 
@@ -30,8 +28,7 @@ class EsLintWorker implements IEsLintWorker {
 	}
 
 	private async createLinter(): Promise<Linter> {
-		// @ts-ignore we define the type on the variable
-		const eslint: Eslint = await import("./eslint.js");
+		const eslint = await import("./eslint.js");
 		const linter = new eslint.Linter();
 		await this.loadRules(linter);
 		return linter;
