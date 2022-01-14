@@ -119,14 +119,17 @@ export class PlaygroundContribution extends Disposable {
 					inlayHintProvider = undefined;
 				} else {
 					inlayHintProvider = monaco.languages.registerInlayHintsProvider("javascript", {
-						async provideInlayHints(model: monaco.editor.ITextModel, range: monaco.Range, token: monaco.CancellationToken): Promise<monaco.languages.InlayHint[]> {
-							return [
-								{
-									kind: monaco.languages.InlayHintKind.Other,
-									position: editor.getPosition() ?? { lineNumber: 1, column: 1 },
-									text: "testing"
-								}
-							];
+						async provideInlayHints(model: monaco.editor.ITextModel, range: monaco.Range, token: monaco.CancellationToken): Promise<monaco.languages.InlayHintList> {
+							return {
+								hints: [
+									{
+										kind: monaco.languages.InlayHintKind.Other,
+										position: editor.getPosition() ?? { lineNumber: 1, column: 1 },
+										label: "testing"
+									}
+								],
+								dispose() {}
+							};
 						}
 					});
 				}
