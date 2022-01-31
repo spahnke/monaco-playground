@@ -135,6 +135,20 @@ export class PlaygroundContribution extends Disposable {
 				}
 			}
 		}));
+
+		this.register(this.editor.editor.addAction({
+			id: "append_lines",
+			label: "Append Lines",
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL)],
+			contextMenuGroupId,
+			run: () => {
+				this.editor.appendLine("asdf");
+				this.editor.appendLine(" ");
+				this.editor.appendLine("");
+				this.editor.appendLine();
+				this.editor.appendLine("qwer");
+			}
+		}));
 	}
 
 	/**

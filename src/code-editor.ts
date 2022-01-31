@@ -97,9 +97,10 @@ export class CodeEditor extends Disposable {
 		const model = this.editor.getModel();
 		if (model === null)
 			return;
+		line = (line ?? "") + model.getEOL();
 		model.pushEditOperations(this.editor.getSelections() ?? [], [{
-			text: line === undefined ? model.getEOL() : line,
-			range: new monaco.Range(model.getLineCount(), 0, model.getLineCount(), 0), // empty range for insert
+			text: line,
+			range: new monaco.Range(model.getLineCount() + 1, 0, model.getLineCount() + 1, 0), // empty range for insert
 		}], () => []);
 	}
 
