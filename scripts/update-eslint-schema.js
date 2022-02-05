@@ -1,30 +1,26 @@
 import { writeFile } from "fs/promises";
 import https from "https";
 
-main();
+try {
+	const schemaText = await getText("https://json.schemastore.org/eslintrc.json");
+	/** @type {EslintSchema} */
+	const schema = JSON.parse(schemaText);
 
-async function main() {
-	try {
-		const schemaText = await getText("https://json.schemastore.org/eslintrc.json");
-		/** @type {EslintSchema} */
-		const schema = JSON.parse(schemaText);
+	schema.title = `Extended ${schema.title}`;
+	schema.definitions.rule.oneOf[1].description += "\"hint\" - turn the rule on as a hint (is not affected by the global auto-fix)\n\"info\" - turn the rule on as a information"
+	schema.definitions.rule.oneOf[1].enum.push("hint", "info");
+	schema.properties.ruleFiles = {
+		description: "Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.\n- The filename without the extension is the rule ID\n- The rule must be compiled as a standalone AMD module\n- The rule object must be the default export of the module",
+		type: "array",
+		items: {
+			"type": "string"
+		}
+	};
 
-		schema.title = `Extended ${schema.title}`;
-		schema.definitions.rule.oneOf[1].description += "\"hint\" - turn the rule on as a hint (is not affected by the global auto-fix)\n\"info\" - turn the rule on as a information"
-		schema.definitions.rule.oneOf[1].enum.push("hint", "info");
-		schema.properties.ruleFiles = {
-			description: "Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.\n- The filename without the extension is the rule ID\n- The rule must be compiled as a standalone AMD module\n- The rule object must be the default export of the module",
-			type: "array",
-			items: {
-				"type": "string"
-			}
-		};
-
-		const newSchemaText = JSON.stringify(schema, undefined, "\t");
-		await writeFile("src/languages/javascript/eslintrc-extended.schema.json", newSchemaText, "utf8");
-	} catch (e) {
-		console.error(e);
-	}
+	const newSchemaText = JSON.stringify(schema, undefined, "\t");
+	await writeFile("src/languages/javascript/eslintrc-extended.schema.json", newSchemaText, "utf8");
+} catch (e) {
+	console.error(e);
 }
 
 /**
