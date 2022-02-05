@@ -1,4 +1,4 @@
-﻿import { Disposable, toDisposable } from "./common/disposable.js";
+import { Disposable, toDisposable } from "./common/disposable.js";
 import { addLibrary, delay, ILibrary, patchKeybindings } from "./common/monaco-utils.js";
 import { loadMonaco } from "./monaco-loader.js";
 

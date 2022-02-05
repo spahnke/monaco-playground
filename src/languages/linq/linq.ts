@@ -1,4 +1,4 @@
-﻿import { JsonSnippetService } from "../../common/json-snippet-service.js";
+import { JsonSnippetService } from "../../common/json-snippet-service.js";
 import { SnippetCompletionProvider } from "../../common/snippet-completion-provider.js";
 import { LinqCompletionProvider } from "./linq-completion-provider.js";
 import { LinqFormatter } from "./linq-formatter.js";

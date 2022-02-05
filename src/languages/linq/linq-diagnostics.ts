@@ -1,4 +1,4 @@
-﻿import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
+import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 import { LinqCompletionProvider } from "./linq-completion-provider.js";
 import { languageId } from "./linq-language.js";
 

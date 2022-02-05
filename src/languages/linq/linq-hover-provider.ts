@@ -1,4 +1,4 @@
-﻿import { isTableOrViewIdentifier, LinqCompletionProvider } from "./linq-completion-provider.js";
+import { isTableOrViewIdentifier, LinqCompletionProvider } from "./linq-completion-provider.js";
 
 export class LinqHoverProvider implements monaco.languages.HoverProvider {
 

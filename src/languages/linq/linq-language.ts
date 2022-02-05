@@ -1,4 +1,4 @@
-﻿export const languageId = "linq";
+export const languageId = "linq";
 
 export const languageConfig: monaco.languages.LanguageConfiguration = {
 	comments: {

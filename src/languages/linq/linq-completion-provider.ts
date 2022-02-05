@@ -1,4 +1,4 @@
-﻿import { monarchTokenProvider } from "./linq-language.js";
+import { monarchTokenProvider } from "./linq-language.js";
 
 interface LinqInformation {
 	tableOrViewName: string;

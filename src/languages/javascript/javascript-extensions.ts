@@ -1,4 +1,4 @@
-﻿import { toDisposable } from "../../common/disposable.js";
+import { toDisposable } from "../../common/disposable.js";
 import { JsonSnippetService } from "../../common/json-snippet-service.js";
 import { SnippetCompletionProvider } from "../../common/snippet-completion-provider.js";
 import { eslintEnabled, semanticDiagnosticsEnabled, strictDiagnosticsEnabled, suggestionDiagnosticsEnabled } from "../../feature-flags.js";

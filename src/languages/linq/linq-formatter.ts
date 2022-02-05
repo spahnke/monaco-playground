@@ -1,4 +1,4 @@
-﻿export class LinqFormatter implements monaco.languages.DocumentFormattingEditProvider {
+export class LinqFormatter implements monaco.languages.DocumentFormattingEditProvider {
 
 	provideDocumentFormattingEdits(model: monaco.editor.ITextModel, options: monaco.languages.FormattingOptions, token: monaco.CancellationToken): monaco.languages.TextEdit[] {
         const textEdit: monaco.languages.TextEdit = {

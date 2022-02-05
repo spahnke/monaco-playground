@@ -1,4 +1,4 @@
-﻿import { toDisposable } from "./common/disposable.js";
+import { toDisposable } from "./common/disposable.js";
 import { registerPromiseCanceledErrorHandler } from "./common/monaco-utils.js";
 import { registerLanguages } from "./languages/language-registry.js";
 
