@@ -3,15 +3,14 @@ import { PlaygroundContribution } from "./contrib/playground-contribution.js";
 import { TodoContribution } from "./contrib/todo-contribution.js";
 import { CodeEditor } from "./code-editor.js";
 
-async function main() {
-	const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
+const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
 
-	editor.register(new TodoContribution());
-	editor.register(new PlaygroundContribution(editor));
-	editor.register(new DebugContribution(editor.editor));
+editor.register(new TodoContribution());
+editor.register(new PlaygroundContribution(editor));
+editor.register(new DebugContribution(editor.editor));
 
-	editor.addLibrary({
-		contents: `
+editor.addLibrary({
+	contents: `
 declare class Facts {
 	/**
 	 * Returns the next fact
@@ -20,11 +19,11 @@ declare class Facts {
 	 */
 	static next(): string;
 }`,
-		language: "typescript",
-		filePath: "test.d.ts"
-	});
+	language: "typescript",
+	filePath: "test.d.ts"
+});
 
-	editor.setContents(`class Foo {
+editor.setContents(`class Foo {
 	/**
 	 * The class Foo
 	 *
@@ -59,11 +58,8 @@ foo.baz();
 foo.qux(new Date());
 `, undefined, "script.js");
 
-	editor.addLibrary({
-		contents: `const abc = 1;`,
-		filePath: "library.js",
-		language: "javascript"
-	});
-}
-
-main();
+editor.addLibrary({
+	contents: `const abc = 1;`,
+	filePath: "library.js",
+	language: "javascript"
+});
