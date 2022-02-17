@@ -84,7 +84,7 @@
 		"no-unused-vars": "hint",
 
 		"func-style": ["info", "declaration", { "allowArrowFunctions": true }],
-		"lines-between-class-members": "info",
+		"lines-between-class-members": ["info", "always", { "exceptAfterSingleLine": true }],
 		"new-parens": "warn",
 		"no-array-constructor": "warn",
 		"no-bitwise": "warn",

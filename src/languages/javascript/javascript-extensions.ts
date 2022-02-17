@@ -28,6 +28,7 @@ function setCompilerOptions(libs?: string[]): void {
 		allowJs: true,
 		allowNonTsExtensions: true, // not documented in the typings but important to get syntax/semantic validation working
 		strict: strictDiagnosticsEnabled,
+		useDefineForClassFields: true,
 	};
 	monaco.languages.typescript.typescriptDefaults.setCompilerOptions(options);
 	monaco.languages.typescript.javascriptDefaults.setCompilerOptions(options);
