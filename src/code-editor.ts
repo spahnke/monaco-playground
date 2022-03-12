@@ -49,6 +49,7 @@ export class CodeEditor extends Disposable {
 			formatOnType: true,
 			guides: {
 				bracketPairs: true,
+				bracketPairsHorizontal: false,
 			},
 			inlayHints: {
 				enabled: true,
