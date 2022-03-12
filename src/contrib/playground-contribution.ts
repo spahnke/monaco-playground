@@ -123,7 +123,7 @@ export class PlaygroundContribution extends Disposable {
 							return {
 								hints: [
 									{
-										kind: monaco.languages.InlayHintKind.Other,
+										kind: monaco.languages.InlayHintKind.Parameter,
 										position: editor.getPosition() ?? { lineNumber: 1, column: 1 },
 										label: "testing"
 									}
