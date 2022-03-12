@@ -1506,10 +1506,10 @@ var store = __webpack_require__(34);
 (module.exports = function (key, value) {
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
-  version: '3.21.0',
+  version: '3.21.1',
   mode: IS_PURE ? 'pure' : 'global',
   copyright: '© 2014-2022 Denis Pushkarev (zloirock.ru)',
-  license: 'https://github.com/zloirock/core-js/blob/v3.21.0/LICENSE',
+  license: 'https://github.com/zloirock/core-js/blob/v3.21.1/LICENSE',
   source: 'https://github.com/zloirock/core-js'
 });
 
@@ -4019,9 +4019,9 @@ var fails = __webpack_require__(6);
 module.exports = function (METHOD_NAME, argument) {
   var method = [][METHOD_NAME];
   return !!method && fails(function () {
-    // eslint-disable-next-line no-useless-call,no-throw-literal -- required for testing
+    // eslint-disable-next-line no-useless-call -- required for testing
     method.call(null, argument || function () {
-      throw 1;
+      return 1;
     }, 1);
   });
 };
@@ -20558,13 +20558,17 @@ function parse(text, languageOptions, filePath) {
    */
 
   try {
+    debug("Parsing:", filePath);
     const parseResult = typeof parser.parseForESLint === "function" ? parser.parseForESLint(textToParse, parserOptions) : {
       ast: parser.parse(textToParse, parserOptions)
     };
+    debug("Parsing successful:", filePath);
     const ast = parseResult.ast;
     const parserServices = parseResult.services || {};
     const visitorKeys = parseResult.visitorKeys || evk.KEYS;
+    debug("Scope analysis:", filePath);
     const scopeManager = parseResult.scopeManager || analyzeScope(ast, languageOptions, visitorKeys);
+    debug("Scope analysis successful:", filePath);
     return {
       success: true,
 
@@ -41957,7 +41961,7 @@ module.exports = merge;
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"eslint","version":"8.9.0","author":"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>","description":"An AST-based pattern checker for JavaScript.","bin":{"eslint":"./bin/eslint.js"},"main":"./lib/api.js","exports":{"./package.json":"./package.json",".":"./lib/api.js","./use-at-your-own-risk":"./lib/unsupported-api.js"},"scripts":{"test":"node Makefile.js test","test:cli":"mocha","lint":"node Makefile.js lint","fix":"node Makefile.js lint -- fix","fuzz":"node Makefile.js fuzz","generate-release":"node Makefile.js generateRelease","generate-alpharelease":"node Makefile.js generatePrerelease -- alpha","generate-betarelease":"node Makefile.js generatePrerelease -- beta","generate-rcrelease":"node Makefile.js generatePrerelease -- rc","publish-release":"node Makefile.js publishRelease","gensite":"node Makefile.js gensite","webpack":"node Makefile.js webpack","perf":"node Makefile.js perf"},"gitHooks":{"pre-commit":"lint-staged"},"lint-staged":{"*.js":"eslint --fix","*.md":"markdownlint"},"files":["LICENSE","README.md","bin","conf","lib","messages"],"repository":"eslint/eslint","funding":"https://opencollective.com/eslint","homepage":"https://eslint.org","bugs":"https://github.com/eslint/eslint/issues/","dependencies":{"@eslint/eslintrc":"^1.1.0","@humanwhocodes/config-array":"^0.9.2","ajv":"^6.10.0","chalk":"^4.0.0","cross-spawn":"^7.0.2","debug":"^4.3.2","doctrine":"^3.0.0","escape-string-regexp":"^4.0.0","eslint-scope":"^7.1.1","eslint-utils":"^3.0.0","eslint-visitor-keys":"^3.3.0","espree":"^9.3.1","esquery":"^1.4.0","esutils":"^2.0.2","fast-deep-equal":"^3.1.3","file-entry-cache":"^6.0.1","functional-red-black-tree":"^1.0.1","glob-parent":"^6.0.1","globals":"^13.6.0","ignore":"^5.2.0","import-fresh":"^3.0.0","imurmurhash":"^0.1.4","is-glob":"^4.0.0","js-yaml":"^4.1.0","json-stable-stringify-without-jsonify":"^1.0.1","levn":"^0.4.1","lodash.merge":"^4.6.2","minimatch":"^3.0.4","natural-compare":"^1.4.0","optionator":"^0.9.1","regexpp":"^3.2.0","strip-ansi":"^6.0.1","strip-json-comments":"^3.1.0","text-table":"^0.2.0","v8-compile-cache":"^2.0.3"},"devDependencies":{"@babel/core":"^7.4.3","@babel/preset-env":"^7.4.3","babel-loader":"^8.0.5","chai":"^4.0.1","cheerio":"^0.22.0","common-tags":"^1.8.0","core-js":"^3.1.3","dateformat":"^4.5.1","ejs":"^3.0.2","eslint":"file:.","eslint-config-eslint":"file:packages/eslint-config-eslint","eslint-plugin-eslint-comments":"^3.2.0","eslint-plugin-eslint-plugin":"^4.0.1","eslint-plugin-internal-rules":"file:tools/internal-rules","eslint-plugin-jsdoc":"^37.0.0","eslint-plugin-node":"^11.1.0","eslint-release":"^3.2.0","eslump":"^3.0.0","esprima":"^4.0.1","fs-teardown":"^0.1.3","glob":"^7.1.6","jsdoc":"^3.5.5","karma":"^6.1.1","karma-chrome-launcher":"^3.1.0","karma-mocha":"^2.0.1","karma-mocha-reporter":"^2.2.5","karma-webpack":"^5.0.0","lint-staged":"^11.0.0","load-perf":"^0.2.0","markdownlint":"^0.24.0","markdownlint-cli":"^0.30.0","marked":"^4.0.8","memfs":"^3.0.1","mocha":"^8.3.2","mocha-junit-reporter":"^2.0.0","node-polyfill-webpack-plugin":"^1.0.3","npm-license":"^0.3.3","nyc":"^15.0.1","progress":"^2.0.3","proxyquire":"^2.0.1","puppeteer":"^9.1.1","recast":"^0.20.4","regenerator-runtime":"^0.13.2","semver":"^7.3.5","shelljs":"^0.8.2","sinon":"^11.0.0","temp":"^0.9.0","webpack":"^5.23.0","webpack-cli":"^4.5.0","yorkie":"^2.0.0"},"keywords":["ast","lint","javascript","ecmascript","espree"],"license":"MIT","engines":{"node":"^12.22.0 || ^14.17.0 || >=16.0.0"}}');
+module.exports = JSON.parse('{"name":"eslint","version":"8.11.0","author":"Nicholas C. Zakas <nicholas+npm@nczconsulting.com>","description":"An AST-based pattern checker for JavaScript.","bin":{"eslint":"./bin/eslint.js"},"main":"./lib/api.js","exports":{"./package.json":"./package.json",".":"./lib/api.js","./use-at-your-own-risk":"./lib/unsupported-api.js"},"scripts":{"test":"node Makefile.js test","test:cli":"mocha","lint":"node Makefile.js lint","fix":"node Makefile.js lint -- fix","fuzz":"node Makefile.js fuzz","generate-release":"node Makefile.js generateRelease","generate-alpharelease":"node Makefile.js generatePrerelease -- alpha","generate-betarelease":"node Makefile.js generatePrerelease -- beta","generate-rcrelease":"node Makefile.js generatePrerelease -- rc","publish-release":"node Makefile.js publishRelease","gensite":"node Makefile.js gensite","webpack":"node Makefile.js webpack","perf":"node Makefile.js perf"},"gitHooks":{"pre-commit":"lint-staged"},"lint-staged":{"*.js":"eslint --fix","*.md":"markdownlint"},"files":["LICENSE","README.md","bin","conf","lib","messages"],"repository":"eslint/eslint","funding":"https://opencollective.com/eslint","homepage":"https://eslint.org","bugs":"https://github.com/eslint/eslint/issues/","dependencies":{"@eslint/eslintrc":"^1.2.1","@humanwhocodes/config-array":"^0.9.2","ajv":"^6.10.0","chalk":"^4.0.0","cross-spawn":"^7.0.2","debug":"^4.3.2","doctrine":"^3.0.0","escape-string-regexp":"^4.0.0","eslint-scope":"^7.1.1","eslint-utils":"^3.0.0","eslint-visitor-keys":"^3.3.0","espree":"^9.3.1","esquery":"^1.4.0","esutils":"^2.0.2","fast-deep-equal":"^3.1.3","file-entry-cache":"^6.0.1","functional-red-black-tree":"^1.0.1","glob-parent":"^6.0.1","globals":"^13.6.0","ignore":"^5.2.0","import-fresh":"^3.0.0","imurmurhash":"^0.1.4","is-glob":"^4.0.0","js-yaml":"^4.1.0","json-stable-stringify-without-jsonify":"^1.0.1","levn":"^0.4.1","lodash.merge":"^4.6.2","minimatch":"^3.0.4","natural-compare":"^1.4.0","optionator":"^0.9.1","regexpp":"^3.2.0","strip-ansi":"^6.0.1","strip-json-comments":"^3.1.0","text-table":"^0.2.0","v8-compile-cache":"^2.0.3"},"devDependencies":{"@babel/core":"^7.4.3","@babel/preset-env":"^7.4.3","babel-loader":"^8.0.5","chai":"^4.0.1","cheerio":"^0.22.0","common-tags":"^1.8.0","core-js":"^3.1.3","dateformat":"^4.5.1","ejs":"^3.0.2","eslint":"file:.","eslint-config-eslint":"file:packages/eslint-config-eslint","eslint-plugin-eslint-comments":"^3.2.0","eslint-plugin-eslint-plugin":"^4.0.1","eslint-plugin-internal-rules":"file:tools/internal-rules","eslint-plugin-jsdoc":"^37.0.0","eslint-plugin-node":"^11.1.0","eslint-release":"^3.2.0","eslump":"^3.0.0","esprima":"^4.0.1","fs-teardown":"^0.1.3","glob":"^7.1.6","jsdoc":"^3.5.5","karma":"^6.1.1","karma-chrome-launcher":"^3.1.0","karma-mocha":"^2.0.1","karma-mocha-reporter":"^2.2.5","karma-webpack":"^5.0.0","lint-staged":"^11.0.0","load-perf":"^0.2.0","markdownlint":"^0.24.0","markdownlint-cli":"^0.30.0","marked":"^4.0.8","memfs":"^3.0.1","mocha":"^8.3.2","mocha-junit-reporter":"^2.0.0","node-polyfill-webpack-plugin":"^1.0.3","npm-license":"^0.3.3","nyc":"^15.0.1","pirates":"^4.0.5","progress":"^2.0.3","proxyquire":"^2.0.1","puppeteer":"^9.1.1","recast":"^0.20.4","regenerator-runtime":"^0.13.2","semver":"^7.3.5","shelljs":"^0.8.2","sinon":"^11.0.0","temp":"^0.9.0","webpack":"^5.23.0","webpack-cli":"^4.5.0","yorkie":"^2.0.0"},"keywords":["ast","lint","javascript","ecmascript","espree"],"license":"MIT","engines":{"node":"^12.22.0 || ^14.17.0 || >=16.0.0"}}');
 
 /***/ }),
 /* 500 */
@@ -71196,7 +71200,7 @@ module.exports = {
     }
     /**
      * Checks if a given binding identifier uses the original name as-is.
-     * - If it's in object destructuring, the original name is its property name.
+     * - If it's in object destructuring or object expression, the original name is its property name.
      * - If it's in import declaration, the original name is its exported name.
      * @param {ASTNode} node The `Identifier` node to check.
      * @returns {boolean} `true` if the identifier uses the original name as-is.
@@ -71210,7 +71214,7 @@ module.exports = {
 
       switch (parent.type) {
         case "Property":
-          return parent.parent.type === "ObjectPattern" && parent.value === valueNode && !parent.computed && parent.key.type === "Identifier" && parent.key.name === localName;
+          return (parent.parent.type === "ObjectPattern" || parent.parent.type === "ObjectExpression") && parent.value === valueNode && !parent.computed && parent.key.type === "Identifier" && parent.key.name === localName;
 
         case "ImportSpecifier":
           return parent.local === node && astUtils.getModuleExportName(parent.imported) === localName;
@@ -72180,8 +72184,18 @@ module.exports = {
           loc: trailingToken.loc,
           messageId: "unexpected",
 
-          fix(fixer) {
-            return fixer.remove(trailingToken);
+          *fix(fixer) {
+            yield fixer.remove(trailingToken);
+            /*
+             * Extend the range of the fix to include surrounding tokens to ensure
+             * that the element after which the comma is removed stays _last_.
+             * This intentionally makes conflicts in fix ranges with rules that may be
+             * adding or removing elements in the same autofix pass.
+             * https://github.com/eslint/eslint/issues/15660
+             */
+
+            yield fixer.insertTextBefore(sourceCode.getTokenBefore(trailingToken), "");
+            yield fixer.insertTextAfter(sourceCode.getTokenAfter(trailingToken), "");
           }
 
         });
@@ -72223,8 +72237,18 @@ module.exports = {
           },
           messageId: "missing",
 
-          fix(fixer) {
-            return fixer.insertTextAfter(trailingToken, ",");
+          *fix(fixer) {
+            yield fixer.insertTextAfter(trailingToken, ",");
+            /*
+             * Extend the range of the fix to include surrounding tokens to ensure
+             * that the element after which the comma is inserted stays _last_.
+             * This intentionally makes conflicts in fix ranges with rules that may be
+             * adding or removing elements in the same autofix pass.
+             * https://github.com/eslint/eslint/issues/15660
+             */
+
+            yield fixer.insertTextBefore(trailingToken, "");
+            yield fixer.insertTextAfter(sourceCode.getTokenAfter(trailingToken), "");
           }
 
         });
@@ -88818,6 +88842,10 @@ module.exports = {
         allowParens: {
           type: "boolean",
           default: true
+        },
+        onlyOneSimpleParam: {
+          type: "boolean",
+          default: false
         }
       },
       additionalProperties: false
@@ -88830,6 +88858,7 @@ module.exports = {
   create(context) {
     const config = context.options[0] || {};
     const allowParens = config.allowParens || config.allowParens === void 0;
+    const onlyOneSimpleParam = config.onlyOneSimpleParam;
     const sourceCode = context.getSourceCode();
     /**
      * Reports if an arrow function contains an ambiguous conditional.
@@ -88840,7 +88869,7 @@ module.exports = {
     function checkArrowFunc(node) {
       const body = node.body;
 
-      if (isConditional(body) && !(allowParens && astUtils.isParenthesised(sourceCode, body))) {
+      if (isConditional(body) && !(allowParens && astUtils.isParenthesised(sourceCode, body)) && !(onlyOneSimpleParam && !(node.params.length === 1 && node.params[0].type === "Identifier"))) {
         context.report({
           node,
           messageId: "confusing",
@@ -89156,11 +89185,24 @@ module.exports = {
       return false;
     }
     /**
+     * Checks if an identifier is a reference to a global variable.
+     * @param {ASTNode} node An identifier node to check.
+     * @returns {boolean} `true` if the identifier is a reference to a global variable.
+     */
+
+
+    function isReferenceToGlobalVariable(node) {
+      const scope = context.getScope();
+      const reference = scope.references.find(ref => ref.identifier === node);
+      return Boolean(reference && reference.resolved && reference.resolved.scope.type === "global" && reference.resolved.defs.length === 0);
+    }
+    /**
      * Checks if a node has a constant truthiness value.
      * @param {ASTNode} node The AST node to check.
-     * @param {boolean} inBooleanPosition `false` if checking branch of a condition.
-     *  `true` in all other cases. When `false`, checks if -- for both string and
-     *  number -- if coerced to that type, the value will be constant.
+     * @param {boolean} inBooleanPosition `true` if checking the test of a
+     * condition. `false` in all other cases. When `false`, checks if -- for
+     * both string and number -- if coerced to that type, the value will
+     * be constant.
      * @returns {Bool} true when node's truthiness is constant
      * @private
      */
@@ -89250,6 +89292,18 @@ module.exports = {
 
         case "SpreadElement":
           return isConstant(node.argument, inBooleanPosition);
+
+        case "CallExpression":
+          if (node.callee.type === "Identifier" && node.callee.name === "Boolean") {
+            if (node.arguments.length === 0 || isConstant(node.arguments[0], true)) {
+              return isReferenceToGlobalVariable(node.callee);
+            }
+          }
+
+          return false;
+
+        case "Identifier":
+          return node.name === "undefined" && isReferenceToGlobalVariable(node);
         // no default
       }
 
@@ -104939,11 +104993,18 @@ module.exports = {
 //------------------------------------------------------------------------------
 
 const astUtils = __webpack_require__(603); //------------------------------------------------------------------------------
+// Helpers
+//------------------------------------------------------------------------------
+
+
+const FUNC_EXPR_NODE_TYPES = ["ArrowFunctionExpression", "FunctionExpression"];
+const CALL_EXPR_NODE_TYPE = ["CallExpression"];
+const FOR_IN_OF_TYPE = /^For(?:In|Of)Statement$/u;
+const SENTINEL_TYPE = /^(?:(?:Function|Class)(?:Declaration|Expression)|ArrowFunctionExpression|CatchClause|ImportDeclaration|ExportNamedDeclaration)$/u; //------------------------------------------------------------------------------
 // Rule Definition
 //------------------------------------------------------------------------------
 
 /** @type {import('../shared/types').Rule} */
-
 
 module.exports = {
   meta: {
@@ -104969,6 +105030,10 @@ module.exports = {
           items: {
             type: "string"
           }
+        },
+        ignoreOnInitialization: {
+          type: "boolean",
+          default: false
         }
       },
       additionalProperties: false
@@ -104983,13 +105048,118 @@ module.exports = {
     const options = {
       builtinGlobals: context.options[0] && context.options[0].builtinGlobals,
       hoist: context.options[0] && context.options[0].hoist || "functions",
-      allow: context.options[0] && context.options[0].allow || []
+      allow: context.options[0] && context.options[0].allow || [],
+      ignoreOnInitialization: context.options[0] && context.options[0].ignoreOnInitialization
     };
+    /**
+     * Checks whether or not a given location is inside of the range of a given node.
+     * @param {ASTNode} node An node to check.
+     * @param {number} location A location to check.
+     * @returns {boolean} `true` if the location is inside of the range of the node.
+     */
+
+    function isInRange(node, location) {
+      return node && node.range[0] <= location && location <= node.range[1];
+    }
+    /**
+     * Searches from the current node through its ancestry to find a matching node.
+     * @param {ASTNode} node a node to get.
+     * @param {(node: ASTNode) => boolean} match a callback that checks whether or not the node verifies its condition or not.
+     * @returns {ASTNode|null} the matching node.
+     */
+
+
+    function findSelfOrAncestor(node, match) {
+      let currentNode = node;
+
+      while (currentNode && !match(currentNode)) {
+        currentNode = currentNode.parent;
+      }
+
+      return currentNode;
+    }
+    /**
+     * Finds function's outer scope.
+     * @param {Scope} scope Function's own scope.
+     * @returns {Scope} Function's outer scope.
+     */
+
+
+    function getOuterScope(scope) {
+      const upper = scope.upper;
+
+      if (upper.type === "function-expression-name") {
+        return upper.upper;
+      }
+
+      return upper;
+    }
+    /**
+     * Checks if a variable and a shadowedVariable have the same init pattern ancestor.
+     * @param {Object} variable a variable to check.
+     * @param {Object} shadowedVariable a shadowedVariable to check.
+     * @returns {boolean} Whether or not the variable and the shadowedVariable have the same init pattern ancestor.
+     */
+
+
+    function isInitPatternNode(variable, shadowedVariable) {
+      const outerDef = shadowedVariable.defs[0];
+
+      if (!outerDef) {
+        return false;
+      }
+
+      const {
+        variableScope
+      } = variable.scope;
+
+      if (!(FUNC_EXPR_NODE_TYPES.includes(variableScope.block.type) && getOuterScope(variableScope) === shadowedVariable.scope)) {
+        return false;
+      }
+
+      const fun = variableScope.block;
+      const {
+        parent
+      } = fun;
+      const callExpression = findSelfOrAncestor(parent, node => CALL_EXPR_NODE_TYPE.includes(node.type));
+
+      if (!callExpression) {
+        return false;
+      }
+
+      let node = outerDef.name;
+      const location = callExpression.range[1];
+
+      while (node) {
+        if (node.type === "VariableDeclarator") {
+          if (isInRange(node.init, location)) {
+            return true;
+          }
+
+          if (FOR_IN_OF_TYPE.test(node.parent.parent.type) && isInRange(node.parent.parent.right, location)) {
+            return true;
+          }
+
+          break;
+        } else if (node.type === "AssignmentPattern") {
+          if (isInRange(node.right, location)) {
+            return true;
+          }
+        } else if (SENTINEL_TYPE.test(node.type)) {
+          break;
+        }
+
+        node = node.parent;
+      }
+
+      return false;
+    }
     /**
      * Check if variable name is allowed.
      * @param {ASTNode} variable The variable to check.
      * @returns {boolean} Whether or not the variable name is allowed.
      */
+
 
     function isAllowed(variable) {
       return options.allow.indexOf(variable.name) !== -1;
@@ -105099,7 +105269,7 @@ module.exports = {
 
         const shadowed = astUtils.getVariableByName(scope.upper, variable.name);
 
-        if (shadowed && (shadowed.identifiers.length > 0 || options.builtinGlobals && "writeable" in shadowed) && !isOnInitializer(variable, shadowed) && !(options.hoist !== "all" && isInTdz(variable, shadowed))) {
+        if (shadowed && (shadowed.identifiers.length > 0 || options.builtinGlobals && "writeable" in shadowed) && !isOnInitializer(variable, shadowed) && !(options.ignoreOnInitialization && isInitPatternNode(variable, shadowed)) && !(options.hoist !== "all" && isInTdz(variable, shadowed))) {
           const location = getDeclaredLocation(shadowed);
           const messageId = location.global ? "noShadowGlobal" : "noShadow";
           const data = {
@@ -108691,6 +108861,9 @@ module.exports = {
           },
           caughtErrorsIgnorePattern: {
             type: "string"
+          },
+          destructuredArrayIgnorePattern: {
+            type: "string"
           }
         },
         additionalProperties: false
@@ -108731,6 +108904,10 @@ module.exports = {
 
         if (firstOption.caughtErrorsIgnorePattern) {
           config.caughtErrorsIgnorePattern = new RegExp(firstOption.caughtErrorsIgnorePattern, "u");
+        }
+
+        if (firstOption.destructuredArrayIgnorePattern) {
+          config.destructuredArrayIgnorePattern = new RegExp(firstOption.destructuredArrayIgnorePattern, "u");
         }
       }
     }
@@ -108774,7 +108951,15 @@ module.exports = {
 
 
     function getAssignedMessageData(unusedVar) {
-      const additional = config.varsIgnorePattern ? ". Allowed unused vars must match ".concat(config.varsIgnorePattern.toString()) : "";
+      const def = unusedVar.defs[0];
+      let additional = "";
+
+      if (config.destructuredArrayIgnorePattern && def && def.name.parent.type === "ArrayPattern") {
+        additional = ". Allowed unused elements of array destructuring patterns must match ".concat(config.destructuredArrayIgnorePattern.toString());
+      } else if (config.varsIgnorePattern) {
+        additional = ". Allowed unused vars must match ".concat(config.varsIgnorePattern.toString());
+      }
+
       return {
         varName: unusedVar.name,
         action: "assigned a value",
@@ -109168,7 +109353,13 @@ module.exports = {
           const def = variable.defs[0];
 
           if (def) {
-            const type = def.type; // skip catch variables
+            const type = def.type;
+            const refUsedInArrayPatterns = variable.references.some(ref => ref.identifier.parent.type === "ArrayPattern"); // skip elements of array destructuring patterns
+
+            if ((def.name.parent.type === "ArrayPattern" || refUsedInArrayPatterns) && config.destructuredArrayIgnorePattern && config.destructuredArrayIgnorePattern.test(def.name.name)) {
+              continue;
+            } // skip catch variables
+
 
             if (type === "CatchClause") {
               if (config.caughtErrors === "none") {
@@ -126929,6 +127120,7 @@ module.exports = {
       recommended: true,
       url: "https://eslint.org/docs/rules/valid-typeof"
     },
+    hasSuggestions: true,
     schema: [{
       type: "object",
       properties: {
@@ -126941,7 +127133,8 @@ module.exports = {
     }],
     messages: {
       invalidValue: "Invalid typeof comparison value.",
-      notString: "Typeof comparisons should be to string literals."
+      notString: "Typeof comparisons should be to string literals.",
+      suggestString: 'Use `"{{type}}"` instead of `{{type}}`.'
     }
   },
 
@@ -126949,11 +127142,24 @@ module.exports = {
     const VALID_TYPES = ["symbol", "undefined", "object", "boolean", "number", "string", "function", "bigint"],
           OPERATORS = ["==", "===", "!=", "!=="];
     const requireStringLiterals = context.options[0] && context.options[0].requireStringLiterals;
+    let globalScope;
+    /**
+     * Checks whether the given node represents a reference to a global variable that is not declared in the source code.
+     * These identifiers will be allowed, as it is assumed that user has no control over the names of external global variables.
+     * @param {ASTNode} node `Identifier` node to check.
+     * @returns {boolean} `true` if the node is a reference to a global variable.
+     */
+
+    function isReferenceToGlobalVariable(node) {
+      const variable = globalScope.set.get(node.name);
+      return variable && variable.defs.length === 0 && variable.references.some(ref => ref.identifier === node);
+    }
     /**
      * Determines whether a node is a typeof expression.
      * @param {ASTNode} node The node
      * @returns {boolean} `true` if the node is a typeof expression
      */
+
 
     function isTypeofExpression(node) {
       return node.type === "UnaryExpression" && node.operator === "typeof";
@@ -126963,6 +127169,10 @@ module.exports = {
 
 
     return {
+      Program() {
+        globalScope = context.getScope();
+      },
+
       UnaryExpression(node) {
         if (isTypeofExpression(node)) {
           const parent = context.getAncestors().pop();
@@ -126979,6 +127189,22 @@ module.exports = {
                   messageId: "invalidValue"
                 });
               }
+            } else if (sibling.type === "Identifier" && sibling.name === "undefined" && isReferenceToGlobalVariable(sibling)) {
+              context.report({
+                node: sibling,
+                messageId: requireStringLiterals ? "notString" : "invalidValue",
+                suggest: [{
+                  messageId: "suggestString",
+                  data: {
+                    type: "undefined"
+                  },
+
+                  fix(fixer) {
+                    return fixer.replaceText(sibling, '"undefined"');
+                  }
+
+                }]
+              });
             } else if (requireStringLiterals && !isTypeofExpression(sibling)) {
               context.report({
                 node: sibling,
@@ -128365,9 +128591,7 @@ const {
   defaultConfig
 } = __webpack_require__(930);
 
-const recommendedConfig = __webpack_require__(931);
-
-const allConfig = __webpack_require__(932); //-----------------------------------------------------------------------------
+const recommendedConfig = __webpack_require__(931); //-----------------------------------------------------------------------------
 // Helpers
 //-----------------------------------------------------------------------------
 
@@ -128435,7 +128659,12 @@ class FlatConfigArray extends ConfigArray {
     }
 
     if (config === "eslint:all") {
-      return allConfig;
+      /*
+       * Load `eslint-all.js` here instead of at the top level to avoid loading all rule modules
+       * when it isn't necessary. `eslint-all.js` reads `meta` of rule objects to filter out deprecated ones,
+       * so requiring `eslint-all.js` module loads all rule modules as a consequence.
+       */
+      return __webpack_require__(932);
     }
 
     return config;
@@ -128616,7 +128845,8 @@ const baseSchema = Object.freeze({
 
 const debug = createDebug('@hwc/config-array');
 const MINIMATCH_OPTIONS = {
-  matchBase: true
+  matchBase: true,
+  dot: true
 };
 const CONFIG_TYPES = new Set(['array', 'function']);
 /**
@@ -128819,10 +129049,6 @@ function pathMatches(filePath, basePath, config) {
     }
 
     throw new TypeError("Unexpected matcher type ".concat(pattern, "."));
-  };
-
-  const isFilePathIgnored = matcher => {
-    return shouldIgnoreFilePath([matcher], filePath, relativeFilePath);
   }; // check for all matches to config.files
 
 
@@ -128839,7 +129065,7 @@ function pathMatches(filePath, basePath, config) {
    */
 
   if (filePathMatchesPattern && config.ignores) {
-    filePathMatchesPattern = !config.ignores.some(isFilePathIgnored);
+    filePathMatchesPattern = !shouldIgnoreFilePath(config.ignores, filePath, relativeFilePath);
   }
 
   return filePathMatchesPattern;
@@ -129067,7 +129293,7 @@ class ConfigArray extends Array {
     if (!this.isNormalized()) {
       const normalizedConfigs = await normalize(this, context, this.extraConfigTypes);
       this.length = 0;
-      this.push(...normalizedConfigs.map(this[ConfigArraySymbol.preprocessConfig]));
+      this.push(...normalizedConfigs.map(this[ConfigArraySymbol.preprocessConfig].bind(this)));
       this[ConfigArraySymbol.isNormalized] = true; // prevent further changes
 
       Object.freeze(this);
@@ -129197,14 +129423,16 @@ exports.ConfigArraySymbol = ConfigArraySymbol;
 /* provided dependency */ var console = __webpack_require__(455);
 module.exports = minimatch;
 minimatch.Minimatch = Minimatch;
-var path = {
+
+var path = function () {
+  try {
+    return __webpack_require__(449);
+  } catch (e) {}
+}() || {
   sep: '/'
 };
 
-try {
-  path = __webpack_require__(449);
-} catch (er) {}
-
+minimatch.sep = path.sep;
 var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {};
 
 var expand = __webpack_require__(919);
@@ -129265,51 +129493,71 @@ function filter(pattern, options) {
 }
 
 function ext(a, b) {
-  a = a || {};
   b = b || {};
   var t = {};
-  Object.keys(b).forEach(function (k) {
-    t[k] = b[k];
-  });
   Object.keys(a).forEach(function (k) {
     t[k] = a[k];
+  });
+  Object.keys(b).forEach(function (k) {
+    t[k] = b[k];
   });
   return t;
 }
 
 minimatch.defaults = function (def) {
-  if (!def || !Object.keys(def).length) return minimatch;
+  if (!def || typeof def !== 'object' || !Object.keys(def).length) {
+    return minimatch;
+  }
+
   var orig = minimatch;
 
   var m = function minimatch(p, pattern, options) {
-    return orig.minimatch(p, pattern, ext(def, options));
+    return orig(p, pattern, ext(def, options));
   };
 
   m.Minimatch = function Minimatch(pattern, options) {
     return new orig.Minimatch(pattern, ext(def, options));
   };
 
+  m.Minimatch.defaults = function defaults(options) {
+    return orig.defaults(ext(def, options)).Minimatch;
+  };
+
+  m.filter = function filter(pattern, options) {
+    return orig.filter(pattern, ext(def, options));
+  };
+
+  m.defaults = function defaults(options) {
+    return orig.defaults(ext(def, options));
+  };
+
+  m.makeRe = function makeRe(pattern, options) {
+    return orig.makeRe(pattern, ext(def, options));
+  };
+
+  m.braceExpand = function braceExpand(pattern, options) {
+    return orig.braceExpand(pattern, ext(def, options));
+  };
+
+  m.match = function (list, pattern, options) {
+    return orig.match(list, pattern, ext(def, options));
+  };
+
   return m;
 };
 
 Minimatch.defaults = function (def) {
-  if (!def || !Object.keys(def).length) return Minimatch;
   return minimatch.defaults(def).Minimatch;
 };
 
 function minimatch(p, pattern, options) {
-  if (typeof pattern !== 'string') {
-    throw new TypeError('glob pattern string required');
-  }
-
+  assertValidPattern(pattern);
   if (!options) options = {}; // shortcut: comments match nothing.
 
   if (!options.nocomment && pattern.charAt(0) === '#') {
     return false;
-  } // "" only matches ""
+  }
 
-
-  if (pattern.trim() === '') return p === '';
   return new Minimatch(pattern, options).match(p);
 }
 
@@ -129318,14 +129566,11 @@ function Minimatch(pattern, options) {
     return new Minimatch(pattern, options);
   }
 
-  if (typeof pattern !== 'string') {
-    throw new TypeError('glob pattern string required');
-  }
-
+  assertValidPattern(pattern);
   if (!options) options = {};
   pattern = pattern.trim(); // windows support: need to use /, not \
 
-  if (path.sep !== '/') {
+  if (!options.allowWindowsEscape && path.sep !== '/') {
     pattern = pattern.split(path.sep).join('/');
   }
 
@@ -129335,7 +129580,8 @@ function Minimatch(pattern, options) {
   this.regexp = null;
   this.negate = false;
   this.comment = false;
-  this.empty = false; // make the set of regexps etc.
+  this.empty = false;
+  this.partial = !!options.partial; // make the set of regexps etc.
 
   this.make();
 }
@@ -129345,8 +129591,6 @@ Minimatch.prototype.debug = function () {};
 Minimatch.prototype.make = make;
 
 function make() {
-  // don't do it more than once.
-  if (this._made) return;
   var pattern = this.pattern;
   var options = this.options; // empty patterns and comments match nothing.
 
@@ -129364,7 +129608,9 @@ function make() {
   this.parseNegate(); // step 2: expand braces
 
   var set = this.globSet = this.braceExpand();
-  if (options.debug) this.debug = console.error;
+  if (options.debug) this.debug = function debug() {
+    console.error.apply(console, arguments);
+  };
   this.debug(this.pattern, set); // step 3: now we have a set, so turn each one into a series of path-portion
   // matching patterns.
   // These will be regexps, except in the case of "**", which is
@@ -129432,18 +129678,28 @@ function braceExpand(pattern, options) {
   }
 
   pattern = typeof pattern === 'undefined' ? this.pattern : pattern;
+  assertValidPattern(pattern); // Thanks to Yeting Li <https://github.com/yetingli> for
+  // improving this regexp to avoid a ReDOS vulnerability.
 
-  if (typeof pattern === 'undefined') {
-    throw new TypeError('undefined pattern');
-  }
-
-  if (options.nobrace || !pattern.match(/\{.*\}/)) {
+  if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) {
     // shortcut. no need to expand.
     return [pattern];
   }
 
   return expand(pattern);
-} // parse a component of the expanded set.
+}
+
+var MAX_PATTERN_LENGTH = 1024 * 64;
+
+var assertValidPattern = function (pattern) {
+  if (typeof pattern !== 'string') {
+    throw new TypeError('invalid pattern');
+  }
+
+  if (pattern.length > MAX_PATTERN_LENGTH) {
+    throw new TypeError('pattern is too long');
+  }
+}; // parse a component of the expanded set.
 // At this point, no pattern may contain "/" in it
 // so we're going to return a 2d array, where each entry is the full
 // pattern, split on '/', and then turned into a regular expression.
@@ -129460,13 +129716,13 @@ Minimatch.prototype.parse = parse;
 var SUBPARSE = {};
 
 function parse(pattern, isSub) {
-  if (pattern.length > 1024 * 64) {
-    throw new TypeError('pattern is too long');
-  }
-
+  assertValidPattern(pattern);
   var options = this.options; // shortcuts
 
-  if (!options.noglobstar && pattern === '**') return GLOBSTAR;
+  if (pattern === '**') {
+    if (!options.noglobstar) return GLOBSTAR;else pattern = '*';
+  }
+
   if (pattern === '') return '';
   var re = '';
   var hasMagic = !!options.nocase;
@@ -129520,10 +129776,13 @@ function parse(pattern, isSub) {
     }
 
     switch (c) {
+      /* istanbul ignore next */
       case '/':
-        // completely not allowed, even escaped.
-        // Should already be path-split by now.
-        return false;
+        {
+          // completely not allowed, even escaped.
+          // Should already be path-split by now.
+          return false;
+        }
 
       case '\\':
         clearStateChar();
@@ -129641,28 +129900,26 @@ function parse(pattern, isSub) {
           continue;
         } // handle the case where we left a class open.
         // "[z-a]" is valid, equivalent to "\[z-a\]"
+        // split where the last [ was, make sure we don't have
+        // an invalid re. if so, re-walk the contents of the
+        // would-be class to re-translate any characters that
+        // were passed through as-is
+        // TODO: It would probably be faster to determine this
+        // without a try/catch and a new RegExp, but it's tricky
+        // to do safely.  For now, this is safe and works.
 
 
-        if (inClass) {
-          // split where the last [ was, make sure we don't have
-          // an invalid re. if so, re-walk the contents of the
-          // would-be class to re-translate any characters that
-          // were passed through as-is
-          // TODO: It would probably be faster to determine this
-          // without a try/catch and a new RegExp, but it's tricky
-          // to do safely.  For now, this is safe and works.
-          var cs = pattern.substring(classStart + 1, i);
+        var cs = pattern.substring(classStart + 1, i);
 
-          try {
-            RegExp('[' + cs + ']');
-          } catch (er) {
-            // not a valid class!
-            var sp = this.parse(cs, SUBPARSE);
-            re = re.substr(0, reClassStart) + '\\[' + sp[0] + '\\]';
-            hasMagic = hasMagic || sp[1];
-            inClass = false;
-            continue;
-          }
+        try {
+          RegExp('[' + cs + ']');
+        } catch (er) {
+          // not a valid class!
+          var sp = this.parse(cs, SUBPARSE);
+          re = re.substr(0, reClassStart) + '\\[' + sp[0] + '\\]';
+          hasMagic = hasMagic || sp[1];
+          inClass = false;
+          continue;
         } // finish up the class.
 
 
@@ -129744,8 +130001,8 @@ function parse(pattern, isSub) {
   var addPatternStart = false;
 
   switch (re.charAt(0)) {
-    case '.':
     case '[':
+    case '.':
     case '(':
       addPatternStart = true;
   } // Hack to work around lack of negative lookbehind in JS
@@ -129810,7 +130067,9 @@ function parse(pattern, isSub) {
 
   try {
     var regExp = new RegExp('^' + re + '$', flags);
-  } catch (er) {
+  } catch (er)
+  /* istanbul ignore next - should be impossible */
+  {
     // If it was an invalid regular expression, then it can't match
     // anything.  This trick looks for a character after the end of
     // the string, which is of course impossible, except in multi-line
@@ -129860,7 +130119,9 @@ function makeRe() {
 
   try {
     this.regexp = new RegExp(re, flags);
-  } catch (ex) {
+  } catch (ex)
+  /* istanbul ignore next - should be impossible */
+  {
     this.regexp = false;
   }
 
@@ -129881,9 +130142,8 @@ minimatch.match = function (list, pattern, options) {
   return list;
 };
 
-Minimatch.prototype.match = match;
-
-function match(f, partial) {
+Minimatch.prototype.match = function match(f, partial) {
+  if (typeof partial === 'undefined') partial = this.partial;
   this.debug('match', f, this.pattern); // short-circuit in the case of busted things.
   // comments, etc.
 
@@ -129934,7 +130194,7 @@ function match(f, partial) {
 
   if (options.flipNegate) return false;
   return this.negate;
-} // set partial to true to test if, for example,
+}; // set partial to true to test if, for example,
 // "/a/b" matches the start of "/*/b/*/d"
 // Partial means, if you run out of file before you run
 // out of pattern, then that's fine, as long as all
@@ -129956,6 +130216,8 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
     var f = file[fi];
     this.debug(pattern, p, f); // should be impossible.
     // some invalid regexp stuff in the set.
+
+    /* istanbul ignore if */
 
     if (p === false) return false;
 
@@ -130026,6 +130288,8 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
       // However, in partial mode, we can't say this is necessarily over.
       // If there's more *pattern* left, then
 
+      /* istanbul ignore if */
+
 
       if (partial) {
         // ran out of file
@@ -130042,12 +130306,7 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
     var hit;
 
     if (typeof p === 'string') {
-      if (options.nocase) {
-        hit = f.toLowerCase() === p.toLowerCase();
-      } else {
-        hit = f === p;
-      }
-
+      hit = f === p;
       this.debug('string match', p, f, hit);
     } else {
       hit = f.match(p);
@@ -130077,14 +130336,17 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
     // this is ok if we're doing the match as part of
     // a glob fs traversal.
     return partial;
-  } else if (pi === pl) {
-    // ran out of pattern, still have file left.
-    // this is only acceptable if we're on the very last
-    // empty segment of a file with a trailing slash.
-    // a/* should match a/b/
-    var emptyFileEnd = fi === fl - 1 && file[fi] === '';
-    return emptyFileEnd;
-  } // should be unreachable.
+  } else
+    /* istanbul ignore else */
+    if (pi === pl) {
+      // ran out of pattern, still have file left.
+      // this is only acceptable if we're on the very last
+      // empty segment of a file with a trailing slash.
+      // a/* should match a/b/
+      return fi === fl - 1 && file[fi] === '';
+    } // should be unreachable.
+
+  /* istanbul ignore next */
 
 
   throw new Error('wtf?');
