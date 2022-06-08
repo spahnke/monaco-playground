@@ -52,7 +52,7 @@ export class CodeEditor extends Disposable {
 				bracketPairsHorizontal: false,
 			},
 			inlayHints: {
-				enabled: true,
+				enabled: "on"
 			},
 			language,
 			lightbulb: { enabled: true },

@@ -70,6 +70,13 @@ export function getLanguageDisplayName(languageId: string): string {
 	return languageIdToDisplayNameMap.get(languageId) ?? languageId;
 }
 
+/** CAUTION: Internal unofficial API (see tokenisationTextModelPart.ts in vscode) */
+const enum BackgroundTokenizationState {
+	Uninitialized = 0,
+	InProgress = 1,
+	Completed = 2,
+}
+
 /** CAUTION: Internal unofficial API (see IEncodedLineTokens in monaco.d.ts) */
 enum StandardTokenType {
 	Other = 0,
@@ -80,7 +87,7 @@ enum StandardTokenType {
 
 /** CAUTION: Uses an internal unofficial API to determine if a line is a comment */
 export function isComment(model: monaco.editor.ITextModel, line: number): boolean {
-	const lineTokens = model.getLineTokens(line);
+	const lineTokens = model.tokenization.getLineTokens(line);
 	const tokenCount = lineTokens.getCount();
 	// a commented line either only has one token (the comment) or begins with whitespace followed by a comment, i.e. has at most 2 tokens
 	if (tokenCount === 1 && lineTokens.getStandardTokenType(0) === StandardTokenType.Comment)
@@ -101,13 +108,11 @@ export async function isInComment(model: monaco.editor.ITextModel, range: monaco
 	if (monaco.Range.spansMultipleLines(range))
 		throw new Error("Ranges over multiple lines are not supported");
 
-	while (model._tokenization._tokenizationSupport === null) {
-		// tokenization of model not completed if _tokenizationSupport is null -> delay (this is a heuristic and may not be 100% accurate)
+	while (model.tokenization.backgroundTokenizationState !== BackgroundTokenizationState.Completed)
 		await delay(500);
-	}
 
 	const line = range.startLineNumber;
-	const lineTokens = model.getLineTokens(line);
+	const lineTokens = model.tokenization.getLineTokens(line);
 	let tokenType = StandardTokenType.Other;
 	for (let i = 0; i < lineTokens.getCount(); i++) {
 		const tokenRange: monaco.IRange = { startLineNumber: line, startColumn: lineTokens.getStartOffset(i) + 1, endLineNumber: line, endColumn: lineTokens.getEndOffset(i) + 1 };

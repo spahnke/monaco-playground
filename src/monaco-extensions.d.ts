@@ -85,11 +85,21 @@ declare namespace monaco {
 
 		interface ITextModel {
 			/** CAUTION: Internal unofficial API */
-			getLineTokens(line: number): ILineTokens;
+			readonly tokenization: ITokenizationTextModelPart;
+		}
+
+		/** CAUTION: Internal unofficial API */
+		interface ITokenizationTextModelPart {
+			/**
+			 * CAUTION: Internal unofficial API
+			 *
+			 * Get the tokens for the line `lineNumber`.
+			 * The tokens might be inaccurate. Use `forceTokenization` to ensure accurate tokens.
+			 */
+			getLineTokens(lineNumber: number): ILineTokens;
+
 			/** CAUTION: Internal unofficial API */
-			_tokenization: {
-				_tokenizationSupport: object | null
-			}
+			readonly backgroundTokenizationState: number;
 		}
 
 		/** CAUTION: Internal unofficial API */
