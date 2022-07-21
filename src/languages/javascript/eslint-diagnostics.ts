@@ -180,8 +180,9 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				diagnostics: [marker],
 				edit: {
 					edits: [{
-						edit: fix.textEdit,
+						textEdit: fix.textEdit,
 						resource: model.uri,
+						versionId: undefined,
 					}],
 				},
 				isPreferred: fix.autoFixAvailable,
@@ -201,8 +202,9 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			edit: {
 				edits: applicableFixes.map(fix => {
 					return {
-						edit: fix.textEdit,
-						resource: model.uri
+						textEdit: fix.textEdit,
+						resource: model.uri,
+						versionId: undefined,
 					};
 				}),
 			},
@@ -221,8 +223,9 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				diagnostics: [marker],
 				edit: {
 					edits: [{
-						edit: { range: new monaco.Range(line, 1, line, 1), text: `${indentation}// eslint-disable-next-line ${ruleId} -- <reason>${model.getEOL()}` },
+						textEdit: { range: new monaco.Range(line, 1, line, 1), text: `${indentation}// eslint-disable-next-line ${ruleId} -- <reason>${model.getEOL()}` },
 						resource: model.uri,
+						versionId: undefined,
 					}],
 				},
 				kind: "quickfix",
@@ -232,8 +235,9 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				diagnostics: [marker],
 				edit: {
 					edits: [{
-						edit: { range: new monaco.Range(1, 1, 1, 1), text: `// eslint-disable ${ruleId} -- <reason>${model.getEOL()}` },
+						textEdit: { range: new monaco.Range(1, 1, 1, 1), text: `// eslint-disable ${ruleId} -- <reason>${model.getEOL()}` },
 						resource: model.uri,
+						versionId: undefined,
 					}],
 				},
 				kind: "quickfix",
@@ -242,15 +246,16 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	}
 
 	private getFixAllAutoFixableCodeActions(model: monaco.editor.ITextModel, fixes: Fix[]): monaco.languages.CodeAction[] {
-		const edits: monaco.languages.WorkspaceTextEdit[] = [];
+		const edits: monaco.languages.IWorkspaceTextEdit[] = [];
 		for (const fix of fixes.filter(fix => fix.autoFixAvailable)) {
 			if (fix.severity === monaco.MarkerSeverity.Hint)
 				continue; // do not auto-fix "hint" level diagnostics in the global auto-fix
-			if (edits.some(x => monaco.Range.areIntersecting(x.edit.range, fix.textEdit.range)))
+			if (edits.some(x => monaco.Range.areIntersecting(x.textEdit.range, fix.textEdit.range)))
 				continue; // overlapping edits are not allowed
 			edits.push({
-				edit: fix.textEdit,
-				resource: model.uri
+				textEdit: fix.textEdit,
+				resource: model.uri,
+				versionId: undefined,
 			});
 		}
 
