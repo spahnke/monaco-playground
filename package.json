@@ -19,17 +19,17 @@
 	},
 	"devDependencies": {
 		"@guanghechen/rollup-plugin-copy": "^1.9.8",
-		"@rollup/plugin-typescript": "^8.3.4",
-		"@types/eslint": "^8.4.5",
+		"@rollup/plugin-typescript": "^8.5.0",
+		"@types/eslint": "^8.4.6",
 		"@types/estree": "1.0.0",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^18.6.3",
-		"@typescript-eslint/eslint-plugin": "^5.32.0",
-		"@typescript-eslint/parser": "^5.32.0",
-		"eslint": "^8.21.0",
+		"@types/node": "^18.7.16",
+		"@typescript-eslint/eslint-plugin": "^5.36.2",
+		"@typescript-eslint/parser": "^5.36.2",
+		"eslint": "^8.23.1",
 		"mocha": "^10.0.0",
-		"rollup": "^2.77.2",
+		"rollup": "^2.79.0",
 		"serve": "^14.0.1",
-		"typescript": "^4.7.4"
+		"typescript": "^4.8.3"
 	}
 }
