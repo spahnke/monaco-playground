@@ -1,7 +1,10 @@
 import { readdirSync } from "fs";
-import { join, resolve } from "path";
-import copy from "@guanghechen/rollup-plugin-copy";
+import { dirname, join, resolve } from "path";
+import { fileURLToPath } from 'url';
+import { copy } from "@guanghechen/rollup-plugin-copy";
 import typescript from "@rollup/plugin-typescript";
+
+const currentDir = dirname(fileURLToPath(import.meta.url));
 
 const commonPlugins = [
 	typescript({
@@ -51,7 +54,7 @@ export default [
 			format: "amd",
 			sourcemap: true,
 		},
-		external: [resolve(__dirname, "src/worker/eslint/eslint.js")],
+		external: [resolve(currentDir, "src/worker/eslint/eslint.js")],
 		plugins: [
 			copy({
 				copyOnce: true,
