@@ -1,5 +1,5 @@
 import { Disposable, toDisposable } from "./common/disposable.js";
-import { addLibrary, delay, ILibrary, patchKeybindings } from "./common/monaco-utils.js";
+import { addLibrary, delay, ILibrary } from "./common/monaco-utils.js";
 import { loadMonaco } from "./monaco-loader.js";
 
 class LocalStorageEditorConfiguration implements monaco.IDisposable {
@@ -79,7 +79,6 @@ export class CodeEditor extends Disposable {
 	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor) {
 		super();
 		this.register(new LocalStorageEditorConfiguration(editor));
-		this.register(patchKeybindings());
 	}
 
 	setContents(content: string, language?: string, fileName?: string): void {
