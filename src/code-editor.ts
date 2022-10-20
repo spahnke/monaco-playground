@@ -79,7 +79,7 @@ export class CodeEditor extends Disposable {
 	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor) {
 		super();
 		this.register(new LocalStorageEditorConfiguration(editor));
-		this.register(patchKeybindings(this.editor));
+		this.register(patchKeybindings());
 	}
 
 	setContents(content: string, language?: string, fileName?: string): void {

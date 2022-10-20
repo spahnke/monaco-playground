@@ -151,27 +151,9 @@ export function getKeybindings(editor: monaco.editor.IStandaloneCodeEditor): Key
 }
 
 /**
- *
+ * Patches existing keybindings, i.e. remove problematic ones, and add/change default ones.
  */
-export function patchKeybinding(id: string, newKeyBinding?: number, when?: string): monaco.IDisposable {
-	// remove existing one; keybinding by prefixing the command id with '-'
-	const undoRemoveKeybinding = monaco.editor.addKeybindingRule({ command: `-${id}`, keybinding: 0 });
-	let undoPatchKeybinding: monaco.IDisposable | undefined;
-	if (newKeyBinding)
-		undoPatchKeybinding = monaco.editor.addKeybindingRule({ command: id, keybinding: newKeyBinding, when });
-
-	// register undo operations in reverse order
-	const disposable = new Disposable();
-	if (undoPatchKeybinding)
-		disposable.register(undoPatchKeybinding);
-	disposable.register(undoRemoveKeybinding);
-	return disposable;
-}
-
-/**
- * CAUTION: Uses an internal API to patch existing keybindings (i.e. remove problematic ones, and add/change default ones).
- */
-export function patchKeybindings(editor: monaco.editor.IStandaloneCodeEditor): monaco.IDisposable {
+export function patchKeybindings(): monaco.IDisposable {
 	const disposable = new Disposable();
 	disposable.register(patchKeybinding("editor.action.addSelectionToNextFindMatch", monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.Period)); // default is Ctrl+D
 	disposable.register(patchKeybinding("editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal)); // no default
@@ -183,6 +165,27 @@ export function patchKeybindings(editor: monaco.editor.IStandaloneCodeEditor): m
 	disposable.register(patchKeybinding("editor.action.quickFix", monaco.KeyMod.Alt | monaco.KeyCode.Enter, "editorHasCodeActionsProvider && editorTextFocus && !editorReadonly")); // default is Ctrl+.
 	disposable.register(patchKeybinding("editor.action.quickOutline", monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyO, "editorFocus && editorHasDocumentSymbolProvider")); // default is Ctrl+Shift+O
 	disposable.register(patchKeybinding("editor.action.rename", monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR), "editorHasRenameProvider && editorTextFocus && !editorReadonly")); // default is F2
+	return disposable;
+}
+
+/**
+ * Patches a keybinding of an existing action with ID `id` by removing the existing one, and optionally adding a `newKeybinding` with (optional) `when` clause.
+ *
+ * If you change an existing keybinding to a new one you should set the original `when` clause of the action. This can be found by dumping all keybindings using
+ * `getKeybindings()`.
+ */
+export function patchKeybinding(id: string, newKeybinding?: number, when?: string): monaco.IDisposable {
+	// remove existing one; keybinding by prefixing the command id with '-'
+	const undoRemoveKeybinding = monaco.editor.addKeybindingRule({ command: `-${id}`, keybinding: 0 });
+	let undoPatchKeybinding: monaco.IDisposable | undefined;
+	if (newKeybinding)
+		undoPatchKeybinding = monaco.editor.addKeybindingRule({ command: id, keybinding: newKeybinding, when });
+
+	// register undo operations in reverse order
+	const disposable = new Disposable();
+	if (undoPatchKeybinding)
+		disposable.register(undoPatchKeybinding);
+	disposable.register(undoRemoveKeybinding);
 	return disposable;
 }
 
