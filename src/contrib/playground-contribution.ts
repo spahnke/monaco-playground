@@ -32,6 +32,7 @@ export class PlaygroundContribution extends Disposable {
 		this.addTestActions();
 		this.addLinkOpenInterceptor();
 		this.addOpenEditorInterceptor();
+		this.addFontZoomEvent();
 	}
 
 	private addTestActions() {
@@ -174,5 +175,13 @@ export class PlaygroundContribution extends Disposable {
 				return false;
 			}
 		}));
+	}
+
+	/**
+	 * Example to subscribe to font zoom events. The same API can be used to get/set the zoom level programmatically.
+	 */
+	private addFontZoomEvent() {
+		console.log(`Zoom Level: ${monaco.editor.EditorZoom.getZoomLevel()}`);
+		monaco.editor.EditorZoom.onDidChangeZoomLevel(level => console.log(`Zoom Level: ${level}`));
 	}
 }

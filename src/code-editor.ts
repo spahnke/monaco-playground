@@ -172,7 +172,6 @@ export class CodeEditor extends Disposable {
 	}
 
 	resetZoom(): void {
-		console.log(monaco.editor.EditorZoom);
 		this.editor.trigger("zoom", "editor.action.fontZoomReset", null);
 	}
 
