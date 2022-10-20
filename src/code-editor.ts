@@ -174,11 +174,11 @@ export class CodeEditor extends Disposable {
 		this.editor.trigger("zoom", "editor.action.fontZoomReset", null);
 	}
 
-	format(): Promise<void> {
+	async format(): Promise<void> {
 		const selection = this.editor.getSelection();
 		if (selection === null || selection.isEmpty())
-			return this.editor.getAction("editor.action.formatDocument").run();
-		return this.editor.getAction("editor.action.formatSelection").run();
+			return this.editor.getAction("editor.action.formatDocument")?.run();
+		return this.editor.getAction("editor.action.formatSelection")?.run();
 	}
 
 	/**
@@ -186,6 +186,8 @@ export class CodeEditor extends Disposable {
 	 */
 	async waitOnFormattingProvider(): Promise<boolean> {
 		const action = this.editor.getAction("editor.action.formatDocument");
+		if (!action)
+			return false;
 		if (action.isSupported())
 			return true;
 

@@ -95,6 +95,7 @@ class EditorOpenService {
 						break;
 				}
 				if (!handled) {
+					// BUG: this action is currently not accessible anymore (see https://github.com/microsoft/monaco-editor/issues/3349)
 					// fallback for "go to definition" which we try to convert into a "peek definition"
 					const peekDefinitionAction = source.getAction("editor.action.peekDefinition");
 					if (input.options?.source !== EditorOpenSource.USER && peekDefinitionAction?.isSupported()) {
