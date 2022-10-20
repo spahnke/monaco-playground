@@ -46,7 +46,7 @@ export function loadMonaco(): Promise<void> {
 }
 
 /** CAUTION: Internal unofficial API */
-const enum EditorOpenContext {
+const enum EditorOpenSource {
 
 	/**
 	 * Default: the editor is opening via a programmatic call
@@ -97,7 +97,7 @@ class EditorOpenService {
 				if (!handled) {
 					// fallback for "go to definition" which we try to convert into a "peek definition"
 					const peekDefinitionAction = source.getAction("editor.action.peekDefinition");
-					if (input.options?.context !== EditorOpenContext.USER && peekDefinitionAction?.isSupported()) {
+					if (input.options?.source !== EditorOpenSource.USER && peekDefinitionAction?.isSupported()) {
 						// We get here if a go to definition action failed (i.e. it's a programmatic call that tried to open another model).
 						// In that case we try using a peek definition instead to reduce the number of cases where an error message is shown.
 						peekDefinitionAction.run();
