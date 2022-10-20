@@ -14,6 +14,9 @@ declare namespace monaco {
 			setZoomLevel(zoomLevel: number): void;
 		}
 
+		/** CAUTION: Unofficial patched API */
+		export let EditorZoom: IEditorZoom;
+
 		/** CAUTION: Internal unofficial API */
 		interface ILinkDetector extends monaco.editor.IEditorContribution {
 			/** CAUTION: Internal unofficial API */
@@ -146,9 +149,6 @@ declare namespace monaco {
 			 */
 			readonly context?: number;
 		}
-
-		/** CAUTION: Unofficial patched API */
-		export let EditorZoom: IEditorZoom;
 
 		/** CAUTION: Unofficial patched API */
 		interface ILinkOpener {
