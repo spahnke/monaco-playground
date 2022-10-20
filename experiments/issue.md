@@ -3,26 +3,8 @@ In my work with editor over the past two years I've used four internal APIs that
 
 > The variable `editor` is always of the type `monaco.editor.IStandaloneCodeEditor` in the following examples.
 
-## Keybinding service
-- Remove existing keybindings
-- Add new keybinding to existing action
-- Both, i.e. patch a keybinding
-
-### Current workaround with internal APIs
-```ts
-patchKeyBinding(id: string, newKeyBinding?: number, context?: string) {
-	// remove existing one; no official API yet
-	editor._standaloneKeybindingService.addDynamicKeybinding(`-${id}`);
-	if (newKeyBinding) {
-		const action = editor.getAction(id);
-		const when = ContextKeyExpr.deserialize(context);
-		editor._standaloneKeybindingService.addDynamicKeybinding(id, newKeyBinding, () => action.run(), when);
-	}
-}
-```
-> Note: For this to work you need access to yet another internal API, the `ContextKeyExpr` which is obtained by calling `require(["vs/platform/contextkey/common/contextkey"]`. If we add the proposed API this would not be necessary.
-
 ## `EditorZoom` API
+
 - Subscribe to zoom level change events
 - Get/set current zoom level
 
