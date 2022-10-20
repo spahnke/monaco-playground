@@ -1,9 +1,6 @@
 declare namespace monaco {
 	namespace editor {
-		interface IEditorAction {
-			/** CAUTION: Internal unofficial API */
-			_precondition?: monaco.platform.IContextKeyExpr;
-		}
+		//#region Font zoom
 
 		/** CAUTION: Internal unofficial API */
 		interface IEditorZoom {
@@ -17,10 +14,31 @@ declare namespace monaco {
 		/** CAUTION: Unofficial patched API */
 		export let EditorZoom: IEditorZoom;
 
+		//#endregion
+
+		//#region Link opener
+
+		/** CAUTION: Unofficial own patched API */
+		interface ILinkOpener {
+			open(resource: monaco.Uri): Promise<boolean>;
+		}
+
 		/** CAUTION: Internal unofficial API */
 		interface ILinkDetector extends monaco.editor.IEditorContribution {
 			/** CAUTION: Internal unofficial API */
 			openerService: IOpenerService;
+		}
+
+		/** CAUTION: Internal unofficial API */
+		interface IOpenerService {
+			/** CAUTION: Internal unofficial API */
+			_openers: ILinkedList<IOpener>;
+		}
+
+		/** CAUTION: Internal unofficial API */
+		interface IOpener {
+			/** CAUTION: Internal unofficial API */
+			open(resource: string | monaco.Uri | string, options?: any): Promise<boolean>;
 		}
 
 		/** CAUTION: Internal unofficial API */
@@ -31,22 +49,40 @@ declare namespace monaco {
 			unshift(element: T): () => void;
 		}
 
+		//#endregion
+
+		//#region Message Controller
+
 		/** CAUTION: Internal unofficial API */
 		interface IMessageController extends monaco.editor.IEditorContribution {
 			/** Shows an inline message at a position in the editor (similar to e.g. the "Cannot edit in read-only editor" message) */
 			showMessage(message: string, position: IPosition): void;
 		}
 
-		/** CAUTION: Internal unofficial API */
-		interface IOpener {
-			/** CAUTION: Internal unofficial API */
-			open(resource: string | monaco.Uri | string, options?: any): Promise<boolean>;
+		//#endregion
+
+		//#region Editor opener
+
+		/**
+		 * Registers a handler that is called when a resource other than the current model should be opened in the editor (e.g. "go to definition").
+		 * The handler callback should return `true` if the request was handled and `false` otherwise.
+		 *
+		 * Returns a disposable that can unregister the opener again.
+		 *
+		 * CAUTION: Unofficial own patched API
+		 */
+		export function registerEditorOpener(opener: ICodeEditorOpener): monaco.IDisposable;
+
+		/** CAUTION: Unofficial own patched API */
+		interface ICodeEditorOpener {
+			openCodeEditor(source: monaco.editor.ICodeEditor, resource: monaco.Uri, selection?: monaco.IRange): Promise<boolean>;
 		}
 
-		/** CAUTION: Internal unofficial API */
-		interface IOpenerService {
+		interface ICodeEditor {
 			/** CAUTION: Internal unofficial API */
-			_openers: ILinkedList<IOpener>;
+			_codeEditorService: {
+				openCodeEditor(input: IResourceEditorInput, source: ICodeEditor | null, sideBySide?: boolean): Promise<ICodeEditor | null>;
+			};
 		}
 
 		/** CAUTION: Internal unofficial API */
@@ -58,17 +94,34 @@ declare namespace monaco {
 			readonly resource: monaco.Uri;
 
 			/**
-	 		 * Optional options to use when opening the text input.
-	 		 */
+				 * Optional options to use when opening the text input.
+				 */
 			options?: ITextEditorOptions;
 		}
 
-		interface ICodeEditor {
-			/** CAUTION: Internal unofficial API */
-			_codeEditorService: {
-				openCodeEditor(input: IResourceEditorInput, source: ICodeEditor | null, sideBySide?: boolean): Promise<ICodeEditor | null>;
-			};
+		/** CAUTION: Internal unofficial API */
+		interface ITextEditorOptions {
+			/**
+				 * Text editor selection.
+				 */
+			readonly selection?: monaco.IRange;
+
+			/**
+			 * A optional hint to signal in which context the editor opens.
+			 *
+			 * If configured to be `EditorOpenContext.USER`, this hint can be
+			 * used in various places to control the experience. For example,
+			 * if the editor to open fails with an error, a notification could
+			 * inform about this in a modal dialog. If the editor opened through
+			 * some background task, the notification would show in the background,
+			 * not as a modal dialog.
+			 */
+			readonly context?: number;
 		}
+
+		//#endregion
+
+		//#region Read Keybindings
 
 		interface IStandaloneCodeEditor {
 			/** CAUTION: Internal unofficial API */
@@ -84,6 +137,22 @@ declare namespace monaco {
 				};
 			};
 		}
+
+		/** CAUTION: Internal unofficial API */
+		interface IResolvedKeybindingItem {
+			command: string;
+			resolvedKeybinding: IResolvedKeybinding;
+			when?: monaco.platform.IContextKeyExpr;
+		}
+
+		/** CAUTION: Internal unofficial API */
+		interface IResolvedKeybinding {
+			getAriaLabel(): string;
+		}
+
+		//#endregion
+
+		//#region Tokenization
 
 		interface ITextModel {
 			/** CAUTION: Internal unofficial API */
@@ -118,57 +187,7 @@ declare namespace monaco {
 			getStandardTokenType(tokenIndex: number): number;
 		}
 
-		/** CAUTION: Internal unofficial API */
-		interface IResolvedKeybindingItem {
-			command: string;
-			resolvedKeybinding: IResolvedKeybinding;
-			when?: monaco.platform.IContextKeyExpr;
-		}
-
-		/** CAUTION: Internal unofficial API */
-		interface IResolvedKeybinding {
-			getAriaLabel(): string;
-		}
-
-		/** CAUTION: Internal unofficial API */
-		interface ITextEditorOptions {
-			/**
-	 		 * Text editor selection.
-	 		 */
-			readonly selection?: monaco.IRange;
-
-			/**
-			 * A optional hint to signal in which context the editor opens.
-			 *
-			 * If configured to be `EditorOpenContext.USER`, this hint can be
-			 * used in various places to control the experience. For example,
-			 * if the editor to open fails with an error, a notification could
-			 * inform about this in a modal dialog. If the editor opened through
-			 * some background task, the notification would show in the background,
-			 * not as a modal dialog.
-			 */
-			readonly context?: number;
-		}
-
-		/** CAUTION: Unofficial patched API */
-		interface ILinkOpener {
-			open(resource: monaco.Uri): Promise<boolean>;
-		}
-
-		/** CAUTION: Unofficial patched API */
-		interface ICodeEditorOpener {
-			openCodeEditor(source: monaco.editor.ICodeEditor, resource: monaco.Uri, selection?: monaco.IRange): Promise<boolean>;
-		}
-
-		/**
-		 * Registers a handler that is called when a resource other than the current model should be opened in the editor (e.g. "go to definition").
-		 * The handler callback should return `true` if the request was handled and `false` otherwise.
-		 *
-		 * Returns a disposable that can unregister the opener again.
-		 *
-		 * CAUTION: Unofficial patched API
-		 */
-		export function registerEditorOpener(opener: ICodeEditorOpener): monaco.IDisposable;
+		//#endregion
 	}
 
 	namespace platform {
@@ -178,18 +197,6 @@ declare namespace monaco {
 			serialize(): string;
 			keys(): string[];
 			negate(): IContextKeyExpr;
-		}
-
-		/** CAUTION: Internal unofficial API */
-		interface IContextKeyExprFactory {
-			has(key: string): IContextKeyExpr;
-			equals(key: string, value: any): IContextKeyExpr;
-			notEquals(key: string, value: any): IContextKeyExpr;
-			regex(key: string, value: RegExp): IContextKeyExpr;
-			not(key: string): IContextKeyExpr;
-			and(...expr: Array<IContextKeyExpr | undefined | null>): IContextKeyExpr | undefined;
-			or(...expr: Array<IContextKeyExpr | undefined | null>): IContextKeyExpr | undefined;
-			deserialize(serialized: string | null | undefined, strict?: boolean): IContextKeyExpr | undefined;
 		}
 	}
 }
