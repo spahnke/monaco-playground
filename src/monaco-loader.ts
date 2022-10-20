@@ -30,9 +30,8 @@ export function loadMonaco(): Promise<void> {
 			// 	}
 			// });
 			require(["vs/editor/editor.main"], () => {
-				require(["vs/editor/common/config/editorZoom", "vs/platform/contextkey/common/contextkey"], (editorZoom: { EditorZoom: monaco.editor.IEditorZoom; }, contextKey: { ContextKeyExpr: monaco.platform.IContextKeyExprFactory; }) => {
+				require(["vs/editor/common/config/editorZoom"], (editorZoom: { EditorZoom: monaco.editor.IEditorZoom; }) => {
 					monaco.editor.EditorZoom = editorZoom.EditorZoom;
-					monaco.ContextKeyExpr = contextKey.ContextKeyExpr;
 					const editorOpenService = new EditorOpenService();
 					monaco.editor.registerEditorOpener = opener => editorOpenService.registerOpener(opener);
 					registerLanguages();
