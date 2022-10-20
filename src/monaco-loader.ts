@@ -95,13 +95,11 @@ class EditorOpenService {
 						break;
 				}
 				if (!handled) {
-					// BUG: this action is currently not accessible anymore (see https://github.com/microsoft/monaco-editor/issues/3349)
 					// fallback for "go to definition" which we try to convert into a "peek definition"
-					const peekDefinitionAction = source.getAction("editor.action.peekDefinition");
-					if (input.options?.source !== EditorOpenSource.USER && peekDefinitionAction?.isSupported()) {
+					if (input.options?.source !== EditorOpenSource.USER) {
 						// We get here if a go to definition action failed (i.e. it's a programmatic call that tried to open another model).
 						// In that case we try using a peek definition instead to reduce the number of cases where an error message is shown.
-						peekDefinitionAction.run();
+						source.trigger("EditorOpenService", "editor.action.peekDefinition", null);
 					} else {
 						// We get here in all other cases and show an error message (e.g. if a user clicks on a link inside a JS error message "x was also defined here").
 						const messageController = source.getContribution<monaco.editor.IMessageController>("editor.contrib.messageController");
