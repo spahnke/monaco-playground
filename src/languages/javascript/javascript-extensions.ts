@@ -45,6 +45,14 @@ function setDiagnosticOptions(codesToIgnore?: number[]): void {
 	monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions(options);
 }
 
+export function restartLanguageServer(): void {
+	// One way to force a restart without having an API to do that is to change some options.
+	// The worker options are the least invasive settings and we just set them to their previous
+	// value which is enough to trigger a worker restart.
+	monaco.languages.typescript.typescriptDefaults.setWorkerOptions(monaco.languages.typescript.typescriptDefaults.workerOptions);
+	monaco.languages.typescript.javascriptDefaults.setWorkerOptions(monaco.languages.typescript.javascriptDefaults.workerOptions);
+}
+
 export function allowTopLevelReturn(): monaco.IDisposable {
 	const oldCodesToIgnore = monaco.languages.typescript.javascriptDefaults.getDiagnosticsOptions().diagnosticCodesToIgnore;
 	setDiagnosticOptions([...oldCodesToIgnore ?? [], /*top-level return*/ 1108]);
