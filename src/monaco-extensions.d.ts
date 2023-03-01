@@ -1,21 +1,5 @@
 declare namespace monaco {
 	namespace editor {
-		//#region Font zoom
-
-		/** CAUTION: Internal unofficial API */
-		interface IEditorZoom {
-			onDidChangeZoomLevel: monaco.IEvent<number>;
-			/** A number between -5 and 20; 0 being no zoom. */
-			getZoomLevel(): number;
-			/** @param zoomLevel A number between -5 and 20; 0 being no zoom. */
-			setZoomLevel(zoomLevel: number): void;
-		}
-
-		/** CAUTION: Unofficial patched API */
-		export let EditorZoom: IEditorZoom;
-
-		//#endregion
-
 		//#region Link opener
 
 		/** CAUTION: Unofficial own patched API */

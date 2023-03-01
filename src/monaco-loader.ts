@@ -30,8 +30,6 @@ export function loadMonaco(): Promise<void> {
 			// 	}
 			// });
 			require(["vs/editor/editor.main"], () => {
-				require(["vs/editor/common/config/editorZoom"], (editorZoom: { EditorZoom: monaco.editor.IEditorZoom; }) => {
-					monaco.editor.EditorZoom = editorZoom.EditorZoom;
 					const editorOpenService = new EditorOpenService();
 					monaco.editor.registerEditorOpener = opener => editorOpenService.registerOpener(opener);
 					registerLanguages();
@@ -40,7 +38,6 @@ export function loadMonaco(): Promise<void> {
 					resolve();
 				});
 			});
-		});
 	}
 	return monacoLoaded;
 }
