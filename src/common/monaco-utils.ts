@@ -85,8 +85,16 @@ enum StandardTokenType {
 	RegEx = 4
 }
 
+export async function waitForTokenization(model: monaco.editor.ITextModel): Promise<void> {
+	while (model.tokenization.backgroundTokenizationState !== BackgroundTokenizationState.Completed)
+		await delay(500);
+}
+
 /** CAUTION: Uses an internal unofficial API to determine if a line is a comment */
 export function isComment(model: monaco.editor.ITextModel, line: number): boolean {
+	if (model.getLanguageId() === "plaintext")
+		return false;
+
 	const lineTokens = model.tokenization.getLineTokens(line);
 	const tokenCount = lineTokens.getCount();
 	// a commented line either only has one token (the comment) or begins with whitespace followed by a comment, i.e. has at most 2 tokens
@@ -100,16 +108,13 @@ export function isComment(model: monaco.editor.ITextModel, line: number): boolea
 	return false;
 }
 
-/** CAUTION: Uses an internal unofficial API to determine if the range is in a comment. Tries to wait until tokenization is complete. */
-export async function isInComment(model: monaco.editor.ITextModel, range: monaco.IRange): Promise<boolean> {
+/** CAUTION: Uses an internal unofficial API to determine if the range is in a comment.*/
+export function isInComment(model: monaco.editor.ITextModel, range: monaco.IRange): boolean {
 	if (model.getLanguageId() === "plaintext")
 		return false;
 
 	if (monaco.Range.spansMultipleLines(range))
 		throw new Error("Ranges over multiple lines are not supported");
-
-	while (model.tokenization.backgroundTokenizationState !== BackgroundTokenizationState.Completed)
-		await delay(500);
 
 	const line = range.startLineNumber;
 	const lineTokens = model.tokenization.getLineTokens(line);

@@ -1,5 +1,5 @@
 import { allLanguages, DiagnosticsAdapter } from "../common/diagnostics-adapter.js";
-import { isInComment } from "../common/monaco-utils.js";
+import { isInComment, waitForTokenization } from "../common/monaco-utils.js";
 
 export class TodoContribution extends DiagnosticsAdapter {
 	private readonly currentDecorations: Map<string, string[]>;
@@ -17,8 +17,11 @@ export class TodoContribution extends DiagnosticsAdapter {
 
 		const decorations: monaco.editor.IModelDeltaDecoration[] = [];
 		const todos = model.findMatches("\\bTODO\\b", false, true, true, null, true);
+		if (todos.length > 0)
+			await waitForTokenization(model);
+
 		for (const todo of todos) {
-			if (!(await isInComment(model, todo.range)))
+			if (!isInComment(model, todo.range))
 				continue;
 
 			const range = todo.range.setStartPosition(todo.range.startLineNumber, todo.range.startColumn);
