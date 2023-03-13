@@ -53,6 +53,38 @@ export function addTemplates(language: string, templates: ITemplate[]): monaco.I
 	return monaco.languages.registerCompletionItemProvider(language, new SnippetCompletionProvider(new InMemorySnippetService(templates)));
 }
 
+let languageAliasToIdMap: Map<string, string> | undefined;
+
+/**
+ * Returns the Monaco language ID of the language with ID, alias, or extension `language`. If none is found `plaintext` is returned.
+ */
+export function getLanguageId(language: string): string {
+	if (languageAliasToIdMap === undefined) {
+		languageAliasToIdMap = new Map();
+		for (const language of monaco.languages.getLanguages()) {
+			const knownAliases = new Set<string>();
+			knownAliases.add(language.id);
+			if (language.aliases) {
+				for (const alias of language.aliases)
+					knownAliases.add(alias);
+			}
+			if (language.extensions) {
+				for (const extension of language.extensions)
+					knownAliases.add(extension.substring(1)); // remove '.' from extension
+			}
+
+			for (const knownAlias of knownAliases) {
+				if (languageAliasToIdMap.has(knownAlias)) {
+					console.warn(`Language alias '${knownAlias}' already registered for language '${languageAliasToIdMap.get(knownAlias)}'. The alias was not registered for '${language.id}' as this would have overwritten the existing one.`);
+					continue;
+				}
+				languageAliasToIdMap.set(knownAlias, language.id);
+			}
+		}
+	}
+	return languageAliasToIdMap.get(language) ?? "plaintext";
+}
+
 let languageIdToDisplayNameMap: Map<string, string> | undefined;
 
 /**
