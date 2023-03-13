@@ -235,7 +235,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 				diagnostics: [marker],
 				edit: {
 					edits: [{
-						textEdit: { range: new monaco.Range(1, 1, 1, 1), text: `// eslint-disable ${ruleId} -- <reason>${model.getEOL()}` },
+						textEdit: { range: new monaco.Range(1, 1, 1, 1), text: `/* eslint-disable ${ruleId} -- <reason> */${model.getEOL()}` },
 						resource: model.uri,
 						versionId: undefined,
 					}],
