@@ -192,7 +192,7 @@ export function getKeybindings(editor: monaco.editor.IStandaloneCodeEditor): Key
  */
 export function patchKeybindings(): monaco.IDisposable {
 	const disposable = new Disposable();
-	disposable.register(patchKeybinding("editor.action.addSelectionToNextFindMatch", monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.Period)); // default is Ctrl+D
+	disposable.register(patchKeybinding("editor.action.addSelectionToNextFindMatch", monaco.KeyMod.Alt | monaco.KeyMod.Shift | monaco.KeyCode.Period, "editorFocus")); // default is Ctrl+D
 	disposable.register(patchKeybinding("editor.action.fontZoomIn", monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal)); // no default
 	disposable.register(patchKeybinding("editor.action.fontZoomOut", monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus)); // no default
 	disposable.register(patchKeybinding("editor.action.fontZoomReset", monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit0)); // no default
