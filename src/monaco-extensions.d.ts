@@ -35,16 +35,6 @@ declare namespace monaco {
 
 		//#endregion
 
-		//#region Message Controller
-
-		/** CAUTION: Internal unofficial API */
-		interface IMessageController extends monaco.editor.IEditorContribution {
-			/** Shows an inline message at a position in the editor (similar to e.g. the "Cannot edit in read-only editor" message) */
-			showMessage(message: string, position: IPosition): void;
-		}
-
-		//#endregion
-
 		//#region Editor opener
 
 		/**

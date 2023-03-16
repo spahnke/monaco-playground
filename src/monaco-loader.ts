@@ -30,14 +30,14 @@ export function loadMonaco(): Promise<void> {
 			// 	}
 			// });
 			require(["vs/editor/editor.main"], () => {
-					const editorOpenService = new EditorOpenService();
-					monaco.editor.registerEditorOpener = opener => editorOpenService.registerOpener(opener);
-					registerLanguages();
-					registerPromiseCanceledErrorHandler();
-					patchKeybindings();
-					resolve();
-				});
+				const editorOpenService = new EditorOpenService();
+				monaco.editor.registerEditorOpener = opener => editorOpenService.registerOpener(opener);
+				registerLanguages();
+				registerPromiseCanceledErrorHandler();
+				patchKeybindings();
+				resolve();
 			});
+		});
 	}
 	return monacoLoaded;
 }
@@ -99,9 +99,7 @@ class EditorOpenService {
 						source.trigger("EditorOpenService", "editor.action.peekDefinition", null);
 					} else {
 						// We get here in all other cases and show an error message (e.g. if a user clicks on a link inside a JS error message "x was also defined here").
-						const messageController = source.getContribution<monaco.editor.IMessageController>("editor.contrib.messageController");
-						const position = source.getPosition() ?? { lineNumber: 1, column: 1 };
-						messageController?.showMessage(`Cannot open resource '${input.resource.path}'. If possible, try using a 'peek' action instead.`, position);
+						// -> do nothing (we had an editor message box here before but the positioning was flaky at best, and the API was not public)
 					}
 				}
 			}
