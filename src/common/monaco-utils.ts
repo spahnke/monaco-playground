@@ -161,32 +161,6 @@ export function isInComment(model: monaco.editor.ITextModel, range: monaco.IRang
 	return tokenType === StandardTokenType.Comment;
 }
 
-type Keybinding = { command: string; keybinding?: string, when?: string; };
-
-/**
- * CAUTION: Uses an internal API to get a list of all keybindings sorted by command/action name.
- */
-export function getKeybindings(editor: monaco.editor.IStandaloneCodeEditor): Keybinding[] {
-
-	const keybindings = editor._standaloneKeybindingService._getResolver()._keybindings.map(x => (<Keybinding>{
-		command: x.command,
-		keybinding: x.resolvedKeybinding.getAriaLabel(),
-		when: x.when?.serialize()
-	}));
-
-	// add actions without default keybinding
-	for (const action of Object.values(editor._actions)) {
-		if (keybindings.some(x => x.command === action.id))
-			continue;
-		keybindings.push({
-			command: action.id,
-			when: action._precondition?.serialize()
-		});
-	}
-
-	return keybindings.sort((a, z) => a.command.localeCompare(z.command));
-}
-
 /**
  * Patches existing keybindings, i.e. remove problematic ones, and add/change default ones.
  */
@@ -208,8 +182,8 @@ export function patchKeybindings(): monaco.IDisposable {
 /**
  * Patches a keybinding of an existing action with ID `id` by removing the existing one, and optionally adding a `newKeybinding` with (optional) `when` clause.
  *
- * If you change an existing keybinding to a new one you should set the original `when` clause of the action. This can be found by dumping all keybindings using
- * `getKeybindings()`.
+ * If you change an existing keybinding to a new one you should set the original `when` clause of the action. The appropriate `when` clause can be found by searching
+ * the action in the VSCode "Keyboard Shortcuts" settings menu.
  */
 export function patchKeybinding(id: string, newKeybinding?: number, when?: string): monaco.IDisposable {
 	// remove existing one; keybinding by prefixing the command id with '-'

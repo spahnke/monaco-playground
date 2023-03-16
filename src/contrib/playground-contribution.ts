@@ -1,5 +1,4 @@
 import { Disposable } from "../common/disposable.js";
-import { getKeybindings } from "../common/monaco-utils.js";
 import { allowTopLevelReturn, enableJavaScriptBrowserCompletion, restartLanguageServer } from "../languages/javascript/javascript-extensions.js";
 import { CodeEditor } from "../code-editor.js";
 
@@ -50,14 +49,6 @@ export class PlaygroundContribution extends Disposable {
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyD)],
 			contextMenuGroupId,
 			run: () => this.editor.dispose()
-		}));
-
-		this.register(this.editor.editor.addAction({
-			id: "dump_keybindings",
-			label: "Dump keybindings",
-			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyK)],
-			contextMenuGroupId,
-			run: (editor: monaco.editor.IStandaloneCodeEditor) => console.log(JSON.stringify(getKeybindings(editor)))
 		}));
 
 		this.register(this.editor.editor.addAction({

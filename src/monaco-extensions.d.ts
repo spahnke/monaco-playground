@@ -95,37 +95,6 @@ declare namespace monaco {
 
 		//#endregion
 
-		//#region Read Keybindings
-
-		interface IStandaloneCodeEditor {
-			/** CAUTION: Internal unofficial API */
-			_actions: Record<string, {
-				id: string;
-				_precondition?: monaco.platform.IContextKeyExpr;
-			}>;
-
-			/** CAUTION: Internal unofficial API */
-			_standaloneKeybindingService: {
-				_getResolver(): {
-					_keybindings: IResolvedKeybindingItem[];
-				};
-			};
-		}
-
-		/** CAUTION: Internal unofficial API */
-		interface IResolvedKeybindingItem {
-			command: string;
-			resolvedKeybinding: IResolvedKeybinding;
-			when?: monaco.platform.IContextKeyExpr;
-		}
-
-		/** CAUTION: Internal unofficial API */
-		interface IResolvedKeybinding {
-			getAriaLabel(): string;
-		}
-
-		//#endregion
-
 		//#region Tokenization
 
 		interface ITextModel {
@@ -162,15 +131,5 @@ declare namespace monaco {
 		}
 
 		//#endregion
-	}
-
-	namespace platform {
-		/** CAUTION: Internal unofficial API */
-		interface IContextKeyExpr {
-			equals(other: IContextKeyExpr): boolean;
-			serialize(): string;
-			keys(): string[];
-			negate(): IContextKeyExpr;
-		}
 	}
 }
