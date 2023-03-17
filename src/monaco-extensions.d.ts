@@ -1,40 +1,5 @@
 declare namespace monaco {
 	namespace editor {
-		//#region Link opener
-
-		/** CAUTION: Unofficial own patched API */
-		interface ILinkOpener {
-			open(resource: monaco.Uri): Promise<boolean>;
-		}
-
-		/** CAUTION: Internal unofficial API */
-		interface ILinkDetector extends monaco.editor.IEditorContribution {
-			/** CAUTION: Internal unofficial API */
-			openerService: IOpenerService;
-		}
-
-		/** CAUTION: Internal unofficial API */
-		interface IOpenerService {
-			/** CAUTION: Internal unofficial API */
-			_openers: ILinkedList<IOpener>;
-		}
-
-		/** CAUTION: Internal unofficial API */
-		interface IOpener {
-			/** CAUTION: Internal unofficial API */
-			open(resource: string | monaco.Uri | string, options?: any): Promise<boolean>;
-		}
-
-		/** CAUTION: Internal unofficial API */
-		interface ILinkedList<T> {
-			/** Adds element to the end. Returns a function that removes the element again. */
-			push(element: T): () => void;
-			/** Adds element to the beginning. Returns a function that removes the element again. */
-			unshift(element: T): () => void;
-		}
-
-		//#endregion
-
 		//#region Editor opener
 
 		/**

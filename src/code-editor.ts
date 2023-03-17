@@ -1,4 +1,4 @@
-import { Disposable, toDisposable } from "./common/disposable.js";
+import { Disposable } from "./common/disposable.js";
 import { addLibrary, delay, ILibrary } from "./common/monaco-utils.js";
 import { loadMonaco } from "./monaco-loader.js";
 
@@ -213,29 +213,6 @@ export class CodeEditor extends Disposable {
 
 	addLibrary(library: ILibrary): void {
 		this.register(addLibrary(library));
-	}
-
-	/**
-	 * Registers a handler that is called when a link is opened. The handler callback should return `true` if the link was handled and `false` otherwise.
-	 * The handler that was registered last will be called first when a link is opened.
-	 *
-	 * Returns a disposable that can unregister the opener again.
-	 *
-	 * CAUTION: Uses internal unofficial APIs
-	 */
-	registerLinkOpener(opener: monaco.editor.ILinkOpener): monaco.IDisposable {
-		const linkDetector = this.editor.getContribution<monaco.editor.ILinkDetector>("editor.linkDetector");
-		let remove: (() => void) | undefined = linkDetector?.openerService._openers.unshift({
-			async open(resource: string | monaco.Uri) {
-				if (typeof resource === "string")
-					resource = monaco.Uri.parse(resource);
-				return opener.open(resource);
-			}
-		});
-		return toDisposable(() => {
-			remove?.();
-			remove = undefined;
-		});
 	}
 
 	override dispose(): void {
