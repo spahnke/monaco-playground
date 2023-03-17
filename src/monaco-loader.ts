@@ -42,22 +42,6 @@ export function loadMonaco(): Promise<void> {
 	return monacoLoaded;
 }
 
-/** CAUTION: Internal unofficial API */
-const enum EditorOpenSource {
-
-	/**
-	 * Default: the editor is opening via a programmatic call
-	 * to the editor service API.
-	 */
-	API,
-
-	/**
-	 * Indicates that a user action triggered the opening, e.g.
-	 * via mouse or keyboard use.
-	 */
-	USER
-}
-
 class EditorOpenService {
 	private readonly openers: Set<monaco.editor.ICodeEditorOpener> = new Set();
 
@@ -85,22 +69,9 @@ class EditorOpenService {
 		editorService.openCodeEditor = async (input: monaco.editor.IResourceEditorInput, source: monaco.editor.ICodeEditor) => {
 			const result = await openEditorBase(input, source);
 			if (result === null) {
-				let handled = false;
 				for (const opener of this.openers.values()) {
-					handled = await opener.openCodeEditor(source, input.resource, input.options?.selection);
-					if (handled)
+					if (await opener.openCodeEditor(source, input.resource, input.options?.selection))
 						break;
-				}
-				if (!handled) {
-					// fallback for "go to definition" which we try to convert into a "peek definition"
-					if (input.options?.source !== EditorOpenSource.USER) {
-						// We get here if a go to definition action failed (i.e. it's a programmatic call that tried to open another model).
-						// In that case we try using a peek definition instead to reduce the number of cases where an error message is shown.
-						source.trigger("EditorOpenService", "editor.action.peekDefinition", null);
-					} else {
-						// We get here in all other cases and show an error message (e.g. if a user clicks on a link inside a JS error message "x was also defined here").
-						// -> do nothing (we had an editor message box here before but the positioning was flaky at best, and the API was not public)
-					}
 				}
 			}
 			return result; // always return the base result
