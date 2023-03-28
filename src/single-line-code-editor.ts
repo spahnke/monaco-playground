@@ -1,7 +1,6 @@
 import { Disposable } from "./common/disposable.js";
 import { loadMonaco } from "./monaco-loader.js";
 
-// inspired by https://github.com/vikyd/vue-monaco-singleline/blob/master/src/monaco-singleline.vue and https://github.com/microsoft/monaco-editor/issues/2009
 export class SingleLineCodeEditor extends Disposable {
 	static async create(element: HTMLElement, placeholder?: string, language?: string, useMonospaceFont = false): Promise<SingleLineCodeEditor> {
 		await loadMonaco();
@@ -37,7 +36,7 @@ export class SingleLineCodeEditor extends Disposable {
 		}), placeholder);
 	}
 
-	private constructor(private readonly editor: monaco.editor.IStandaloneCodeEditor, placeholder?: string) {
+	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, placeholder?: string) {
 		super();
 
 		const container = editor.getContainerDomNode();

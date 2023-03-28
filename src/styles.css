@@ -14,7 +14,7 @@ body {
 }
 
 .editor {
-	height: 85%;
+	height: 80%;
 }
 
 .codicon-debug-breakpoint,
@@ -65,4 +65,12 @@ body {
 
 .monaco-single-line.focus {
 	border-color: #0090f1;
+}
+
+.monaco-single-line-slash-command {
+	color: #006ab1 !important;
+}
+
+.monaco-single-line-slash-command-detail {
+	opacity: 0.5;
 }

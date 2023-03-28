@@ -1,6 +1,7 @@
 import { Disposable } from "../common/disposable.js";
 import { allowTopLevelReturn, enableJavaScriptBrowserCompletion, restartLanguageServer } from "../languages/javascript/javascript-extensions.js";
 import { CodeEditor } from "../code-editor.js";
+import { SingleLineCodeEditor } from "../single-line-code-editor.js";
 
 const contextMenuGroupId = "7_playground";
 const linqTestCode = `const query = foo + 'a x.id.toString() === "' + foo + \`" a x.id.toString() !== "\${text}" asdf\` + foo;
@@ -183,4 +184,75 @@ export class PlaygroundContribution extends Disposable {
 		console.log(`Zoom Level: ${monaco.editor.EditorZoom.getZoomLevel()}`);
 		monaco.editor.EditorZoom.onDidChangeZoomLevel(level => console.log(`Zoom Level: ${level}`));
 	}
+}
+
+// example from https://github.com/microsoft/vscode/blob/9216747901d28de7a0ea8ffbf9d11b6c9dc253b8/src/vs/workbench/contrib/interactiveEditor/browser/interactiveEditorWidget.ts#L1051
+export function registerSlashCommands(textInput: SingleLineCodeEditor, commands: { command: string, detail: string; }[]): monaco.IDisposable {
+	const model = textInput.editor.getModel();
+	if (!model)
+		return Disposable.None;
+
+	const disposable = new Disposable();
+	const selector: monaco.languages.LanguageSelector = { scheme: model.uri.scheme, pattern: model.uri.path, language: model.getLanguageId() };
+	disposable.register(monaco.languages.registerCompletionItemProvider(selector, new class implements monaco.languages.CompletionItemProvider {
+		readonly triggerCharacters?: string[] = ["/"];
+
+		provideCompletionItems(model: monaco.editor.ITextModel, position: monaco.Position, context: monaco.languages.CompletionContext, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.CompletionList> {
+			if (position.lineNumber !== 1 && position.column !== 1)
+				return undefined;
+
+			const suggestions: monaco.languages.CompletionItem[] = commands.map(command => {
+
+				const withSlash = `/${command.command}`;
+
+				return {
+					label: withSlash,
+					insertText: `${withSlash} $0`,
+					insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+					kind: monaco.languages.CompletionItemKind.Text,
+					range: new monaco.Range(1, 1, 1, 1),
+					detail: command.detail
+				};
+			});
+
+			return { suggestions };
+		}
+	}));
+
+	const decorations = textInput.editor.createDecorationsCollection();
+
+	const updateSlashDecorations = () => {
+		const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
+		for (const command of commands) {
+			const withSlash = `/${command.command}`;
+			const firstLine = model.getLineContent(1);
+			if (firstLine.startsWith(withSlash)) {
+				newDecorations.push({
+					range: new monaco.Range(1, 1, 1, withSlash.length + 1),
+					options: {
+						inlineClassName: "monaco-single-line-slash-command",
+					}
+				});
+
+				// inject detail when otherwise empty
+				if (firstLine === `/${command.command} `) {
+					newDecorations.push({
+						range: new monaco.Range(1, withSlash.length + 1, 1, withSlash.length + 2),
+						options: {
+							after: {
+								content: `${command.detail}`,
+								inlineClassName: "monaco-single-line-slash-command-detail"
+							}
+						}
+					});
+				}
+				break;
+			}
+		}
+		decorations.set(newDecorations);
+	};
+
+	disposable.register(textInput.editor.onDidChangeModelContent(updateSlashDecorations));
+
+	return disposable;
 }
