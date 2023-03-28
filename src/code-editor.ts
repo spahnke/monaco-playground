@@ -224,7 +224,7 @@ export class CodeEditor extends Disposable {
 
 // inspired by https://github.com/vikyd/vue-monaco-singleline/blob/master/src/monaco-singleline.vue and https://github.com/microsoft/monaco-editor/issues/2009
 export class SingleLineCodeEditor extends Disposable {
-	static async create(element: HTMLElement, language?: string): Promise<SingleLineCodeEditor> {
+	static async create(element: HTMLElement, language?: string, useMonospaceFont = false): Promise<SingleLineCodeEditor> {
 		await loadMonaco();
 		return new SingleLineCodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
@@ -232,6 +232,7 @@ export class SingleLineCodeEditor extends Disposable {
 			cursorStyle: "line-thin",
 			fixedOverflowWidgets: true,
 			folding: false,
+			fontFamily: useMonospaceFont ? undefined : `-apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "HelveticaNeue-Light", system-ui, "Ubuntu", "Droid Sans", sans-serif`,
 			fontLigatures: true,
 			fontSize: 13,
 			glyphMargin: false,
