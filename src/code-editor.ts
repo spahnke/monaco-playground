@@ -246,6 +246,7 @@ export class SingleLineCodeEditor extends Disposable {
 			overviewRulerLanes: 0,
 			overviewRulerBorder: false,
 			renderLineHighlight: "none",
+			roundedSelection: false,
 			scrollBeyondLastColumn: 0,
 			scrollbar: {
 				horizontal: "hidden",

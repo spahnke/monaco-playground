@@ -3,6 +3,10 @@ import { PlaygroundContribution } from "./contrib/playground-contribution.js";
 import { TodoContribution } from "./contrib/todo-contribution.js";
 import { CodeEditor, SingleLineCodeEditor } from "./code-editor.js";
 
+const textInput = await SingleLineCodeEditor.create(document.querySelector<HTMLElement>("#textInput")!);
+textInput.onEnter = console.log;
+textInput.focus();
+
 const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
 
 editor.register(new TodoContribution());
@@ -63,6 +67,3 @@ editor.addLibrary({
 	filePath: "library.js",
 	language: "javascript"
 });
-
-const textInput = await SingleLineCodeEditor.create(document.querySelector<HTMLElement>("#textInput")!);
-textInput.onEnter = console.log;
