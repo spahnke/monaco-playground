@@ -97,7 +97,7 @@ export class CodeEditorTextInput extends Disposable {
 			label: "",
 			keybindings: [monaco.KeyCode.Enter],
 			run: editor => this.onEnter?.(editor.getValue()),
-			precondition: "!suggestWidgetVisible || !suggestWidgetHasFocusedSuggestion", // acceptSuggestionOnEnter && suggestWidgetHasFocusedSuggestion && suggestWidgetVisible && suggestionMakesTextEdit && textInputFocus
+			precondition: "!suggestWidgetVisible || !suggestWidgetHasFocusedSuggestion",
 		}));
 
 		// when pasting multi-line content merge lines into one line
