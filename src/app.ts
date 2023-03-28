@@ -1,7 +1,7 @@
 import { DebugContribution } from "./contrib/debug-contribution.js";
 import { PlaygroundContribution } from "./contrib/playground-contribution.js";
 import { TodoContribution } from "./contrib/todo-contribution.js";
-import { CodeEditor } from "./code-editor.js";
+import { CodeEditor, SingleLineCodeEditor } from "./code-editor.js";
 
 const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
 
@@ -63,3 +63,6 @@ editor.addLibrary({
 	filePath: "library.js",
 	language: "javascript"
 });
+
+const textInput = await SingleLineCodeEditor.create(document.querySelector<HTMLElement>("#textInput")!);
+textInput.onEnter = console.log;

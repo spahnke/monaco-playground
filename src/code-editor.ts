@@ -221,3 +221,76 @@ export class CodeEditor extends Disposable {
 		this.editor.dispose();
 	}
 }
+
+// inspired by https://github.com/vikyd/vue-monaco-singleline/blob/master/src/monaco-singleline.vue and https://github.com/microsoft/monaco-editor/issues/2009
+export class SingleLineCodeEditor extends Disposable {
+	static async create(element: HTMLElement, language?: string): Promise<SingleLineCodeEditor> {
+		element.className = "monaco-single-line";
+		await loadMonaco();
+		return new SingleLineCodeEditor(monaco.editor.create(element, {
+			automaticLayout: true,
+			contextmenu: false,
+			cursorStyle: "line-thin",
+			fixedOverflowWidgets: true,
+			folding: false,
+			fontLigatures: true,
+			fontSize: 13,
+			glyphMargin: false,
+			language,
+			lightbulb: { enabled: false },
+			lineDecorationsWidth: 0,
+			lineNumbers: "off",
+			links: false,
+			minimap: { enabled: false },
+			occurrencesHighlight: false,
+			overviewRulerLanes: 0,
+			overviewRulerBorder: false,
+			renderLineHighlight: "none",
+			scrollBeyondLastColumn: 0,
+			scrollbar: {
+				horizontal: "hidden",
+				vertical: "hidden",
+				alwaysConsumeMouseWheel: false,
+			},
+			wordBasedSuggestions: false,
+			wordWrap: "off",
+		}));
+	}
+
+	private constructor(private readonly editor: monaco.editor.IStandaloneCodeEditor) {
+		super();
+		this.register(editor.addAction({ id: "disableFind", label: "", keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF], run: () => { } }));
+		this.register(editor.addAction({ id: "disableCommandPalette", label: "", keybindings: [monaco.KeyCode.F1], run: () => { } }));
+		this.register(editor.addAction({ id: "hijackEnter", label: "", keybindings: [monaco.KeyCode.Enter], run: editor => this.onEnter?.(editor.getValue()), precondition: "!suggestWidgetVisible" }));
+		// TODO hijack paste
+	}
+
+	onEnter?: (value: string) => void;
+
+	getText(): string {
+		return this.editor.getValue();
+	}
+
+	setText(text: string): void {
+		this.editor.setValue(text);
+		// set cursor to end
+		this.editor.setPosition({ lineNumber: 1, column: this.editor.getModel()?.getLineMaxColumn(1) ?? 1 });
+	}
+
+	focus(): void {
+		this.editor.focus();
+	}
+
+	setReadonly(value: boolean): void {
+		this.editor.updateOptions({ readOnly: value	});
+	}
+
+	isReadonly(): boolean {
+		return this.editor.getOptions().get(monaco.editor.EditorOption.readOnly);
+	}
+
+	override dispose(): void {
+		super.dispose();
+		this.editor.dispose();
+	}
+}
