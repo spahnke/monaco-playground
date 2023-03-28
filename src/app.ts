@@ -4,7 +4,7 @@ import { TodoContribution } from "./contrib/todo-contribution.js";
 import { CodeEditor } from "./code-editor.js";
 import { SingleLineCodeEditor } from "./single-line-code-editor.js";
 
-const textInput = await SingleLineCodeEditor.create(document.querySelector<HTMLElement>("#textInput")!);
+const textInput = await SingleLineCodeEditor.create(document.querySelector<HTMLElement>("#textInput")!, "type text here");
 textInput.onEnter = console.log;
 textInput.focus();
 

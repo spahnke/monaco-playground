@@ -3,7 +3,7 @@ import { loadMonaco } from "./monaco-loader.js";
 
 // inspired by https://github.com/vikyd/vue-monaco-singleline/blob/master/src/monaco-singleline.vue and https://github.com/microsoft/monaco-editor/issues/2009
 export class SingleLineCodeEditor extends Disposable {
-	static async create(element: HTMLElement, language?: string, useMonospaceFont = false): Promise<SingleLineCodeEditor> {
+	static async create(element: HTMLElement, placeholder?: string, language?: string, useMonospaceFont = false): Promise<SingleLineCodeEditor> {
 		await loadMonaco();
 		return new SingleLineCodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
@@ -34,10 +34,10 @@ export class SingleLineCodeEditor extends Disposable {
 			},
 			wordBasedSuggestions: false,
 			wordWrap: "off",
-		}));
+		}), placeholder);
 	}
 
-	private constructor(private readonly editor: monaco.editor.IStandaloneCodeEditor) {
+	private constructor(private readonly editor: monaco.editor.IStandaloneCodeEditor, placeholder?: string) {
 		super();
 
 		const container = editor.getContainerDomNode();
@@ -45,6 +45,29 @@ export class SingleLineCodeEditor extends Disposable {
 		container.style.height = `${editor.getOption(monaco.editor.EditorOption.lineHeight)}px`;
 		this.register(editor.onDidFocusEditorWidget(() => container.classList.add("focus")));
 		this.register(editor.onDidBlurEditorWidget(() => container.classList.remove("focus")));
+
+		if (placeholder) {
+			const placeholderDecoration: monaco.editor.IModelDeltaDecoration = {
+				options: {
+					before: {
+						content: placeholder,
+						inlineClassName: "monaco-single-line-placeholder",
+						cursorStops: monaco.editor.InjectedTextCursorStops.None
+					},
+					isWholeLine: true,
+					showIfCollapsed: true,
+				},
+				range: new monaco.Range(1, 1, 1, 1),
+			};
+			const decorations = editor.createDecorationsCollection([placeholderDecoration]);
+			this.register(editor.onDidChangeModelContent(() => {
+				const length = editor.getModel()?.getValueLength() ?? 0;
+				if (length === 0)
+					decorations.set([placeholderDecoration]);
+				else
+					decorations.clear();
+			}));
+		}
 
 		this.register(editor.onKeyDown(e => {
 			// prevent editor from handling the tab key and inputting a tab character
