@@ -267,22 +267,27 @@ export class SingleLineCodeEditor extends Disposable {
 		this.register(editor.onDidFocusEditorWidget(() => container.classList.add("focus")));
 		this.register(editor.onDidBlurEditorWidget(() => container.classList.remove("focus")));
 
-		editor.createContextKey("singleLine", "true");
-
-		// disable find widget (use of the context key allows the browser default to be the fallback instead of suppressing it completely)
-		this.register(monaco.editor.addKeybindingRule({ keybinding: 0, command: "-actions.find" }));
-		this.register(monaco.editor.addKeybindingRule({ keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, command: "actions.find", when: "!singleLine && editorFocus" }));
-
-		// disable command palette; this cannot be unbound through a keybinding rule
-		this.register(editor.addAction({ id: "disableCommandPalette", label: "", keybindings: [monaco.KeyCode.F1], run: () => { } }));
-
-		// suppress enter key and invoke a custom action
-		this.register(editor.addAction({ id: "hijackEnter", label: "", keybindings: [monaco.KeyCode.Enter], run: editor => this.onEnter?.(editor.getValue()), precondition: "!suggestWidgetVisible" }));
-
-		// prevent editor from handling the tab key and inputting a tab character
 		this.register(editor.onKeyDown(e => {
+			// prevent editor from handling the tab key and inputting a tab character
 			if (e.equals(monaco.KeyCode.Tab) || e.equals(monaco.KeyMod.Shift | monaco.KeyCode.Tab))
-				e.stopPropagation(); // stop propagation to editor handling
+				e.stopPropagation();
+
+			// disable command palette
+			if (e.equals(monaco.KeyCode.F1))
+				e.stopPropagation();
+
+			// disable find widget
+			if (e.equals(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF))
+				e.stopPropagation();
+		}));
+
+		// suppress enter key and invoke a custom action if registered; use an action so we can have a precondition
+		this.register(editor.addAction({
+			id: "hijackEnter",
+			label: "",
+			keybindings: [monaco.KeyCode.Enter],
+			run: editor => this.onEnter?.(editor.getValue()),
+			precondition: "!suggestWidgetVisible",
 		}));
 
 		// when pasting multi-line content merge lines into one line
