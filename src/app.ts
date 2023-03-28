@@ -1,7 +1,8 @@
 import { DebugContribution } from "./contrib/debug-contribution.js";
 import { PlaygroundContribution } from "./contrib/playground-contribution.js";
 import { TodoContribution } from "./contrib/todo-contribution.js";
-import { CodeEditor, SingleLineCodeEditor } from "./code-editor.js";
+import { CodeEditor } from "./code-editor.js";
+import { SingleLineCodeEditor } from "./single-line-code-editor.js";
 
 const textInput = await SingleLineCodeEditor.create(document.querySelector<HTMLElement>("#textInput")!);
 textInput.onEnter = console.log;
