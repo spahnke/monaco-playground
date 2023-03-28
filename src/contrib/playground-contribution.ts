@@ -202,9 +202,7 @@ export function registerSlashCommands(textInput: CodeEditorTextInput, commands: 
 				return undefined;
 
 			const suggestions: monaco.languages.CompletionItem[] = commands.map(command => {
-
 				const withSlash = `/${command.command}`;
-
 				return {
 					label: withSlash,
 					insertText: `${withSlash} $0`,
@@ -220,7 +218,6 @@ export function registerSlashCommands(textInput: CodeEditorTextInput, commands: 
 	}));
 
 	const decorations = textInput.editor.createDecorationsCollection();
-
 	const updateSlashDecorations = () => {
 		const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
 		for (const command of commands) {
@@ -251,7 +248,6 @@ export function registerSlashCommands(textInput: CodeEditorTextInput, commands: 
 		}
 		decorations.set(newDecorations);
 	};
-
 	disposable.register(textInput.editor.onDidChangeModelContent(updateSlashDecorations));
 
 	return disposable;
