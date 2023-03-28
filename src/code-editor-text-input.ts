@@ -2,8 +2,9 @@ import { Disposable } from "./common/disposable.js";
 import { loadMonaco } from "./monaco-loader.js";
 
 export class CodeEditorTextInput extends Disposable {
-	static async create(element: HTMLElement, placeholder?: string, language?: string, useMonospaceFont = false): Promise<CodeEditorTextInput> {
+	static async create(element: HTMLElement, placeholder?: string, icon?: string, useMonospaceFont = false): Promise<CodeEditorTextInput> {
 		await loadMonaco();
+		const hasIcon = Boolean(icon);
 		return new CodeEditorTextInput(monaco.editor.create(element, {
 			automaticLayout: true,
 			contextmenu: false,
@@ -13,10 +14,10 @@ export class CodeEditorTextInput extends Disposable {
 			fontFamily: useMonospaceFont ? undefined : `-apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "HelveticaNeue-Light", system-ui, "Ubuntu", "Droid Sans", sans-serif`,
 			fontLigatures: true,
 			fontSize: 13,
-			glyphMargin: false,
-			language,
+			glyphMargin: hasIcon,
+			language: "plaintext",
 			lightbulb: { enabled: false },
-			lineDecorationsWidth: 0,
+			lineDecorationsWidth: hasIcon ? 10 : 0,
 			lineNumbers: "off",
 			links: false,
 			minimap: { enabled: false },
@@ -33,10 +34,10 @@ export class CodeEditorTextInput extends Disposable {
 			},
 			wordBasedSuggestions: false,
 			wordWrap: "off",
-		}), placeholder);
+		}), placeholder, icon);
 	}
 
-	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, placeholder?: string) {
+	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, placeholder?: string, icon?: string) {
 		super();
 
 		const container = editor.getContainerDomNode();
@@ -47,16 +48,15 @@ export class CodeEditorTextInput extends Disposable {
 
 		if (placeholder) {
 			const placeholderDecoration: monaco.editor.IModelDeltaDecoration = {
+				range: new monaco.Range(1, 1, 1, 1),
 				options: {
 					before: {
 						content: placeholder,
 						inlineClassName: "monaco-single-line-placeholder",
 						cursorStops: monaco.editor.InjectedTextCursorStops.None
 					},
-					isWholeLine: true,
 					showIfCollapsed: true,
 				},
-				range: new monaco.Range(1, 1, 1, 1),
 			};
 			const decorations = editor.createDecorationsCollection([placeholderDecoration]);
 			this.register(editor.onDidChangeModelContent(() => {
@@ -66,6 +66,15 @@ export class CodeEditorTextInput extends Disposable {
 				else
 					decorations.clear();
 			}));
+		}
+
+		if (icon) {
+			editor.createDecorationsCollection([
+				{
+					range: new monaco.Range(1, 1, 1, 1),
+					options: { glyphMarginClassName: `codicon-${icon}`, },
+				}
+			]);
 		}
 
 		this.register(editor.onKeyDown(e => {

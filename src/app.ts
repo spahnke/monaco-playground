@@ -8,7 +8,7 @@ const textInput = await CodeEditorTextInput.create(document.querySelector<HTMLEl
 textInput.onEnter = console.log;
 textInput.register(registerSlashCommands(textInput, [{ command: "test", detail: "A test command" }, { command: "format", detail: "Formats the text" }]));
 
-const textInput2 = await CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput2")!, "type more text here");
+const textInput2 = await CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput2")!, "type more text here", "search");
 textInput2.onEnter = console.log;
 
 const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
