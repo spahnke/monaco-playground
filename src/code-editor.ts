@@ -279,6 +279,12 @@ export class SingleLineCodeEditor extends Disposable {
 		// suppress enter key and invoke a custom action
 		this.register(editor.addAction({ id: "hijackEnter", label: "", keybindings: [monaco.KeyCode.Enter], run: editor => this.onEnter?.(editor.getValue()), precondition: "!suggestWidgetVisible" }));
 
+		// prevent editor from handling the tab key and inputting a tab character
+		this.register(editor.onKeyDown(e => {
+			if (e.equals(monaco.KeyCode.Tab) || e.equals(monaco.KeyMod.Shift | monaco.KeyCode.Tab))
+				e.stopPropagation(); // stop propagation to editor handling
+		}));
+
 		// when pasting multi-line content merge lines into one line
 		this.register(editor.onDidPaste(e => {
 			if (e.range.endLineNumber <= 1)
@@ -286,9 +292,6 @@ export class SingleLineCodeEditor extends Disposable {
 			const text = this.getText();
 			this.setText(text.replaceAll(/\r?\n/g, " "));
 		}));
-
-		// TODO make tabbing work; the option tabFocusMode does not work
-		// editor.trigger("", "editor.action.toggleTabFocusMode", null);
 	}
 
 	onEnter?: (value: string) => void;
