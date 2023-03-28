@@ -225,9 +225,8 @@ export class CodeEditor extends Disposable {
 // inspired by https://github.com/vikyd/vue-monaco-singleline/blob/master/src/monaco-singleline.vue and https://github.com/microsoft/monaco-editor/issues/2009
 export class SingleLineCodeEditor extends Disposable {
 	static async create(element: HTMLElement, language?: string): Promise<SingleLineCodeEditor> {
-		element.className = "monaco-single-line";
 		await loadMonaco();
-		return new SingleLineCodeEditor(monaco.editor.create(element, {
+		const editor = monaco.editor.create(element, {
 			automaticLayout: true,
 			contextmenu: false,
 			cursorStyle: "line-thin",
@@ -254,7 +253,10 @@ export class SingleLineCodeEditor extends Disposable {
 			},
 			wordBasedSuggestions: false,
 			wordWrap: "off",
-		}));
+		});
+		element.className = "monaco-single-line";
+		element.style.height = `${editor.getOption(monaco.editor.EditorOption.lineHeight)}px`;
+		return new SingleLineCodeEditor(editor);
 	}
 
 	private constructor(private readonly editor: monaco.editor.IStandaloneCodeEditor) {

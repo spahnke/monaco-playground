@@ -5,8 +5,15 @@
 	--monaco-todo-color: #fff;
 }
 
+body {
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+}
+
 .editor {
-	height: 90vh;
+	height: 85%;
 }
 
 .codicon-debug-breakpoint,
@@ -43,7 +50,6 @@
 }
 
 .monaco-single-line {
-	height: 18px;
 	display: flex;
 	align-items: center;
 	position: relative;
