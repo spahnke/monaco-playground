@@ -226,7 +226,7 @@ export class CodeEditor extends Disposable {
 export class SingleLineCodeEditor extends Disposable {
 	static async create(element: HTMLElement, language?: string): Promise<SingleLineCodeEditor> {
 		await loadMonaco();
-		const editor = monaco.editor.create(element, {
+		return new SingleLineCodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
 			contextmenu: false,
 			cursorStyle: "line-thin",
@@ -253,14 +253,18 @@ export class SingleLineCodeEditor extends Disposable {
 			},
 			wordBasedSuggestions: false,
 			wordWrap: "off",
-		});
-		element.className = "monaco-single-line";
-		element.style.height = `${editor.getOption(monaco.editor.EditorOption.lineHeight)}px`;
-		return new SingleLineCodeEditor(editor);
+		}));
 	}
 
 	private constructor(private readonly editor: monaco.editor.IStandaloneCodeEditor) {
 		super();
+
+		const container = editor.getContainerDomNode();
+		container.className = "monaco-single-line";
+		container.style.height = `${editor.getOption(monaco.editor.EditorOption.lineHeight)}px`;
+		this.register(editor.onDidFocusEditorWidget(() => container.classList.add("focus")));
+		this.register(editor.onDidBlurEditorWidget(() => container.classList.remove("focus")));
+
 		editor.createContextKey("singleLine", "true");
 
 		// disable find widget (use of the context key allows the browser default to be the fallback instead of suppressing it completely)
