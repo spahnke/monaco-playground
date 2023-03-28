@@ -1,7 +1,7 @@
 import { Disposable } from "../common/disposable.js";
 import { allowTopLevelReturn, enableJavaScriptBrowserCompletion, restartLanguageServer } from "../languages/javascript/javascript-extensions.js";
 import { CodeEditor } from "../code-editor.js";
-import { SingleLineCodeEditor } from "../single-line-code-editor.js";
+import { CodeEditorTextInput } from "../code-editor-text-input.js";
 
 const contextMenuGroupId = "7_playground";
 const linqTestCode = `const query = foo + 'a x.id.toString() === "' + foo + \`" a x.id.toString() !== "\${text}" asdf\` + foo;
@@ -187,7 +187,7 @@ export class PlaygroundContribution extends Disposable {
 }
 
 // example from https://github.com/microsoft/vscode/blob/9216747901d28de7a0ea8ffbf9d11b6c9dc253b8/src/vs/workbench/contrib/interactiveEditor/browser/interactiveEditorWidget.ts#L1051
-export function registerSlashCommands(textInput: SingleLineCodeEditor, commands: { command: string, detail: string; }[]): monaco.IDisposable {
+export function registerSlashCommands(textInput: CodeEditorTextInput, commands: { command: string, detail: string; }[]): monaco.IDisposable {
 	const model = textInput.editor.getModel();
 	if (!model)
 		return Disposable.None;

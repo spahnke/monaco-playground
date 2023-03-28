@@ -1,10 +1,10 @@
 import { Disposable } from "./common/disposable.js";
 import { loadMonaco } from "./monaco-loader.js";
 
-export class SingleLineCodeEditor extends Disposable {
-	static async create(element: HTMLElement, placeholder?: string, language?: string, useMonospaceFont = false): Promise<SingleLineCodeEditor> {
+export class CodeEditorTextInput extends Disposable {
+	static async create(element: HTMLElement, placeholder?: string, language?: string, useMonospaceFont = false): Promise<CodeEditorTextInput> {
 		await loadMonaco();
-		return new SingleLineCodeEditor(monaco.editor.create(element, {
+		return new CodeEditorTextInput(monaco.editor.create(element, {
 			automaticLayout: true,
 			contextmenu: false,
 			cursorStyle: "line-thin",
