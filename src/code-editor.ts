@@ -259,9 +259,18 @@ export class SingleLineCodeEditor extends Disposable {
 
 	private constructor(private readonly editor: monaco.editor.IStandaloneCodeEditor) {
 		super();
-		this.register(editor.addAction({ id: "disableFind", label: "", keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF], run: () => { } }));
+		editor.createContextKey("singleLine", "true");
+
+		// disable find widget (use of the context key allows the browser default to be the fallback instead of suppressing it completely)
+		this.register(monaco.editor.addKeybindingRule({ keybinding: 0, command: "-actions.find" }));
+		this.register(monaco.editor.addKeybindingRule({ keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, command: "actions.find", when: "!singleLine && editorFocus" }));
+
+		// disable command palette; this cannot be unbound through a keybinding rule
 		this.register(editor.addAction({ id: "disableCommandPalette", label: "", keybindings: [monaco.KeyCode.F1], run: () => { } }));
+
+		// suppress enter key and invoke a custom action
 		this.register(editor.addAction({ id: "hijackEnter", label: "", keybindings: [monaco.KeyCode.Enter], run: editor => this.onEnter?.(editor.getValue()), precondition: "!suggestWidgetVisible" }));
+
 		// TODO hijack paste
 	}
 
