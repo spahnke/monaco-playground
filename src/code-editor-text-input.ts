@@ -2,6 +2,7 @@ import { Disposable } from "./common/disposable.js";
 import { loadMonaco } from "./monaco-loader.js";
 
 export class CodeEditorTextInput extends Disposable {
+	private readonly onDidChangeTextEmitter = new monaco.Emitter<string>();
 	private readonly onDidPressEnterEmitter = new monaco.Emitter<string>();
 
 	static async create(element: HTMLElement, placeholder?: string, icon?: string, useMonospaceFont = false): Promise<CodeEditorTextInput> {
@@ -109,8 +110,11 @@ export class CodeEditorTextInput extends Disposable {
 			const text = this.getText();
 			this.setText(text.replaceAll(/\r?\n/g, " "));
 		}));
+
+		this.register(editor.onDidChangeModelContent(() => this.onDidChangeTextEmitter.fire(editor.getValue())));
 	}
 
+	readonly onDidChangeText = this.onDidChangeTextEmitter.event;
 	readonly onDidPressEnter = this.onDidPressEnterEmitter.event;
 
 	getText(): string {
@@ -137,6 +141,7 @@ export class CodeEditorTextInput extends Disposable {
 
 	override dispose(): void {
 		super.dispose();
+		this.onDidChangeTextEmitter.dispose();
 		this.onDidPressEnterEmitter.dispose();
 		this.editor.dispose();
 	}
