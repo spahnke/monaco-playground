@@ -5,7 +5,7 @@ import { CodeEditor } from "./code-editor.js";
 import { CodeEditorTextInput } from "./code-editor-text-input.js";
 
 const textInput = await CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput")!, "type text here");
-textInput.onEnter = console.log;
+textInput.onDidPressEnter(console.log);
 textInput.register(registerSlashCommands(textInput, [{ command: "test", detail: "A test command" }, { command: "format", detail: "Formats the text" }]));
 
 await CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput2")!, "type your search query here", "search");

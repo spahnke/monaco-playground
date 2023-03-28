@@ -2,6 +2,8 @@ import { Disposable } from "./common/disposable.js";
 import { loadMonaco } from "./monaco-loader.js";
 
 export class CodeEditorTextInput extends Disposable {
+	private readonly onDidPressEnterEmitter = new monaco.Emitter<string>();
+
 	static async create(element: HTMLElement, placeholder?: string, icon?: string, useMonospaceFont = false): Promise<CodeEditorTextInput> {
 		await loadMonaco();
 		const hasIcon = Boolean(icon);
@@ -96,7 +98,7 @@ export class CodeEditorTextInput extends Disposable {
 			id: "hijackEnter",
 			label: "",
 			keybindings: [monaco.KeyCode.Enter],
-			run: editor => this.onEnter?.(editor.getValue()),
+			run: editor => this.onDidPressEnterEmitter.fire(editor.getValue()),
 			precondition: "!suggestWidgetVisible || !suggestWidgetHasFocusedSuggestion",
 		}));
 
@@ -109,7 +111,7 @@ export class CodeEditorTextInput extends Disposable {
 		}));
 	}
 
-	onEnter?: (value: string) => void;
+	readonly onDidPressEnter = this.onDidPressEnterEmitter.event;
 
 	getText(): string {
 		return this.editor.getValue();
@@ -135,6 +137,7 @@ export class CodeEditorTextInput extends Disposable {
 
 	override dispose(): void {
 		super.dispose();
+		this.onDidPressEnterEmitter.dispose();
 		this.editor.dispose();
 	}
 }
