@@ -6,7 +6,7 @@
 	"configurations": [
 		{
 			"name": "Launch Edge",
-			"type": "pwa-msedge",
+			"type": "msedge",
 			"request": "launch",
 			"url": "http://localhost:9000",
 			"webRoot": "${workspaceFolder}/wwwroot",
@@ -14,7 +14,7 @@
 		},
 		{
 			"name": "Launch Chrome",
-			"type": "pwa-chrome",
+			"type": "chrome",
 			"request": "launch",
 			"url": "http://localhost:9000",
 			"webRoot": "${workspaceFolder}/wwwroot",
