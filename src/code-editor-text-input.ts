@@ -115,8 +115,7 @@ export class CodeEditorTextInput extends Disposable {
 		this.register(editor.onDidPaste(e => {
 			if (e.range.endLineNumber <= 1)
 				return;
-			const text = this.getText();
-			this.setText(text.replaceAll(/\r?\n/g, " "));
+			this.setText(this.getText()); // setText removes line breaks
 		}));
 
 		this.register(editor.onDidChangeModelContent(() => this.onDidChangeTextEmitter.fire(editor.getValue())));
@@ -130,7 +129,7 @@ export class CodeEditorTextInput extends Disposable {
 	}
 
 	setText(text: string): void {
-		this.editor.setValue(text);
+		this.editor.setValue(text.replaceAll(/\r?\n/g, " "));
 		// set cursor to end
 		this.editor.setPosition({ lineNumber: 1, column: this.editor.getModel()?.getLineMaxColumn(1) ?? 1 });
 	}
