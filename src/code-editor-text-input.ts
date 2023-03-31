@@ -5,7 +5,7 @@ export class CodeEditorTextInput extends Disposable {
 	private readonly onDidChangeTextEmitter = new monaco.Emitter<string>();
 	private readonly onDidPressEnterEmitter = new monaco.Emitter<string>();
 
-	static async create(element: HTMLElement, placeholder?: string, icon?: string, useMonospaceFont = false): Promise<CodeEditorTextInput> {
+	static async create(element: HTMLElement, text?: string, placeholder?: string, icon?: string, useMonospaceFont = false): Promise<CodeEditorTextInput> {
 		await loadMonaco();
 		const hasIcon = Boolean(icon);
 		return new CodeEditorTextInput(monaco.editor.create(element, {
@@ -43,6 +43,7 @@ export class CodeEditorTextInput extends Disposable {
 				vertical: "hidden",
 				alwaysConsumeMouseWheel: false,
 			},
+			value: text,
 			wordBasedSuggestions: false,
 			wordWrap: "off",
 		}), placeholder, icon);
@@ -58,25 +59,28 @@ export class CodeEditorTextInput extends Disposable {
 		this.register(editor.onDidBlurEditorWidget(() => container.classList.remove("focus")));
 
 		if (placeholder) {
-			const placeholderDecoration: monaco.editor.IModelDeltaDecoration = {
-				range: new monaco.Range(1, 1, 1, 1),
-				options: {
-					before: {
-						content: placeholder,
-						inlineClassName: "monaco-single-line-placeholder",
-						cursorStops: monaco.editor.InjectedTextCursorStops.None
-					},
-					showIfCollapsed: true,
-				},
-			};
-			const decorations = editor.createDecorationsCollection([placeholderDecoration]);
-			this.register(editor.onDidChangeModelContent(() => {
+			const placeHolderDecorations = editor.createDecorationsCollection();
+			const updatePlaceHolderDecorations = () => {
 				const length = editor.getModel()?.getValueLength() ?? 0;
-				if (length === 0)
-					decorations.set([placeholderDecoration]);
-				else
-					decorations.clear();
-			}));
+				if (length === 0) {
+					placeHolderDecorations.set([{
+						range: new monaco.Range(1, 1, 1, 1),
+						options: {
+							before: {
+								content: placeholder,
+								inlineClassName: "monaco-single-line-placeholder",
+								cursorStops: monaco.editor.InjectedTextCursorStops.None
+							},
+							showIfCollapsed: true,
+						},
+					}]);
+				}
+				else {
+					placeHolderDecorations.clear();
+				}
+			};
+			updatePlaceHolderDecorations();
+			this.register(editor.onDidChangeModelContent(updatePlaceHolderDecorations));
 		}
 
 		if (icon) {
