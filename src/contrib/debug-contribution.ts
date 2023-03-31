@@ -7,12 +7,14 @@ const contextMenuGroupId = "8_debug";
  * Adds debug UI capabilities to the editor.
  */
 export class DebugContribution extends Disposable {
-	private breakpointPreviewDecorations: string[] = [];
+	private breakpointPreviewDecorations: monaco.editor.IEditorDecorationsCollection;
 	private breakpointDecorations: Map<string, monaco.editor.IModelDecoration> = new Map();
-	private currentDebugLineDecorations: string[] = [];
+	private currentDebugLineDecorations: monaco.editor.IEditorDecorationsCollection;
 
 	constructor(private editor: monaco.editor.IStandaloneCodeEditor) {
 		super();
+		this.breakpointPreviewDecorations = editor.createDecorationsCollection();
+		this.currentDebugLineDecorations = editor.createDecorationsCollection();
 		this.enableGlyphMargin();
 		this.register(this.editor.onMouseMove(this.onMouseMove));
 		this.register(this.editor.onMouseDown(this.onMouseDown));
@@ -75,8 +77,7 @@ export class DebugContribution extends Disposable {
 			this.removeDebugLine();
 			return;
 		}
-
-		this.currentDebugLineDecorations = this.editor.deltaDecorations(this.currentDebugLineDecorations, [
+		this.currentDebugLineDecorations.set([
 			{
 				range: new monaco.Range(debugPosition.startLineNumber, debugPosition.startColumn, debugPosition.endLineNumber, debugPosition.endColumn),
 				options: {
@@ -91,8 +92,7 @@ export class DebugContribution extends Disposable {
 	}
 
 	private removeDebugLine(): void {
-		this.editor.deltaDecorations(this.currentDebugLineDecorations, []);
-		this.currentDebugLineDecorations = [];
+		this.currentDebugLineDecorations.clear();
 	}
 
 	private enableGlyphMargin() {
@@ -140,7 +140,7 @@ export class DebugContribution extends Disposable {
 		if (isComment(model, line))
 			return;
 
-		const [decorationId] = this.editor.deltaDecorations([], [
+		const [decorationId] = model.deltaDecorations([], [
 			{
 				range: new monaco.Range(line, 1, line, 1),
 				options: {
@@ -155,7 +155,10 @@ export class DebugContribution extends Disposable {
 	}
 
 	private removeBreakpoint(breakpointDecoration: monaco.editor.IModelDecoration): void {
-		this.editor.deltaDecorations([breakpointDecoration.id], []);
+		const model = this.editor.getModel();
+		if (!model)
+			return;
+		model.deltaDecorations([breakpointDecoration.id], []);
 		this.breakpointDecorations.delete(breakpointDecoration.id);
 	}
 
@@ -171,14 +174,12 @@ export class DebugContribution extends Disposable {
 				}
 			});
 		}
-		this.breakpointPreviewDecorations = this.editor.deltaDecorations(this.breakpointPreviewDecorations, newDecorations);
+		this.breakpointPreviewDecorations.set(newDecorations);
 	}
 
 	private hideBreakpointPreview(): void {
-		if (this.breakpointPreviewDecorations.length > 0) {
-			this.editor.deltaDecorations(this.breakpointPreviewDecorations, []);
-			this.breakpointPreviewDecorations = [];
-		}
+		if (this.breakpointPreviewDecorations.length > 0)
+			this.breakpointPreviewDecorations.clear();
 	}
 
 	private getBreakpointDecoration(line: number): monaco.editor.IModelDecoration | undefined {
@@ -188,6 +189,6 @@ export class DebugContribution extends Disposable {
 
 	private getDebugLineDecoration(line: number): monaco.editor.IModelDecoration | undefined {
 		const lineDecorations = this.editor.getLineDecorations(line);
-		return lineDecorations?.find(x => this.currentDebugLineDecorations.includes(x.id));
+		return lineDecorations?.find(x => this.currentDebugLineDecorations.has(x));
 	}
 }
