@@ -129,9 +129,14 @@ export class CodeEditorTextInput extends Disposable {
 	}
 
 	setText(text: string): void {
-		this.editor.setValue(text.replaceAll(/\r?\n/g, " "));
+		const model = this.editor.getModel();
+		if (!model)
+			return;
+
+		const normalizedText = text.replaceAll(/\r?\n/g, " ");
+		this.editor.executeEdits(null, [{ range: model.getFullModelRange(), text: normalizedText }]);
 		// set cursor to end
-		this.editor.setPosition({ lineNumber: 1, column: this.editor.getModel()?.getLineMaxColumn(1) ?? 1 });
+		this.editor.setPosition({ lineNumber: 1, column: model.getLineMaxColumn(1) });
 	}
 
 	focus(): void {
