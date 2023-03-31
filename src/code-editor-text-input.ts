@@ -107,7 +107,7 @@ export class CodeEditorTextInput extends Disposable {
 			id: "hijackEnter",
 			label: "",
 			keybindings: [monaco.KeyCode.Enter],
-			run: editor => this.onDidPressEnterEmitter.fire(editor.getValue()),
+			run: () => this.onDidPressEnterEmitter.fire(this.getText()),
 			precondition: "!suggestWidgetVisible || !suggestWidgetHasFocusedSuggestion",
 		}));
 
