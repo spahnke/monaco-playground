@@ -115,6 +115,7 @@ export class CodeEditorTextInput extends Disposable {
 		this.register(editor.onDidPaste(e => {
 			if (e.range.endLineNumber <= 1)
 				return;
+			this.editor.popUndoStop(); // remove undo stop introduced by paste operation that contains multiline text
 			this.setText(this.getText()); // setText removes line breaks
 		}));
 
