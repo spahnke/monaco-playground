@@ -119,7 +119,12 @@ export class CodeEditorTextInput extends Disposable {
 			this.setText(this.getText()); // setText removes line breaks
 		}));
 
-		this.register(editor.onDidChangeModelContent(() => this.onDidChangeTextEmitter.fire(editor.getValue())));
+		this.register(editor.onDidChangeModelContent(() => {
+			const text = this.getText();
+			if (/\r?\n/.test(text))
+				return; // do not trigger event for multiline text because it is normalized in the next step and the event fires again with the normalized text
+			return this.onDidChangeTextEmitter.fire(text);
+		}));
 	}
 
 	readonly onDidChangeText = this.onDidChangeTextEmitter.event;
