@@ -21,7 +21,7 @@ type MonacoLocale = "en" | "de" | "es" | "fr" | "it" | "ja" | "ko" | "ru" | "zh-
 
 /**
  * Asynchronously loads the Monaco editor sources. Call this once at app start-up and wait for it to complete before doing
- * any editor specific operations.
+ * any Monaco specific operations.
  */
 export function loadMonaco(locale: MonacoLocale = "en"): Promise<void> {
 	if (monacoLoaded === undefined) {
