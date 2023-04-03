@@ -3,15 +3,18 @@ import { PlaygroundContribution, registerSlashCommands } from "./contrib/playgro
 import { TodoContribution } from "./contrib/todo-contribution.js";
 import { CodeEditor } from "./code-editor.js";
 import { CodeEditorTextInput } from "./code-editor-text-input.js";
+import { loadMonaco } from "./monaco-loader.js";
 
-const textInput = await CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput")!, undefined, "type text here");
+await loadMonaco();
+
+const textInput = CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput")!, undefined, "type text here");
 textInput.onDidPressEnter(console.log);
 textInput.register(registerSlashCommands(textInput, [{ command: "test", detail: "A test command" }, { command: "format", detail: "Formats the text" }]));
 
-const textInput2 = await CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput2")!, "asdf", "type your search query here", "search");
+const textInput2 = CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput2")!, "asdf", "type your search query here", "search");
 textInput2.onDidChangeText(console.log);
 
-const editor = await CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
+const editor = CodeEditor.create(document.querySelector<HTMLElement>(".editor")!);
 
 editor.register(new TodoContribution());
 editor.register(new PlaygroundContribution(editor));

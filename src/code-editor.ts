@@ -1,6 +1,5 @@
 import { Disposable } from "./common/disposable.js";
 import { addLibrary, delay, ILibrary } from "./common/monaco-utils.js";
-import { loadMonaco } from "./monaco-loader.js";
 
 class LocalStorageEditorConfiguration implements monaco.IDisposable {
 	constructor(private readonly editor: monaco.editor.IEditor) {
@@ -35,8 +34,7 @@ class LocalStorageEditorConfiguration implements monaco.IDisposable {
 }
 
 export class CodeEditor extends Disposable {
-	static async create(element: HTMLElement, language?: string): Promise<CodeEditor> {
-		await loadMonaco();
+	static create(element: HTMLElement, language?: string): CodeEditor {
 		return new CodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
 			bracketPairColorization: {

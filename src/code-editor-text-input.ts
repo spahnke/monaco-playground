@@ -1,12 +1,10 @@
 import { Disposable } from "./common/disposable.js";
-import { loadMonaco } from "./monaco-loader.js";
 
 export class CodeEditorTextInput extends Disposable {
 	private readonly onDidChangeTextEmitter = new monaco.Emitter<string>();
 	private readonly onDidPressEnterEmitter = new monaco.Emitter<string>();
 
-	static async create(element: HTMLElement, text?: string, placeholder?: string, icon?: string, useMonospaceFont = false): Promise<CodeEditorTextInput> {
-		await loadMonaco();
+	static create(element: HTMLElement, text?: string, placeholder?: string, icon?: string, useMonospaceFont = false): CodeEditorTextInput {
 		const hasIcon = Boolean(icon);
 		return new CodeEditorTextInput(monaco.editor.create(element, {
 			automaticLayout: true,

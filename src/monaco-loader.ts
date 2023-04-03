@@ -18,6 +18,10 @@ interface IRequireConfig {
 
 let monacoLoaded: Promise<void> | undefined;
 
+/**
+ * Asynchronously loads the Monaco editor sources. Call this once at app start-up and wait for it to complete before doing
+ * any editor specific operations.
+ */
 export function loadMonaco(): Promise<void> {
 	if (monacoLoaded === undefined) {
 		monacoLoaded = new Promise<void>(resolve => {
