@@ -17,22 +17,24 @@ interface IRequireConfig {
 }
 
 let monacoLoaded: Promise<void> | undefined;
+type MonacoLocale = "en" | "de" | "es" | "fr" | "it" | "ja" | "ko" | "ru" | "zh-cn" | "zh-tw";
 
 /**
  * Asynchronously loads the Monaco editor sources. Call this once at app start-up and wait for it to complete before doing
  * any editor specific operations.
  */
-export function loadMonaco(): Promise<void> {
+export function loadMonaco(locale: MonacoLocale = "en"): Promise<void> {
 	if (monacoLoaded === undefined) {
+		const monacoLocale = locale === "en" ? "" : locale; // en is default and must not be explicitly specified (but it makes the API nicer to include it as value)
 		monacoLoaded = new Promise<void>(resolve => {
 			require.config({ paths: { vs: "lib/monaco-editor/dev/vs" } });
-			// require.config({
-			// 	"vs/nls": {
-			// 		availableLanguages: {
-			// 			"*": "de"
-			// 		}
-			// 	}
-			// });
+			require.config({
+				"vs/nls": {
+					availableLanguages: {
+						"*": monacoLocale,
+					}
+				}
+			});
 			require(["vs/editor/editor.main"], () => {
 				const editorOpenService = new EditorOpenService();
 				monaco.editor.registerEditorOpener = opener => editorOpenService.registerOpener(opener);
