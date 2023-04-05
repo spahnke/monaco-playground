@@ -15,17 +15,17 @@
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
-		"monaco-editor": "0.37.0-dev.20230330"
+		"monaco-editor": "0.37.0"
 	},
 	"devDependencies": {
 		"@guanghechen/rollup-plugin-copy": "^4.7.4",
-		"@rollup/plugin-typescript": "^11.0.0",
+		"@rollup/plugin-typescript": "^11.1.0",
 		"@types/eslint": "^8.37.0",
 		"@types/estree": "1.0.0",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.15.11",
-		"@typescript-eslint/eslint-plugin": "^5.57.0",
-		"@typescript-eslint/parser": "^5.57.0",
+		"@typescript-eslint/eslint-plugin": "^5.57.1",
+		"@typescript-eslint/parser": "^5.57.1",
 		"eslint": "^8.37.0",
 		"mocha": "^10.2.0",
 		"rollup": "^3.20.2",
