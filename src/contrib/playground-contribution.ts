@@ -201,7 +201,7 @@ export function registerSlashCommands(textInput: CodeEditorTextInput, commands: 
 			if (position.lineNumber !== 1 && position.column !== 1)
 				return undefined;
 
-			const suggestions: monaco.languages.CompletionItem[] = commands.map(command => {
+			const suggestions = commands.map<monaco.languages.CompletionItem>(command => {
 				const withSlash = `/${command.command}`;
 				return {
 					label: withSlash,
