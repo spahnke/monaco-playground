@@ -169,8 +169,8 @@ export class PlaygroundContribution extends Disposable {
 	 */
 	private addOpenEditorInterceptor() {
 		this.register(monaco.editor.registerEditorOpener({
-			async openCodeEditor(source: monaco.editor.ICodeEditor, resource: monaco.Uri, selection?: monaco.IRange): Promise<boolean> {
-				console.log("Open definition here...", resource, selection);
+			openCodeEditor(source: monaco.editor.ICodeEditor, resource: monaco.Uri, selectionOrPosition?: monaco.IRange | monaco.IPosition): boolean {
+				console.log("Open definition here...", resource, selectionOrPosition);
 				console.log("Corresponding model: ", monaco.editor.getModel(resource));
 				return false;
 			}
