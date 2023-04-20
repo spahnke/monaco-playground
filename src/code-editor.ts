@@ -40,6 +40,8 @@ export class CodeEditor extends Disposable {
 			bracketPairColorization: {
 				enabled: true,
 			},
+			colorDecorators: true,
+			defaultColorDecorators: true,
 			fixedOverflowWidgets: true,
 			fontLigatures: true,
 			fontSize: 13,
