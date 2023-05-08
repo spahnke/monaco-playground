@@ -4,6 +4,7 @@ import { CodeEditor } from "../code-editor.js";
 import { CodeEditorTextInput } from "../code-editor-text-input.js";
 
 const contextMenuGroupId = "7_playground";
+
 const linqTestCode = `const query = foo + 'a x.id.toString() === "' + foo + \`" a x.id.toString() !== "\${text}" asdf\` + foo;
 const query2 = query;
 linq.execute('a x.id.toString() === "asdf" asdf x.id.toString() === "qwer"');
@@ -12,6 +13,7 @@ linq.execute(\`a x.id.toString() === "\${text}" asdf\`);
 linq.execute(foo + 'a x.id.toString() === "' + foo + '" asdf ' + \`a x.id.toString() !== "\${text}" asdf \` + foo);
 linq.execute(query);
 linq.execute(query2);`;
+
 const todoTestCode = `// TODO asdf
 /*
  * TODO qwer
@@ -23,6 +25,10 @@ const todoTestCode = `// TODO asdf
 const TODO = 1;
 1 * TODO;`;
 
+const colorProviderTestCode = `
+Color.createFromRgb(1, 2, 3);
+// #ffaaddcc this doesn't work anymore after registering a custom color provider because it's a fallback`;
+
 /**
  * Adds typical test scenarios to the editor to aid exploring APIs.
  */
@@ -33,6 +39,7 @@ export class PlaygroundContribution extends Disposable {
 		this.addLinkOpenInterceptor();
 		this.addOpenEditorInterceptor();
 		this.addFontZoomEvent();
+		this.addColorProviderExample();
 	}
 
 	private addTestActions() {
@@ -100,33 +107,12 @@ export class PlaygroundContribution extends Disposable {
 			}
 		}));
 
-		let inlayHintProvider: monaco.IDisposable | undefined;
 		this.register(this.editor.editor.addAction({
-			id: "toggle_inlay_hint_example",
-			label: "Toggle Inlay Hint Example",
-			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyI)],
+			id: "color_provider_test_code",
+			label: "Add color provider test code",
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyC)],
 			contextMenuGroupId,
-			run: editor => {
-				if (inlayHintProvider) {
-					inlayHintProvider.dispose();
-					inlayHintProvider = undefined;
-				} else {
-					inlayHintProvider = monaco.languages.registerInlayHintsProvider("javascript", {
-						async provideInlayHints(model: monaco.editor.ITextModel, range: monaco.Range, token: monaco.CancellationToken): Promise<monaco.languages.InlayHintList> {
-							return {
-								hints: [
-									{
-										kind: monaco.languages.InlayHintKind.Parameter,
-										position: editor.getPosition() ?? { lineNumber: 1, column: 1 },
-										label: "testing"
-									}
-								],
-								dispose() {}
-							};
-						}
-					});
-				}
-			}
+			run: () => this.editor.appendLine(colorProviderTestCode)
 		}));
 
 		this.register(this.editor.editor.addAction({
@@ -182,7 +168,51 @@ export class PlaygroundContribution extends Disposable {
 	 */
 	private addFontZoomEvent() {
 		console.log(`Zoom Level: ${monaco.editor.EditorZoom.getZoomLevel()}`);
-		monaco.editor.EditorZoom.onDidChangeZoomLevel(level => console.log(`Zoom Level: ${level}`));
+		this.register(monaco.editor.EditorZoom.onDidChangeZoomLevel(level => console.log(`Zoom Level: ${level}`)));
+	}
+
+	private addColorProviderExample() {
+		this.editor.addLibrary({
+			contents: `
+interface Color {
+	readonly alpha: number;
+	readonly blue: number;
+	readonly green: number;
+	readonly red: number;
+}
+
+interface ColorConstructor {
+	createFromRgb(red: number, green: number, blue: number): Color;
+	createFromRgba(red: number, green: number, blue: number, alpha: number): Color;
+}
+
+declare var Color: ColorConstructor;`,
+			language: "typescript",
+			filePath: "color.d.ts"
+		});
+
+		this.register(monaco.languages.registerColorProvider("javascript", {
+			provideDocumentColors(model: monaco.editor.ITextModel, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.IColorInformation[]> {
+				console.log("provideDocumentColors");
+				// return undefined;
+				return [
+					{
+						color: { red: 1, blue: 0, green: 0, alpha: 1 },
+						range: {
+							startLineNumber: 35,
+							startColumn: 0,
+							endLineNumber: 35,
+							endColumn: 30,
+						},
+					},
+				];
+			},
+
+			provideColorPresentations(model: monaco.editor.ITextModel, colorInfo: monaco.languages.IColorInformation, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.IColorPresentation[]> {
+				console.log("provideColorPresentations", colorInfo);
+				return undefined;
+			}
+		}));
 	}
 }
 
