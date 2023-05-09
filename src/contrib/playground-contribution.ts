@@ -28,7 +28,7 @@ const TODO = 1;
 
 const colorProviderTestCode = `
 Color.createFromRgb(100, 150, 200);
-Color.createFromRgba(200, 150, 100, 150);
+Color.createFromRgba(100, 200, 150, 200);
 Color.createFromRgb(0x64, 0x96, 0xc8); // not supported yet
 // Color.createFromRgb(100, 150, 200);
 /* Color.createFromRgb(100, 150, 200) */
@@ -233,9 +233,19 @@ declare var Color: ColorConstructor;`,
 				return colors.length === 0 ? undefined : colors;
 			}
 
-			provideColorPresentations(model: monaco.editor.ITextModel, colorInfo: ColorInformation, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.IColorPresentation[]> {
-				console.log("provideColorPresentations", colorInfo);
-				return undefined;
+			provideColorPresentations(model: monaco.editor.ITextModel, colorInfo: monaco.languages.IColorInformation, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.IColorPresentation[]> {
+				const text = model.getValueInRange(colorInfo.range);
+				const hasAlpha = text.startsWith("Color.createFromRgba");
+
+				const red = Math.round(colorInfo.color.red * 255);
+				const green = Math.round(colorInfo.color.green * 255);
+				const blue = Math.round(colorInfo.color.blue * 255);
+				const alpha = Math.round(colorInfo.color.alpha * 255);
+
+				const label = hasAlpha
+					? `Color.createFromRgba(${red}, ${green}, ${blue}, ${alpha})`
+					: `Color.createFromRgb(${red}, ${green}, ${blue})`;
+				return [{ label }];
 			}
 
 			private convertToColorComponent(s: string): number {
