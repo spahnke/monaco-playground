@@ -1,4 +1,5 @@
 import { Disposable } from "../common/disposable.js";
+import { isInComment, waitForTokenization } from "../common/monaco-utils.js";
 import { allowTopLevelReturn, enableJavaScriptBrowserCompletion, restartLanguageServer } from "../languages/javascript/javascript-extensions.js";
 import { CodeEditor } from "../code-editor.js";
 import { CodeEditorTextInput } from "../code-editor-text-input.js";
@@ -28,6 +29,11 @@ const TODO = 1;
 const colorProviderTestCode = `
 Color.createFromRgb(100, 150, 200);
 Color.createFromRgba(200, 150, 100, 50);
+// Color.createFromRgb(100, 150, 200);
+/* Color.createFromRgb(100, 150, 200) */
+/** Color.createFromRgb(100, 150, 200) */
+parseInt(""); // Color.createFromRgb(100, 150, 200)
+parseInt(""); /* Color.createFromRgb(100, 150, 200) */
 // #ffaaddcc this doesn't work anymore after registering a custom color provider because it's a fallback`;
 
 /**
@@ -193,7 +199,7 @@ declare var Color: ColorConstructor;`,
 		});
 
 		this.register(monaco.languages.registerColorProvider("javascript", {
-			provideDocumentColors(model: monaco.editor.ITextModel, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.IColorInformation[]> {
+			async provideDocumentColors(model: monaco.editor.ITextModel, token: monaco.CancellationToken): Promise<monaco.languages.IColorInformation[] | null | undefined> {
 				const colorMatches = model.findMatches("Color\\.createFromRgb(a?)\\(([^)]*)\\)", false, true, true, null, true);
 				if (colorMatches.length === 0)
 					return undefined; // return undefined in the empty case instead of always mapping, so the editor can fallback to the default color provider in that case
@@ -201,6 +207,9 @@ declare var Color: ColorConstructor;`,
 				const colors: monaco.languages.IColorInformation[] = [];
 				for (const colorMatch of colorMatches) {
 					if (!colorMatch.matches)
+						continue;
+					await waitForTokenization(model);
+					if (isInComment(model, colorMatch.range))
 						continue;
 					const hasAlpha = colorMatch.matches[1] === "a";
 					const params = colorMatch.matches[2];
