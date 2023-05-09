@@ -26,7 +26,8 @@ const TODO = 1;
 1 * TODO;`;
 
 const colorProviderTestCode = `
-Color.createFromRgb(1, 2, 3);
+Color.createFromRgb(100, 150, 200);
+Color.createFromRgba(200, 150, 100, 50);
 // #ffaaddcc this doesn't work anymore after registering a custom color provider because it's a fallback`;
 
 /**
@@ -193,19 +194,20 @@ declare var Color: ColorConstructor;`,
 
 		this.register(monaco.languages.registerColorProvider("javascript", {
 			provideDocumentColors(model: monaco.editor.ITextModel, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.IColorInformation[]> {
-				console.log("provideDocumentColors");
-				// return undefined;
-				return [
-					{
-						color: { red: 1, blue: 0, green: 0, alpha: 1 },
-						range: {
-							startLineNumber: 35,
-							startColumn: 0,
-							endLineNumber: 35,
-							endColumn: 30,
-						},
-					},
-				];
+				const colorMatches = model.findMatches("Color\\.createFromRgb(a?)\\(([^)]*)\\)", false, true, true, null, true);
+				if (colorMatches.length === 0)
+					return undefined; // return undefined in the empty case instead of always mapping, so the editor can fallback to the default color provider in that case
+
+				const colors: monaco.languages.IColorInformation[] = [];
+				for (const colorMatch of colorMatches) {
+					if (!colorMatch.matches)
+						continue;
+					const hasAlpha = colorMatch.matches[1] === "a";
+					const params = colorMatch.matches[2];
+					console.log(hasAlpha, params);
+					colors.push({ color: { red: 1, green: 0, blue: 0, alpha: 1 }, range: colorMatch.range });
+				}
+				return colors.length === 0 ? undefined : colors;
 			},
 
 			provideColorPresentations(model: monaco.editor.ITextModel, colorInfo: monaco.languages.IColorInformation, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.IColorPresentation[]> {
