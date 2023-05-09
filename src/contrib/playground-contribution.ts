@@ -28,7 +28,8 @@ const TODO = 1;
 
 const colorProviderTestCode = `
 Color.createFromRgb(100, 150, 200);
-Color.createFromRgba(200, 150, 100, 50);
+Color.createFromRgba(200, 150, 100, 150);
+Color.createFromRgb(0x64, 0x96, 0xc8); // not supported yet
 // Color.createFromRgb(100, 150, 200);
 /* Color.createFromRgb(100, 150, 200) */
 /** Color.createFromRgb(100, 150, 200) */
@@ -198,7 +199,7 @@ declare var Color: ColorConstructor;`,
 			filePath: "color.d.ts"
 		});
 
-		this.register(monaco.languages.registerColorProvider("javascript", {
+		this.register(monaco.languages.registerColorProvider("javascript", new class implements monaco.languages.DocumentColorProvider {
 			async provideDocumentColors(model: monaco.editor.ITextModel, token: monaco.CancellationToken): Promise<monaco.languages.IColorInformation[] | null | undefined> {
 				const colorMatches = model.findMatches("Color\\.createFromRgb(a?)\\(([^)]*)\\)", false, true, true, null, true);
 				if (colorMatches.length === 0)
@@ -211,17 +212,37 @@ declare var Color: ColorConstructor;`,
 					await waitForTokenization(model);
 					if (isInComment(model, colorMatch.range))
 						continue;
+
 					const hasAlpha = colorMatch.matches[1] === "a";
 					const params = colorMatch.matches[2];
-					console.log(hasAlpha, params);
-					colors.push({ color: { red: 1, green: 0, blue: 0, alpha: 1 }, range: colorMatch.range });
+					const rgbaMatcher = /^(?<r>\d+),\s*(?<g>\d+),\s*(?<b>\d+)(?:,\s*(?<a>\d+))?$/;
+					const rgbaMatch = params.match(rgbaMatcher);
+					if (!rgbaMatch)
+						continue;
+
+					const red = this.convertToColorComponent(rgbaMatch.groups?.["r"] ?? "");
+					const green = this.convertToColorComponent(rgbaMatch.groups?.["g"] ?? "");
+					const blue = this.convertToColorComponent(rgbaMatch.groups?.["b"] ?? "");
+					const alpha = hasAlpha ? this.convertToColorComponent(rgbaMatch.groups?.["a"] ?? "") : 1;
+					if (Number.isNaN(red) || Number.isNaN(green) || Number.isNaN(blue))
+						continue;
+					if (hasAlpha && Number.isNaN(alpha))
+						continue;
+					colors.push({ color: { red, green, blue, alpha }, range: colorMatch.range });
 				}
 				return colors.length === 0 ? undefined : colors;
-			},
+			}
 
 			provideColorPresentations(model: monaco.editor.ITextModel, colorInfo: monaco.languages.IColorInformation, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.IColorPresentation[]> {
 				console.log("provideColorPresentations", colorInfo);
 				return undefined;
+			}
+
+			private convertToColorComponent(s: string): number {
+				// NaN values are propagated correctly through every statement so we don't need a special case here
+				let color = Number.parseInt(s);
+				color = Math.max(0, Math.min(color, 255));
+				return color / 255;
 			}
 		}));
 	}
