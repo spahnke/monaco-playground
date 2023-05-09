@@ -37,6 +37,8 @@ parseInt(""); // Color.createFromRgb(100, 150, 200)
 parseInt(""); /* Color.createFromRgb(100, 150, 200) */
 // #ffaaddcc this doesn't work anymore after registering a custom color provider because it's a fallback`;
 
+type ColorInformation = monaco.languages.IColorInformation & { hasAlpha: boolean; };
+
 /**
  * Adds typical test scenarios to the editor to aid exploring APIs.
  */
@@ -205,7 +207,7 @@ declare var Color: ColorConstructor;`,
 				if (colorMatches.length === 0)
 					return undefined; // return undefined in the empty case instead of always mapping, so the editor can fallback to the default color provider in that case
 
-				const colors: monaco.languages.IColorInformation[] = [];
+				const colors: ColorInformation[] = [];
 				for (const colorMatch of colorMatches) {
 					if (!colorMatch.matches)
 						continue;
@@ -228,12 +230,12 @@ declare var Color: ColorConstructor;`,
 						continue;
 					if (hasAlpha && Number.isNaN(alpha))
 						continue;
-					colors.push({ color: { red, green, blue, alpha }, range: colorMatch.range });
+					colors.push({ color: { red, green, blue, alpha }, range: colorMatch.range, hasAlpha });
 				}
 				return colors.length === 0 ? undefined : colors;
 			}
 
-			provideColorPresentations(model: monaco.editor.ITextModel, colorInfo: monaco.languages.IColorInformation, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.IColorPresentation[]> {
+			provideColorPresentations(model: monaco.editor.ITextModel, colorInfo: ColorInformation, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.IColorPresentation[]> {
 				console.log("provideColorPresentations", colorInfo);
 				return undefined;
 			}
