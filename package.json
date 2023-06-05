@@ -18,18 +18,18 @@
 		"monaco-editor": "0.38.0"
 	},
 	"devDependencies": {
-		"@guanghechen/rollup-plugin-copy": "^4.7.4",
-		"@rollup/plugin-typescript": "^11.1.0",
-		"@types/eslint": "^8.37.0",
+		"@guanghechen/rollup-plugin-copy": "^5.0.1",
+		"@rollup/plugin-typescript": "^11.1.1",
+		"@types/eslint": "^8.40.0",
 		"@types/estree": "1.0.1",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^18.16.3",
-		"@typescript-eslint/eslint-plugin": "^5.59.2",
-		"@typescript-eslint/parser": "^5.59.2",
-		"eslint": "^8.39.0",
+		"@types/node": "^20.2.5",
+		"@typescript-eslint/eslint-plugin": "^5.59.8",
+		"@typescript-eslint/parser": "^5.59.8",
+		"eslint": "^8.42.0",
 		"mocha": "^10.2.0",
-		"rollup": "^3.21.3",
+		"rollup": "^3.23.1",
 		"serve": "^14.2.0",
-		"typescript": "^5.0.4"
+		"typescript": "^5.1.3"
 	}
 }
