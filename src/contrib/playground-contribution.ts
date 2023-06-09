@@ -1,6 +1,6 @@
 import { Disposable } from "../common/disposable.js";
 import { isInComment, waitForTokenization } from "../common/monaco-utils.js";
-import { allowTopLevelReturn, enableJavaScriptBrowserCompletion, restartLanguageServer } from "../languages/javascript/javascript-extensions.js";
+import { allowTopLevelReturn, enableJavaScriptBrowserCompletion, getEsLintWorker, restartLanguageServer } from "../languages/javascript/javascript-extensions.js";
 import { CodeEditor } from "../code-editor.js";
 import { CodeEditorTextInput } from "../code-editor-text-input.js";
 
@@ -151,6 +151,20 @@ export class PlaygroundContribution extends Disposable {
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyV)],
 			contextMenuGroupId,
 			run: () => console.log(monaco.languages.typescript.typescriptVersion)
+		}));
+
+		this.register(this.editor.editor.addAction({
+			id: "dump_eslint_version",
+			label: "Dump ESLint Version",
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyE)],
+			contextMenuGroupId,
+			run: async () => {
+				const worker = await getEsLintWorker();
+				if (worker) {
+					const version = await worker.getVersion();
+					console.log(version);
+				}
+			}
 		}));
 	}
 

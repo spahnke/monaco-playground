@@ -1,7 +1,9 @@
 import { toDisposable } from "../../common/disposable.js";
 import { JsonSnippetService } from "../../common/json-snippet-service.js";
 import { SnippetCompletionProvider } from "../../common/snippet-completion-provider.js";
-import { EsLintDiagnostics } from "./eslint-diagnostics.js";
+import { EsLintDiagnostics, IEsLintWorker } from "./eslint-diagnostics.js";
+
+let eslintDiagnostics: EsLintDiagnostics | null = null;
 
 export function registerJavascriptLanguageExtensions(): void {
 	monaco.languages.onLanguage("javascript", () => {
@@ -13,7 +15,8 @@ export function registerJavascriptLanguageExtensions(): void {
 		});
 
 		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("languages/javascript/snippets.json")));
-		monaco.languages.registerCodeActionProvider("javascript", new EsLintDiagnostics("languages/javascript/eslintrc.json"), { providedCodeActionKinds: EsLintDiagnostics.providedCodeActionKinds });
+		eslintDiagnostics = new EsLintDiagnostics("languages/javascript/eslintrc.json");
+		monaco.languages.registerCodeActionProvider("javascript", eslintDiagnostics, { providedCodeActionKinds: EsLintDiagnostics.providedCodeActionKinds });
 	});
 }
 
@@ -61,6 +64,12 @@ export function enableJavaScriptBrowserCompletion(): monaco.IDisposable {
 	const oldLibs = monaco.languages.typescript.javascriptDefaults.getCompilerOptions().lib;
 	setCompilerOptions([...oldLibs ?? [], "dom"]);
 	return toDisposable(() => setCompilerOptions(oldLibs));
+}
+
+export async function getEsLintWorker(): Promise<IEsLintWorker | null> {
+	if (!eslintDiagnostics)
+		return null;
+	return eslintDiagnostics.eslintWorker;
 }
 
 export async function getJavaScriptWorker(model: monaco.editor.ITextModel): Promise<monaco.languages.typescript.TypeScriptWorker | null> {

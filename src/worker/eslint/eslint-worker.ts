@@ -27,6 +27,11 @@ class EsLintWorker implements IEsLintWorker {
 		return linter.verify(model.getValue(), this.config);
 	}
 
+	async getVersion(): Promise<string> {
+		const linter = await this.linter;
+		return linter.version;
+	}
+
 	private async createLinter(): Promise<Linter> {
 		const eslint = await import("./eslint.js");
 		const linter = new eslint.Linter();

@@ -23,6 +23,7 @@ type Fix = {
 export interface IEsLintWorker {
 	getRuleToUrlMapping(): Promise<Map<string, string>>;
 	lint(fileName: string): Promise<Linter.LintMessage[]>;
+	getVersion(): Promise<string>;
 }
 
 export interface IWorkerCreateData {
@@ -64,7 +65,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private config: EsLintConfig | undefined;
 	/** Defined if and only if `eslintWorker` has been awaited. */
 	private webWorker: monaco.editor.MonacoWebWorker<IEsLintWorker> | undefined;
-	private readonly eslintWorker: Promise<IEsLintWorker>;
+	public readonly eslintWorker: Promise<IEsLintWorker>;
 	private ruleToUrlMapping: Map<string, string> | undefined;
 	private readonly diagnostics: DiagnosticContainer;
 
