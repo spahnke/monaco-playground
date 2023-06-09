@@ -40,7 +40,7 @@ export function addLibrary(library: ILibrary): monaco.IDisposable {
 		model.setValue(library.contents);
 	}
 
-	if (library.filePath.endsWith("d.ts")) {
+	if (library.filePath.endsWith(".d.ts")) {
 		const content = model.getValue(); // use value of model to make line endings and whitespace consistent between monaco and TypeScript
 		disposable.register(monaco.languages.typescript.javascriptDefaults.addExtraLib(content, uri.toString()));
 		disposable.register(monaco.languages.typescript.typescriptDefaults.addExtraLib(content, uri.toString()));
