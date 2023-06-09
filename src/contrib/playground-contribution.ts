@@ -144,6 +144,14 @@ export class PlaygroundContribution extends Disposable {
 			contextMenuGroupId,
 			run: () => restartLanguageServer()
 		}));
+
+		this.register(this.editor.editor.addAction({
+			id: "dump_typescript_version",
+			label: "Dump TS Version",
+			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyV)],
+			contextMenuGroupId,
+			run: () => console.log(monaco.languages.typescript.typescriptVersion)
+		}));
 	}
 
 	/**
