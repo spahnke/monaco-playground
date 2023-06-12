@@ -60,7 +60,7 @@ export class CodeEditorTextInput extends Disposable {
 
 		this.updatePlaceholderDecoration();
 		this.updateIconDecoration();
-		this.register(editor.onDidChangeModelContent(this.updatePlaceholderDecoration));
+		this.register(editor.onDidChangeModelContent(() => this.updatePlaceholderDecoration()));
 
 		this.register(editor.onKeyDown(e => {
 			// prevent editor from handling the tab key and inputting a tab character
