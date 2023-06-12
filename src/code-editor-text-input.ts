@@ -58,7 +58,24 @@ export class CodeEditorTextInput extends Disposable {
 
 		const container = editor.getContainerDomNode();
 		container.className = "monaco-single-line";
-		container.style.height = `${editor.getOption(monaco.editor.EditorOption.lineHeight)}px`;
+		const updateHeights = () => {
+			const defaultCodiconSize = 16;
+			const defaultLineHeight = 18;
+			const lineHeight = editor.getOption(monaco.editor.EditorOption.lineHeight);
+
+			// Set height of parent container.
+			container.style.height = `${lineHeight}px`;
+
+			// Set font-size of codicon icons in the glyph margin because otherwise they would keep their default.
+			// Since adjusting the container height seems to destroy and recreate the DOM elements in the glyph we
+			// wait for the next animation frame.
+			requestAnimationFrame(() => {
+				for (const iconElement of container.querySelectorAll<HTMLDivElement>(".monaco-single-line-icon"))
+					iconElement.style.fontSize = `${Math.floor(defaultCodiconSize * editor.getOption(monaco.editor.EditorOption.lineHeight) / defaultLineHeight)}px`;
+			});
+		};
+		updateHeights();
+		this.register(monaco.editor.EditorZoom.onDidChangeZoomLevel(() => updateHeights()));
 		this.register(editor.onDidFocusEditorWidget(() => container.classList.add("focus")));
 		this.register(editor.onDidBlurEditorWidget(() => container.classList.remove("focus")));
 
@@ -183,7 +200,7 @@ export class CodeEditorTextInput extends Disposable {
 			this.editor.updateOptions({ glyphMargin: true, lineDecorationsWidth: 10 });
 			this.iconDecoration.set([{
 				range: new monaco.Range(1, 1, 1, 1),
-				options: { glyphMarginClassName: `codicon-${this.icon}`, },
+				options: { glyphMarginClassName: `monaco-single-line-icon codicon-${this.icon}`, },
 			}]);
 		} else {
 			this.editor.updateOptions({ glyphMargin: false, lineDecorationsWidth: 0 });
