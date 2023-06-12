@@ -7,6 +7,10 @@ export class CodeEditorTextInput extends Disposable {
 	private readonly placeholderDecoration = this.editor.createDecorationsCollection();
 	private readonly iconDecoration = this.editor.createDecorationsCollection();
 
+	/**
+	 * Creates a monaco based one-line text input in `element` and optionally sets the initial `text`, a `placeholder` text, and an `icon`.
+	 * @param icon See https://code.visualstudio.com/api/references/icons-in-labels#icon-listing for valid values.
+	 */
 	static create(element: HTMLElement, text?: string, placeholder?: string, icon?: string, useMonospaceFont = false): CodeEditorTextInput {
 		return new CodeEditorTextInput(monaco.editor.create(element, {
 			automaticLayout: true,
@@ -140,6 +144,10 @@ export class CodeEditorTextInput extends Disposable {
 		this.updatePlaceholderDecoration();
 	}
 
+	/**
+	 * Sets the icon that is shown in the decorations gutter to the one passed in `icon`, or removes the icon completely if `undefined` is passed.
+	 * @param icon See https://code.visualstudio.com/api/references/icons-in-labels#icon-listing for valid values.
+	 */
 	setIcon(icon: string | undefined): void {
 		this.icon = icon;
 		this.updateIconDecoration();
