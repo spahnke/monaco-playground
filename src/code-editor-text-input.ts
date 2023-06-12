@@ -104,6 +104,10 @@ export class CodeEditorTextInput extends Disposable {
 	readonly onDidChangeText = this.onDidChangeTextEmitter.event;
 	readonly onDidPressEnter = this.onDidPressEnterEmitter.event;
 
+	get length(): number {
+		return this.editor.getModel()?.getValueLength() ?? 0;
+	}
+
 	getText(): string {
 		return this.editor.getValue();
 	}
@@ -121,10 +125,6 @@ export class CodeEditorTextInput extends Disposable {
 
 	focus(): void {
 		this.editor.focus();
-	}
-
-	get length(): number {
-		return this.editor.getModel()?.getValueLength() ?? 0;
 	}
 
 	setReadonly(value: boolean): void {
