@@ -163,7 +163,7 @@ export class CodeEditorTextInput extends Disposable {
 	private updateIconDecoration(): void {
 		if (this.icon) {
 			this.editor.updateOptions({ glyphMargin: true, lineDecorationsWidth: 10 });
-			this.placeholderDecoration.set([{
+			this.iconDecoration.set([{
 				range: new monaco.Range(1, 1, 1, 1),
 				options: { glyphMarginClassName: `codicon-${this.icon}`, },
 			}]);
