@@ -8,7 +8,6 @@ export class CodeEditorTextInput extends Disposable {
 	private readonly iconDecoration = this.editor.createDecorationsCollection();
 
 	static create(element: HTMLElement, text?: string, placeholder?: string, icon?: string, useMonospaceFont = false): CodeEditorTextInput {
-		const hasIcon = Boolean(icon);
 		return new CodeEditorTextInput(monaco.editor.create(element, {
 			automaticLayout: true,
 			contextmenu: false,
@@ -25,10 +24,10 @@ export class CodeEditorTextInput extends Disposable {
 				highlightActiveIndentation: false,
 				indentation: false,
 			},
-			glyphMargin: hasIcon,
+			glyphMargin: false,
 			language: "plaintext",
 			lightbulb: { enabled: false },
-			lineDecorationsWidth: hasIcon ? 10 : 0,
+			lineDecorationsWidth: 0,
 			lineNumbers: "off",
 			links: false,
 			matchBrackets: "never",
@@ -163,11 +162,13 @@ export class CodeEditorTextInput extends Disposable {
 
 	private updateIconDecoration(): void {
 		if (this.icon) {
+			this.editor.updateOptions({ glyphMargin: true, lineDecorationsWidth: 10 });
 			this.placeholderDecoration.set([{
 				range: new monaco.Range(1, 1, 1, 1),
 				options: { glyphMarginClassName: `codicon-${this.icon}`, },
 			}]);
 		} else {
+			this.editor.updateOptions({ glyphMargin: false, lineDecorationsWidth: 0 });
 			this.iconDecoration.clear();
 		}
 	}
