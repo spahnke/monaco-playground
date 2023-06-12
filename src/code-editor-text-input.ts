@@ -92,8 +92,8 @@ export class CodeEditorTextInput extends Disposable {
 			if (e.equals(monaco.KeyCode.F1))
 				e.stopPropagation();
 
-			// disable find widget
-			if (e.equals(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF))
+			// disable find (Ctrl+F on Windows, Cmd+F on Mac) and replace (Ctrl+H on Windows, Cmd+Alt+F on Mac) widgets
+			if (e.equals(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF) || e.equals(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH) || e.equals(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.KeyF))
 				e.stopPropagation();
 		}));
 
