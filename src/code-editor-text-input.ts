@@ -135,6 +135,16 @@ export class CodeEditorTextInput extends Disposable {
 		return this.editor.getOptions().get(monaco.editor.EditorOption.readOnly);
 	}
 
+	setPlaceholder(placeholder: string | undefined): void {
+		this.placeholder = placeholder;
+		this.updatePlaceholderDecoration();
+	}
+
+	setIcon(icon: string | undefined): void {
+		this.icon = icon;
+		this.updateIconDecoration();
+	}
+
 	override dispose(): void {
 		super.dispose();
 		this.onDidChangeTextEmitter.dispose();
