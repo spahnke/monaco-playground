@@ -4,6 +4,9 @@ export class CodeEditorTextInput extends Disposable {
 	private readonly onDidChangeTextEmitter = new monaco.Emitter<string>();
 	private readonly onDidPressEnterEmitter = new monaco.Emitter<string>();
 
+	private readonly placeholderDecoration = this.editor.createDecorationsCollection();
+	private readonly iconDecoration = this.editor.createDecorationsCollection();
+
 	static create(element: HTMLElement, text?: string, placeholder?: string, icon?: string, useMonospaceFont = false): CodeEditorTextInput {
 		const hasIcon = Boolean(icon);
 		return new CodeEditorTextInput(monaco.editor.create(element, {
@@ -47,7 +50,7 @@ export class CodeEditorTextInput extends Disposable {
 		}), placeholder, icon);
 	}
 
-	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, placeholder?: string, icon?: string) {
+	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, private placeholder?: string, private icon?: string) {
 		super();
 
 		const container = editor.getContainerDomNode();
@@ -56,39 +59,9 @@ export class CodeEditorTextInput extends Disposable {
 		this.register(editor.onDidFocusEditorWidget(() => container.classList.add("focus")));
 		this.register(editor.onDidBlurEditorWidget(() => container.classList.remove("focus")));
 
-		if (placeholder) {
-			const placeHolderDecorations = editor.createDecorationsCollection();
-			const updatePlaceHolderDecorations = () => {
-				const length = editor.getModel()?.getValueLength() ?? 0;
-				if (length === 0) {
-					placeHolderDecorations.set([{
-						range: new monaco.Range(1, 1, 1, 1),
-						options: {
-							before: {
-								content: placeholder,
-								inlineClassName: "monaco-single-line-placeholder",
-								cursorStops: monaco.editor.InjectedTextCursorStops.None
-							},
-							showIfCollapsed: true,
-						},
-					}]);
-				}
-				else {
-					placeHolderDecorations.clear();
-				}
-			};
-			updatePlaceHolderDecorations();
-			this.register(editor.onDidChangeModelContent(updatePlaceHolderDecorations));
-		}
-
-		if (icon) {
-			editor.createDecorationsCollection([
-				{
-					range: new monaco.Range(1, 1, 1, 1),
-					options: { glyphMarginClassName: `codicon-${icon}`, },
-				}
-			]);
-		}
+		this.updatePlaceholderDecoration();
+		this.updateIconDecoration();
+		this.register(editor.onDidChangeModelContent(this.updatePlaceholderDecoration));
 
 		this.register(editor.onKeyDown(e => {
 			// prevent editor from handling the tab key and inputting a tab character
@@ -151,6 +124,10 @@ export class CodeEditorTextInput extends Disposable {
 		this.editor.focus();
 	}
 
+	get length(): number {
+		return this.editor.getModel()?.getValueLength() ?? 0;
+	}
+
 	setReadonly(value: boolean): void {
 		this.editor.updateOptions({ readOnly: value });
 	}
@@ -164,5 +141,34 @@ export class CodeEditorTextInput extends Disposable {
 		this.onDidChangeTextEmitter.dispose();
 		this.onDidPressEnterEmitter.dispose();
 		this.editor.dispose();
+	}
+
+	private updatePlaceholderDecoration(): void {
+		if (this.placeholder && this.length === 0) {
+			this.placeholderDecoration.set([{
+				range: new monaco.Range(1, 1, 1, 1),
+				options: {
+					before: {
+						content: this.placeholder,
+						inlineClassName: "monaco-single-line-placeholder",
+						cursorStops: monaco.editor.InjectedTextCursorStops.None
+					},
+					showIfCollapsed: true,
+				},
+			}]);
+		} else {
+			this.placeholderDecoration.clear();
+		}
+	}
+
+	private updateIconDecoration(): void {
+		if (this.icon) {
+			this.placeholderDecoration.set([{
+				range: new monaco.Range(1, 1, 1, 1),
+				options: { glyphMarginClassName: `codicon-${this.icon}`, },
+			}]);
+		} else {
+			this.iconDecoration.clear();
+		}
 	}
 }
