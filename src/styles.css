@@ -61,12 +61,12 @@ body {
 	border: 1px solid var(--monaco-single-line-border-color);
 }
 
-.monaco-single-line-placeholder {
-	opacity: 0.5;
-}
-
 .monaco-single-line.focus {
 	border-color: var(--monaco-single-line-focus-border-color);
+}
+
+.monaco-single-line-placeholder {
+	opacity: 0.5;
 }
 
 .monaco-single-line-slash-command {
