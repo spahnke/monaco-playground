@@ -15,7 +15,7 @@
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
-		"monaco-editor": "0.40.0"
+		"monaco-editor": "0.44.0"
 	},
 	"devDependencies": {
 		"@guanghechen/rollup-plugin-copy": "^5.0.12",
