@@ -36,7 +36,7 @@ export class CodeEditorTextInput extends Disposable {
 			links: false,
 			matchBrackets: "never",
 			minimap: { enabled: false },
-			occurrencesHighlight: false,
+			occurrencesHighlight: "off",
 			overviewRulerLanes: 0,
 			overviewRulerBorder: false,
 			renderLineHighlight: "none",
@@ -48,7 +48,7 @@ export class CodeEditorTextInput extends Disposable {
 				alwaysConsumeMouseWheel: false,
 			},
 			value: text,
-			wordBasedSuggestions: false,
+			wordBasedSuggestions: "off",
 			wordWrap: "off",
 		}), placeholder, icon);
 	}
