@@ -68,7 +68,7 @@ export default new class implements Rule.RuleModule {
 	}
 
 	private reportStringOrTemplateLiteral(context: Rule.RuleContext, literal: Literal | TemplateLiteral) {
-		const value = context.getSourceCode().getText(literal);
+		const value = context.sourceCode.getText(literal);
 		const matches = value.matchAll(this.reportPattern);
 		for (const match of matches)
 			this.report(context, literal, this.computeLocationInsideLiteral(literal, match));
@@ -99,7 +99,7 @@ export default new class implements Rule.RuleModule {
 	}
 
 	private getVariableDeclarator(context: Rule.RuleContext, identifier: Identifier): VariableDeclarator | undefined {
-		const variable = this.findVariable(context.getScope(), identifier.name);
+		const variable = this.findVariable(context.sourceCode.getScope(identifier), identifier.name);
 		if (!variable)
 			return undefined;
 
@@ -145,7 +145,7 @@ export default new class implements Rule.RuleModule {
 		if (!node.loc || !node.range)
 			return null;
 
-		const literalText = context.getSourceCode().getText(node);
+		const literalText = context.sourceCode.getText(node);
 
 		const [rangeStart] = node.range;
 		const startOffset = loc.start.column - node.loc.start.column;
