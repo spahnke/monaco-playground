@@ -1,6 +1,11 @@
 import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 
+// TODO migrate to ESLint flat config format
+// - https://eslint.org/docs/next/use/migrate-to-9.0.0#-linter-now-expects-flat-config-format
+// - https://eslint.org/docs/next/use/configure/migration-guide
+// - https://eslint.org/docs/next/use/configure/migration-guide#--rulesdir
+
 export type EsLintConfig = Linter.Config<Linter.RulesRecord> & {
 	/**
 	 * Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.
