@@ -34,8 +34,9 @@ class EsLintWorker implements IEsLintWorker {
 
 	private async createLinter(): Promise<Linter> {
 		const eslint = await import("./eslint.js");
-		const linter = new eslint.Linter();
-		await this.loadRules(linter);
+		// @ts-ignore - revert to eslintrc compatible config for now until we have migrated everything
+		const linter = new eslint.Linter({ configType: "eslintrc" });
+		// await this.loadRules(linter); // disable loading additional rules for now until we have migrated everything
 		return linter;
 	}
 
