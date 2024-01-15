@@ -1328,8 +1328,8 @@
 			}
 		},
 		"extends": {
-			"description": "If you want to extend a specific configuration file, you can use the extends property and specify the path to the file. The path can be either relative or absolute.",
-			"$ref": "#/definitions/stringOrStringArray"
+			"$ref": "#/definitions/stringOrStringArray",
+			"description": "If you want to extend a specific configuration file, you can use the extends property and specify the path to the file. The path can be either relative or absolute."
 		},
 		"globals": {
 			"description": "Set each global variable name equal to true to allow the variable to be overwritten or false to disallow overwriting.",
@@ -1395,10 +1395,11 @@
 				"sourceType": {
 					"enum": [
 						"script",
-						"module"
+						"module",
+						"commonjs"
 					],
 					"default": "script",
-					"description": "set to \"script\" (default) or \"module\" if your code is in ECMAScript modules"
+					"description": "set to \"script\" (default), \"commonjs\", or \"module\" if your code is in ECMAScript modules"
 				}
 			}
 		},
@@ -1414,8 +1415,8 @@
 			"type": "boolean"
 		},
 		"ignorePatterns": {
-			"description": "Tell ESLint to ignore specific files and directories. Each value uses the same pattern as the `.eslintignore` file.",
-			"$ref": "#/definitions/stringOrStringArray"
+			"$ref": "#/definitions/stringOrStringArray",
+			"description": "Tell ESLint to ignore specific files and directories. Each value uses the same pattern as the `.eslintignore` file."
 		},
 		"rules": {
 			"description": "ESLint comes with a large number of rules. You can modify which rules your project uses either using configuration comments or configuration files.",
@@ -1473,12 +1474,12 @@
 						]
 					},
 					"extends": {
-						"description": "If you want to extend a specific configuration file, you can use the extends property and specify the path to the file. The path can be either relative or absolute.",
-						"$ref": "#/definitions/stringOrStringArray"
+						"$ref": "#/definitions/stringOrStringArray",
+						"description": "If you want to extend a specific configuration file, you can use the extends property and specify the path to the file. The path can be either relative or absolute."
 					},
 					"excludedFiles": {
-						"description": "If a file matches any of the 'excludedFiles' glob patterns, the 'overrides' configuration won't apply",
-						"$ref": "#/definitions/stringOrStringArray"
+						"$ref": "#/definitions/stringOrStringArray",
+						"description": "If a file matches any of the 'excludedFiles' glob patterns, the 'overrides' configuration won't apply"
 					},
 					"ecmaFeatures": {
 						"$ref": "#/properties/ecmaFeatures"
