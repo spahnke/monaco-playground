@@ -11,16 +11,12 @@ ruleTester.run("no-id-tostring-in-query", rule, {
 		},
 		{
 			code: "linq.execute(`asdf`);",
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 		{
 			code: `linq.execute('a x.foo.toString() === "asdf"');`,
 		},
 		{
 			code: 'linq.execute(`a x.foo.toString() === "asdf"`);',
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 	],
 	invalid: [
@@ -56,14 +52,10 @@ ruleTester.run("no-id-tostring-in-query", rule, {
 		{
 			code: 'linq.execute(`a x.id.toString() === "asdf" asdf`);',
 			errors: [{ column: 19, endColumn: 43, type: "TemplateLiteral", suggestions: [{ output: 'linq.execute(`a x.id === new Guid("asdf") asdf`);' }] }],
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 		{
 			code: 'linq.execute(`a x.id.toString() === "${text}" asdf`);',
 			errors: [{ column: 19, endColumn: 46, type: "TemplateLiteral", suggestions: [{ output: 'linq.execute(`a x.id === new Guid("${text}") asdf`);' }] }],
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 		// concatenated string
 		{
@@ -72,8 +64,6 @@ ruleTester.run("no-id-tostring-in-query", rule, {
 				{ column: 25, endColumn: 44, type: "Literal", suggestions: [] },
 				{ column: 71, endColumn: 98, type: "TemplateLiteral", suggestions: [{ output: `linq.execute(foo + 'a x.id.toString() === "' + foo + '" asdf ' + \`a x.id !== new Guid("\${text}") asdf \` + foo);` }] },
 			],
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 		// intermediate variable
 		{
@@ -95,8 +85,6 @@ linq.execute(query);
 					]
 				},
 			],
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 		{
 			code: `
@@ -117,8 +105,6 @@ linq.execute(query);
 					]
 				},
 			],
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 		{
 			code: `
@@ -141,8 +127,6 @@ linq.execute(query2);
 					]
 				},
 			],
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 		{
 			code: `
@@ -167,8 +151,6 @@ linq.execute(query2);
 					]
 				},
 			],
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 		{
 			code: `
@@ -197,8 +179,6 @@ linq.execute(query2);
 					]
 				},
 			],
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 		{
 			code: `
@@ -223,8 +203,6 @@ linq.execute(query2);
 					]
 				},
 			],
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 		{
 			code: `
@@ -253,8 +231,6 @@ linq.execute(query2);
 					]
 				},
 			],
-			// @ts-expect-error - ignore error until the types package is renewed
-			languageOptions: { ecmaVersion: 2015 },
 		},
 	]
 });
