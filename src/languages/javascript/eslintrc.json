@@ -1,8 +1,11 @@
 {
 	"$schema": "./eslintrc-extended.schema.json",
-	"parserOptions": {
+	"languageOptions": {
 		"ecmaVersion": "latest",
-		"ecmaFeatures": { "globalReturn": true }
+		"sourceType": "script",
+		"parserOptions": {
+			"ecmaFeatures": { "globalReturn": true }
+		}
 	},
 	"rules": {
 		"for-direction": "warn",
@@ -109,7 +112,7 @@
 		"prefer-spread": "hint",
 		"prefer-template": "hint",
 
-		"no-id-tostring-in-query": "warn"
+		"local/no-id-tostring-in-query": "warn"
 	},
 	"ruleFiles": [
 		"/rules/no-id-tostring-in-query.js"

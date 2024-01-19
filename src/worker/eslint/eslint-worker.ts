@@ -11,11 +11,12 @@ class EsLintWorker implements IEsLintWorker {
 	async getRuleToUrlMapping(): Promise<Map<string, string>> {
 		const linter = await this.linter;
 		const ruleToUrlMapping = new Map<string, string>();
-		for (const [ruleId, ruleData] of linter.getRules()) {
-			const url = ruleData.meta?.docs?.url;
-			if (url)
-				ruleToUrlMapping.set(ruleId, url);
-		}
+		// TODO getRules is deprecated (https://eslint.org/blog/2022/08/new-config-system-part-3/) -> find a replacement for querying the rule URLs
+		// for (const [ruleId, ruleData] of linter.getRules()) {
+		// 	const url = ruleData.meta?.docs?.url;
+		// 	if (url)
+		// 		ruleToUrlMapping.set(ruleId, url);
+		// }
 		return ruleToUrlMapping;
 	}
 
@@ -24,7 +25,7 @@ class EsLintWorker implements IEsLintWorker {
 		const model = this.context.getMirrorModels().find(m => m.uri.toString() === fileName);
 		if (model === undefined)
 			return [];
-		return linter.verify(model.getValue(), this.config);
+		return linter.verify(model.getValue(), [this.config]);
 	}
 
 	async getVersion(): Promise<string> {
@@ -34,8 +35,7 @@ class EsLintWorker implements IEsLintWorker {
 
 	private async createLinter(): Promise<Linter> {
 		const eslint = await import("./eslint.js");
-		// @ts-expect-error - revert to eslintrc compatible config for now until we have migrated everything
-		const linter = new eslint.Linter({ configType: "eslintrc" });
+		const linter = new eslint.Linter();
 		await this.loadRules(linter);
 		return linter;
 	}
@@ -45,7 +45,14 @@ class EsLintWorker implements IEsLintWorker {
 			return;
 		if (!Array.isArray(this.config.ruleFiles)) {
 			console.warn(`[ESLint] Config element 'ruleFiles' is not an array. No additional rules loaded.`);
+			delete this.config.ruleFiles; // delete to pass validation
 			return;
+		}
+
+		if (this.config.ruleFiles?.length > 0) {
+			this.config.plugins ??= {};
+			this.config.plugins.local ??= {};
+			this.config.plugins.local.rules ??= {};
 		}
 
 		for (const ruleFile of this.config.ruleFiles) {
@@ -58,11 +65,12 @@ class EsLintWorker implements IEsLintWorker {
 				if (typeof rule.create !== "function")
 					throw new Error(`The rule '${id}' does not define a 'create' method.`);
 
-				linter.defineRule(id, rule);
+				this.config.plugins!.local.rules![id] = rule;
 			} catch (e: any) {
 				console.warn(`[ESLint] Could not load additional rule module '${ruleFile}': ${e.message}`);
 			}
 		}
+		delete this.config.ruleFiles; // delete to pass validation
 	}
 }
 

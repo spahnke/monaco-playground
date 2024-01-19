@@ -6,7 +6,7 @@ import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 // - https://eslint.org/docs/next/use/configure/migration-guide
 // - https://eslint.org/docs/next/use/configure/migration-guide#--rulesdir
 
-export type EsLintConfig = Linter.Config<Linter.RulesRecord> & {
+export type EsLintConfig = Linter.FlatConfig & {
 	/**
 	 * Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.
 	 * - The filename without the extension is the rule ID
@@ -287,6 +287,8 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	 */
 	private createEsLintCompatibleConfig(): EsLintConfig {
 		const compatConfig = (JSON.parse(JSON.stringify(this.config)) ?? {}) as EsLintConfig;
+		// @ts-expect-error the $schema property is part of the JSON definition and has to be deleted in order to pass validation
+		delete compatConfig.$schema;
 		for (const ruleId in compatConfig.rules) {
 			const rule = compatConfig.rules[ruleId];
 			if (rule === undefined)
