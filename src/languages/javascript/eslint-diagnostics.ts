@@ -1,11 +1,6 @@
 import { Linter, Rule } from "eslint";
 import { DiagnosticsAdapter } from "../../common/diagnostics-adapter.js";
 
-// TODO migrate to ESLint flat config format
-// - https://eslint.org/docs/next/use/migrate-to-9.0.0#-linter-now-expects-flat-config-format
-// - https://eslint.org/docs/next/use/configure/migration-guide
-// - https://eslint.org/docs/next/use/configure/migration-guide#--rulesdir
-
 export type EsLintConfig = Linter.FlatConfig & {
 	/**
 	 * Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.
@@ -281,6 +276,10 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	 * Creates a new config where all "info" and "hint" level severities are replaced by "warn".
 	 */
 	private createEsLintCompatibleConfig(): EsLintConfig {
+		// For now we keep the ".eslintrc" JSON format for our ESLint config since it is structurally equivalent to the FlatConfig,
+		// at least for our purposes. This way we keep the advantage of autocomplete using the JSON schema. Should the
+		// FlatConfig have better (and easy to setup) autocomplete in the future we may switch. Loading configs in JS format in the
+		// worker may prove difficult though.
 		const compatConfig = (JSON.parse(JSON.stringify(this.config)) ?? {}) as EsLintConfig;
 		// @ts-expect-error the $schema property is part of the JSON definition and has to be deleted in order to pass validation
 		delete compatConfig.$schema;
@@ -352,7 +351,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		// Since the change to the FlatConfig we can't get the rule metadata through the linter API anymore, meaning we have to revert back to using
 		// a heuristic. The FlatConfig has the advantage that rule IDs of custom rules/rules provided by plugins are of the form "<custom name>/<rule name>" now.
 		// This means every rule ID that doesn't contain a "/" has to be a built-in rule that we can point to the official ESLint documentation. Furthermore,
-		// the documentation URL ends in the exact rule ID we get from the diagnoistic.
+		// the documentation URL ends in the exact rule ID we get from the diagnostic.
 		if (diagnostic.ruleId.includes("/"))
 			return diagnostic.ruleId;
 		return {
