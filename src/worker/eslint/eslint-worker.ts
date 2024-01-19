@@ -8,18 +8,6 @@ class EsLintWorker implements IEsLintWorker {
 		this.linter = this.createLinter();
 	}
 
-	async getRuleToUrlMapping(): Promise<Map<string, string>> {
-		const linter = await this.linter;
-		const ruleToUrlMapping = new Map<string, string>();
-		// TODO getRules is deprecated (https://eslint.org/blog/2022/08/new-config-system-part-3/) -> find a replacement for querying the rule URLs
-		// for (const [ruleId, ruleData] of linter.getRules()) {
-		// 	const url = ruleData.meta?.docs?.url;
-		// 	if (url)
-		// 		ruleToUrlMapping.set(ruleId, url);
-		// }
-		return ruleToUrlMapping;
-	}
-
 	async lint(fileName: string): Promise<Linter.LintMessage[]> {
 		const linter = await this.linter;
 		const model = this.context.getMirrorModels().find(m => m.uri.toString() === fileName);
@@ -36,11 +24,11 @@ class EsLintWorker implements IEsLintWorker {
 	private async createLinter(): Promise<Linter> {
 		const eslint = await import("./eslint.js");
 		const linter = new eslint.Linter();
-		await this.loadRules(linter);
+		await this.loadRules();
 		return linter;
 	}
 
-	private async loadRules(linter: Linter) {
+	private async loadRules() {
 		if (this.config.ruleFiles === undefined)
 			return;
 		if (!Array.isArray(this.config.ruleFiles)) {
@@ -49,7 +37,7 @@ class EsLintWorker implements IEsLintWorker {
 			return;
 		}
 
-		if (this.config.ruleFiles?.length > 0) {
+		if (this.config.ruleFiles.length > 0) {
 			this.config.plugins ??= {};
 			this.config.plugins.local ??= {};
 			this.config.plugins.local.rules ??= {};

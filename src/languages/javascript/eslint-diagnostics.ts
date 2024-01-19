@@ -26,7 +26,6 @@ type Fix = {
 };
 
 export interface IEsLintWorker {
-	getRuleToUrlMapping(): Promise<Map<string, string>>;
 	lint(fileName: string): Promise<Linter.LintMessage[]>;
 	getVersion(): Promise<string>;
 }
@@ -71,7 +70,6 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	/** Defined if and only if `eslintWorker` has been awaited. */
 	private webWorker: monaco.editor.MonacoWebWorker<IEsLintWorker> | undefined;
 	public readonly eslintWorker: Promise<IEsLintWorker>;
-	private ruleToUrlMapping: Map<string, string> | undefined;
 	private readonly diagnostics: DiagnosticContainer;
 
 	constructor(configPath: string) {
@@ -123,10 +121,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 			createData: { config: this.createEsLintCompatibleConfig() } as IWorkerCreateData
 		});
 		this.register(this.webWorker);
-
-		const eslintWorker = await this.webWorker.getProxy();
-		this.ruleToUrlMapping = await eslintWorker.getRuleToUrlMapping();
-		return eslintWorker;
+		return this.webWorker.getProxy();
 	}
 
 	private async computeDiagnostics(resource: monaco.Uri): Promise<void> {
@@ -354,12 +349,15 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private toCode(diagnostic: Linter.LintMessage): string | { value: string; target: monaco.Uri; } {
 		if (!diagnostic.ruleId)
 			return "";
-		const url = this.ruleToUrlMapping?.get(diagnostic.ruleId);
-		if (!url)
+		// Since the change to the FlatConfig we can't get the rule metadata through the linter API anymore, meaning we have to revert back to using
+		// a heuristic. The FlatConfig has the advantage that rule IDs of custom rules/rules provided by plugins are of the form "<custom name>/<rule name>" now.
+		// This means every rule ID that doesn't contain a "/" has to be a built-in rule that we can point to the official ESLint documentation. Furthermore,
+		// the documentation URL ends in the exact rule ID we get from the diagnoistic.
+		if (diagnostic.ruleId.includes("/"))
 			return diagnostic.ruleId;
 		return {
 			value: diagnostic.ruleId,
-			target: monaco.Uri.parse(url)
+			target: monaco.Uri.parse(`https://eslint.org/docs/latest/rules/${diagnostic.ruleId}`)
 		};
 	}
 
