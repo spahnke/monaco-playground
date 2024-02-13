@@ -3,7 +3,10 @@ import rule from "../../src/rules/no-id-tostring-in-query.js";
 
 rule.create = rule.create.bind(rule);
 
-const ruleTester = new RuleTester();
+const ruleTester = new RuleTester({
+	// TODO remove this once we can adopt ESLint 9 top-level in the repo
+	parserOptions: { ecmaVersion: 2015 },
+});
 ruleTester.run("no-id-tostring-in-query", rule, {
 	valid: [
 		{
