@@ -27,42 +27,42 @@ ruleTester.run("no-id-tostring-in-query", rule, {
 		},
 		{
 			code: `linq.execute('a x.Id.toString() === "asdf"');`,
-			errors: [{ column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.Id === new Guid("asdf")');` }] }],
+			errors: [{ messageId: "possibleConversion", column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.Id === new Guid("asdf")');`, messageId: "convertToGuid" }] }],
 		},
 		{
 			code: `linq.execute('a x.iD.toString() === "asdf"');`,
-			errors: [{ column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.iD === new Guid("asdf")');` }] }],
+			errors: [{ messageId: "possibleConversion", column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.iD === new Guid("asdf")');`, messageId: "convertToGuid" }] }],
 		},
 		{
 			code: `linq.execute('a x.ID.toString() === "asdf"');`,
-			errors: [{ column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.ID === new Guid("asdf")');` }] }],
+			errors: [{ messageId: "possibleConversion", column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.ID === new Guid("asdf")');`, messageId: "convertToGuid" }] }],
 		},
 		{
 			code: `linq.execute('a x.fooId.toString() === "asdf"');`,
-			errors: [{ column: 19, endColumn: 46, type: "Literal", suggestions: [{ output: `linq.execute('a x.fooId === new Guid("asdf")');` }] }],
+			errors: [{ messageId: "possibleConversion", column: 19, endColumn: 46, type: "Literal", suggestions: [{ output: `linq.execute('a x.fooId === new Guid("asdf")');`, messageId: "convertToGuid" }] }],
 		},
 		{
 			code: `linq.execute('a x.id.toString() === "asdf" asdf x.id.toString() === "qwer"');`,
 			errors: [
-				{ column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.id === new Guid("asdf") asdf x.id.toString() === "qwer"');` }] },
-				{ column: 51, endColumn: 75, type: "Literal", suggestions: [{ output: `linq.execute('a x.id.toString() === "asdf" asdf x.id === new Guid("qwer")');` }] },
+				{ messageId: "possibleConversion", column: 19, endColumn: 43, type: "Literal", suggestions: [{ output: `linq.execute('a x.id === new Guid("asdf") asdf x.id.toString() === "qwer"');`, messageId: "convertToGuid" }] },
+				{ messageId: "possibleConversion", column: 51, endColumn: 75, type: "Literal", suggestions: [{ output: `linq.execute('a x.id.toString() === "asdf" asdf x.id === new Guid("qwer")');`, messageId: "convertToGuid" }] },
 			],
 		},
 		// template strings
 		{
 			code: 'linq.execute(`a x.id.toString() === "asdf" asdf`);',
-			errors: [{ column: 19, endColumn: 43, type: "TemplateLiteral", suggestions: [{ output: 'linq.execute(`a x.id === new Guid("asdf") asdf`);' }] }],
+			errors: [{ messageId: "possibleConversion", column: 19, endColumn: 43, type: "TemplateLiteral", suggestions: [{ output: 'linq.execute(`a x.id === new Guid("asdf") asdf`);', messageId: "convertToGuid" }] }],
 		},
 		{
 			code: 'linq.execute(`a x.id.toString() === "${text}" asdf`);',
-			errors: [{ column: 19, endColumn: 46, type: "TemplateLiteral", suggestions: [{ output: 'linq.execute(`a x.id === new Guid("${text}") asdf`);' }] }],
+			errors: [{ messageId: "possibleConversion", column: 19, endColumn: 46, type: "TemplateLiteral", suggestions: [{ output: 'linq.execute(`a x.id === new Guid("${text}") asdf`);', messageId: "convertToGuid" }] }],
 		},
 		// concatenated string
 		{
 			code: `linq.execute(foo + 'a x.id.toString() === "' + foo + '" asdf ' + \`a x.id.toString() !== "\${text}" asdf \` + foo);`,
 			errors: [
-				{ column: 25, endColumn: 44, type: "Literal", suggestions: [] },
-				{ column: 71, endColumn: 98, type: "TemplateLiteral", suggestions: [{ output: `linq.execute(foo + 'a x.id.toString() === "' + foo + '" asdf ' + \`a x.id !== new Guid("\${text}") asdf \` + foo);` }] },
+				{ messageId: "possibleConversion", column: 25, endColumn: 44, type: "Literal", suggestions: [] },
+				{ messageId: "possibleConversion", column: 71, endColumn: 98, type: "TemplateLiteral", suggestions: [{ output: `linq.execute(foo + 'a x.id.toString() === "' + foo + '" asdf ' + \`a x.id !== new Guid("\${text}") asdf \` + foo);`, messageId: "convertToGuid" }] },
 			],
 		},
 		// intermediate variable
@@ -72,11 +72,12 @@ const query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\
 linq.execute(query);
 `.trim(),
 			errors: [
-				{ line: 1, column: 26, endColumn: 45, type: "Literal", suggestions: [] },
+				{ messageId: "possibleConversion", line: 1, column: 26, endColumn: 45, type: "Literal", suggestions: [] },
 				{
-					line: 1, column: 60, endColumn: 87, type: "TemplateLiteral",
+					messageId: "possibleConversion", line: 1, column: 60, endColumn: 87, type: "TemplateLiteral",
 					suggestions: [
 						{
+							messageId: "convertToGuid",
 							output: `
 const query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
 linq.execute(query);
@@ -92,11 +93,12 @@ var query = foo + 'a x.id.toString() === "' + foo + \`a x.id.toString() !== "\${
 linq.execute(query);
 `.trim(),
 			errors: [
-				{ line: 1, column: 24, endColumn: 43, type: "Literal", suggestions: [] },
+				{ messageId: "possibleConversion", line: 1, column: 24, endColumn: 43, type: "Literal", suggestions: [] },
 				{
-					line: 1, column: 58, endColumn: 85, type: "TemplateLiteral",
+					messageId: "possibleConversion", line: 1, column: 58, endColumn: 85, type: "TemplateLiteral",
 					suggestions: [
 						{
+							messageId: "convertToGuid",
 							output: `
 var query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
 linq.execute(query);
@@ -113,11 +115,12 @@ const query2 = query;
 linq.execute(query2);
 `.trim(),
 			errors: [
-				{ line: 1, column: 26, endColumn: 45, type: "Literal", suggestions: [] },
+				{ messageId: "possibleConversion", line: 1, column: 26, endColumn: 45, type: "Literal", suggestions: [] },
 				{
-					line: 1, column: 60, endColumn: 87, type: "TemplateLiteral",
+					messageId: "possibleConversion", line: 1, column: 60, endColumn: 87, type: "TemplateLiteral",
 					suggestions: [
 						{
+							messageId: "convertToGuid",
 							output: `
 const query = foo + 'a x.id.toString() === "' + foo + \`a x.id !== new Guid("\${text}") asdf\` + foo;
 const query2 = query;
@@ -136,11 +139,12 @@ linq.execute(query2);
 	linq.execute(query);
 }`.trim(),
 			errors: [
-				{ line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
+				{ messageId: "possibleConversion", line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
 				{
-					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
+					messageId: "possibleConversion", line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
 					suggestions: [
 						{
+							messageId: "convertToGuid",
 							output: `
 /* let/const in block */
 {
@@ -162,11 +166,12 @@ linq.execute(query2);
 	}
 }`.trim(),
 			errors: [
-				{ line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
+				{ messageId: "possibleConversion", line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
 				{
-					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
+					messageId: "possibleConversion", line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
 					suggestions: [
 						{
+							messageId: "convertToGuid",
 							output: `
 /* let/const in nested block */
 {
@@ -188,11 +193,12 @@ linq.execute(query2);
 	linq.execute(query);
 }`.trim(),
 			errors: [
-				{ line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
+				{ messageId: "possibleConversion", line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
 				{
-					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
+					messageId: "possibleConversion", line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
 					suggestions: [
 						{
+							messageId: "convertToGuid",
 							output: `
 /* var in block */
 {
@@ -214,11 +220,12 @@ linq.execute(query2);
 	}
 }`.trim(),
 			errors: [
-				{ line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
+				{ messageId: "possibleConversion", line: 3, column: 25, endColumn: 44, type: "Literal", suggestions: [] },
 				{
-					line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
+					messageId: "possibleConversion", line: 3, column: 59, endColumn: 86, type: "TemplateLiteral",
 					suggestions: [
 						{
+							messageId: "convertToGuid",
 							output: `
 /* var in nested block */
 {
