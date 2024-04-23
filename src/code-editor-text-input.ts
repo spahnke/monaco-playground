@@ -30,7 +30,7 @@ export class CodeEditorTextInput extends Disposable {
 			},
 			glyphMargin: false,
 			language: "plaintext",
-			lightbulb: { enabled: false },
+			lightbulb: { enabled: monaco.editor.ShowLightbulbIconMode.Off },
 			lineDecorationsWidth: 0,
 			lineNumbers: "off",
 			links: false,

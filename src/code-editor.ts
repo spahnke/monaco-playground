@@ -24,7 +24,7 @@ export class CodeEditor extends Disposable {
 				enabled: "on"
 			},
 			language,
-			lightbulb: { enabled: true },
+			lightbulb: { enabled: monaco.editor.ShowLightbulbIconMode.On },
 			minimap: { enabled: true },
 			mouseWheelZoom: true,
 			quickSuggestions: {
@@ -84,7 +84,7 @@ export class CodeEditor extends Disposable {
 	setReadonly(value: boolean): void {
 		this.editor.updateOptions({
 			readOnly: value,
-			lightbulb: { enabled: !value }, // because of https://github.com/microsoft/monaco-editor/issues/1596
+			lightbulb: { enabled: value ? monaco.editor.ShowLightbulbIconMode.Off : monaco.editor.ShowLightbulbIconMode.On }, // because of https://github.com/microsoft/monaco-editor/issues/1596
 		});
 	}
 
