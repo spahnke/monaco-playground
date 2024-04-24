@@ -47,6 +47,9 @@ export class CodeEditorTextInput extends Disposable {
 				vertical: "hidden",
 				alwaysConsumeMouseWheel: false,
 			},
+			stickyScroll: {
+				enabled: false,
+			},
 			value: text,
 			wordBasedSuggestions: "off",
 			wordWrap: "off",

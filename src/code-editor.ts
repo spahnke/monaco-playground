@@ -21,7 +21,7 @@ export class CodeEditor extends Disposable {
 				bracketPairsHorizontal: false,
 			},
 			inlayHints: {
-				enabled: "on"
+				enabled: "on",
 			},
 			language,
 			lightbulb: { enabled: monaco.editor.ShowLightbulbIconMode.On },
@@ -36,6 +36,9 @@ export class CodeEditor extends Disposable {
 			renderWhitespace: "selection",
 			showDeprecated: true,
 			showUnused: true,
+			stickyScroll: {
+				enabled: false,
+			},
 			suggest: {
 				preview: true,
 				showDeprecated: true,
