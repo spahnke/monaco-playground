@@ -20,17 +20,17 @@
 	"devDependencies": {
 		"@guanghechen/rollup-plugin-copy": "^5.0.12",
 		"@rollup/plugin-typescript": "^11.1.6",
-		"@types/eslint": "^8.56.10",
+		"@types/eslint": "^8.56.11",
 		"@types/estree": "1.0.5",
-		"@types/mocha": "^10.0.6",
-		"@types/node": "^20.14.7",
-		"@typescript-eslint/eslint-plugin": "7.13.1",
-		"@typescript-eslint/parser": "7.13.1",
+		"@types/mocha": "^10.0.7",
+		"@types/node": "^22.0.0",
+		"@typescript-eslint/eslint-plugin": "7.17.0",
+		"@typescript-eslint/parser": "7.17.0",
 		"eslint": "8.57.0",
-		"mocha": "^10.4.0",
-		"rollup": "^4.18.0",
+		"mocha": "^10.7.0",
+		"rollup": "^4.19.1",
 		"serve": "^14.2.3",
 		"tslib": "2.6.3",
-		"typescript": "^5.5.2"
+		"typescript": "^5.5.4"
 	}
 }
