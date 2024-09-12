@@ -48,6 +48,7 @@ export class PlaygroundContribution extends Disposable {
 		this.addOpenEditorInterceptor();
 		this.addFontZoomEvent();
 		this.addColorProviderExample();
+		this.addCursorAlignAction();
 	}
 
 	private addTestActions() {
@@ -275,6 +276,41 @@ declare var Color: ColorConstructor;`,
 				let color = Number.parseInt(s);
 				color = Math.max(0, Math.min(color, 255));
 				return color / 255;
+			}
+		}));
+	}
+
+	private addCursorAlignAction() {
+		this.register(this.editor.editor.addAction({
+			id: "cursor_align",
+			label: "Align cursors",
+			keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyA],
+			run: editor => {
+				const selections = editor.getSelections();
+				if (!selections || selections.length <= 1)
+					return;
+
+				// we have multiple cursors in selections
+				let maxColumn = 0;
+				for (const selection of selections) {
+					if (selection.selectionStartLineNumber !== selection.endLineNumber)
+						return; // only allow selections on the same line
+					maxColumn = Math.max(maxColumn, selection.startColumn);
+				}
+
+				const edits: monaco.editor.IIdentifiedSingleEditOperation[] = [];
+				for (let i = 0; i < selections.length; i++) {
+					const selection = selections[i];
+					const missingSpaces = maxColumn - selection.startColumn;
+					if (missingSpaces > 0) {
+						// add spaces for aligment                                                                                      this is correct; we want a collapsed range to insert
+						edits.push({ range: new monaco.Range(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.startColumn), text: " ".repeat(missingSpaces) });
+						selections[i] = new monaco.Selection(selection.startLineNumber, selection.startColumn + missingSpaces, selection.positionLineNumber, selection.positionColumn + missingSpaces);
+					}
+				}
+
+				if (edits.length > 0)
+					editor.executeEdits("cursor_align", edits, selections);
 			}
 		}));
 	}
