@@ -7,7 +7,7 @@
 		"clean": "./scripts/clean.js",
 		"build": "rollup -c",
 		"dev": "rollup -c -w",
-		"serve": "http-server -p 9000 -c-1 wwwroot",
+		"serve": "./scripts/server.js -p 9000 wwwroot",
 		"test": "tsc -p test/tsconfig.json && mocha test --recursive",
 		"schema": "./scripts/update-eslint-schema.js"
 	},
