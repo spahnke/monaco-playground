@@ -118,7 +118,7 @@
 				"background": {
 					"activeOnStart": true,
 					"beginsPattern": "@@@@@@@@", // impossible pattern
-					"endsPattern": "Serving!"
+					"endsPattern": "Available on:"
 				}
 			}
 		}
