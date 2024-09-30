@@ -2,6 +2,7 @@
 
 import fs from "fs";
 import http from "http";
+import os from "os";
 import path from "path";
 
 const params = parseCommandLine();
@@ -65,8 +66,11 @@ server.on("listening", () => {
 	console.log("Server listening on:");
 	console.log(`- http://localhost:${address.port}`);
 	console.log(`- http://${address.address}:${address.port}`);
-	console.log("If you run in WSL and the port forwarding doesn't work you can run the following command to get the IP address:")
-	console.log("hostname -I");
+
+	const networkInterface = Object.values(os.networkInterfaces()).flat().filter(x => x.family === "IPv4" && !x.internal);
+	const externalAddress = networkInterface[0]?.address;
+	if (externalAddress)
+		console.log(`- http://${externalAddress}:${address.port}`);
 });
 
 function parseCommandLine() {
