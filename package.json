@@ -4,12 +4,12 @@
 	"description": "",
 	"type": "module",
 	"scripts": {
-		"clean": "node scripts/clean.js",
+		"clean": "./scripts/clean.js",
 		"build": "rollup -c",
 		"dev": "rollup -c -w",
 		"serve": "http-server -p 9000 -c-1 wwwroot",
 		"test": "tsc -p test/tsconfig.json && mocha test --recursive",
-		"schema": "node scripts/update-eslint-schema.js"
+		"schema": "./scripts/update-eslint-schema.js"
 	},
 	"keywords": [],
 	"author": "",
