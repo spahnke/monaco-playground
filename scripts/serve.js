@@ -2,14 +2,7 @@ import fs from "fs";
 import http from "http";
 import path from "path";
 
-// const serverParams = {
-// 	port: 9000,
-// 	basePath: "",
-// }
-
-const port = 9000;
-const basePath = process.argv[2] ?? "";
-const contentRoot = path.join(process.cwd(), basePath);
+const params = parseCommandLine();
 
 const mimeTypes = {
 	".css" : "text/css",
@@ -30,7 +23,7 @@ const server = http.createServer((req, res) => {
 		return;
 	}
 
-	let filePath = path.join(contentRoot, url.path);
+	let filePath = path.join(params.contentRoot, url.path);
 	if (fs.statSync(filePath, { throwIfNoEntry: false })?.isDirectory()) {
 		filePath = path.join(filePath, "/index.html")
 	}
@@ -45,6 +38,7 @@ const server = http.createServer((req, res) => {
 		if (err) {
 			res.statusCode = 500;
 			res.end();
+			console.error(err);
 			log(req, res);
 		} else {
 			const ext = path.extname(filePath);
@@ -59,16 +53,38 @@ const server = http.createServer((req, res) => {
 			log(req, res);
 		}
 	});
-}).listen(port, "0.0.0.0");
+}).listen(params.port, "0.0.0.0");
 server.on("error", console.error);
 server.on("listening", () => {
 	/** @type {import("net").AddressInfo} */
 	const address = server.address();
-	console.log(`Content root: ${contentRoot}`);
+	console.log(`Content root: ${params.contentRoot}`);
 	console.log("Server listening on:");
 	console.log(`- http://localhost:${address.port}`);
 	console.log(`- http://${address.address}:${address.port}`);
 });
+
+function parseCommandLine() {
+	const serverParams = {
+		port: 9000,
+		contentRoot: process.cwd(),
+	};
+
+	for (let i = 2; i < process.argv.length; i++) {
+		const arg = process.argv[i];
+		if (arg === "-p") {
+			const port = process.argv[++i];
+			if (Number.isNaN(Number(port)))
+				console.error(`Port must be a number but got ${port}`);
+			else
+				serverParams.port = Number(port);
+		} else {
+			serverParams.contentRoot = path.join(process.cwd(), arg);
+		}
+	}
+
+	return serverParams;
+}
 
 /**
  * @param {string} urlPath
