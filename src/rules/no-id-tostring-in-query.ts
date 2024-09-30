@@ -1,5 +1,5 @@
 import { AST, Rule, Scope } from "eslint";
-import { CallExpression, Expression, Identifier, Literal, SourceLocation, TemplateLiteral, VariableDeclarator } from "estree";
+import { CallExpression, Expression, Identifier, Literal, PrivateIdentifier, SourceLocation, TemplateLiteral, VariableDeclarator } from "estree";
 
 export default new class implements Rule.RuleModule {
 	private readonly reportPattern = /\.[a-z0-9]*?id\.toString\(\)\s*[!=]==?\s*"(?:[^"]*?")?/gi;
@@ -53,9 +53,10 @@ export default new class implements Rule.RuleModule {
 	private checkExpression(context: Rule.RuleContext, expression: Expression) {
 		// if it's a binary expression (i.e. string concatenation) we collect all sub expressions and check against them
 		const expressionsToCheck: Expression[] = [];
-		while (expression.type === "BinaryExpression") {
-			expressionsToCheck.unshift(expression.right);
-			expression = expression.left;
+		let expr: Expression | PrivateIdentifier = expression;
+		while (expr.type === "BinaryExpression") {
+			expressionsToCheck.unshift(expr.right);
+			expr = expr.left;
 		}
 		expressionsToCheck.unshift(expression);
 

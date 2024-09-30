@@ -11,7 +11,7 @@ export type EsLintConfig = Linter.FlatConfig & {
 	ruleFiles?: string[];
 };
 
-type ExtendedRuleLevel = Linter.RuleLevel | "info" | "hint";
+type ExtendedRuleLevel = Linter.RuleSeverity | "info" | "hint";
 type Fix = {
 	description: string;
 	textEdit: monaco.languages.TextEdit;
