@@ -80,6 +80,8 @@ function parseCommandLine() {
 				console.error(`Port must be a number but got ${port}`);
 			else
 				serverParams.port = Number(port);
+		} else if (arg.startsWith("-")) {
+			console.error(`Unknown option ${arg}`);
 		} else {
 			serverParams.contentRoot = path.join(process.cwd(), arg);
 		}
