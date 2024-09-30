@@ -12,6 +12,7 @@ const mimeTypes = {
 	".ico" : "image/x-icon",
 	".js"  : "text/javascript",
 	".json": "application/json",
+	".map" : "application/json", // source maps
 	".ttf" : "application/x-font-ttf",
 };
 const longestMimeTypeLength = Math.max(...Object.values(mimeTypes).map(x => x.length));
