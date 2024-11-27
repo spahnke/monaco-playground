@@ -18,7 +18,7 @@
 		"monaco-editor": "0.50.0"
 	},
 	"devDependencies": {
-		"@guanghechen/rollup-plugin-copy": "^5.0.12",
+		"@guanghechen/rollup-plugin-copy": "^6.0.2",
 		"@rollup/plugin-typescript": "^12.1.1",
 		"@types/eslint": "^9.6.1",
 		"@types/estree": "1.0.6",
