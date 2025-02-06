@@ -167,6 +167,32 @@ export class PlaygroundContribution extends Disposable {
 				}
 			}
 		}));
+
+		this.register(this.editor.editor.addAction({
+			id: "dump_editor_object",
+			label: "Dump Editor Object",
+			run: editor => console.log(editor)
+		}));
+
+		this.register(this.editor.editor.addAction({
+			id: "dump_keybindings_text",
+			label: "Dump Keybindings Text",
+			run: (editor: any) => {
+				// CAUTION: Internal unofficial API
+				const keybindings: string[] = editor._standaloneKeybindingService._cachedResolver._keybindings.map((x: any) => `${x.chords}\t${x.command}${x.when ? " (" + x.when.serialize() + ")" : ""}`);
+				keybindings.sort((a, b) => a.localeCompare(b, "en-US", { caseFirst: "lower" }));
+				let maxColumn = 0;
+				for (const keybinding of keybindings) {
+					const seperatorColumn = keybinding.indexOf("\t");
+					maxColumn = Math.max(maxColumn, seperatorColumn);
+				}
+				for (let i = 0; i < keybindings.length; i++) {
+					const seperatorColumn = keybindings[i].indexOf("\t");
+					keybindings[i] = keybindings[i].replace("\t", " ".repeat(maxColumn - seperatorColumn + 1));
+				}
+				console.log(keybindings.join("\n"));
+			}
+		}));
 	}
 
 	/**
