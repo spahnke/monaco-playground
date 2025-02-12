@@ -1,6 +1,38 @@
 import { Linter, Rule } from "eslint";
 import { EsLintConfig, IEsLintWorker, IWorkerCreateData } from "../../languages/javascript/eslint-diagnostics.js";
 
+// ================== Workaround for deprecated AMD builds
+// See files src/language/typescript/ts.worker.ts and src/common/initialize.ts in https://github.com/microsoft/monaco-editor/pull/4950
+import { start } from "../../../node_modules/monaco-editor/esm/vs/editor/editor.worker.start.js";
+
+self.onmessage = (e) => {
+	// ignore the first message
+	initialize((ctx: monaco.worker.IWorkerContext, createData: IWorkerCreateData) => {
+		return create(ctx, createData);
+	});
+};
+
+let initialized = false;
+
+export function isWorkerInitialized(): boolean {
+	return initialized;
+}
+
+export function initialize(callback: (ctx: any, createData: any) => any): void {
+	initialized = true;
+	self.onmessage = (m) => {
+		start((ctx: any) => {
+			return callback(ctx, m.data);
+		});
+	};
+}
+
+// If we don't have AMD modules anymore that load ESLint itself, it will inject itself into the global namespace.
+declare const eslint: {
+	Linter: typeof import("eslint").Linter;
+};
+// ==================
+
 class EsLintWorker implements IEsLintWorker {
 	private linter: Promise<Linter>;
 
@@ -22,7 +54,7 @@ class EsLintWorker implements IEsLintWorker {
 	}
 
 	private async createLinter(): Promise<Linter> {
-		const eslint = await import("./eslint.js");
+		await import("./eslint.js");
 		const linter = new eslint.Linter();
 		await this.loadRules();
 		return linter;

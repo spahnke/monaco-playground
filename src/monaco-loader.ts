@@ -9,6 +9,7 @@ interface IRequire {
 }
 
 interface IRequireConfig {
+	baseUrl?: string;
 	paths?: Record<string, string>;
 	"vs/nls"?: {
 		availableLanguages: Record<string, string>;

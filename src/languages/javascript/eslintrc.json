@@ -51,7 +51,7 @@
 		"no-caller": "error",
 		"no-constructor-return": "warn",
 		"no-div-regex": "info",
-		"no-else-return": "info",
+		"no-else-return": "hint",
 		"no-empty-pattern": "warn",
 		"no-eval": "error",
 		"no-extend-native": "warn",

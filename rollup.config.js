@@ -51,7 +51,7 @@ export default [
 		],
 		output: {
 			dir: "wwwroot/worker",
-			format: "amd",
+			format: "es",
 			sourcemap: true,
 		},
 		external: [resolve(currentDir, "src/worker/eslint/eslint.js")],
@@ -69,7 +69,7 @@ export default [
 		input: [...getFilenames("src/rules")],
 		output: {
 			dir: "wwwroot/rules",
-			format: "amd",
+			format: "es",
 			sourcemap: true,
 		},
 		plugins: commonPlugins

@@ -1,0 +1,12 @@
+diff --git a/webpack.config.js b/webpack.config.js
+--- a/webpack.config.js
++++ b/webpack.config.js
+@@ -17,7 +17,7 @@ module.exports = {
+ 		filename: "[name].js",
+ 		library: "[name]",
+ 		libraryTarget: "umd",
+-		globalObject: "this",
++		globalObject: "globalThis",
+ 	},
+ 	module: {
+ 		rules: [

@@ -117,8 +117,42 @@ enum StandardTokenType {
 	RegEx = 4
 }
 
+/** CAUTION: Internal unofficial API */
+interface ITextModelWithTokenization extends monaco.editor.ITextModel {
+	/** CAUTION: Internal unofficial API */
+	readonly tokenization: ITokenizationTextModelPart;
+}
+
+/** CAUTION: Internal unofficial API */
+interface ITokenizationTextModelPart {
+	/**
+	 * CAUTION: Internal unofficial API
+	 *
+	 * Get the tokens for the line `lineNumber`.
+	 * The tokens might be inaccurate. Use `forceTokenization` to ensure accurate tokens.
+	 */
+	getLineTokens(lineNumber: number): ILineTokens;
+
+	/** CAUTION: Internal unofficial API */
+	readonly backgroundTokenizationState: number;
+}
+
+/** CAUTION: Internal unofficial API */
+interface ILineTokens {
+	/** CAUTION: Internal unofficial API */
+	getCount(): number;
+	/** CAUTION: Internal unofficial API */
+	getLineContent(): string;
+	/** CAUTION: Internal unofficial API */
+	getStartOffset(tokenIndex: number): number;
+	/** CAUTION: Internal unofficial API */
+	getEndOffset(tokenIndex: number): number;
+	/** CAUTION: Internal unofficial API (see IEncodedLineTokens in monaco.d.ts) */
+	getStandardTokenType(tokenIndex: number): number;
+}
+
 export async function waitForTokenization(model: monaco.editor.ITextModel): Promise<void> {
-	while (model.tokenization.backgroundTokenizationState !== BackgroundTokenizationState.Completed)
+	while ((model as ITextModelWithTokenization).tokenization.backgroundTokenizationState !== BackgroundTokenizationState.Completed)
 		await delay(500);
 }
 
@@ -127,7 +161,7 @@ export function isComment(model: monaco.editor.ITextModel, line: number): boolea
 	if (model.getLanguageId() === "plaintext")
 		return false;
 
-	const lineTokens = model.tokenization.getLineTokens(line);
+	const lineTokens = (model as ITextModelWithTokenization).tokenization.getLineTokens(line);
 	const tokenCount = lineTokens.getCount();
 	// a commented line either only has one token (the comment) or begins with whitespace followed by a comment, i.e. has at most 2 tokens
 	if (tokenCount === 1 && lineTokens.getStandardTokenType(0) === StandardTokenType.Comment)
@@ -149,7 +183,7 @@ export function isInComment(model: monaco.editor.ITextModel, range: monaco.IRang
 		throw new Error("Ranges over multiple lines are not supported");
 
 	const line = range.startLineNumber;
-	const lineTokens = model.tokenization.getLineTokens(line);
+	const lineTokens = (model as ITextModelWithTokenization).tokenization.getLineTokens(line);
 	let tokenType = StandardTokenType.Other;
 	for (let i = 0; i < lineTokens.getCount(); i++) {
 		const tokenRange: monaco.IRange = { startLineNumber: line, startColumn: lineTokens.getStartOffset(i) + 1, endLineNumber: line, endColumn: lineTokens.getEndOffset(i) + 1 };

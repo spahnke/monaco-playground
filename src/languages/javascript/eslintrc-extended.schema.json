@@ -1529,7 +1529,7 @@
 			}
 		},
 		"ruleFiles": {
-			"description": "Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.\n- The filename without the extension is the rule ID\n- The rule must be compiled as a standalone AMD module\n- The rule object must be the default export of the module",
+			"description": "Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.\n- The filename without the extension is the rule ID\n- The rule must be compiled as a standalone ES module\n- The rule object must be the default export of the module",
 			"type": "array",
 			"items": {
 				"type": "string"

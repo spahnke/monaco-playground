@@ -65,10 +65,6 @@ body {
 	border-color: var(--monaco-single-line-focus-border-color);
 }
 
-.monaco-single-line-placeholder {
-	opacity: 0.5;
-}
-
 .monaco-single-line-slash-command {
 	color: #006ab1 !important;
 }

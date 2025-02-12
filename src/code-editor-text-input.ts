@@ -4,8 +4,7 @@ export class CodeEditorTextInput extends Disposable {
 	private readonly onDidChangeTextEmitter = new monaco.Emitter<string>();
 	private readonly onDidPressEnterEmitter = new monaco.Emitter<string>();
 
-	private readonly placeholderDecoration = this.editor.createDecorationsCollection();
-	private readonly iconDecoration = this.editor.createDecorationsCollection();
+	private readonly iconDecoration: monaco.editor.IEditorDecorationsCollection;
 
 	/**
 	 * Creates a monaco based one-line text input in `element` and optionally sets the initial `text`, a `placeholder` text, and an `icon`.
@@ -39,6 +38,7 @@ export class CodeEditorTextInput extends Disposable {
 			occurrencesHighlight: "off",
 			overviewRulerLanes: 0,
 			overviewRulerBorder: false,
+			placeholder: placeholder,
 			renderLineHighlight: "none",
 			roundedSelection: false,
 			scrollBeyondLastColumn: 0,
@@ -53,11 +53,12 @@ export class CodeEditorTextInput extends Disposable {
 			value: text,
 			wordBasedSuggestions: "off",
 			wordWrap: "off",
-		}), placeholder, icon);
+		}), icon);
 	}
 
-	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, private placeholder?: string, private icon?: string) {
+	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, private icon?: string) {
 		super();
+		this.iconDecoration = editor.createDecorationsCollection();
 
 		const container = editor.getContainerDomNode();
 		container.className = "monaco-single-line";
@@ -82,9 +83,7 @@ export class CodeEditorTextInput extends Disposable {
 		this.register(editor.onDidFocusEditorWidget(() => container.classList.add("focus")));
 		this.register(editor.onDidBlurEditorWidget(() => container.classList.remove("focus")));
 
-		this.updatePlaceholderDecoration();
 		this.updateIconDecoration();
-		this.register(editor.onDidChangeModelContent(() => this.updatePlaceholderDecoration()));
 
 		this.register(editor.onKeyDown(e => {
 			// prevent editor from handling the tab key and inputting a tab character
@@ -159,11 +158,6 @@ export class CodeEditorTextInput extends Disposable {
 		return this.editor.getOptions().get(monaco.editor.EditorOption.readOnly);
 	}
 
-	setPlaceholder(placeholder: string | undefined): void {
-		this.placeholder = placeholder;
-		this.updatePlaceholderDecoration();
-	}
-
 	/**
 	 * Sets the icon that is shown in the decorations gutter to the one passed in `icon`, or removes the icon completely if `undefined` is passed.
 	 * @param icon See https://code.visualstudio.com/api/references/icons-in-labels#icon-listing for valid values.
@@ -178,24 +172,6 @@ export class CodeEditorTextInput extends Disposable {
 		this.onDidChangeTextEmitter.dispose();
 		this.onDidPressEnterEmitter.dispose();
 		this.editor.dispose();
-	}
-
-	private updatePlaceholderDecoration(): void {
-		if (this.placeholder && this.length === 0) {
-			this.placeholderDecoration.set([{
-				range: new monaco.Range(1, 1, 1, 1),
-				options: {
-					before: {
-						content: this.placeholder,
-						inlineClassName: "monaco-single-line-placeholder",
-						cursorStops: monaco.editor.InjectedTextCursorStops.None
-					},
-					showIfCollapsed: true,
-				},
-			}]);
-		} else {
-			this.placeholderDecoration.clear();
-		}
 	}
 
 	private updateIconDecoration(): void {

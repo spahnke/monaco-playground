@@ -12,6 +12,7 @@ const mimeTypes = {
 	".js"  : "text/javascript",
 	".json": "application/json",
 	".map" : "application/json", // source maps
+	".ts"  : "text/typescript",
 	".ttf" : "application/x-font-ttf",
 };
 const longestMimeTypeLength = Math.max(...Object.values(mimeTypes).map(x => x.length));
@@ -30,10 +31,15 @@ const server = http.createServer((req, res) => {
 		filePath = path.join(filePath, "/index.html")
 	}
 	if (!fs.existsSync(filePath)) {
-		res.statusCode = 404;
-		res.end();
-		log(req, res);
-		return;
+		if (url.path.endsWith(".ts")) {
+			// special case for source mapping
+			filePath = path.join(params.contentRoot, "..", url.path);
+		} else {
+			res.statusCode = 404;
+			res.end();
+			log(req, res);
+			return;
+		}
 	}
 
 	fs.readFile(filePath, (err, data) => {

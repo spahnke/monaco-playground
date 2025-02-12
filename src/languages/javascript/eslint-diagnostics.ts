@@ -5,7 +5,7 @@ export type EsLintConfig = Linter.Config & {
 	/**
 	 * Optional paths to additional rule files, either absolute webserver paths, or relative to the worker directory.
 	 * - The filename without the extension is the rule ID
-	 * - The rule must be compiled as a standalone AMD module
+	 * - The rule must be compiled as a standalone ES module
 	 * - The rule object must be the default export of the module
 	 */
 	ruleFiles?: string[];
@@ -110,11 +110,13 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 
 	private async createEslintWorker(configPath: string): Promise<IEsLintWorker> {
 		this.config = await fetch(configPath).then(r => r.json());
-		this.webWorker = monaco.editor.createWebWorker<IEsLintWorker>({
-			moduleId: "/worker/eslint-worker",
-			label: this.owner,
-			createData: { config: this.createEsLintCompatibleConfig() } as IWorkerCreateData
-		});
+		// ================== Workaround for deprecated AMD builds
+		const worker = new Worker("/worker/eslint-worker.js", { type: "module" });
+		// See src/common/workers.ts in https://github.com/microsoft/monaco-editor/pull/4950 for the postMessage order and content:
+		worker.postMessage('ignore');
+		worker.postMessage({ config: this.createEsLintCompatibleConfig() } as IWorkerCreateData);
+		// ==================
+		this.webWorker = monaco.editor.createWebWorker<IEsLintWorker>({ worker });
 		this.register(this.webWorker);
 		return this.webWorker.getProxy();
 	}
