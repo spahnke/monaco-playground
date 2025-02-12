@@ -27,7 +27,7 @@ export function loadMonaco(locale: MonacoLocale = "en"): Promise<void> {
 	if (monacoLoaded === undefined) {
 		const monacoLocale = locale === "en" ? "" : locale; // en is default and must not be explicitly specified (but it makes the API nicer to include it as value)
 		monacoLoaded = new Promise<void>(resolve => {
-			require.config({ paths: { vs: "lib/monaco-editor/dev/vs" } });
+			require.config({ paths: { vs: window.location.origin + "/lib/monaco-editor/dev/vs" } });
 			require.config({
 				"vs/nls": {
 					availableLanguages: {

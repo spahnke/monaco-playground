@@ -111,7 +111,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 	private async createEslintWorker(configPath: string): Promise<IEsLintWorker> {
 		this.config = await fetch(configPath).then(r => r.json());
 		this.webWorker = monaco.editor.createWebWorker<IEsLintWorker>({
-			moduleId: "/worker/eslint-worker",
+			moduleId: window.location.origin + "/worker/eslint-worker",
 			label: this.owner,
 			createData: { config: this.createEsLintCompatibleConfig() } as IWorkerCreateData
 		});

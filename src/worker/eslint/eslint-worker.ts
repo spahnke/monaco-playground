@@ -49,7 +49,7 @@ class EsLintWorker implements IEsLintWorker {
 				if (id === undefined)
 					throw new Error("Could not extract rule ID from file name.");
 
-				const rule: Rule.RuleModule = (await import(ruleFile)).default;
+				const rule: Rule.RuleModule = (await import(self.location.origin + ruleFile)).default;
 				if (typeof rule.create !== "function")
 					throw new Error(`The rule '${id}' does not define a 'create' method.`);
 
