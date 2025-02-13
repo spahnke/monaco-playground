@@ -1,0 +1,13 @@
+diff --git a/lib/config/rule-validator.js b/lib/config/rule-validator.js
+index 3b4ea6122..c0c7051cc 100644
+--- a/lib/config/rule-validator.js
++++ b/lib/config/rule-validator.js
+@@ -153,7 +153,7 @@ class RuleValidator {
+                     const schema = getRuleOptionsSchema(rule);
+ 
+                     if (schema) {
+-                        this.validators.set(rule, ajv.compile(schema));
++                        this.validators.set(rule, config.settings?.disableRuleValidation ? () => { } : ajv.compile(schema));
+                     }
+                 } catch (err) {
+                     throw new InvalidRuleOptionsSchemaError(ruleId, err);
