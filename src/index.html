@@ -3,8 +3,8 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<!-- TODO(seb) Since Monaco switched to absolute domains and blobs for workers in >= 0.51.0, ESLint now want unsafe-eval to verify the ESLint config (using new Function()). Why
-	 wasn't this a problem before? The ESLint version didn't change between 0.50.0 and 0.52.2 and must have verified the config before?! -> Investigate this -->
+	<!-- TODO(seb) Since Monaco switched to absolute domains and blobs for workers in >= 0.51.0, ESLint now want unsafe-eval to verify the ESLint config (using new Function()).
+	 This is because web workers do not inherit the origins CSP if they are normal files, but they do if they are blobs (see https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers#content_security_policy) -->
 	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; form-action 'none'; object-src 'none'; base-uri 'none'" />
 	<title>Monaco Playground</title>
 	<link rel="stylesheet" href="styles.css">
