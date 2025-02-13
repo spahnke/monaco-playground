@@ -25,6 +25,9 @@ class EsLintWorker implements IEsLintWorker {
 		const eslint = await import("./eslint.js");
 		const linter = new eslint.Linter();
 		await this.loadRules();
+		// see README.md (in this folder) why we add the following custom setting
+		this.config.settings ??= {};
+		this.config.settings.disableRuleValidation = true;
 		return linter;
 	}
 
