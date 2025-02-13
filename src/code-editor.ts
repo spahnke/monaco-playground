@@ -25,7 +25,11 @@ export class CodeEditor extends Disposable {
 			},
 			language,
 			lightbulb: { enabled: monaco.editor.ShowLightbulbIconMode.OnCode },
-			minimap: { enabled: true },
+			minimap: {
+				enabled: true,
+				showMarkSectionHeaders: false,
+				showRegionSectionHeaders: false,
+			},
 			mouseWheelZoom: true,
 			quickSuggestions: {
 				comments: true,
