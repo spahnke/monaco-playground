@@ -11,6 +11,7 @@ export class CodeEditor extends Disposable {
 			},
 			colorDecorators: true,
 			defaultColorDecorators: "never",
+			definitionLinkOpensInPeek: true,
 			fixedOverflowWidgets: true,
 			fontLigatures: true,
 			fontSize: 13,
