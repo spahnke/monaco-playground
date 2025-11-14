@@ -282,7 +282,7 @@ export class EsLintDiagnostics extends DiagnosticsAdapter implements monaco.lang
 		// new config format ("flat config"), at least for our purposes. This way we keep the advantage of autocomplete
 		// using the JSON schema. Should the Config have better (and easy to setup) autocomplete in the future we may
 		// switch. Loading configs in JS format in the worker may prove difficult though.
-		const compatConfig = (JSON.parse(JSON.stringify(this.config)) ?? {}) as EsLintConfig;
+		const compatConfig = structuredClone(this.config ?? {});
 		// @ts-expect-error the $schema property is part of the JSON definition and has to be deleted in order to pass validation
 		delete compatConfig.$schema;
 		for (const ruleId in compatConfig.rules) {
