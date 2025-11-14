@@ -40,7 +40,7 @@
 		"array-callback-return": "warn",
 		"block-scoped-var": "warn",
 		"consistent-return": "warn",
-		"curly": ["info", "multi-or-nest", "consistent"],
+		"curly": ["off", "multi-or-nest", "consistent"],
 		"default-case": "warn",
 		"default-case-last": "info",
 		"default-param-last": "info",
