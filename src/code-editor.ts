@@ -22,7 +22,7 @@ export class CodeEditor extends Disposable {
 				bracketPairsHorizontal: false,
 			},
 			inlayHints: {
-				enabled: "on",
+				enabled: "offUnlessPressed", // need to press Ctrl+Alt to show them
 			},
 			language,
 			lightbulb: { enabled: monaco.editor.ShowLightbulbIconMode.OnCode },
