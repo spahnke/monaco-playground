@@ -1,4 +1,4 @@
-import { writeFile } from "fs/promises";
+import { writeFileSync } from "fs";
 import https from "https";
 
 try {
@@ -18,7 +18,7 @@ try {
 	};
 
 	const newSchemaText = JSON.stringify(schema, undefined, "\t");
-	await writeFile("src/languages/javascript/eslintrc-extended.schema.json", newSchemaText, "utf8");
+	writeFileSync("src/languages/javascript/eslintrc-extended.schema.json", newSchemaText, "utf8");
 } catch (e) {
 	console.error(e);
 }

@@ -1,4 +1,4 @@
-import { rm } from "fs/promises";
+import { rmSync } from "fs";
 
-await rm("test/dist", { recursive: true, force: true });
-await rm("wwwroot", { recursive: true, force: true });
+rmSync("test/dist", { recursive: true, force: true });
+rmSync("wwwroot", { recursive: true, force: true });

@@ -5,8 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"clean": "node scripts/clean.js",
-		"build": "rollup -c",
-		"dev": "rollup -c -w",
+		"build": "node scripts/build.js",
+		"dev": "node scripts/build.js -w",
 		"serve": "node scripts/server.js -p 9000 wwwroot",
 		"test": "tsc -p test/tsconfig.json && mocha test --recursive",
 		"schema": "node scripts/update-eslint-schema.js"
@@ -18,15 +18,13 @@
 		"monaco-editor": "0.55.1"
 	},
 	"devDependencies": {
-		"@guanghechen/rollup-plugin-copy": "6.0.9",
-		"@rollup/plugin-typescript": "12.3.0",
 		"@types/eslint": "9.6.1",
 		"@types/estree": "1.0.8",
 		"@types/mocha": "10.0.10",
 		"@types/node": "24.10.1",
+		"esbuild": "0.27.0",
 		"eslint": "9.39.1",
 		"mocha": "11.7.5",
-		"rollup": "4.53.3",
 		"tslib": "2.8.1",
 		"typescript": "5.9.3"
 	}
