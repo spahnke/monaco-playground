@@ -5,7 +5,7 @@ Personal playground for the [Monaco editor](https://github.com/Microsoft/monaco-
 ## Running
 
 ```sh
-npm install
+npm ci
 npm run build
 npm run serve
 ```
