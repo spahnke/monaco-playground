@@ -8,14 +8,13 @@ type MonacoLocale = "en" | "cs" | "de" | "es" | "fr" | "it" | "ja" | "ko" | "pl"
  * any Monaco specific operations.
  */
 export async function loadMonaco(locale: MonacoLocale = "en"): Promise<void> {
-	const monacoLocale = locale === "en" ? "" : locale; // en is default and must not be explicitly specified (but it makes the API nicer to include it as value)
-	const monacoScript = "/lib/monaco-editor/index.js";
-	if (monacoLocale !== "") {
-		await import(`/lib/monaco-editor/nls.messages.${monacoLocale}.js`);
+	if (locale !== "en") {
+		await import(`/lib/monaco-editor/nls.messages.${locale}.js`);
 	}
-	// NOTE Using a variable to avoid TS errors because this module only exists at runtime and using interpolation to
-	// prevent any bundler from trying to inline import the file here.
-	await import(`${monacoScript}`);
+	// NOTE Using a variable a) avoid TS errors because this module only exists at runtime and b) to prevent any bundler
+	// from trying to inline import the file here.
+	const monacoScript = "/lib/monaco-editor/index.js";
+	await import(monacoScript);
 	registerLanguages();
 	registerPromiseCanceledErrorHandler();
 	patchKeybindings();

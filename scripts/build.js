@@ -32,7 +32,7 @@ for (const srcPath of staticFiles) {
 build({
 	entryPoints: fs.globSync("node_modules/monaco-editor/esm/vs/**/*.worker.js"),
 	bundle: true,
-	format: "iife",
+	format: "esm",
 	minify: true,
 	sourcemap: true,
 	outbase: "node_modules/monaco-editor/esm/",
@@ -42,7 +42,7 @@ build({
 build({
 	entryPoints: ["monaco-esm/index.js"],
 	bundle: true,
-	format: "iife",
+	format: "esm",
 	minify: true,
 	sourcemap: true,
 	outdir: "wwwroot/lib/monaco-editor",
@@ -56,7 +56,7 @@ build({
 	bundle: true,
 	format: "esm",
 	sourcemap: true,
-	outdir: "wwwroot/dist",
+	outdir: "wwwroot",
 });
 
 build({
@@ -64,7 +64,6 @@ build({
 	bundle: true,
 	format: "esm",
 	sourcemap: true,
-	external: ["./eslint.js"],
 	outdir: "wwwroot/worker",
 });
 

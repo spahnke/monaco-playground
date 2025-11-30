@@ -54,7 +54,10 @@ class EsLintWorker implements IEsLintWorker {
 	}
 
 	private async createLinter(): Promise<Linter> {
-		await import("./eslint.js");
+		// NOTE Using a variable a) avoid TS errors because this module only exists at runtime and b) to prevent any
+		// bundler from trying to inline import the file here.
+		const eslintScript = "./eslint.js";
+		await import(eslintScript);
 		const linter = new eslint.Linter();
 		await this.loadRules();
 		return linter;
