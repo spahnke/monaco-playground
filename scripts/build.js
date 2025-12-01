@@ -3,7 +3,13 @@ import fs from "fs";
 import path from "path";
 import { styleText } from "node:util"
 
-const watch = process.argv.includes("-w");
+if (process.argv.includes("clean")) {
+	fs.rmSync("test/dist", { recursive: true, force: true });
+	fs.rmSync("wwwroot", { recursive: true, force: true });
+	process.exit();
+}
+
+const watch = process.argv.includes("watch");
 
 for (const srcPath of fs.globSync("node_modules/monaco-editor/esm/nls.messages.*.js")) {
 	const destPath = `wwwroot/lib/monaco-editor/${path.basename(srcPath)}`;

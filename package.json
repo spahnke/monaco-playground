@@ -4,9 +4,9 @@
 	"description": "",
 	"type": "module",
 	"scripts": {
-		"clean": "node scripts/clean.js",
+		"clean": "node scripts/build.js clean",
 		"build": "node scripts/build.js",
-		"dev": "node scripts/build.js -w",
+		"dev": "node scripts/build.js watch",
 		"serve": "node scripts/server.js -p 9000 wwwroot",
 		"test": "tsc -p test/tsconfig.json && node --test '**/*.test.js'",
 		"schema": "node scripts/update-eslint-schema.js"
