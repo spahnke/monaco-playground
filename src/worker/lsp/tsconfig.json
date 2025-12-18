@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"module": "es2022",
+		"target": "es2022",
+		"moduleResolution": "bundler",
+		"lib": ["ES2022", "WebWorker"],
+		"types": [],
+		"sourceMap": true,
+		"checkJs": false,
+		"strict": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+	},
+}

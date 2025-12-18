@@ -8,5 +8,6 @@
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
 	},
-	"include": ["**/*", "../node_modules/monaco-editor/monaco.d.ts"]
+	"include": ["**/*", "../node_modules/monaco-editor/monaco.d.ts"],
+	"exclude": ["worker/lsp/**"]
 }
