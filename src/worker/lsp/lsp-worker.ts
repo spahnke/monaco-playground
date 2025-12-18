@@ -1,4 +1,4 @@
-import { createConnection, BrowserMessageReader, BrowserMessageWriter, TextDocuments, DocumentDiagnosticReportKind, DiagnosticSeverity, Diagnostic, DiagnosticTag, Range, CodeDescription } from "vscode-languageserver/browser.js";
+import { createConnection, BrowserMessageReader, BrowserMessageWriter, TextDocuments, DocumentDiagnosticReportKind, DiagnosticSeverity, Diagnostic, DiagnosticTag, Range, CodeDescription, CodeActionKind, CodeAction, TextEdit } from "vscode-languageserver/browser.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import type { Linter, Rule } from "eslint";
 
@@ -17,6 +17,12 @@ type EsLintConfig = Linter.Config & {
 };
 
 type ExtendedRuleLevel = Linter.RuleSeverity | "info" | "hint";
+
+type Fix = {
+	description: string;
+	textEdit: TextEdit;
+	autoFixAvailable: boolean;
+};
 
 let eslintExtendedConfig: EsLintConfig;
 let eslintCompatConfig: EsLintConfig;
@@ -40,6 +46,10 @@ connection.onInitialize(async (params) => {
 				identifier: "eslint",
 				interFileDependencies: false,
 				workspaceDiagnostics: false,
+			},
+			codeActionProvider: {
+				codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll],
+				resolveProvider: false, // TODO(seb) Do we need this?
 			}
 		},
 	};
@@ -52,6 +62,31 @@ connection.languages.diagnostics.on(params => {
 		items: computeDiagnostics(textDocument),
 	};
 });
+
+connection.onCodeAction(params => {
+	// TODO(seb) Neither data, nor source, nor code are roundtripped, so our previous approach also doesn't work without
+	// changes...
+	const codeActions: CodeAction[] = [];
+	for (const diagnostic of params.context.diagnostics) {
+		// The data field isn't roundtripped by the monaco LSP client so this code doesn't work, but it should probably
+		// be all we need.
+		const fixes: Fix[] = diagnostic.data ?? [];
+		for (const fix of fixes) {
+			codeActions.push({
+				title: fix.description,
+				diagnostics: [diagnostic],
+				edit: {
+					changes: {
+						[params.textDocument.uri]: [fix.textEdit],
+					},
+				},
+				isPreferred: fix.autoFixAvailable,
+				kind: CodeActionKind.QuickFix,
+			});
+		}
+	}
+	return codeActions;
+})
 
 const documents = new TextDocuments(TextDocument);
 documents.listen(connection);
@@ -73,11 +108,43 @@ function computeDiagnostics(document: TextDocument | undefined): Diagnostic[] {
 			source: "eslint",
 			severity: toSeverity(lintMessage),
 			code: lintMessage.ruleId ?? undefined,
-			codeDescription: toCodeDescription(lintMessage), // Congrats this isn't supported by the monaco LSP client yet...
-			tags: lintMessage.ruleId === "no-unused-vars" ? [DiagnosticTag.Unnecessary] : []
+			codeDescription: toCodeDescription(lintMessage), // This isn't supported by the monaco LSP client yet.
+			tags: lintMessage.ruleId === "no-unused-vars" ? [DiagnosticTag.Unnecessary] : [],
+			data: computeFixesForDataField(document, lintMessage), // The data field isn't roundtripped by monaco LSP client.
 		});
 	}
 	return diagnostics;
+}
+
+function computeFixesForDataField(document: TextDocument, lintMessage: Linter.LintMessage): Fix[] {
+	const fixes: Fix[] = [];
+	if (lintMessage.fix) {
+		fixes.push({
+			description: `Fix this '${lintMessage.message}' problem`,
+			textEdit: toTextEdit(document, lintMessage.fix),
+			autoFixAvailable: true,
+		});
+	}
+	if (lintMessage.suggestions) {
+		for (const suggestion of lintMessage.suggestions) {
+			fixes.push({
+				description: suggestion.desc,
+				textEdit: toTextEdit(document, suggestion.fix),
+				autoFixAvailable: false,
+			});
+		}
+	}
+	return fixes;
+}
+
+function toTextEdit(document: TextDocument, fix: Rule.Fix): TextEdit {
+	const [startOffset, endOffset] = fix.range;
+	const start = document.positionAt(startOffset);
+	const end = document.positionAt(endOffset);
+	return {
+		range: Range.create(start, end),
+		newText: fix.text,
+	}
 }
 
 function toRange(lintMessage: Linter.LintMessage): Range {
