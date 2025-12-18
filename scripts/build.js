@@ -74,6 +74,14 @@ build({
 });
 
 build({
+	entryPoints: ["src/worker/lsp/lsp-worker.ts"],
+	bundle: true,
+	format: "esm",
+	sourcemap: true,
+	outdir: "wwwroot/worker",
+});
+
+build({
 	entryPoints: fs.globSync("src/rules/*.ts"),
 	bundle: true,
 	format: "esm",
