@@ -20,10 +20,6 @@ editor.register(new TodoContribution());
 editor.register(new PlaygroundContribution(editor));
 editor.register(new DebugContribution(editor.monacoEditor));
 
-const worker = new Worker("/worker/lsp-worker.js", { type: "module" });
-const s = monaco.lsp.createTransportToWorker(worker);//.log();
-new monaco.lsp.MonacoLspClient(s);
-
 editor.addLibrary({
 	contents: `
 declare class Facts {

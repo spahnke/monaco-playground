@@ -15,8 +15,11 @@ export function registerJavascriptLanguageExtensions(): void {
 		});
 
 		monaco.languages.registerCompletionItemProvider("javascript", new SnippetCompletionProvider(new JsonSnippetService("languages/javascript/snippets.json")));
-		eslintDiagnostics = new EsLintDiagnostics("languages/javascript/eslintrc.json");
-		monaco.languages.registerCodeActionProvider("javascript", eslintDiagnostics, { providedCodeActionKinds: EsLintDiagnostics.providedCodeActionKinds });
+		// eslintDiagnostics = new EsLintDiagnostics("languages/javascript/eslintrc.json");
+		// monaco.languages.registerCodeActionProvider("javascript", eslintDiagnostics, { providedCodeActionKinds: EsLintDiagnostics.providedCodeActionKinds });
+		const worker = new Worker("/worker/lsp-worker.js", { type: "module" });
+		const s = monaco.lsp.createTransportToWorker(worker);//.log();
+		new monaco.lsp.MonacoLspClient(s);
 	});
 }
 
