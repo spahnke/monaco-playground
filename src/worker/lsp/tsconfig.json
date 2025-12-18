@@ -2,6 +2,8 @@
 	"compilerOptions": {
 		"module": "es2022",
 		"target": "es2022",
+		"moduleResolution": "node",
+		"lib": ["ES2022", "WebWorker"],
 		"types": [],
 		"sourceMap": true,
 		"checkJs": false,
@@ -10,6 +12,4 @@
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
 	},
-	"include": ["**/*", "../node_modules/monaco-editor/monaco.d.ts"],
-	"exclude": ["worker/lsp/**"]
 }
