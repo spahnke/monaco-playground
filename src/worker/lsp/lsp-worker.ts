@@ -77,12 +77,17 @@ connection.onCodeAction(params => {
 	const codeActions: CodeAction[] = [];
 
 	// Temp workaround
-	// TODO(seb) For some reason we get duplicate code action entries from the second diagnostic of the same kind onward...
+	//
+	// TODO(seb) If we have 2 dianostics on the same range where only one of them has a fix (e.g. a single quote string
+	// as a statement) we now add that fix twice because we can't distinguish between them with range alone. Severity
+	// can (and will in this specific case) help, but even then 2 of them could overlap. Maybe it's better to swap the
+	// loops so we go over our fixes and search every (deduplicated) diagnostic it applies to, but even then how do we
+	// report which diagnostic it fixed?
 	const cachedFixes = currentFixes.get(params.textDocument.uri) ?? [];
 	for (const diagnostic of params.context.diagnostics) {
 		const ruleIds = new Set<string>();
 		for (const fix of cachedFixes) {
-			if (diagnostic.range.start.line === fix.range.start.line && diagnostic.range.start.character === fix.range.start.character && diagnostic.range.end.line === fix.range.end.line && diagnostic.range.end.character === fix.range.end.character) {
+			if (diagnostic.range.start.line === fix.range.start.line && diagnostic.range.start.character === fix.range.start.character && diagnostic.range.end.line === fix.range.end.line && diagnostic.range.end.character === fix.range.end.character && diagnostic.severity === fix.severity) {
 				codeActions.push({
 					title: fix.description,
 					diagnostics: [diagnostic],
