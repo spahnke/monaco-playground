@@ -22,11 +22,19 @@ type Fix = {
 	description: string;
 	textEdit: TextEdit;
 	autoFixAvailable: boolean;
+	// Temp workaround:
+	range: Range;
+	severity: DiagnosticSeverity;
+	ruleId: string,
 };
 
 let eslintExtendedConfig: EsLintConfig;
 let eslintCompatConfig: EsLintConfig;
 let linter: Linter;
+
+// Temp workaround
+const currentFixes = new Map<string, Fix[]>();
+const ruleFixes = new Map<string, Fix[]>();
 
 const connection = createConnection(new BrowserMessageReader(self), new BrowserMessageWriter(self));
 connection.onInitialize(async (params) => {
@@ -67,24 +75,49 @@ connection.onCodeAction(params => {
 	// TODO(seb) Neither data, nor source, nor code are roundtripped, so our previous approach also doesn't work without
 	// changes...
 	const codeActions: CodeAction[] = [];
+
+	// Temp workaround
+	const cachedFixes = currentFixes.get(params.textDocument.uri) ?? [];
 	for (const diagnostic of params.context.diagnostics) {
-		// The data field isn't roundtripped by the monaco LSP client so this code doesn't work, but it should probably
-		// be all we need.
-		const fixes: Fix[] = diagnostic.data ?? [];
-		for (const fix of fixes) {
-			codeActions.push({
-				title: fix.description,
-				diagnostics: [diagnostic],
-				edit: {
-					changes: {
-						[params.textDocument.uri]: [fix.textEdit],
+		for (const fix of cachedFixes) {
+			if (diagnostic.range.start.line === fix.range.start.line && diagnostic.range.start.character === fix.range.start.character && diagnostic.range.end.line === fix.range.end.line && diagnostic.range.end.character === fix.range.end.character) {
+				codeActions.push({
+					title: fix.description,
+					diagnostics: [diagnostic],
+					edit: {
+						changes: {
+							[params.textDocument.uri]: [fix.textEdit],
+						},
 					},
-				},
-				isPreferred: fix.autoFixAvailable,
-				kind: CodeActionKind.QuickFix,
-			});
+					isPreferred: fix.autoFixAvailable,
+					kind: CodeActionKind.QuickFix,
+				});
+			}
 		}
+		// TODO(seb) Add fix for all markers of this problem which is hard because we don't know the original diagnostic code we set here
+		// TODO(seb) Add fix to disable rule
 	}
+	// TODO(seb) Add source level actions
+
+	// Variant if data would be roundtripped (need to add code for "fix all", "disable rule", "source level fixes" still):
+	// for (const diagnostic of params.context.diagnostics) {
+	// 	// The data field isn't roundtripped by the monaco LSP client so this code doesn't work, but it should probably
+	// 	// be all we need.
+	// 	const fixes: Fix[] = diagnostic.data ?? [];
+	// 	for (const fix of fixes) {
+	// 		codeActions.push({
+	// 			title: fix.description,
+	// 			diagnostics: [diagnostic],
+	// 			edit: {
+	// 				changes: {
+	// 					[params.textDocument.uri]: [fix.textEdit],
+	// 				},
+	// 			},
+	// 			isPreferred: fix.autoFixAvailable,
+	// 			kind: CodeActionKind.QuickFix,
+	// 		});
+	// 	}
+	// }
 	return codeActions;
 })
 
@@ -99,6 +132,8 @@ function computeDiagnostics(document: TextDocument | undefined): Diagnostic[] {
 		return [];
 	}
 
+	currentFixes.set(document.uri, []); // Temp workaround
+	ruleFixes.clear(); // Temp workaround
 	const diagnostics: Diagnostic[] = [];
 	const lintMessages = linter.verify(document.getText(), eslintCompatConfig);
 	for (const lintMessage of lintMessages) {
@@ -123,6 +158,10 @@ function computeFixesForDataField(document: TextDocument, lintMessage: Linter.Li
 			description: `Fix this '${lintMessage.message}' problem`,
 			textEdit: toTextEdit(document, lintMessage.fix),
 			autoFixAvailable: true,
+			// Temp workaround
+			range: toRange(lintMessage),
+			severity: toSeverity(lintMessage),
+			ruleId: lintMessage.ruleId ?? "",
 		});
 	}
 	if (lintMessage.suggestions) {
@@ -131,9 +170,25 @@ function computeFixesForDataField(document: TextDocument, lintMessage: Linter.Li
 				description: suggestion.desc,
 				textEdit: toTextEdit(document, suggestion.fix),
 				autoFixAvailable: false,
+				// Temp workaround
+				range: toRange(lintMessage),
+				severity: toSeverity(lintMessage),
+				ruleId: lintMessage.ruleId ?? "",
 			});
 		}
 	}
+
+	// Temp workaround
+	currentFixes.get(document.uri)!.push(...fixes);
+	for (const fix of fixes) {
+		if (fix.ruleId) {
+			if (!ruleFixes.has(fix.ruleId)) {
+				ruleFixes.set(fix.ruleId, []);
+			}
+			ruleFixes.get(fix.ruleId)!.push(fix);
+		}
+	}
+
 	return fixes;
 }
 
