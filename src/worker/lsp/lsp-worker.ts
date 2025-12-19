@@ -77,8 +77,10 @@ connection.onCodeAction(params => {
 	const codeActions: CodeAction[] = [];
 
 	// Temp workaround
+	// TODO(seb) For some reason we get duplicate code action entries from the second diagnostic of the same kind onward...
 	const cachedFixes = currentFixes.get(params.textDocument.uri) ?? [];
 	for (const diagnostic of params.context.diagnostics) {
+		const ruleIds = new Set<string>();
 		for (const fix of cachedFixes) {
 			if (diagnostic.range.start.line === fix.range.start.line && diagnostic.range.start.character === fix.range.start.character && diagnostic.range.end.line === fix.range.end.line && diagnostic.range.end.character === fix.range.end.character) {
 				codeActions.push({
@@ -92,10 +94,29 @@ connection.onCodeAction(params => {
 					isPreferred: fix.autoFixAvailable,
 					kind: CodeActionKind.QuickFix,
 				});
+				ruleIds.add(fix.ruleId);
 			}
 		}
-		// TODO(seb) Add fix for all markers of this problem which is hard because we don't know the original diagnostic code we set here
-		// TODO(seb) Add fix to disable rule
+		// Fix all of a specific problem
+		for (const ruleId of ruleIds.keys()) {
+			if (ruleId !== "") {
+				const applicableFixes = (ruleFixes.get(ruleId) ?? []).filter(fix => fix.autoFixAvailable);
+				if (applicableFixes.length > 1) {
+					codeActions.push({
+						title: `Fix all '${ruleId}' problems`,
+						diagnostics: [diagnostic],
+						edit: {
+							changes: {
+								[params.textDocument.uri]: applicableFixes.map(f => f.textEdit),
+							},
+						},
+						isPreferred: true,
+						kind: CodeActionKind.QuickFix,
+					});
+				}
+				// TODO(seb) Add fix to disable rule
+			}
+		}
 	}
 	// TODO(seb) Add source level actions
 
