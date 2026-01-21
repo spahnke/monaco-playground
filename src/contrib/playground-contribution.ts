@@ -389,14 +389,13 @@ declare var Color: ColorConstructor;`,
 }
 
 // example from https://github.com/microsoft/vscode/blob/9216747901d28de7a0ea8ffbf9d11b6c9dc253b8/src/vs/workbench/contrib/interactiveEditor/browser/interactiveEditorWidget.ts#L1051
-export function registerSlashCommands(textInput: CodeEditorTextInput, commands: { command: string, detail: string; }[]): monaco.IDisposable {
+export function registerSlashCommands(textInput: CodeEditorTextInput, commands: { command: string, detail: string; }[]) {
 	const model = textInput.monacoEditor.getModel();
 	if (!model)
-		return Disposable.None;
+		return;
 
-	const disposable = new Disposable();
 	const selector: monaco.languages.LanguageSelector = { scheme: model.uri.scheme, pattern: model.uri.path, language: model.getLanguageId() };
-	disposable.register(monaco.languages.registerCompletionItemProvider(selector, new class implements monaco.languages.CompletionItemProvider {
+	textInput.register(monaco.languages.registerCompletionItemProvider(selector, new class implements monaco.languages.CompletionItemProvider {
 		readonly triggerCharacters?: string[] = ["/"];
 
 		provideCompletionItems(model: monaco.editor.ITextModel, position: monaco.Position, context: monaco.languages.CompletionContext, token: monaco.CancellationToken): monaco.languages.ProviderResult<monaco.languages.CompletionList> {
@@ -450,7 +449,5 @@ export function registerSlashCommands(textInput: CodeEditorTextInput, commands: 
 		}
 		decorations.set(newDecorations);
 	};
-	disposable.register(textInput.monacoEditor.onDidChangeModelContent(updateSlashDecorations));
-
-	return disposable;
+	textInput.register(textInput.monacoEditor.onDidChangeModelContent(updateSlashDecorations));
 }

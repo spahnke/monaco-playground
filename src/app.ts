@@ -9,7 +9,7 @@ await loadMonaco();
 
 const textInput = CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput")!, undefined, "type text here");
 textInput.onDidPressEnter(console.log);
-textInput.register(registerSlashCommands(textInput, [{ command: "test", detail: "A test command" }, { command: "format", detail: "Formats the text" }]));
+registerSlashCommands(textInput, [{ command: "test", detail: "A test command" }, { command: "format", detail: "Formats the text" }]);
 
 const textInput2 = CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput2")!, "asdf", "type your search query here", "search");
 textInput2.onDidChangeText(console.log);
