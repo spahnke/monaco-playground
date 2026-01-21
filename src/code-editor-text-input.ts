@@ -56,16 +56,16 @@ export class CodeEditorTextInput extends Disposable {
 		}), icon);
 	}
 
-	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor, private icon?: string) {
+	private constructor(public readonly monacoEditor: monaco.editor.IStandaloneCodeEditor, private icon?: string) {
 		super();
-		this.iconDecoration = editor.createDecorationsCollection();
+		this.iconDecoration = monacoEditor.createDecorationsCollection();
 
-		const container = editor.getContainerDomNode();
+		const container = monacoEditor.getContainerDomNode();
 		container.className = "monaco-single-line";
 		const updateHeights = () => {
 			const defaultCodiconSize = 16;
 			const defaultLineHeight = 18;
-			const lineHeight = editor.getOption(monaco.editor.EditorOption.lineHeight);
+			const lineHeight = monacoEditor.getOption(monaco.editor.EditorOption.lineHeight);
 
 			// Set height of parent container.
 			container.style.height = `${lineHeight}px`;
@@ -75,17 +75,17 @@ export class CodeEditorTextInput extends Disposable {
 			// wait for the next animation frame.
 			requestAnimationFrame(() => {
 				for (const iconElement of container.querySelectorAll<HTMLDivElement>(".monaco-single-line-icon"))
-					iconElement.style.fontSize = `${Math.floor(defaultCodiconSize * editor.getOption(monaco.editor.EditorOption.lineHeight) / defaultLineHeight)}px`;
+					iconElement.style.fontSize = `${Math.floor(defaultCodiconSize * monacoEditor.getOption(monaco.editor.EditorOption.lineHeight) / defaultLineHeight)}px`;
 			});
 		};
 		updateHeights();
 		this.register(monaco.editor.EditorZoom.onDidChangeZoomLevel(() => updateHeights()));
-		this.register(editor.onDidFocusEditorWidget(() => container.classList.add("focus")));
-		this.register(editor.onDidBlurEditorWidget(() => container.classList.remove("focus")));
+		this.register(monacoEditor.onDidFocusEditorWidget(() => container.classList.add("focus")));
+		this.register(monacoEditor.onDidBlurEditorWidget(() => container.classList.remove("focus")));
 
 		this.updateIconDecoration();
 
-		this.register(editor.onKeyDown(e => {
+		this.register(monacoEditor.onKeyDown(e => {
 			// prevent editor from handling the tab key and inputting a tab character
 			if (e.equals(monaco.KeyCode.Tab) || e.equals(monaco.KeyMod.Shift | monaco.KeyCode.Tab))
 				e.stopPropagation();
@@ -100,7 +100,7 @@ export class CodeEditorTextInput extends Disposable {
 		}));
 
 		// suppress enter key and invoke a custom action if registered; use an action so we can have a precondition
-		this.register(editor.addAction({
+		this.register(monacoEditor.addAction({
 			id: "hijackEnter",
 			label: "",
 			keybindings: [monaco.KeyCode.Enter],
@@ -109,14 +109,14 @@ export class CodeEditorTextInput extends Disposable {
 		}));
 
 		// when pasting multi-line content merge lines into one line
-		this.register(editor.onDidPaste(e => {
+		this.register(monacoEditor.onDidPaste(e => {
 			if (e.range.endLineNumber <= 1)
 				return;
-			this.editor.popUndoStop(); // remove undo stop introduced by paste operation that contains multiline text
+			this.monacoEditor.popUndoStop(); // remove undo stop introduced by paste operation that contains multiline text
 			this.setText(this.getText()); // setText removes line breaks
 		}));
 
-		this.register(editor.onDidChangeModelContent(() => {
+		this.register(monacoEditor.onDidChangeModelContent(() => {
 			const text = this.getText();
 			if (/\r?\n/.test(text))
 				return; // do not trigger event for multiline text because it is normalized in the next step and the event fires again with the normalized text
@@ -128,34 +128,34 @@ export class CodeEditorTextInput extends Disposable {
 	readonly onDidPressEnter = this.onDidPressEnterEmitter.event;
 
 	get length(): number {
-		return this.editor.getModel()?.getValueLength() ?? 0;
+		return this.monacoEditor.getModel()?.getValueLength() ?? 0;
 	}
 
 	getText(): string {
-		return this.editor.getValue();
+		return this.monacoEditor.getValue();
 	}
 
 	setText(text: string): void {
-		const model = this.editor.getModel();
+		const model = this.monacoEditor.getModel();
 		if (!model)
 			return;
 
 		const normalizedText = text.replaceAll(/\r?\n/g, " ");
-		this.editor.executeEdits(null, [{ range: model.getFullModelRange(), text: normalizedText }]);
+		this.monacoEditor.executeEdits(null, [{ range: model.getFullModelRange(), text: normalizedText }]);
 		// set cursor to end
-		this.editor.setPosition({ lineNumber: 1, column: model.getLineMaxColumn(1) });
+		this.monacoEditor.setPosition({ lineNumber: 1, column: model.getLineMaxColumn(1) });
 	}
 
 	focus(): void {
-		this.editor.focus();
+		this.monacoEditor.focus();
 	}
 
 	setReadonly(value: boolean): void {
-		this.editor.updateOptions({ readOnly: value });
+		this.monacoEditor.updateOptions({ readOnly: value });
 	}
 
 	isReadonly(): boolean {
-		return this.editor.getOptions().get(monaco.editor.EditorOption.readOnly);
+		return this.monacoEditor.getOptions().get(monaco.editor.EditorOption.readOnly);
 	}
 
 	/**
@@ -169,18 +169,18 @@ export class CodeEditorTextInput extends Disposable {
 
 	override dispose(): void {
 		super.dispose();
-		this.editor.dispose();
+		this.monacoEditor.dispose();
 	}
 
 	private updateIconDecoration(): void {
 		if (this.icon) {
-			this.editor.updateOptions({ glyphMargin: true, lineDecorationsWidth: 10 });
+			this.monacoEditor.updateOptions({ glyphMargin: true, lineDecorationsWidth: 10 });
 			this.iconDecoration.set([{
 				range: new monaco.Range(1, 1, 1, 1),
 				options: { glyphMarginClassName: `monaco-single-line-icon codicon-${this.icon}`, },
 			}]);
 		} else {
-			this.editor.updateOptions({ glyphMargin: false, lineDecorationsWidth: 0 });
+			this.monacoEditor.updateOptions({ glyphMargin: false, lineDecorationsWidth: 0 });
 			this.iconDecoration.clear();
 		}
 	}

@@ -63,13 +63,13 @@ export class CodeEditor extends Disposable {
 		}));
 	}
 
-	private constructor(public readonly editor: monaco.editor.IStandaloneCodeEditor) {
+	private constructor(public readonly monacoEditor: monaco.editor.IStandaloneCodeEditor) {
 		super();
-		this.register(this.editor.onDidChangeCursorPosition(e => {
+		this.register(this.monacoEditor.onDidChangeCursorPosition(e => {
 			this.cursorState.position = e.position;
 			this.onDidCursorStateChangeEmitter.fire(this.cursorState);
 		}));
-		this.register(this.editor.onDidChangeCursorSelection(e => {
+		this.register(this.monacoEditor.onDidChangeCursorSelection(e => {
 			this.cursorState.selectedLines = 0;
 			this.cursorState.selectedCharacters = 0;
 			this.cursorState.selections = 1 + e.secondarySelections.length;
@@ -78,7 +78,7 @@ export class CodeEditor extends Disposable {
 					this.cursorState.selectedLines += selection.endLineNumber - selection.startLineNumber + 1;
 					let selectedCharacters = selection.endColumn - selection.startColumn;
 					if (monaco.Selection.spansMultipleLines(selection)) {
-						const model = this.editor.getModel();
+						const model = this.monacoEditor.getModel();
 						if (model) {
 							selectedCharacters = model.getOffsetAt(selection.getEndPosition()) - model.getOffsetAt(selection.getStartPosition());
 						}
@@ -88,14 +88,14 @@ export class CodeEditor extends Disposable {
 			}
 			this.onDidCursorStateChangeEmitter.fire(this.cursorState);
 		}));
-		this.register(new LocalStorageEditorConfiguration(editor));
+		this.register(new LocalStorageEditorConfiguration(monacoEditor));
 	}
 
 	readonly onDidCursorStateChange = this.onDidCursorStateChangeEmitter.event;
 
 	/** Replaces the entire editor model, allowing a change of language and content. Does NOT preserve the undo stack! */
 	setContents(content: string, language?: string, fileName?: string): void {
-		this.editor.getModel()?.dispose();
+		this.monacoEditor.getModel()?.dispose();
 		const uri = fileName !== undefined ? monaco.Uri.file(fileName) : undefined;
 		const model = monaco.editor.createModel(content, language, uri);
 		model.updateOptions({
@@ -103,85 +103,85 @@ export class CodeEditor extends Disposable {
 			tabSize: 4,
 			trimAutoWhitespace: true
 		});
-		this.editor.setModel(model);
+		this.monacoEditor.setModel(model);
 	}
 
 	appendLine(line?: string): void {
-		const model = this.editor.getModel();
+		const model = this.monacoEditor.getModel();
 		if (model === null)
 			return;
 		line = (line ?? "") + model.getEOL();
-		model.pushEditOperations(this.editor.getSelections() ?? [], [{
+		model.pushEditOperations(this.monacoEditor.getSelections() ?? [], [{
 			text: line,
 			range: new monaco.Range(model.getLineCount() + 1, 0, model.getLineCount() + 1, 0), // empty range for insert
 		}], () => []);
 	}
 
 	getText(): string {
-		return this.editor.getValue();
+		return this.monacoEditor.getValue();
 	}
 
 	/** Replaces the text of the current model (if there is one). Does NOT preserve the undo stack! */
 	setText(text: string): void {
-		this.editor.getModel()?.setValue(text);
+		this.monacoEditor.getModel()?.setValue(text);
 	}
 
 	focus(): void {
-		this.editor.focus();
+		this.monacoEditor.focus();
 	}
 
 	refresh(): void {
-		this.editor.layout();
+		this.monacoEditor.layout();
 	}
 
 	setReadonly(value: boolean): void {
-		this.editor.updateOptions({
+		this.monacoEditor.updateOptions({
 			readOnly: value,
 			lightbulb: { enabled: value ? monaco.editor.ShowLightbulbIconMode.Off : monaco.editor.ShowLightbulbIconMode.OnCode }, // because of https://github.com/microsoft/monaco-editor/issues/1596
 		});
 	}
 
 	isReadonly(): boolean {
-		return this.editor.getOptions().get(monaco.editor.EditorOption.readOnly);
+		return this.monacoEditor.getOptions().get(monaco.editor.EditorOption.readOnly);
 	}
 
 	getSelectedText(): string | undefined {
-		const selection = this.editor.getSelection();
+		const selection = this.monacoEditor.getSelection();
 		if (selection === null)
 			return undefined;
-		return this.editor.getModel()?.getValueInRange(selection);
+		return this.monacoEditor.getModel()?.getValueInRange(selection);
 	}
 
 	replaceSelectedText(newText: string): void {
-		const selection = this.editor.getSelection();
+		const selection = this.monacoEditor.getSelection();
 		if (newText !== null && selection !== null)
-			this.editor.executeEdits("replace", [{ range: selection, text: newText }]);
+			this.monacoEditor.executeEdits("replace", [{ range: selection, text: newText }]);
 	}
 
 	getLine(): number | undefined {
-		const position = this.editor.getPosition();
+		const position = this.monacoEditor.getPosition();
 		return position?.lineNumber;
 	}
 
 	gotoLine(line: number): void {
-		this.editor.setPosition({ lineNumber: line, column: 1 });
-		this.editor.revealLineInCenterIfOutsideViewport(line);
+		this.monacoEditor.setPosition({ lineNumber: line, column: 1 });
+		this.monacoEditor.revealLineInCenterIfOutsideViewport(line);
 	}
 
 	getOffset(): number | undefined {
-		const position = this.editor.getPosition();
+		const position = this.monacoEditor.getPosition();
 		if (position === null)
 			return undefined;
-		return this.editor.getModel()?.getOffsetAt(position);
+		return this.monacoEditor.getModel()?.getOffsetAt(position);
 	}
 
 	gotoOffset(offset: number): void {
-		const model = this.editor.getModel();
+		const model = this.monacoEditor.getModel();
 		if (model === null)
 			return;
 		const position = model.getPositionAt(offset);
-		this.editor.setPosition(position);
-		this.editor.revealPositionInCenterIfOutsideViewport(position);
+		this.monacoEditor.setPosition(position);
+		this.monacoEditor.revealPositionInCenterIfOutsideViewport(position);
 	}
 
 	zoom(zoomFactor: number): void {
@@ -190,29 +190,29 @@ export class CodeEditor extends Disposable {
 	}
 
 	zoomIn(): void {
-		this.editor.trigger("zoom", "editor.action.fontZoomIn", null);
+		this.monacoEditor.trigger("zoom", "editor.action.fontZoomIn", null);
 	}
 
 	zoomOut(): void {
-		this.editor.trigger("zoom", "editor.action.fontZoomOut", null);
+		this.monacoEditor.trigger("zoom", "editor.action.fontZoomOut", null);
 	}
 
 	resetZoom(): void {
-		this.editor.trigger("zoom", "editor.action.fontZoomReset", null);
+		this.monacoEditor.trigger("zoom", "editor.action.fontZoomReset", null);
 	}
 
 	async format(): Promise<void> {
-		const selection = this.editor.getSelection();
+		const selection = this.monacoEditor.getSelection();
 		if (selection === null || selection.isEmpty())
-			return this.editor.getAction("editor.action.formatDocument")?.run();
-		return this.editor.getAction("editor.action.formatSelection")?.run();
+			return this.monacoEditor.getAction("editor.action.formatDocument")?.run();
+		return this.monacoEditor.getAction("editor.action.formatSelection")?.run();
 	}
 
 	/**
 	 * Returns `true` as soon as a formatting provider is ready. If no formatting provider is registered within 2 seconds the method returns `false`.
 	 */
 	async waitOnFormattingProvider(): Promise<boolean> {
-		const action = this.editor.getAction("editor.action.formatDocument");
+		const action = this.monacoEditor.getAction("editor.action.formatDocument");
 		if (!action)
 			return false;
 		if (action.isSupported())
@@ -232,27 +232,27 @@ export class CodeEditor extends Disposable {
 	}
 
 	getCurrentWord(): string | undefined {
-		const position = this.editor.getPosition();
+		const position = this.monacoEditor.getPosition();
 		if (position === null)
 			return undefined;
-		return this.editor.getModel()?.getWordAtPosition(position)?.word;
+		return this.monacoEditor.getModel()?.getWordAtPosition(position)?.word;
 	}
 
 	getPreviousWord(): string | undefined {
-		const currentPosition = this.editor.getPosition();
+		const currentPosition = this.monacoEditor.getPosition();
 		if (currentPosition == null)
 			return undefined;
 
-		const currentWord = this.editor.getModel()?.getWordAtPosition(currentPosition);
+		const currentWord = this.monacoEditor.getModel()?.getWordAtPosition(currentPosition);
 		if (!currentWord || currentWord.startColumn === 0)
 			return undefined;
 
-		const word = this.editor.getModel()?.getWordAtPosition({ lineNumber: currentPosition.lineNumber, column: currentWord.startColumn - 1 });
+		const word = this.monacoEditor.getModel()?.getWordAtPosition({ lineNumber: currentPosition.lineNumber, column: currentWord.startColumn - 1 });
 		return !word ? undefined : word.word;
 	}
 
 	addChangeListener(listener: () => void): monaco.IDisposable {
-		return this.editor.onDidChangeModelContent(e => listener());
+		return this.monacoEditor.onDidChangeModelContent(e => listener());
 	}
 
 	addLibrary(library: ILibrary): void {
@@ -260,7 +260,7 @@ export class CodeEditor extends Disposable {
 	}
 
 	addTemplates(templates: ITemplate[]): void {
-		const model = this.editor.getModel();
+		const model = this.monacoEditor.getModel();
 		if (model === null)
 			return;
 		this.register(addTemplates(model.getLanguageId(), templates));
@@ -268,7 +268,7 @@ export class CodeEditor extends Disposable {
 
 	override dispose(): void {
 		super.dispose();
-		this.editor.getModel()?.dispose();
-		this.editor.dispose();
+		this.monacoEditor.getModel()?.dispose();
+		this.monacoEditor.dispose();
 	}
 }

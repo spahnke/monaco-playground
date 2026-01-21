@@ -53,7 +53,7 @@ export class PlaygroundContribution extends Disposable {
 	}
 
 	private addTestActions() {
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "toggle_readonly",
 			label: "Toggle Readonly State",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyR)],
@@ -61,7 +61,7 @@ export class PlaygroundContribution extends Disposable {
 			run: () => this.editor.setReadonly(!this.editor.isReadonly())
 		}));
 
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "dispose",
 			label: "Dispose (refresh afterwards)",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyD)],
@@ -69,7 +69,7 @@ export class PlaygroundContribution extends Disposable {
 			run: () => this.editor.dispose()
 		}));
 
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "todo_test_code",
 			label: "Add TODO test code",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyT)],
@@ -77,7 +77,7 @@ export class PlaygroundContribution extends Disposable {
 			run: () => this.editor.appendLine(todoTestCode)
 		}));
 
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "linq_test_code",
 			label: "Add LINQ test code",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyL)],
@@ -86,7 +86,7 @@ export class PlaygroundContribution extends Disposable {
 		}));
 
 		let topLevelReturn: monaco.IDisposable | undefined;
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "toggle_top_level_return",
 			label: "Toggle Top Level Return",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR)],
@@ -102,7 +102,7 @@ export class PlaygroundContribution extends Disposable {
 		}));
 
 		let browserCompletion: monaco.IDisposable | undefined;
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "toggle_browser_completion",
 			label: "Toggle Browser Completion",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyB)],
@@ -117,7 +117,7 @@ export class PlaygroundContribution extends Disposable {
 			}
 		}));
 
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "color_provider_test_code",
 			label: "Add color provider test code",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyC)],
@@ -125,7 +125,7 @@ export class PlaygroundContribution extends Disposable {
 			run: () => this.editor.appendLine(colorProviderTestCode)
 		}));
 
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "append_lines",
 			label: "Append Lines",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL)],
@@ -139,7 +139,7 @@ export class PlaygroundContribution extends Disposable {
 			}
 		}));
 
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "restart_js_language_server",
 			label: "Restart JS Language Server",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyS)],
@@ -147,7 +147,7 @@ export class PlaygroundContribution extends Disposable {
 			run: () => restartLanguageServer()
 		}));
 
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "dump_typescript_version",
 			label: "Dump TS Version",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyV)],
@@ -155,7 +155,7 @@ export class PlaygroundContribution extends Disposable {
 			run: () => console.log(monaco.typescript.typescriptVersion)
 		}));
 
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "dump_eslint_version",
 			label: "Dump ESLint Version",
 			keybindings: [monaco.KeyMod.chord(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyD, monaco.KeyCode.KeyE)],
@@ -169,13 +169,13 @@ export class PlaygroundContribution extends Disposable {
 			}
 		}));
 
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "dump_editor_object",
 			label: "Dump Editor Object",
 			run: editor => console.log(editor)
 		}));
 
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "dump_keybindings_text",
 			label: "Dump Keybindings Text",
 			run: (editor: any) => {
@@ -353,7 +353,7 @@ declare var Color: ColorConstructor;`,
 	}
 
 	private addCursorAlignAction() {
-		this.register(this.editor.editor.addAction({
+		this.register(this.editor.monacoEditor.addAction({
 			id: "cursor_align",
 			label: "Align cursors",
 			keybindings: [monaco.KeyMod.Alt | monaco.KeyCode.KeyA],
@@ -390,7 +390,7 @@ declare var Color: ColorConstructor;`,
 
 // example from https://github.com/microsoft/vscode/blob/9216747901d28de7a0ea8ffbf9d11b6c9dc253b8/src/vs/workbench/contrib/interactiveEditor/browser/interactiveEditorWidget.ts#L1051
 export function registerSlashCommands(textInput: CodeEditorTextInput, commands: { command: string, detail: string; }[]): monaco.IDisposable {
-	const model = textInput.editor.getModel();
+	const model = textInput.monacoEditor.getModel();
 	if (!model)
 		return Disposable.None;
 
@@ -419,7 +419,7 @@ export function registerSlashCommands(textInput: CodeEditorTextInput, commands: 
 		}
 	}));
 
-	const decorations = textInput.editor.createDecorationsCollection();
+	const decorations = textInput.monacoEditor.createDecorationsCollection();
 	const updateSlashDecorations = () => {
 		const newDecorations: monaco.editor.IModelDeltaDecoration[] = [];
 		for (const command of commands) {
@@ -450,7 +450,7 @@ export function registerSlashCommands(textInput: CodeEditorTextInput, commands: 
 		}
 		decorations.set(newDecorations);
 	};
-	disposable.register(textInput.editor.onDidChangeModelContent(updateSlashDecorations));
+	disposable.register(textInput.monacoEditor.onDidChangeModelContent(updateSlashDecorations));
 
 	return disposable;
 }

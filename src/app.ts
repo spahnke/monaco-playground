@@ -18,7 +18,7 @@ const editor = CodeEditor.create(document.querySelector<HTMLElement>(".editor")!
 
 editor.register(new TodoContribution());
 editor.register(new PlaygroundContribution(editor));
-editor.register(new DebugContribution(editor.editor));
+editor.register(new DebugContribution(editor.monacoEditor));
 
 editor.addLibrary({
 	contents: `
