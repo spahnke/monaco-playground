@@ -1,7 +1,7 @@
 import { Disposable } from "../common/disposable.js";
 import { isInComment, waitForTokenization } from "../common/monaco-utils.js";
 import { allowTopLevelReturn, enableJavaScriptBrowserCompletion, getEsLintWorker, restartLanguageServer } from "../languages/javascript/javascript-extensions.js";
-import { CodeEditor } from "../code-editor.js";
+import { CodeEditor, CursorState } from "../code-editor.js";
 import { CodeEditorTextInput } from "../code-editor-text-input.js";
 
 const contextMenuGroupId = "7_playground";
@@ -47,6 +47,7 @@ export class PlaygroundContribution extends Disposable {
 		this.addLinkOpenInterceptor();
 		this.addOpenEditorInterceptor();
 		this.addFontZoomEvent();
+		this.addCursorStateEvent();
 		this.addColorProviderExample();
 		this.addCursorAlignAction();
 	}
@@ -224,8 +225,53 @@ export class PlaygroundContribution extends Disposable {
 	 * Example to subscribe to font zoom events. The same API can be used to get/set the zoom level programmatically.
 	 */
 	private addFontZoomEvent() {
-		console.log(`Zoom Level: ${monaco.editor.EditorZoom.getZoomLevel()}`);
-		this.register(monaco.editor.EditorZoom.onDidChangeZoomLevel(level => console.log(`Zoom Level: ${level}`)));
+		const zoomStatusBar = document.querySelector<HTMLSpanElement>("#zoom");
+		if (zoomStatusBar) {
+			zoomStatusBar.innerText = renderZoomLevel(monaco.editor.EditorZoom.getZoomLevel());
+			this.register(monaco.editor.EditorZoom.onDidChangeZoomLevel(level => zoomStatusBar.innerText = renderZoomLevel(level)));
+		}
+
+		function renderZoomLevel(level: number): string {
+			return (1 + level * 0.1).toLocaleString("en", { style: "percent" });
+		}
+	}
+
+	/**
+	 * Example to subscribe to cursor state events.
+	 */
+	private addCursorStateEvent() {
+		const cursorStatusBar = document.querySelector<HTMLSpanElement>("#cursor");
+		if (cursorStatusBar) {
+			cursorStatusBar.innerText = renderCursorState(this.editor.getCursorState());
+			this.register(this.editor.onDidCursorStateChange(cursorState => cursorStatusBar.innerText = renderCursorState(cursorState)));
+		}
+
+		function renderCursorState(cursorState: CursorState): string {
+			let result = `${cursorState.position.lineNumber}:${cursorState.position.column}`;
+			if (cursorState.selections > 1 || cursorState.selectedCharacters > 0) {
+				result += " (";
+				let needsComma = false;
+				if (cursorState.selections > 1) {
+					result += `${cursorState.selections} selections`;
+					needsComma = true;
+				}
+				if (cursorState.selectedLines > 1) {
+					if (needsComma) {
+						result += ", ";
+					}
+					result += `${cursorState.selectedLines} lines`;
+					needsComma = true;
+				}
+				if (cursorState.selectedCharacters > 0) {
+					if (needsComma) {
+						result += ", ";
+					}
+					result += `${cursorState.selectedCharacters} characters`;
+				}
+				result += ")";
+			}
+			return result;
+		}
 	}
 
 	private addColorProviderExample() {

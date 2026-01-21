@@ -8,6 +8,7 @@
 }
 
 body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "HelveticaNeue-Light", system-ui, "Ubuntu", "Droid Sans", sans-serif;
 	height: 100vh;
 	overflow: hidden;
 	display: flex;
@@ -17,6 +18,11 @@ body {
 
 .editor {
 	height: 80%;
+}
+
+.statusBar {
+	display: flex;
+	justify-content: space-between;
 }
 
 .codicon-debug-breakpoint,
