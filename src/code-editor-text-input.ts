@@ -1,8 +1,8 @@
 import { Disposable } from "./common/disposable.js";
 
 export class CodeEditorTextInput extends Disposable {
-	private readonly onDidChangeTextEmitter = new monaco.Emitter<string>();
-	private readonly onDidPressEnterEmitter = new monaco.Emitter<string>();
+	private readonly onDidChangeTextEmitter = this.register(new monaco.Emitter<string>());
+	private readonly onDidPressEnterEmitter = this.register(new monaco.Emitter<string>());
 
 	private readonly iconDecoration: monaco.editor.IEditorDecorationsCollection;
 
@@ -169,8 +169,6 @@ export class CodeEditorTextInput extends Disposable {
 
 	override dispose(): void {
 		super.dispose();
-		this.onDidChangeTextEmitter.dispose();
-		this.onDidPressEnterEmitter.dispose();
 		this.editor.dispose();
 	}
 
