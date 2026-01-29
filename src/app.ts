@@ -4,6 +4,7 @@ import { TodoContribution } from "./contrib/todo-contribution.js";
 import { CodeEditor } from "./code-editor.js";
 import { CodeEditorTextInput } from "./code-editor-text-input.js";
 import { loadMonaco } from "./monaco-loader.js";
+import { addLibrary } from "./common/monaco-utils.js";
 
 await loadMonaco();
 
@@ -74,3 +75,77 @@ editor.addLibrary({
 	filePath: "library.js",
 	language: "javascript"
 });
+
+// EXPERIMENT =============================================================
+
+const definitionEditor = CodeEditor.create(document.querySelector<HTMLElement>("#definitionEditor")!);
+definitionEditor.setContents(`interface MyExports {
+	/**
+	 * Dies ist ein bar.
+	 * @name asdf
+	 * @see keyword1, keyword2
+	 */
+	bar: number;
+
+	/**
+	 * Oha ein baz!
+	 */
+	baz: string;
+
+	qux: MyModuleResult;
+}
+
+interface MyModuleResult {
+	/** Anrede */
+	zeile1: string;
+	/** Name */
+	zeile2: string;
+	/** Straße */
+	zeile3: string;
+	/** PLZ Ort */
+	zeile4: string;
+}`, undefined, "mydefinitions.d.ts")
+
+// global untyped version
+addLibrary({
+	contents: `
+interface MyExports {
+	[key: string]: any;
+}
+
+declare const myExports: MyExports;
+`,
+	language: "typescript",
+	filePath: "exporting.d.ts"
+});
+
+// local typed version
+let definitionLibrary: monaco.IDisposable | undefined;
+definitionEditor.register(definitionEditor.monacoEditor.addAction({
+	id: "define_my_exports",
+	label: "Define my Exports",
+	run: editor => {
+		definitionLibrary?.dispose();
+		definitionLibrary = addLibrary({
+			contents: editor.getValue(),
+			language: "typescript",
+			filePath: "myExports.de.d.ts",
+		});
+	}
+}));
+
+definitionEditor.register(definitionEditor.monacoEditor.addAction({
+	id: "analyze_exports",
+	label: "Analyze Exports",
+	run: async editor => {
+		const uri = editor.getModel()!.uri;
+		const fileName = uri.toString();
+		const workerFactory = await monaco.typescript.getTypeScriptWorker();
+		const worker = await workerFactory();
+		const outline = await worker.getNavigationTree(fileName)
+		for (const property of outline.childItems[0].childItems) {
+			const hoverCard = await worker.getQuickInfoAtPosition(fileName, property.nameSpan.start);
+			console.log(hoverCard);
+		}
+	}
+}));
