@@ -142,6 +142,10 @@ definitionEditor.register(definitionEditor.monacoEditor.addAction({
 		const uri = editor.getModel()!.uri;
 		const fileName = uri.toString();
 		const workerFactory = await monaco.typescript.getTypeScriptWorker();
+		// NOTE(seb) This approach will not get us far because we don't have access to the parse tree which we would
+		// need to restrict the feature set used and do other analysis. In addition the LS API here is completely
+		// untyped and it's very tedious to extract the information we need from it. It's probably better to roll our
+		// own integration with the TS compiler API.
 		const worker = await workerFactory();
 		const outline = await worker.getNavigationTree(fileName)
 		for (const property of outline.childItems[0].childItems) {
