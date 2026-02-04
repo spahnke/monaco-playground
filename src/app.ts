@@ -105,7 +105,7 @@ interface MyModuleResult {
 	zeile3: string;
 	/** PLZ Ort */
 	zeile4: string;
-}`, undefined, "mydefinitions.d.ts")
+}`, undefined, "myExports.de.d.ts");
 
 // global untyped version
 addLibrary({
