@@ -82,8 +82,9 @@ const definitionEditor = CodeEditor.create(document.querySelector<HTMLElement>("
 definitionEditor.setContents(`interface MyExports {
 	/**
 	 * Dies ist ein bar.
-	 * @name asdf
-	 * @see keyword1, keyword2
+	 * Mit einem Zeilenumbruch.
+	 * @displayName asdf
+	 * @keywords keyword1 keyword2 keyword3
 	 */
 	bar: number;
 
