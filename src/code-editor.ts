@@ -89,6 +89,9 @@ export class CodeEditor extends Disposable {
 			this.onDidCursorStateChangeEmitter.fire(this.cursorState);
 		}));
 		this.register(new LocalStorageEditorConfiguration(monacoEditor));
+		// @ts-ignore Workaround for https://github.com/microsoft/monaco-editor/issues/2603 but I don't know if I
+		// actually want to reach into the internals ever again. Is there another way to set this?
+		monacoEditor._configurationService?.updateValue("problems.sortOrder", "position");
 	}
 
 	readonly onDidCursorStateChange = this.onDidCursorStateChangeEmitter.event;
