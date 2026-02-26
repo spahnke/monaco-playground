@@ -19,7 +19,7 @@ for (const srcPath of fs.globSync("node_modules/monaco-editor/esm/nls.messages.*
 
 const staticFiles = ["src/index.html", "src/styles.css", ...fs.globSync("src/languages/**/*.json"), "src/worker/eslint/eslint.js"];
 for (const srcPath of staticFiles) {
-	const destPath = srcPath.replace("src/", "wwwroot/").replace("worker/eslint/", "worker/");
+	const destPath = srcPath.replace(path.sep, "/").replace("src/", "wwwroot/").replace("worker/eslint/", "worker/");
 	fs.mkdirSync(path.dirname(destPath), { recursive: true });
 	fs.copyFileSync(srcPath, destPath);
 	if (watch) {

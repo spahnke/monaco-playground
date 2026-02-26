@@ -18,7 +18,7 @@ Then patch the Webpack config, build, and copy the build result over. The patch 
 as an ES module where `this` is `undefined`, so we need to replace it with `globalThis`.
 
 ```sh
-git apply ../monaco-playground/src/worker/eslint/global-this.patch
+git apply --ignore-whitespace ../monaco-playground/src/worker/eslint/global-this.patch
 npm run build:webpack
 cp build/eslint.js ../monaco-playground/src/worker/eslint
 ```
