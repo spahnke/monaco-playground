@@ -1453,7 +1453,7 @@
 					"$ref": "#/definitions/legacy"
 				},
 				{
-					"$ref": "https://json.schemastore.org/partial-eslint-plugins.json"
+					"$ref": "partial-eslint-plugins.json"
 				}
 			]
 		},
