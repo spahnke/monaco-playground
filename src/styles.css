@@ -16,6 +16,7 @@ body {
 }
 
 .editor {
+	position: relative; /* (Hopefully only temp) workaround for the offset copy button in diagnostic popups (see https://github.com/microsoft/monaco-editor/issues/5112). */
 	height: 80%;
 }
 
