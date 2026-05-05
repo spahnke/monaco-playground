@@ -21,6 +21,6 @@
 		"esbuild": "0.28.0",
 		"eslint": "9.39.4",
 		"monaco-editor": "0.55.1",
-		"typescript": "5.9.3"
+		"typescript": "6.0.3"
 	}
 }
