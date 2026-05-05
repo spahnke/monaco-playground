@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"module": "es2022",
 		"target": "es2022",
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"lib": ["ES2022", "WebWorker"],
 		"types": [],
 		"sourceMap": true,
