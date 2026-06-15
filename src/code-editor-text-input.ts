@@ -107,6 +107,13 @@ export class CodeEditorTextInput extends Disposable {
 			run: () => this.onDidPressEnterEmitter.fire(this.getText()),
 			precondition: "!suggestWidgetVisible || !suggestWidgetHasFocusedSuggestion",
 		}));
+		this.register(monacoEditor.addAction({
+			id: "hijackCtrlOrShiftEnter",
+			label: "",
+			keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+			run: () => { }, // do nothing here
+			precondition: "editorTextFocus && !editorReadonly",
+		}));
 
 		// when pasting multi-line content merge lines into one line
 		this.register(monacoEditor.onDidPaste(e => {
