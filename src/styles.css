@@ -5,6 +5,8 @@
 	--monaco-todo-color: #fff;
 	--monaco-single-line-border-color: #cecece;
 	--monaco-single-line-focus-border-color: #0090f1;
+	--monaco-single-line-disabled-background-color: #cccccc;
+	--monaco-single-line-disabled-foreground-color: #666666;
 }
 
 body {
@@ -68,6 +70,21 @@ body {
 	border-radius: 2px;
 	border: 1px solid var(--monaco-single-line-border-color);
 }
+
+.monaco-single-line[aria-disabled="true"] {
+	background-color: var(--monaco-single-line-disabled-background-color);
+}
+
+.monaco-single-line[aria-disabled="true"] .monaco-editor {
+	--vscode-editor-foreground: var(--monaco-single-line-disabled-foreground-color);
+	--vscode-editor-background: var(--monaco-single-line-disabled-background-color);
+	--vscode-editorGutter-background: var(--monaco-single-line-disabled-background-color);
+}
+
+.monaco-single-line[aria-disabled="true"] .monaco-editor .mtk1 {
+	color: var(--monaco-single-line-disabled-foreground-color);
+}
+
 
 .monaco-single-line.focus {
 	border-color: var(--monaco-single-line-focus-border-color);
