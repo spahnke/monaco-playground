@@ -86,9 +86,15 @@ export class CodeEditorTextInput extends Disposable {
 		this.updateIconDecoration();
 
 		this.register(monacoEditor.onKeyDown(e => {
-			// prevent editor from handling the tab key and inputting a tab character
-			if (e.equals(monaco.KeyCode.Tab) || e.equals(monaco.KeyMod.Shift | monaco.KeyCode.Tab))
-				e.stopPropagation();
+			// prevent editor from handling the tab key and inputting a tab character and delegate to browser instead,
+			// but allow using tab to commit a suggestion
+			if (e.equals(monaco.KeyCode.Tab) || e.equals(monaco.KeyMod.Shift | monaco.KeyCode.Tab)) {
+				if (!(monacoEditor as IStandaloneCodeEditorWithContextKeyService)._contextKeyService?.getContextKeyValue?.("suggestWidgetVisible", e.target) ||
+					!(monacoEditor as IStandaloneCodeEditorWithContextKeyService)._contextKeyService?.getContextKeyValue?.("suggestWidgetHasFocusedSuggestion", e.target))
+				{
+					e.stopPropagation();
+				}
+			}
 
 			// disable command palette
 			if (e.equals(monaco.KeyCode.F1))
@@ -201,4 +207,16 @@ export class CodeEditorTextInput extends Disposable {
 			this.iconDecoration.clear();
 		}
 	}
+}
+
+/** CAUTION: Internal unofficial API */
+interface IStandaloneCodeEditorWithContextKeyService extends monaco.editor.IStandaloneCodeEditor {
+	/** CAUTION: Internal unofficial API (see IEncodedLineTokens in monaco.d.ts) */
+	_contextKeyService: IContextKeyService;
+}
+
+/** CAUTION: Internal unofficial API (see IEncodedLineTokens in monaco.d.ts) */
+interface IContextKeyService {
+	/** CAUTION: Internal unofficial API (see IEncodedLineTokens in monaco.d.ts) */
+	getContextKeyValue(contextKey: string, target: HTMLElement): boolean;
 }
