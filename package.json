@@ -8,7 +8,7 @@
 		"build": "node scripts/build.js",
 		"dev": "node scripts/build.js watch",
 		"serve": "node scripts/server.js -p 9000 wwwroot",
-		"test": "tsc -p test/tsconfig.json && node --test '**/*.test.js'",
+		"test": "tsc -p test/tsconfig.json && node --test \"**/*.test.js\"",
 		"schema": "node scripts/update-eslint-schema.js"
 	},
 	"keywords": [],
