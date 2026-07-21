@@ -20,6 +20,10 @@ export class DebugContribution extends Disposable {
 		this.currentDebugLineDecorations = editor.createDecorationsCollection();
 		this.enableGlyphMargin();
 		this.debugActiveContextKey = editor.createContextKey("debuggerSessionActive", false);
+		// TODO(seb) For reacting to context key changes there is only the following undocumented access. Do we want to
+		// go there for buttons/other UI that don't take context keys to react to state changes?
+		//
+		// editor._contextKeyService.onDidChangeContext(console.log) -> returns output like {key: 'debuggerSessionActive'}
 		this.register(this.editor.onMouseMove(this.onMouseMove));
 		this.register(this.editor.onMouseDown(this.onMouseDown));
 
@@ -32,7 +36,11 @@ export class DebugContribution extends Disposable {
 			contextMenuGroupId: contextMenuGroupId,
 			contextMenuOrder: 0,
 			run: async () => {
-				protocol = new DebugProtocol(new WebsocketTransport(debugRemoteAddressInput.getText()));
+				const remoteAddress = debugRemoteAddressInput.getText();
+				if (!remoteAddress)
+					return;
+
+				protocol = new DebugProtocol(new WebsocketTransport(remoteAddress));
 				protocol.transport.onDidTerminate((reason, error) => {
 					if (reason === "close") {
 						console.log("Transport connection was closed");
@@ -152,30 +160,39 @@ export class DebugContribution extends Disposable {
 			},
 
 			getDomNode() {
+				// TODO(seb) Hook up all buttons with corresponding actions and react to state changes
+				// TODO(seb) Vendor the styles from the find widget classes as styles for the debug widget
 				const debugWidget = document.createElement("div");
 				debugWidget.className = "monaco-editor editor-widget find-widget visible";
 				debugWidget.style.display = "flex";
 				debugWidget.style.alignItems = "center";
 				const startAndContinueButton = document.createElement("div");
 				startAndContinueButton.className = "button codicon codicon-debug-start";
+				startAndContinueButton.addEventListener("click", () => editor.trigger("debugger", "debugger_start_session", null));
 				debugWidget.appendChild(startAndContinueButton);
 				const continueButton = document.createElement("div");
 				continueButton.className = "button codicon codicon-debug-continue";
+				continueButton.addEventListener("click", () => editor.trigger("debugger", "debugger_continue", null));
 				debugWidget.appendChild(continueButton);
 				const pauseButton = document.createElement("div");
 				pauseButton.className = "button codicon codicon-debug-pause";
 				debugWidget.appendChild(pauseButton);
 				const stepOverButton = document.createElement("div");
 				stepOverButton.className = "button codicon codicon-debug-step-over";
+				stepOverButton.addEventListener("click", () => editor.trigger("debugger", "debugger_step_over", null));
 				debugWidget.appendChild(stepOverButton);
 				const stepIntoButton = document.createElement("div");
 				stepIntoButton.className = "button codicon codicon-debug-step-into";
 				debugWidget.appendChild(stepIntoButton);
+				// TODO(seb) How do we want to handle this in general? Like monaco with aria roles/disabled/classes? Or
+				// do we use a button element and do more styling? We don't need any special handling in the click
+				// handler because we trigger actions that have preconditions anyway.
 				const stepOutButton = document.createElement("div");
-				stepOutButton.className = "button codicon codicon-debug-step-out";
+				stepOutButton.className = "button codicon codicon-debug-step-out disabled";
 				debugWidget.appendChild(stepOutButton);
 				const stopButton = document.createElement("div");
 				stopButton.className = "button codicon codicon-debug-stop";
+				stopButton.addEventListener("click", () => editor.trigger("debugger", "debugger_stop_session", null));
 				debugWidget.appendChild(stopButton);
 				return debugWidget;
 			},
