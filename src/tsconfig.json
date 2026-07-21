@@ -1,11 +1,9 @@
 {
 	"compilerOptions": {
-		"module": "es2022",
-		"target": "es2022",
+		"target": "es2024",
 		"types": [],
 		"sourceMap": true,
 		"checkJs": false,
-		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitOverride": true,
 		"noImplicitReturns": true,
