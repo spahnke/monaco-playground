@@ -1,5 +1,7 @@
 import { Disposable, toDisposable } from "../common/disposable.js";
 import { isComment } from "../common/monaco-utils.js";
+import { DebugProtocol, WebsocketTransport } from "../debug/debug-protocol.js";
+import { CodeEditorTextInput } from "../code-editor-text-input.js";
 
 const contextMenuGroupId = "8_debug";
 
@@ -12,7 +14,7 @@ export class DebugContribution extends Disposable {
 	private readonly currentDebugLineDecorations: monaco.editor.IEditorDecorationsCollection;
 	private readonly debugActiveContextKey: monaco.editor.IContextKey<boolean>;
 
-	constructor(private editor: monaco.editor.IStandaloneCodeEditor) {
+	constructor(private readonly editor: monaco.editor.IStandaloneCodeEditor, debugRemoteAddressInput: CodeEditorTextInput) {
 		super();
 		this.breakpointPreviewDecorations = editor.createDecorationsCollection();
 		this.currentDebugLineDecorations = editor.createDecorationsCollection();
@@ -20,50 +22,127 @@ export class DebugContribution extends Disposable {
 		this.debugActiveContextKey = editor.createContextKey("debuggerSessionActive", false);
 		this.register(this.editor.onMouseMove(this.onMouseMove));
 		this.register(this.editor.onMouseDown(this.onMouseDown));
+
+		let protocol: DebugProtocol | undefined;
 		this.register(editor.addAction({
 			id: "debugger_start_session",
 			label: "Start Debugging",
 			keybindings: [monaco.KeyCode.F5],
 			precondition: "!debuggerSessionActive",
+			contextMenuGroupId: contextMenuGroupId,
+			contextMenuOrder: 0,
 			run: async () => {
-				console.log("Start debugging");
+				protocol = new DebugProtocol(new WebsocketTransport(debugRemoteAddressInput.getText()));
+				protocol.transport.onDidTerminate((reason, error) => {
+					if (reason === "close") {
+						console.log("Transport connection was closed");
+					} else {
+						console.error("Transport connection was closed unexpectedly", error);
+					}
+					this.debugActiveContextKey.set(false);
+				});
+				protocol.runtime.on("executionContextCreated", params => {
+					console.log("Debugging session started", params);
+				});
+				protocol.runtime.on("executionContextDestroyed", params => {
+					console.log("Debugging session finished", params);
+					protocol?.transport.disconnect();
+				});
+				protocol.runtime.on("consoleAPICalled", params => {
+					const args = params.args.map(arg => {
+						switch (arg.type) {
+							case "bigint": return BigInt(arg.unserializableValue!.slice(0, -1));
+							case "function": return arg.description ?? "<function>";
+							case "object": {
+								if (arg.subtype === "null") {
+									return null;
+								} else if (arg.preview) {
+									if (arg.subtype) {
+										return arg.description;
+									} else {
+										const obj = Object.create(null);
+										for (const prop of arg.preview.properties) {
+											let value;
+											switch (prop.type) {
+												case "bigint": value = BigInt(prop.value!.slice(0, -1)); break;
+												case "boolean": value = Boolean(prop.value); break;
+												case "number": value = Number(prop.value); break;
+												default: value = prop.value; break;
+											}
+											obj[prop.name] = value;
+										}
+										return obj;
+									}
+								} else {
+									return "<object>";
+								}
+							}
+							case "symbol": return arg.description ?? "<symbol>";
+							default: return arg.value;
+						}
+					});
+					switch (params.type) {
+						case "assert": console.assert(...args); break;
+						case "warning": console.warn(...args); break;
+						case "startGroup": console.group(...args); break;
+						case "startGroupCollapsed": console.groupCollapsed(...args); break;
+						case "endGroup": console.groupEnd(); break;
+						case "profile": console.time(...args); break;
+						case "profileEnd": console.timeEnd(...args); break;
+						default: console[params.type](...args); break;
+					}
+				});
+				protocol.debugger.on("scriptParsed", async params => {
+					console.log("scriptParsed notification", params);
+					const source = await protocol?.debugger.getScriptSource({ scriptId: params.scriptId });
+					console.log("script src result", source);
+				});
+				protocol.debugger.on("paused", params => {
+					console.log("paused notification", params);
+				});
+				await protocol.runtime.enable();
+				console.log("Runtime.enable done");
+				const enableResult = await protocol.debugger.enable({});
+				console.log("Debugger.enable response", enableResult);
+				await protocol.debugger.pause(); // pause on first statement
+				console.log("Scheduled pause on first statement");
+				await protocol.runtime.runIfWaitingForDebugger();
 				this.debugActiveContextKey.set(true);
-			},
+			}
 		}));
 		this.register(editor.addAction({
 			id: "debugger_continue",
-			label: "Start Debugging",
+			label: "Continue",
 			keybindings: [monaco.KeyCode.F5],
 			precondition: "debuggerSessionActive",
-			run: async () => {
-				console.log("Continue");
-			},
+			contextMenuGroupId: contextMenuGroupId,
+			contextMenuOrder: 0,
+			run: () => protocol?.debugger.resume({}),
 		}));
 		this.register(editor.addAction({
 			id: "debugger_step_over",
-			label: "Start Debugging",
+			label: "Step Over",
 			keybindings: [monaco.KeyCode.F10],
 			precondition: "debuggerSessionActive",
-			run: async () => {
-				console.log("Step over");
-			},
+			contextMenuGroupId: contextMenuGroupId,
+			contextMenuOrder: 1,
+			run: () => protocol?.debugger.stepOver({}),
 		}));
 		this.register(editor.addAction({
 			id: "debugger_stop_session",
-			label: "Start Debugging",
+			label: "Stop Debugging",
 			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F5],
 			precondition: "debuggerSessionActive",
-			run: async () => {
-				console.log("Stop debugging");
-				this.debugActiveContextKey.set(false);
-			},
+			contextMenuGroupId: contextMenuGroupId,
+			contextMenuOrder: 2,
+			run: () => protocol?.debugger.resume({ terminateOnResume: true }),
 		}));
 		this.register(editor.addAction({
 			id: "toggle_breakpoint",
 			label: "Toggle Breakpoint",
 			keybindings: [monaco.KeyCode.F9],
 			contextMenuGroupId,
-			contextMenuOrder: 0,
+			contextMenuOrder: 3,
 			run: () => this.toggleBreakpoint(),
 		}));
 
