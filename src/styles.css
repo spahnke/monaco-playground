@@ -1,6 +1,10 @@
 :root {
+	/* debug colors from <vscode>/src/vs/workbench/contrib/debug/browser/breakPointEditorContribution.ts and debugColors.ts */
 	--monaco-debug-breakpoint-color: #e51400;
 	--monaco-debug-stackframe-color: #ffcc00;
+	--monaco-debug-start-color: #388a34;
+	--monaco-debug-command-color: #007acc;
+	--monaco-debug-stop-color: #a1260d;
 	--monaco-todo-background-color: hsl(100, 75%, 30%);
 	--monaco-todo-color: #fff;
 	--monaco-single-line-border-color: #cecece;
@@ -48,6 +52,22 @@ body {
 	content: "\eb8a"; /* codicon-debug-stackframe-dot */
 	position: absolute;
 	color: var(--monaco-debug-breakpoint-color);
+}
+
+.codicon-debug-start {
+	color: var(--monaco-debug-start-color);
+}
+
+.codicon-debug-continue,
+.codicon-debug-pause,
+.codicon-debug-step-over,
+.codicon-debug-step-into,
+.codicon-debug-step-out {
+	color: var(--monaco-debug-command-color);
+}
+
+.codicon-debug-stop {
+	color: var(--monaco-debug-stop-color);
 }
 
 .monaco-debug-line {
