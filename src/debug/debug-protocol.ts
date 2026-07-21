@@ -94,9 +94,10 @@ export class DebugProtocol {
 			method,
 			params,
 		};
-		const pendingResponse = new Promise((resolve, reject) => this.pendingResponses.set(request.id, { id: request.id, resolve, reject }));
+		const { promise, resolve, reject } = Promise.withResolvers();
+		this.pendingResponses.set(request.id, { id: request.id, resolve, reject });
 		this.transport.sendMessage(JSON.stringify(request));
-		return pendingResponse;
+		return promise;
 	}
 }
 
