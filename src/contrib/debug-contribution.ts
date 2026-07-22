@@ -1,6 +1,6 @@
 import { Disposable, toDisposable } from "../common/disposable.js";
 import { isComment } from "../common/monaco-utils.js";
-import { DebugProtocol, WebsocketTransport } from "../debug/debug-protocol.js";
+import { DebugProtocol, Transport, WebsocketTransport } from "../debug/debug-protocol.js";
 import { CodeEditorTextInput } from "../code-editor-text-input.js";
 
 const contextMenuGroupId = "8_debug";
@@ -94,8 +94,8 @@ class DebugSession extends Disposable {
 	readonly onDidConnectedChange = this.connectedEvent.event;
 	readonly onDidPausedStateChange = this.pausedEvent.event;
 
-	async connect(remoteAddress: string, pauseOnFirstStatement: boolean): Promise<void> {
-		this.protocol = new DebugProtocol(new WebsocketTransport(remoteAddress));
+	async connect(connectTransport: () => Transport, pauseOnFirstStatement: boolean): Promise<void> {
+		this.protocol = new DebugProtocol(connectTransport());
 		this.protocol.transport.onDidTerminate((reason, error) => {
 			if (reason === "close") {
 				console.log("Transport connection was closed");
@@ -262,7 +262,7 @@ export class DebugContribution extends Disposable {
 						connectedEvent = null!;
 					}
 				});
-				this.debugSession.connect(remoteAddress, true);
+				this.debugSession.connect(() => new WebsocketTransport(remoteAddress), true);
 			}
 		}));
 		this.register(editor.addAction({
