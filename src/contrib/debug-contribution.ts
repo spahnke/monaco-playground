@@ -208,6 +208,11 @@ class DebugSession extends Disposable {
 		this.protocol?.transport.disconnect();
 		this.protocol = undefined;
 	}
+
+	override dispose(): void {
+		this.disconnect();
+		super.dispose();
+	}
 }
 
 /**
@@ -215,11 +220,9 @@ class DebugSession extends Disposable {
  */
 export class DebugContribution extends Disposable {
 	private readonly debugSession = this.register(new DebugSession());
-	private readonly debugWidget: DebugWidget;
 	private readonly breakpointPreviewDecorations: monaco.editor.IEditorDecorationsCollection;
 	private readonly breakpointDecorations: Map<string, monaco.editor.IModelDecoration> = new Map();
 	private readonly currentDebugLineDecorations: monaco.editor.IEditorDecorationsCollection;
-	private readonly debugActiveContextKey: monaco.editor.IContextKey<boolean>;
 
 	constructor(private readonly editor: monaco.editor.IStandaloneCodeEditor, debugRemoteAddressInput: CodeEditorTextInput) {
 		super();
@@ -233,12 +236,14 @@ export class DebugContribution extends Disposable {
 			const url = monaco.Uri.parse(maybeUrl);
 			return url.scheme === "ws" || url.scheme === "wss";
 		};
-		this.debugWidget = new DebugWidget(editor);
-		this.debugWidget.setVisible(isValidRemoteAddress(debugRemoteAddressInput.getText()));
-		this.register(debugRemoteAddressInput.onDidChangeText(maybeUrl => this.debugWidget.setVisible(isValidRemoteAddress(maybeUrl))));
-		editor.addOverlayWidget(this.debugWidget);
-		this.register(toDisposable(() => editor.removeOverlayWidget(this.debugWidget)));
-		this.debugActiveContextKey = editor.createContextKey("debuggerSessionActive", false);
+
+		const debugWidget = new DebugWidget(editor);
+		debugWidget.setVisible(isValidRemoteAddress(debugRemoteAddressInput.getText()));
+		this.register(debugRemoteAddressInput.onDidChangeText(maybeUrl => debugWidget.setVisible(isValidRemoteAddress(maybeUrl))));
+		editor.addOverlayWidget(debugWidget);
+		this.register(toDisposable(() => editor.removeOverlayWidget(debugWidget)));
+
+		const debugActiveContextKey = editor.createContextKey<boolean>("debuggerSessionActive", false);
 		this.register(editor.addAction({
 			id: "debugger_start_session",
 			label: "Start Debugging",
@@ -250,7 +255,7 @@ export class DebugContribution extends Disposable {
 					return;
 
 				let connectedEvent = this.debugSession.onDidConnectedChange(connected => {
-					this.debugActiveContextKey.set(connected);
+					debugActiveContextKey.set(connected);
 					debugRemoteAddressInput.setDisabled(connected);
 					if (!connected) {
 						connectedEvent.dispose();
