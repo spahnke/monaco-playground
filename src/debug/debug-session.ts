@@ -9,7 +9,7 @@ export class DebugSession extends Disposable {
 	readonly onDidConnectedChange = this.connectedEvent.event;
 	readonly onDidPausedStateChange = this.pausedEvent.event;
 
-	async connect(connectTransport: () => Transport, pauseOnFirstStatement: boolean): Promise<void> {
+	async connect(connectTransport: () => Transport): Promise<void> {
 		this.protocol = new DebugProtocol(connectTransport());
 		this.connectedEvent.fire(true);
 		this.protocol.transport.onDidTerminate((reason, error) => {
@@ -88,10 +88,6 @@ export class DebugSession extends Disposable {
 		console.log("Runtime.enable done");
 		const enableResult = await this.protocol.debugger.enable({});
 		console.log("Debugger.enable response", enableResult);
-		if (pauseOnFirstStatement) {
-			await this.protocol.debugger.pause();
-			console.log("Scheduled pause on first statement");
-		}
 		await this.protocol.runtime.runIfWaitingForDebugger();
 	}
 
