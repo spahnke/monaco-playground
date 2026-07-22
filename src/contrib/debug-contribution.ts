@@ -85,10 +85,136 @@ class DebugWidget implements monaco.editor.IOverlayWidget {
 	}
 }
 
+// TODO(seb) State for a single debug session; keep this free from UI stuff. To be moved to the debug folder.
+class DebugSession extends Disposable {
+	private protocol: DebugProtocol | undefined;
+	private readonly connectedEvent = this.register(new monaco.Emitter<boolean>());
+	private readonly pausedEvent = this.register(new monaco.Emitter<boolean>());
+
+	readonly onDidConnectedChange = this.connectedEvent.event;
+	readonly onDidPausedStateChange = this.pausedEvent.event;
+
+	async connect(remoteAddress: string, pauseOnFirstStatement: boolean): Promise<void> {
+		this.protocol = new DebugProtocol(new WebsocketTransport(remoteAddress));
+		this.protocol.transport.onDidTerminate((reason, error) => {
+			if (reason === "close") {
+				console.log("Transport connection was closed");
+			} else {
+				console.error("Transport connection was closed unexpectedly", error);
+			}
+			this.connectedEvent.fire(false);
+		});
+		this.protocol.runtime.on("executionContextCreated", params => {
+			console.log("Debugging session started", params);
+		});
+		this.protocol.runtime.on("executionContextDestroyed", params => {
+			console.log("Debugging session finished", params);
+			this.disconnect();
+		});
+		this.protocol.runtime.on("consoleAPICalled", params => {
+			const args = params.args.map(arg => {
+				switch (arg.type) {
+					case "bigint": return BigInt(arg.unserializableValue!.slice(0, -1));
+					case "function": return arg.description ?? "<function>";
+					case "object": {
+						if (arg.subtype === "null") {
+							return null;
+						} else if (arg.preview) {
+							if (arg.subtype) {
+								return arg.description;
+							} else {
+								const obj = Object.create(null);
+								for (const prop of arg.preview.properties) {
+									let value;
+									switch (prop.type) {
+										case "bigint": value = BigInt(prop.value!.slice(0, -1)); break;
+										case "boolean": value = Boolean(prop.value); break;
+										case "number": value = Number(prop.value); break;
+										default: value = prop.value; break;
+									}
+									obj[prop.name] = value;
+								}
+								return obj;
+							}
+						} else {
+							return "<object>";
+						}
+					}
+					case "symbol": return arg.description ?? "<symbol>";
+					default: return arg.value;
+				}
+			});
+			switch (params.type) {
+				case "assert": console.assert(...args); break;
+				case "warning": console.warn(...args); break;
+				case "startGroup": console.group(...args); break;
+				case "startGroupCollapsed": console.groupCollapsed(...args); break;
+				case "endGroup": console.groupEnd(); break;
+				case "profile": console.time(...args); break;
+				case "profileEnd": console.timeEnd(...args); break;
+				default: console[params.type](...args); break;
+			}
+		});
+		this.protocol.debugger.on("scriptParsed", async params => {
+			console.log("scriptParsed notification", params);
+			const source = await this.protocol?.debugger.getScriptSource({ scriptId: params.scriptId });
+			console.log("script src result", source);
+		});
+		this.protocol.debugger.on("paused", params => {
+			console.log("paused notification", params);
+			this.pausedEvent.fire(true);
+		});
+		this.protocol.debugger.on("resumed", () => {
+			console.log("resumed notification");
+			this.pausedEvent.fire(false);
+		});
+		await this.protocol.runtime.enable();
+		console.log("Runtime.enable done");
+		const enableResult = await this.protocol.debugger.enable({});
+		console.log("Debugger.enable response", enableResult);
+		if (pauseOnFirstStatement) {
+			await this.protocol.debugger.pause();
+			console.log("Scheduled pause on first statement");
+		}
+		await this.protocol.runtime.runIfWaitingForDebugger();
+		this.connectedEvent.fire(true);
+	}
+
+	continue(): void {
+		this.protocol?.debugger.resume({});
+	}
+
+	pause(): void {
+		this.protocol?.debugger.pause();
+	}
+
+	stepOver(): void {
+		this.protocol?.debugger.stepOver({});
+	}
+
+	stepInto(): void {
+		this.protocol?.debugger.stepInto({});
+	}
+
+	stepOut(): void {
+		this.protocol?.debugger.stepOut();
+	}
+
+	stop(): void {
+		this.protocol?.debugger.resume({ terminateOnResume: true });
+	}
+
+	disconnect(): void {
+		this.protocol?.transport.disconnect();
+		this.protocol = undefined;
+	}
+}
+
 /**
  * Adds debug UI capabilities to the editor.
  */
 export class DebugContribution extends Disposable {
+	private readonly debugSession = this.register(new DebugSession());
 	private readonly debugWidget: DebugWidget;
 	private readonly breakpointPreviewDecorations: monaco.editor.IEditorDecorationsCollection;
 	private readonly breakpointDecorations: Map<string, monaco.editor.IModelDecoration> = new Map();
@@ -100,103 +226,38 @@ export class DebugContribution extends Disposable {
 		this.breakpointPreviewDecorations = editor.createDecorationsCollection();
 		this.currentDebugLineDecorations = editor.createDecorationsCollection();
 		this.enableGlyphMargin();
-		this.debugActiveContextKey = editor.createContextKey("debuggerSessionActive", false);
-		// TODO(seb) For reacting to context key changes there is only the following undocumented access. Do we want to
-		// go there for buttons/other UI that don't take context keys to react to state changes?
-		//
-		// editor._contextKeyService.onDidChangeContext(console.log) -> returns output like {key: 'debuggerSessionActive'}
 		this.register(this.editor.onMouseMove(this.onMouseMove));
 		this.register(this.editor.onMouseDown(this.onMouseDown));
 
-		let protocol: DebugProtocol | undefined;
+		const isValidRemoteAddress = (maybeUrl: string) => {
+			const url = monaco.Uri.parse(maybeUrl);
+			return url.scheme === "ws" || url.scheme === "wss";
+		};
+		this.debugWidget = new DebugWidget(editor);
+		this.debugWidget.setVisible(isValidRemoteAddress(debugRemoteAddressInput.getText()));
+		this.register(debugRemoteAddressInput.onDidChangeText(maybeUrl => this.debugWidget.setVisible(isValidRemoteAddress(maybeUrl))));
+		editor.addOverlayWidget(this.debugWidget);
+		this.register(toDisposable(() => editor.removeOverlayWidget(this.debugWidget)));
+		this.debugActiveContextKey = editor.createContextKey("debuggerSessionActive", false);
 		this.register(editor.addAction({
 			id: "debugger_start_session",
 			label: "Start Debugging",
 			keybindings: [monaco.KeyCode.F5],
 			precondition: "!debuggerSessionActive",
-			run: async () => {
+			run: () => {
 				const remoteAddress = debugRemoteAddressInput.getText();
-				if (!remoteAddress)
+				if (!isValidRemoteAddress(remoteAddress))
 					return;
 
-				protocol = new DebugProtocol(new WebsocketTransport(remoteAddress));
-				protocol.transport.onDidTerminate((reason, error) => {
-					if (reason === "close") {
-						console.log("Transport connection was closed");
-					} else {
-						console.error("Transport connection was closed unexpectedly", error);
-					}
-					this.debugActiveContextKey.set(false);
-					debugRemoteAddressInput.setDisabled(false);
-				});
-				protocol.runtime.on("executionContextCreated", params => {
-					console.log("Debugging session started", params);
-				});
-				protocol.runtime.on("executionContextDestroyed", params => {
-					console.log("Debugging session finished", params);
-					protocol?.transport.disconnect();
-				});
-				protocol.runtime.on("consoleAPICalled", params => {
-					const args = params.args.map(arg => {
-						switch (arg.type) {
-							case "bigint": return BigInt(arg.unserializableValue!.slice(0, -1));
-							case "function": return arg.description ?? "<function>";
-							case "object": {
-								if (arg.subtype === "null") {
-									return null;
-								} else if (arg.preview) {
-									if (arg.subtype) {
-										return arg.description;
-									} else {
-										const obj = Object.create(null);
-										for (const prop of arg.preview.properties) {
-											let value;
-											switch (prop.type) {
-												case "bigint": value = BigInt(prop.value!.slice(0, -1)); break;
-												case "boolean": value = Boolean(prop.value); break;
-												case "number": value = Number(prop.value); break;
-												default: value = prop.value; break;
-											}
-											obj[prop.name] = value;
-										}
-										return obj;
-									}
-								} else {
-									return "<object>";
-								}
-							}
-							case "symbol": return arg.description ?? "<symbol>";
-							default: return arg.value;
-						}
-					});
-					switch (params.type) {
-						case "assert": console.assert(...args); break;
-						case "warning": console.warn(...args); break;
-						case "startGroup": console.group(...args); break;
-						case "startGroupCollapsed": console.groupCollapsed(...args); break;
-						case "endGroup": console.groupEnd(); break;
-						case "profile": console.time(...args); break;
-						case "profileEnd": console.timeEnd(...args); break;
-						default: console[params.type](...args); break;
+				let connectedEvent = this.debugSession.onDidConnectedChange(connected => {
+					this.debugActiveContextKey.set(connected);
+					debugRemoteAddressInput.setDisabled(connected);
+					if (!connected) {
+						connectedEvent.dispose();
+						connectedEvent = null!;
 					}
 				});
-				protocol.debugger.on("scriptParsed", async params => {
-					console.log("scriptParsed notification", params);
-					const source = await protocol?.debugger.getScriptSource({ scriptId: params.scriptId });
-					console.log("script src result", source);
-				});
-				protocol.debugger.on("paused", params => {
-					console.log("paused notification", params);
-				});
-				await protocol.runtime.enable();
-				console.log("Runtime.enable done");
-				const enableResult = await protocol.debugger.enable({});
-				console.log("Debugger.enable response", enableResult);
-				await protocol.debugger.pause(); // pause on first statement
-				console.log("Scheduled pause on first statement");
-				await protocol.runtime.runIfWaitingForDebugger();
-				this.debugActiveContextKey.set(true);
-				debugRemoteAddressInput.setDisabled(true);
+				this.debugSession.connect(remoteAddress, true);
 			}
 		}));
 		this.register(editor.addAction({
@@ -204,42 +265,42 @@ export class DebugContribution extends Disposable {
 			label: "Continue",
 			keybindings: [monaco.KeyCode.F5],
 			precondition: "debuggerSessionActive",
-			run: () => protocol?.debugger.resume({}),
+			run: () => this.debugSession.continue(),
 		}));
 		this.register(editor.addAction({
 			id: "debugger_pause",
 			label: "Pause",
 			keybindings: [monaco.KeyCode.F6],
 			precondition: "debuggerSessionActive",
-			run: () => protocol?.debugger.pause(),
+			run: () => this.debugSession.pause(),
 		}));
 		this.register(editor.addAction({
 			id: "debugger_step_over",
 			label: "Step Over",
 			keybindings: [monaco.KeyCode.F10],
 			precondition: "debuggerSessionActive",
-			run: () => protocol?.debugger.stepOver({}),
+			run: () => this.debugSession.stepOver(),
 		}));
 		this.register(editor.addAction({
 			id: "debugger_step_into",
 			label: "Step Into",
 			keybindings: [monaco.KeyCode.F11],
 			precondition: "debuggerSessionActive",
-			run: () => protocol?.debugger.stepInto({}),
+			run: () => this.debugSession.stepInto(),
 		}));
 		this.register(editor.addAction({
 			id: "debugger_step_out",
 			label: "Step Out",
 			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F11],
 			precondition: "debuggerSessionActive",
-			run: () => protocol?.debugger.stepOut(),
+			run: () => this.debugSession.stepOut(),
 		}));
 		this.register(editor.addAction({
 			id: "debugger_stop_session",
 			label: "Stop Debugging",
 			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F5],
 			precondition: "debuggerSessionActive",
-			run: () => protocol?.debugger.resume({ terminateOnResume: true }),
+			run: () => this.debugSession.stop(),
 		}));
 		this.register(editor.addAction({
 			id: "toggle_breakpoint",
@@ -248,16 +309,6 @@ export class DebugContribution extends Disposable {
 			contextMenuGroupId,
 			run: () => this.toggleBreakpoint(),
 		}));
-
-		this.debugWidget = new DebugWidget(editor);
-		const makeVisibleOnValidUri = (maybeUrl: string) => {
-			const url = monaco.Uri.parse(maybeUrl);
-			this.debugWidget.setVisible(url.scheme === "ws" || url.scheme === "wss");
-		};
-		makeVisibleOnValidUri(debugRemoteAddressInput.getText());
-		this.register(debugRemoteAddressInput.onDidChangeText(makeVisibleOnValidUri));
-		editor.addOverlayWidget(this.debugWidget);
-		this.register(toDisposable(() => editor.removeOverlayWidget(this.debugWidget)));
 	}
 
 	override dispose(): void {
