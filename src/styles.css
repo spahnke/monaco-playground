@@ -75,6 +75,10 @@ body {
 	opacity: 0.4;
 }
 
+.monaco-editor .find-widget .button.hidden {
+	display: none;
+}
+
 .monaco-todo-line {
 	background-color: var(--monaco-todo-background-color);
 	border-radius: 3px;
