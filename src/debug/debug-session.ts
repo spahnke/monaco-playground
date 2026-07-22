@@ -11,6 +11,7 @@ export class DebugSession extends Disposable {
 
 	async connect(connectTransport: () => Transport, pauseOnFirstStatement: boolean): Promise<void> {
 		this.protocol = new DebugProtocol(connectTransport());
+		this.connectedEvent.fire(true);
 		this.protocol.transport.onDidTerminate((reason, error) => {
 			if (reason === "close") {
 				console.log("Transport connection was closed");
@@ -92,7 +93,6 @@ export class DebugSession extends Disposable {
 			console.log("Scheduled pause on first statement");
 		}
 		await this.protocol.runtime.runIfWaitingForDebugger();
-		this.connectedEvent.fire(true);
 	}
 
 	continue(): void {
