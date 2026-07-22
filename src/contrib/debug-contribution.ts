@@ -17,7 +17,7 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 		this.domNode.style.display    = "flex";
 		this.domNode.style.alignItems = "center";
 		const startButton             = this.createAndAddButton("Start Debugging (F5)", "debug-start", "debugger_start_session", true);
-		const continueButton          = this.createAndAddButton("Continue (F5)", "debug-continue", "debugger_continue");
+		const continueButton          = this.createAndAddButton("Continue (F5)", "debug-continue", "debugger_continue", false, false);
 		const pauseButton             = this.createAndAddButton("Pause (F6)", "debug-pause", "debugger_pause");
 		const stepOverButton          = this.createAndAddButton("Step Over (F10)", "debug-step-over", "debugger_step_over");
 		const stepIntoButton          = this.createAndAddButton("Step Into (F11)", "debug-step-into", "debugger_step_into");
@@ -26,6 +26,8 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 
 		this.register(debugSession.onDidConnectedChange(connected => {
 			this.setButtonEnabled(startButton, !connected);
+			this.setButtonVisible(startButton, !connected);
+			this.setButtonVisible(continueButton, connected);
 			if (!connected) {
 				this.setButtonEnabled(continueButton, false);
 				this.setButtonEnabled(pauseButton, false);
@@ -69,13 +71,14 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 		}
 	}
 
-	private createAndAddButton(label: string, icon: string, action: string, enabled = false): HTMLElement {
+	private createAndAddButton(label: string, icon: string, action: string, enabled = false, visible = true): HTMLElement {
 		const button     = document.createElement("div");
 		button.title     = label;
 		button.ariaLabel = label;
 		button.role      = "button";
 		button.className = `button codicon codicon-${icon}`;
 		this.setButtonEnabled(button, enabled);
+		this.setButtonVisible(button, visible);
 		button.addEventListener("click", () => this.editor.trigger("debugger", action, null));
 		this.domNode.appendChild(button);
 		return button;
@@ -90,6 +93,14 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 			button.classList.add("disabled");
 			button.ariaDisabled = "true";
 			button.tabIndex = -1;
+		}
+	}
+
+	private setButtonVisible(button: HTMLElement, visible: boolean): void {
+		if (visible) {
+			button.classList.remove("hidden");
+		} else {
+			button.classList.add("hidden");
 		}
 	}
 }
