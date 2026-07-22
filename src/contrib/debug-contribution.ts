@@ -5,10 +5,91 @@ import { CodeEditorTextInput } from "../code-editor-text-input.js";
 
 const contextMenuGroupId = "8_debug";
 
+class DebugWidget implements monaco.editor.IOverlayWidget {
+	private domNode: HTMLElement;
+	private startButton: HTMLElement;
+	private continueButton: HTMLElement;
+	private pauseButton: HTMLElement;
+	private stepOverButton: HTMLElement;
+	private stepIntoButton: HTMLElement;
+	private stepOutButton: HTMLElement;
+	private stopButton: HTMLElement;
+
+	constructor(private editor: monaco.editor.IStandaloneCodeEditor) {
+		// TODO(seb) Hook up all buttons with corresponding actions and react to state changes
+		// TODO(seb) Vendor the styles from the find widget classes as styles for the debug widget
+		this.domNode                  = document.createElement("div");
+		this.domNode.className        = "monaco-editor editor-widget find-widget";
+		this.domNode.style.display    = "flex";
+		this.domNode.style.alignItems = "center";
+		this.startButton              = this.createAndAddButton("Start Debugging (F5)", "debug-start", "debugger_start_session");
+		this.continueButton           = this.createAndAddButton("Continue (F5)", "debug-continue", "debugger_continue");
+		this.pauseButton              = this.createAndAddButton("Pause (F6)", "debug-pause", "debugger_pause");
+		this.stepOverButton           = this.createAndAddButton("Step Over (F10)", "debug-step-over", "debugger_step_over");
+		this.stepIntoButton           = this.createAndAddButton("Step Into (F11)", "debug-step-into", "debugger_step_into");
+		this.stepOutButton            = this.createAndAddButton("Step Out (Shift+F11)", "debug-step-out", "debugger_step_out");
+		this.stopButton               = this.createAndAddButton("Stop (Shift+F5)", "debug-stop", "debugger_stop_session");
+		this.setButtonEnabled(this.stepOutButton, false);
+	}
+
+	getId(): string {
+		return "debugger_overlay_widget";
+	}
+
+	getDomNode(): HTMLElement {
+		return this.domNode;
+	}
+
+	getPosition(): monaco.editor.IOverlayWidgetPosition | null {
+		return {
+			preference: monaco.editor.OverlayWidgetPositionPreference.TOP_CENTER,
+		};
+	}
+
+	setVisible(visible: boolean): void {
+		if (visible) {
+			this.domNode.classList.add("visible");
+			this.domNode.inert = false;
+		} else {
+			this.domNode.classList.remove("visible");
+			this.domNode.inert = true;
+		}
+	}
+
+	private createAndAddButton(label: string, icon: string, action: string): HTMLElement {
+		// TODO(seb) How do we want to handle this in general? Like monaco with aria roles/disabled/classes? Or
+		// do we use a button element and do more styling? We don't need any special handling in the click
+		// handler because we trigger actions that have preconditions anyway.
+		const button        = document.createElement("div");
+		button.title        = label;
+		button.ariaLabel    = label;
+		button.ariaDisabled = "false";
+		button.role         = "button";
+		button.tabIndex     = 0;
+		button.className    = `button codicon codicon-${icon}`;
+		button.addEventListener("click", () => this.editor.trigger("debugger", action, null));
+		this.domNode.appendChild(button);
+		return button;
+	}
+
+	private setButtonEnabled(button: HTMLElement, enable: boolean): void {
+		if (enable) {
+			button.classList.remove("disabled");
+			button.ariaDisabled = "false";
+			button.tabIndex = 0;
+		} else {
+			button.classList.add("disabled");
+			button.ariaDisabled = "true";
+			button.tabIndex = -1;
+		}
+	}
+}
+
 /**
  * Adds debug UI capabilities to the editor.
  */
 export class DebugContribution extends Disposable {
+	private readonly debugWidget: DebugWidget;
 	private readonly breakpointPreviewDecorations: monaco.editor.IEditorDecorationsCollection;
 	private readonly breakpointDecorations: Map<string, monaco.editor.IModelDecoration> = new Map();
 	private readonly currentDebugLineDecorations: monaco.editor.IEditorDecorationsCollection;
@@ -33,8 +114,6 @@ export class DebugContribution extends Disposable {
 			label: "Start Debugging",
 			keybindings: [monaco.KeyCode.F5],
 			precondition: "!debuggerSessionActive",
-			contextMenuGroupId: contextMenuGroupId,
-			contextMenuOrder: 0,
 			run: async () => {
 				const remoteAddress = debugRemoteAddressInput.getText();
 				if (!remoteAddress)
@@ -48,6 +127,7 @@ export class DebugContribution extends Disposable {
 						console.error("Transport connection was closed unexpectedly", error);
 					}
 					this.debugActiveContextKey.set(false);
+					debugRemoteAddressInput.setDisabled(false);
 				});
 				protocol.runtime.on("executionContextCreated", params => {
 					console.log("Debugging session started", params);
@@ -116,6 +196,7 @@ export class DebugContribution extends Disposable {
 				console.log("Scheduled pause on first statement");
 				await protocol.runtime.runIfWaitingForDebugger();
 				this.debugActiveContextKey.set(true);
+				debugRemoteAddressInput.setDisabled(true);
 			}
 		}));
 		this.register(editor.addAction({
@@ -123,26 +204,41 @@ export class DebugContribution extends Disposable {
 			label: "Continue",
 			keybindings: [monaco.KeyCode.F5],
 			precondition: "debuggerSessionActive",
-			contextMenuGroupId: contextMenuGroupId,
-			contextMenuOrder: 0,
 			run: () => protocol?.debugger.resume({}),
+		}));
+		this.register(editor.addAction({
+			id: "debugger_pause",
+			label: "Pause",
+			keybindings: [monaco.KeyCode.F6],
+			precondition: "debuggerSessionActive",
+			run: () => protocol?.debugger.pause(),
 		}));
 		this.register(editor.addAction({
 			id: "debugger_step_over",
 			label: "Step Over",
 			keybindings: [monaco.KeyCode.F10],
 			precondition: "debuggerSessionActive",
-			contextMenuGroupId: contextMenuGroupId,
-			contextMenuOrder: 1,
 			run: () => protocol?.debugger.stepOver({}),
+		}));
+		this.register(editor.addAction({
+			id: "debugger_step_into",
+			label: "Step Into",
+			keybindings: [monaco.KeyCode.F11],
+			precondition: "debuggerSessionActive",
+			run: () => protocol?.debugger.stepInto({}),
+		}));
+		this.register(editor.addAction({
+			id: "debugger_step_out",
+			label: "Step Out",
+			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F11],
+			precondition: "debuggerSessionActive",
+			run: () => protocol?.debugger.stepOut(),
 		}));
 		this.register(editor.addAction({
 			id: "debugger_stop_session",
 			label: "Stop Debugging",
 			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F5],
 			precondition: "debuggerSessionActive",
-			contextMenuGroupId: contextMenuGroupId,
-			contextMenuOrder: 2,
 			run: () => protocol?.debugger.resume({ terminateOnResume: true }),
 		}));
 		this.register(editor.addAction({
@@ -150,61 +246,18 @@ export class DebugContribution extends Disposable {
 			label: "Toggle Breakpoint",
 			keybindings: [monaco.KeyCode.F9],
 			contextMenuGroupId,
-			contextMenuOrder: 3,
 			run: () => this.toggleBreakpoint(),
 		}));
 
-		const debugOverlay: monaco.editor.IOverlayWidget = {
-			getId() {
-				return "debugger_overlay_widget";
-			},
-
-			getDomNode() {
-				// TODO(seb) Hook up all buttons with corresponding actions and react to state changes
-				// TODO(seb) Vendor the styles from the find widget classes as styles for the debug widget
-				const debugWidget = document.createElement("div");
-				debugWidget.className = "monaco-editor editor-widget find-widget visible";
-				debugWidget.style.display = "flex";
-				debugWidget.style.alignItems = "center";
-				const startAndContinueButton = document.createElement("div");
-				startAndContinueButton.className = "button codicon codicon-debug-start";
-				startAndContinueButton.addEventListener("click", () => editor.trigger("debugger", "debugger_start_session", null));
-				debugWidget.appendChild(startAndContinueButton);
-				const continueButton = document.createElement("div");
-				continueButton.className = "button codicon codicon-debug-continue";
-				continueButton.addEventListener("click", () => editor.trigger("debugger", "debugger_continue", null));
-				debugWidget.appendChild(continueButton);
-				const pauseButton = document.createElement("div");
-				pauseButton.className = "button codicon codicon-debug-pause";
-				debugWidget.appendChild(pauseButton);
-				const stepOverButton = document.createElement("div");
-				stepOverButton.className = "button codicon codicon-debug-step-over";
-				stepOverButton.addEventListener("click", () => editor.trigger("debugger", "debugger_step_over", null));
-				debugWidget.appendChild(stepOverButton);
-				const stepIntoButton = document.createElement("div");
-				stepIntoButton.className = "button codicon codicon-debug-step-into";
-				debugWidget.appendChild(stepIntoButton);
-				// TODO(seb) How do we want to handle this in general? Like monaco with aria roles/disabled/classes? Or
-				// do we use a button element and do more styling? We don't need any special handling in the click
-				// handler because we trigger actions that have preconditions anyway.
-				const stepOutButton = document.createElement("div");
-				stepOutButton.className = "button codicon codicon-debug-step-out disabled";
-				debugWidget.appendChild(stepOutButton);
-				const stopButton = document.createElement("div");
-				stopButton.className = "button codicon codicon-debug-stop";
-				stopButton.addEventListener("click", () => editor.trigger("debugger", "debugger_stop_session", null));
-				debugWidget.appendChild(stopButton);
-				return debugWidget;
-			},
-
-			getPosition() {
-				return {
-					preference: monaco.editor.OverlayWidgetPositionPreference.TOP_CENTER,
-				};
-			},
+		this.debugWidget = new DebugWidget(editor);
+		const makeVisibleOnValidUri = (maybeUrl: string) => {
+			const url = monaco.Uri.parse(maybeUrl);
+			this.debugWidget.setVisible(url.scheme === "ws" || url.scheme === "wss");
 		};
-		editor.addOverlayWidget(debugOverlay);
-		this.register(toDisposable(() => editor.removeOverlayWidget(debugOverlay)));
+		makeVisibleOnValidUri(debugRemoteAddressInput.getText());
+		this.register(debugRemoteAddressInput.onDidChangeText(makeVisibleOnValidUri));
+		editor.addOverlayWidget(this.debugWidget);
+		this.register(toDisposable(() => editor.removeOverlayWidget(this.debugWidget)));
 	}
 
 	override dispose(): void {

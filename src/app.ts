@@ -9,7 +9,6 @@ await loadMonaco();
 
 const textInput = CodeEditorTextInput.create(document.querySelector<HTMLElement>("#textInput")!, undefined, "type text here");
 textInput.onDidPressEnter(console.log);
-textInput.onDidChangeText(console.log);
 registerSlashCommands(textInput, [{ command: "test", detail: "A test command" }, { command: "format", detail: "Formats the text" }]);
 
 const debugRemoteAddressTextInput = CodeEditorTextInput.create(document.querySelector<HTMLElement>("#debugRemoteAddressInput")!, "", "remote debugging websocket address", "vm-connect");
