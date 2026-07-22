@@ -170,7 +170,10 @@ export class CodeEditorTextInput extends Disposable {
 		} else {
 			container.setAttribute("aria-disabled", "false");
 		}
-		container.inert = value;
+		const editorNode = this.monacoEditor.getDomNode();
+		if (editorNode) {
+			editorNode.inert = value;
+		}
 	}
 
 	setReadonly(value: boolean): void {
