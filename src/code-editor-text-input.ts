@@ -166,6 +166,7 @@ export class CodeEditorTextInput extends Disposable {
 	setDisabled(value: boolean): void {
 		const container = this.monacoEditor.getContainerDomNode();
 		if (value) {
+			this.monacoEditor.setPosition(this.monacoEditor.getPosition() ?? { lineNumber: 1, column: 1 }); // clear any selections
 			container.setAttribute("aria-disabled", "true");
 		} else {
 			container.setAttribute("aria-disabled", "false");
