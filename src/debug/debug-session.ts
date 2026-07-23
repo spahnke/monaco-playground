@@ -2,16 +2,19 @@ import { Disposable } from "../common/disposable.js";
 import { DebugProtocol, Transport } from "./debug-protocol.js";
 
 export class DebugSession extends Disposable {
-	private protocol: DebugProtocol | undefined;
+	private protocol?: DebugProtocol;
 	private readonly connectedEvent = this.register(new monaco.Emitter<boolean>());
 	private readonly pausedEvent = this.register(new monaco.Emitter<boolean>());
 
 	readonly onDidConnectedChange = this.connectedEvent.event;
 	readonly onDidPausedStateChange = this.pausedEvent.event;
 
-	async connect(connectTransport: () => Transport): Promise<void> {
-		this.protocol = new DebugProtocol(connectTransport());
+	async connect(transport: Transport): Promise<void> {
+		// TODO(seb) Probably good to have finer grained events for connecting/connected + disconnecting/disconnected?
+		// Can we alternatively just get rid of this event entirely and just use the returned promise on the caller
+		// side?
 		this.connectedEvent.fire(true);
+		this.protocol = new DebugProtocol(transport);
 		this.protocol.transport.onDidTerminate((reason, error) => {
 			if (reason === "close") {
 				console.log("Transport connection was closed");
@@ -19,6 +22,7 @@ export class DebugSession extends Disposable {
 				console.error("Transport connection was closed unexpectedly", error);
 			}
 			this.connectedEvent.fire(false);
+			this.protocol = undefined;
 		});
 		this.protocol.runtime.on("executionContextCreated", params => {
 			console.log("Debugging session started", params);
@@ -84,11 +88,13 @@ export class DebugSession extends Disposable {
 			console.log("resumed notification");
 			this.pausedEvent.fire(false);
 		});
-		await this.protocol.runtime.enable();
-		console.log("Runtime.enable done");
-		const enableResult = await this.protocol.debugger.enable({});
-		console.log("Debugger.enable response", enableResult);
-		await this.protocol.runtime.runIfWaitingForDebugger();
+		if (await this.protocol.transport.connect()) {
+			await this.protocol.runtime.enable();
+			console.log("Runtime.enable done");
+			const enableResult = await this.protocol.debugger.enable({});
+			console.log("Debugger.enable response", enableResult);
+			await this.protocol.runtime.runIfWaitingForDebugger();
+		}
 	}
 
 	continue(): void {
