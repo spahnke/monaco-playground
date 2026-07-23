@@ -7,44 +7,29 @@ import { CodeEditorTextInput } from "../code-editor-text-input.js";
 const contextMenuGroupId = "8_debug";
 
 class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
-	private domNode: HTMLElement;
+	private readonly domNode: HTMLElement;
+	private readonly startButton: HTMLElement;
+	private readonly continueButton: HTMLElement;
+	private readonly pauseButton: HTMLElement;
+	private readonly stepOverButton: HTMLElement;
+	private readonly stepIntoButton: HTMLElement;
+	private readonly stepOutButton: HTMLElement;
+	private readonly stopButton: HTMLElement;
 
-	constructor(private editor: monaco.editor.IStandaloneCodeEditor, debugSession: DebugSession) {
+	constructor(private editor: monaco.editor.IStandaloneCodeEditor) {
 		super();
 		// TODO(seb) Vendor the styles from the find widget classes as styles for the debug widget
 		this.domNode                  = document.createElement("div");
 		this.domNode.className        = "monaco-editor editor-widget find-widget";
 		this.domNode.style.display    = "flex";
 		this.domNode.style.alignItems = "center";
-		const startButton             = this.createAndAddButton("Start Debugging (F5)", "debug-start", "debugger_start_session", true);
-		const continueButton          = this.createAndAddButton("Continue (F5)", "debug-continue", "debugger_continue", false, false);
-		const pauseButton             = this.createAndAddButton("Pause (F6)", "debug-pause", "debugger_pause");
-		const stepOverButton          = this.createAndAddButton("Step Over (F10)", "debug-step-over", "debugger_step_over");
-		const stepIntoButton          = this.createAndAddButton("Step Into (F11)", "debug-step-into", "debugger_step_into");
-		const stepOutButton           = this.createAndAddButton("Step Out (Shift+F11)", "debug-step-out", "debugger_step_out");
-		const stopButton              = this.createAndAddButton("Stop (Shift+F5)", "debug-stop", "debugger_stop_session");
-
-		this.register(debugSession.onDidConnectedChange(connected => {
-			this.setButtonEnabled(startButton, !connected);
-			this.setButtonVisible(startButton, !connected);
-			this.setButtonVisible(continueButton, connected);
-			if (!connected) {
-				this.setButtonEnabled(continueButton, false);
-				this.setButtonEnabled(pauseButton, false);
-				this.setButtonEnabled(stepOverButton, false);
-				this.setButtonEnabled(stepIntoButton, false);
-				this.setButtonEnabled(stepOutButton, false);
-				this.setButtonEnabled(stopButton, false);
-			}
-		}));
-		this.register(debugSession.onDidPausedStateChange(paused => {
-			this.setButtonEnabled(continueButton, paused);
-			this.setButtonEnabled(pauseButton, !paused);
-			this.setButtonEnabled(stepOverButton, paused);
-			this.setButtonEnabled(stepIntoButton, paused);
-			this.setButtonEnabled(stepOutButton, paused);
-			this.setButtonEnabled(stopButton, paused);
-		}));
+		this.startButton              = this.createAndAddButton("Start Debugging (F5)", "debug-start", "debugger_start_session", true);
+		this.continueButton           = this.createAndAddButton("Continue (F5)", "debug-continue", "debugger_continue", false, false);
+		this.pauseButton              = this.createAndAddButton("Pause (F6)", "debug-pause", "debugger_pause");
+		this.stepOverButton           = this.createAndAddButton("Step Over (F10)", "debug-step-over", "debugger_step_over");
+		this.stepIntoButton           = this.createAndAddButton("Step Into (F11)", "debug-step-into", "debugger_step_into");
+		this.stepOutButton            = this.createAndAddButton("Step Out (Shift+F11)", "debug-step-out", "debugger_step_out");
+		this.stopButton               = this.createAndAddButton("Stop (Shift+F5)", "debug-stop", "debugger_stop_session");
 	}
 
 	getId(): string {
@@ -69,6 +54,18 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 			this.domNode.classList.remove("visible");
 			this.domNode.inert = true;
 		}
+	}
+
+	updateState(debuggerSessionActive: boolean, debuggerSessionPaused: boolean): void {
+		this.setButtonVisible(this.startButton,    !debuggerSessionActive);
+		this.setButtonEnabled(this.startButton,    !debuggerSessionActive);
+		this.setButtonVisible(this.continueButton, debuggerSessionActive);
+		this.setButtonEnabled(this.continueButton, debuggerSessionActive && debuggerSessionPaused);
+		this.setButtonEnabled(this.pauseButton,    debuggerSessionActive && !debuggerSessionPaused);
+		this.setButtonEnabled(this.stepOverButton, debuggerSessionActive && debuggerSessionPaused);
+		this.setButtonEnabled(this.stepIntoButton, debuggerSessionActive && debuggerSessionPaused);
+		this.setButtonEnabled(this.stepOutButton,  debuggerSessionActive && debuggerSessionPaused);
+		this.setButtonEnabled(this.stopButton,     debuggerSessionActive);
 	}
 
 	private createAndAddButton(label: string, icon: string, action: string, enabled = false, visible = true): HTMLElement {
@@ -127,7 +124,7 @@ export class DebugContribution extends Disposable {
 			return (url.scheme === "ws" || url.scheme === "wss") && typeof url.authority === "string" && url.authority.trim() !== "";
 		};
 
-		const debugWidget = this.register(new DebugWidget(editor, this.debugSession));
+		const debugWidget = this.register(new DebugWidget(editor));
 		debugWidget.setVisible(isValidRemoteAddress(debugRemoteAddressInput.getText()));
 		this.register(debugRemoteAddressInput.onDidChangeText(maybeUrl => debugWidget.setVisible(isValidRemoteAddress(maybeUrl))));
 		editor.addOverlayWidget(debugWidget);
@@ -135,12 +132,14 @@ export class DebugContribution extends Disposable {
 
 		const debugActiveContextKey = editor.createContextKey<boolean>("debuggerSessionActive", false);
 		const debugPausedContextKey = editor.createContextKey<boolean>("debuggerSessionPaused", false);
-		this.register(this.debugSession.onDidConnectedChange(connected => {
-			debugActiveContextKey.set(connected);
-			debugRemoteAddressInput.setDisabled(connected);
+		this.register(this.debugSession.onDidChangeActiveState(active => {
+			debugActiveContextKey.set(active);
+			debugRemoteAddressInput.setDisabled(active);
+			debugWidget.updateState(active, debugPausedContextKey.get() ?? false);
 		}));
-		this.register(this.debugSession.onDidPausedStateChange(paused => {
+		this.register(this.debugSession.onDidChangePausedState(paused => {
 			debugPausedContextKey.set(paused);
+			debugWidget.updateState(debugActiveContextKey.get() ?? false, paused);
 			if (paused) {
 				// TODO(seb) Show code and highlight current line
 			}
