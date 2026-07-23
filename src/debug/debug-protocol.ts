@@ -82,8 +82,7 @@ export class DebugProtocol {
 			if (pendingResponse && pendingResponse.id === message.id) {
 				this.pendingResponses.delete(message.id);
 				if ("error" in message) {
-					console.error(message.error);
-					pendingResponse.reject();
+					pendingResponse.reject(message.error);
 				} else {
 					pendingResponse.resolve(message.result);
 				}
