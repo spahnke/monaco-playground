@@ -19,7 +19,7 @@ interface DebugProtocolRequest {
 interface PendingDebugProtocolResponse {
 	id: number;
 	resolve(response: unknown): void;
-	reject(): void;
+	reject(reason?: any): void;
 }
 
 interface DebugProtocolResponseSuccess {
@@ -48,6 +48,13 @@ export class DebugProtocol {
 
 	constructor(readonly transport: Transport) {
 		transport.onDidReceiveMessage(message => this.onDidReceiveMessage(message));
+		transport.onDidTerminate((reason, error) => {
+			for (const pendingResponse of this.pendingResponses.values()) {
+				pendingResponse.reject(reason === "close" ? "canceled" : error);
+			}
+			this.pendingResponses.clear();
+			this.notificationListeners.clear();
+		});
 	}
 
 	debugger = this.createProxy("Debugger");
@@ -102,6 +109,7 @@ export class DebugProtocol {
 }
 
 export interface Transport {
+	connect(): Promise<boolean>;
 	sendMessage(message: string): void;
 	onDidReceiveMessage(listener: (message: string) => void): void;
 	onDidTerminate(listener: (reason: "close" | "error", error?: any) => void): void;
@@ -109,32 +117,60 @@ export interface Transport {
 }
 
 export class WebsocketTransport implements Transport {
-	private readonly ws: WebSocket;
-	private readonly openBarrier: Promise<void>;
+	private readonly address: string;
+	private readonly messageListeners: ((message: string) => void)[] = [];
+	private readonly terminateListeners: ((reason: "close" | "error", error?: any) => void)[] = [];
+	private ws?: WebSocket;
 
 	constructor(address: string) {
-		this.ws = new WebSocket(address);
-		this.openBarrier = new Promise(resolve => this.ws.addEventListener("open", () => resolve()));
+		this.address = address;
+	}
+
+	connect(): Promise<boolean> {
+		const barrier = Promise.withResolvers<boolean>();
+		this.ws = new WebSocket(this.address);
+		this.ws.addEventListener("open", () => barrier.resolve(true));
+		this.ws.addEventListener("message", ev => {
+			for (const listener of this.messageListeners) {
+				listener(ev.data);
+			}
+		});
+		this.ws.addEventListener("close", () => {
+			for (const listener of this.terminateListeners) {
+				listener("close");
+			}
+			this.disconnect();
+			barrier.resolve(false);
+		});
+		this.ws.addEventListener("error", ev => {
+			for (const listener of this.terminateListeners) {
+				listener("error", ev);
+			}
+			this.disconnect();
+			barrier.resolve(false);
+		});
+		return barrier.promise;
 	}
 
 	sendMessage(data: string) {
-		this.openBarrier.then(() => {
-			if (this.ws.readyState === this.ws.OPEN) {
-				this.ws.send(data);
-			}
-		});
+		if (!this.ws) {
+			throw new Error("Not connected");
+		}
+		if (this.ws.readyState === WebSocket.OPEN) {
+			this.ws.send(data);
+		}
 	}
 
 	onDidReceiveMessage(listener: (message: string) => void) {
-		this.ws.addEventListener("message", ev => listener(ev.data));
+		this.messageListeners.push(listener);
 	}
 
 	onDidTerminate(listener: (reason: "close" | "error", error?: any) => void) {
-		this.ws.addEventListener("close", () => listener("close"));
-		this.ws.addEventListener("error", ev => listener("error", ev));
+		this.terminateListeners.push(listener);
 	}
 
 	disconnect() {
-		this.ws.close();
+		this.ws?.close();
+		this.ws = undefined;
 	}
 }

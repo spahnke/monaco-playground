@@ -151,7 +151,7 @@ export class DebugContribution extends Disposable {
 				const remoteAddress = debugRemoteAddressInput.getText();
 				if (!isValidRemoteAddress(remoteAddress))
 					return;
-				this.debugSession.connect(() => new WebsocketTransport(remoteAddress));
+				this.debugSession.connect(new WebsocketTransport(remoteAddress));
 			}
 		}));
 		this.register(editor.addAction({
