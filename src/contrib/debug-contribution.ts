@@ -122,9 +122,9 @@ export class DebugContribution extends Disposable {
 		this.register(this.editor.onMouseMove(this.onMouseMove));
 		this.register(this.editor.onMouseDown(this.onMouseDown));
 
-		const isValidRemoteAddress = (maybeUrl: string) => {
+		const isValidRemoteAddress = (maybeUrl: string): boolean => {
 			const url = monaco.Uri.parse(maybeUrl);
-			return url.scheme === "ws" || url.scheme === "wss";
+			return (url.scheme === "ws" || url.scheme === "wss") && typeof url.authority === "string" && url.authority.trim() !== "";
 		};
 
 		const debugWidget = this.register(new DebugWidget(editor, this.debugSession));
@@ -141,6 +141,9 @@ export class DebugContribution extends Disposable {
 		}));
 		this.register(this.debugSession.onDidPausedStateChange(paused => {
 			debugPausedContextKey.set(paused);
+			if (paused) {
+				// TODO(seb) Show code and highlight current line
+			}
 		}));
 		this.register(editor.addAction({
 			id: "debugger_start_session",
