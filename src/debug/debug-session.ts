@@ -77,7 +77,6 @@ export class DebugSession extends Disposable {
 					const wasmModule = await this.protocol!.debugger.disassembleWasmModule({ scriptId });
 					const wat = wasmModule.chunk.lines.join("\n");
 					const model = monaco.editor.createModel(wat, undefined, metadata.url ? monaco.Uri.parse(metadata.url) : undefined);
-					// TODO(seb) Add syntax definition for WAT
 					monaco.editor.setModelLanguage(model, "wat");
 					this.scriptModels.set(scriptId, model);
 					this.wasmModules.set(scriptId, wasmModule);
