@@ -21,7 +21,7 @@ const languageConfig: monaco.languages.LanguageConfiguration = {
 	],
 };
 
-const monarchTokenProvider: TokenProvider = {
+const monarchTokenProvider: monaco.languages.IMonarchLanguage = {
 
 	keywords: [
 		"data",
@@ -104,13 +104,6 @@ const monarchTokenProvider: TokenProvider = {
 		],
 	},
 };
-
-interface TokenProvider extends monaco.languages.IMonarchLanguage {
-	keywords: string[];
-	operators: string[];
-	symbols: RegExp;
-	typeKeywords: string[];
-}
 
 export function registerWat(): void {
 	const languageId = "wat";
