@@ -194,6 +194,9 @@ export class DebugContribution extends Disposable {
 						});
 					}
 				}
+				if (this.debugSession.pauseState?.reason === "exception") {
+					console.error(this.debugSession.pauseState.data?.description ?? "Unknown exception");
+				}
 			} else {
 				this.removeDebugLine();
 			}
