@@ -14,8 +14,9 @@ export class DebugSession extends Disposable {
 	// into type/write safety.
 	readonly scriptMetadata = new Map<string, Protocol.Debugger.ScriptParsedEvent>();
 	readonly scriptModels = new Map<string, monaco.editor.ITextModel>();
-	readonly urlToScriptId = new Map<string, string>();
+	readonly uriToScriptId = new Map<string, string>();
 	readonly wasmModules = new Map<string, Protocol.Debugger.DisassembleWasmModuleResponse>();
+	readonly breakpoints = new Map<string, Protocol.Debugger.SetBreakpointResponse[]>();
 	executionContext?: Protocol.Runtime.ExecutionContextCreatedEvent;
 	pauseState?: Protocol.Debugger.PausedEvent;
 
@@ -26,8 +27,9 @@ export class DebugSession extends Disposable {
 			model.dispose();
 		}
 		this.scriptModels.clear();
-		this.urlToScriptId.clear();
+		this.uriToScriptId.clear();
 		this.wasmModules.clear();
+		this.breakpoints.clear();
 		this.executionContext = undefined;
 		this.pauseState = undefined;
 	}
@@ -57,7 +59,7 @@ export class DebugSession extends Disposable {
 		this.protocol.debugger.on("scriptParsed", params => {
 			this.scriptMetadata.set(params.scriptId, params);
 			if (params.url) {
-				this.urlToScriptId.set(params.url, params.scriptId);
+				this.uriToScriptId.set(monaco.Uri.file(params.url).toString(), params.scriptId);
 			}
 		});
 		this.protocol.debugger.on("paused", async (params) => {
@@ -70,13 +72,13 @@ export class DebugSession extends Disposable {
 					// NOTE(seb) In the createModel call, the uri parameter wins over language and since we don't
 					// necessarily have a proper file extension the model will be plaintext. So set the language
 					// manually afterwards.
-					const model = monaco.editor.createModel(scriptSource.scriptSource, undefined, metadata.url ? monaco.Uri.parse(metadata.url) : undefined);
+					const model = monaco.editor.createModel(scriptSource.scriptSource, undefined, metadata.url ? monaco.Uri.file(metadata.url) : undefined);
 					monaco.editor.setModelLanguage(model, "javascript");
 					this.scriptModels.set(scriptId, model);
 				} else if (metadata.scriptLanguage === "WebAssembly") {
 					const wasmModule = await this.protocol!.debugger.disassembleWasmModule({ scriptId });
 					const wat = wasmModule.chunk.lines.join("\n");
-					const model = monaco.editor.createModel(wat, undefined, metadata.url ? monaco.Uri.parse(metadata.url) : undefined);
+					const model = monaco.editor.createModel(wat, undefined, metadata.url ? monaco.Uri.file(metadata.url) : undefined);
 					monaco.editor.setModelLanguage(model, "wat");
 					this.scriptModels.set(scriptId, model);
 					this.wasmModules.set(scriptId, wasmModule);
@@ -118,6 +120,27 @@ export class DebugSession extends Disposable {
 
 	stop(): void {
 		this.protocol?.debugger.resume({ terminateOnResume: true });
+	}
+
+	async setBreakpoint(uri: monaco.Uri, lineOneBased: number, op: "add" | "remove"): Promise<void> {
+		if (!this.protocol) {
+			return;
+		}
+		const scriptId = this.uriToScriptId.get(uri.toString());
+		if (!scriptId) {
+			return;
+		}
+		const breakpointList = this.breakpoints.get(scriptId) ?? [];
+		if (op === "add") {
+			const breakpointAddResponse = await this.protocol.debugger.setBreakpoint({ location: { scriptId, lineNumber: lineOneBased - 1 } });
+			breakpointList.push(breakpointAddResponse);
+			this.breakpoints.set(scriptId, breakpointList);
+		} else if (op === "remove") {
+			const breakpoint = breakpointList.find(b => b.actualLocation.lineNumber === lineOneBased - 1);
+			if (breakpoint) {
+				await this.protocol.debugger.removeBreakpoint({ breakpointId: breakpoint.breakpointId });
+			}
+		}
 	}
 
 	disconnect(): void {

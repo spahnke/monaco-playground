@@ -319,8 +319,11 @@ export class DebugContribution extends Disposable {
 		if (currentBreakpointDecoration === undefined) {
 			this.hideBreakpointPreview();
 			this.addBreakpoint(line);
+			// TODO(seb) Temp hack into existing code, this needs to be done entirely differently
+			this.debugSession.setBreakpoint(this.editor.monacoEditor.getModel()!.uri, line, "add");
 		} else {
 			this.removeBreakpoint(currentBreakpointDecoration);
+			this.debugSession.setBreakpoint(this.editor.monacoEditor.getModel()!.uri, line, "remove");
 		}
 	}
 
