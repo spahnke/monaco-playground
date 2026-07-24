@@ -2,6 +2,7 @@ import { Disposable, toDisposable } from "../common/disposable.js";
 import { isComment } from "../common/monaco-utils.js";
 import { WebsocketTransport } from "../debug/debug-protocol.js";
 import { DebugSession } from "../debug/debug-session.js";
+import { CodeEditor } from "../code-editor.js";
 import { CodeEditorTextInput } from "../code-editor-text-input.js";
 
 const contextMenuGroupId = "8_debug";
@@ -111,31 +112,32 @@ export class DebugContribution extends Disposable {
 	private readonly breakpointDecorations: Map<string, monaco.editor.IModelDecoration> = new Map();
 	private readonly currentDebugLineDecorations: monaco.editor.IEditorDecorationsCollection;
 
-	constructor(private readonly editor: monaco.editor.IStandaloneCodeEditor, debugRemoteAddressInput: CodeEditorTextInput) {
+	constructor(private readonly editor: CodeEditor, debugRemoteAddressInput: CodeEditorTextInput) {
 		super();
-		this.breakpointPreviewDecorations = editor.createDecorationsCollection();
-		this.currentDebugLineDecorations = editor.createDecorationsCollection();
+		this.breakpointPreviewDecorations = editor.monacoEditor.createDecorationsCollection();
+		this.currentDebugLineDecorations = editor.monacoEditor.createDecorationsCollection();
 		this.enableGlyphMargin();
-		this.register(this.editor.onMouseMove(this.onMouseMove));
-		this.register(this.editor.onMouseDown(this.onMouseDown));
+		this.register(this.editor.monacoEditor.onMouseMove(this.onMouseMove));
+		this.register(this.editor.monacoEditor.onMouseDown(this.onMouseDown));
 
 		const isValidRemoteAddress = (maybeUrl: string): boolean => {
 			const url = monaco.Uri.parse(maybeUrl);
 			return (url.scheme === "ws" || url.scheme === "wss") && typeof url.authority === "string" && url.authority.trim() !== "";
 		};
 
-		const debugWidget = this.register(new DebugWidget(editor));
+		const debugWidget = this.register(new DebugWidget(editor.monacoEditor));
 		debugWidget.setVisible(isValidRemoteAddress(debugRemoteAddressInput.getText()));
 		this.register(debugRemoteAddressInput.onDidChangeText(maybeUrl => debugWidget.setVisible(isValidRemoteAddress(maybeUrl))));
-		editor.addOverlayWidget(debugWidget);
-		this.register(toDisposable(() => editor.removeOverlayWidget(debugWidget)));
+		editor.monacoEditor.addOverlayWidget(debugWidget);
+		this.register(toDisposable(() => editor.monacoEditor.removeOverlayWidget(debugWidget)));
 
-		const debugActiveContextKey = editor.createContextKey<boolean>("debuggerSessionActive", false);
-		const debugPausedContextKey = editor.createContextKey<boolean>("debuggerSessionPaused", false);
+		const debugActiveContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionActive", false);
+		const debugPausedContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionPaused", false);
 		this.register(this.debugSession.onDidChangeActiveState(active => {
 			debugActiveContextKey.set(active);
 			debugRemoteAddressInput.setDisabled(active);
 			debugWidget.updateState(active, debugPausedContextKey.get() ?? false);
+			editor.setReadonly(active);
 		}));
 		this.register(this.debugSession.onDidChangePausedState(paused => {
 			debugPausedContextKey.set(paused);
@@ -144,7 +146,7 @@ export class DebugContribution extends Disposable {
 				// TODO(seb) Show code and highlight current line
 			}
 		}));
-		this.register(editor.addAction({
+		this.register(editor.monacoEditor.addAction({
 			id: "debugger_start_session",
 			label: "Start Debugging",
 			keybindings: [monaco.KeyCode.F5],
@@ -156,49 +158,49 @@ export class DebugContribution extends Disposable {
 				this.debugSession.connect(new WebsocketTransport(remoteAddress));
 			}
 		}));
-		this.register(editor.addAction({
+		this.register(editor.monacoEditor.addAction({
 			id: "debugger_continue",
 			label: "Continue",
 			keybindings: [monaco.KeyCode.F5],
 			precondition: "debuggerSessionActive && debuggerSessionPaused",
 			run: () => this.debugSession.continue(),
 		}));
-		this.register(editor.addAction({
+		this.register(editor.monacoEditor.addAction({
 			id: "debugger_pause",
 			label: "Pause",
 			keybindings: [monaco.KeyCode.F6],
 			precondition: "debuggerSessionActive && !debuggerSessionPaused",
 			run: () => this.debugSession.pause(),
 		}));
-		this.register(editor.addAction({
+		this.register(editor.monacoEditor.addAction({
 			id: "debugger_step_over",
 			label: "Step Over",
 			keybindings: [monaco.KeyCode.F10],
 			precondition: "debuggerSessionActive && debuggerSessionPaused",
 			run: () => this.debugSession.stepOver(),
 		}));
-		this.register(editor.addAction({
+		this.register(editor.monacoEditor.addAction({
 			id: "debugger_step_into",
 			label: "Step Into",
 			keybindings: [monaco.KeyCode.F11],
 			precondition: "debuggerSessionActive && debuggerSessionPaused",
 			run: () => this.debugSession.stepInto(),
 		}));
-		this.register(editor.addAction({
+		this.register(editor.monacoEditor.addAction({
 			id: "debugger_step_out",
 			label: "Step Out",
 			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F11],
 			precondition: "debuggerSessionActive && debuggerSessionPaused",
 			run: () => this.debugSession.stepOut(),
 		}));
-		this.register(editor.addAction({
+		this.register(editor.monacoEditor.addAction({
 			id: "debugger_stop_session",
 			label: "Stop Debugging",
 			keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.F5],
 			precondition: "debuggerSessionActive",
 			run: () => this.debugSession.stop(),
 		}));
-		this.register(editor.addAction({
+		this.register(editor.monacoEditor.addAction({
 			id: "toggle_breakpoint",
 			label: "Toggle Breakpoint",
 			keybindings: [monaco.KeyCode.F9],
@@ -230,8 +232,8 @@ export class DebugContribution extends Disposable {
 			}
 		]);
 
-		this.editor.setPosition({ lineNumber: debugPosition.startLineNumber, column: 1 });
-		this.editor.revealLineInCenterIfOutsideViewport(debugPosition.startLineNumber);
+		this.editor.monacoEditor.setPosition({ lineNumber: debugPosition.startLineNumber, column: 1 });
+		this.editor.monacoEditor.revealLineInCenterIfOutsideViewport(debugPosition.startLineNumber);
 	}
 
 	private removeDebugLine(): void {
@@ -239,10 +241,9 @@ export class DebugContribution extends Disposable {
 	}
 
 	private enableGlyphMargin() {
-		const editor = this.editor;
-		const previousGlyphMarginSetting = editor.getOptions().get(monaco.editor.EditorOption.glyphMargin);
-		this.register(toDisposable(() => editor.updateOptions({ glyphMargin: previousGlyphMarginSetting })));
-		editor.updateOptions({ glyphMargin: true });
+		const previousGlyphMarginSetting = this.editor.monacoEditor.getOptions().get(monaco.editor.EditorOption.glyphMargin);
+		this.register(toDisposable(() => this.editor.monacoEditor.updateOptions({ glyphMargin: previousGlyphMarginSetting })));
+		this.editor.monacoEditor.updateOptions({ glyphMargin: true });
 	}
 
 	private onMouseDown = (e: monaco.editor.IEditorMouseEvent) => {
@@ -258,7 +259,7 @@ export class DebugContribution extends Disposable {
 	};
 
 	private toggleBreakpoint(line?: number): void {
-		line ??= this.editor.getPosition()?.lineNumber;
+		line ??= this.editor.monacoEditor.getPosition()?.lineNumber;
 		if (line === undefined)
 			return;
 
@@ -272,7 +273,7 @@ export class DebugContribution extends Disposable {
 	}
 
 	private addBreakpoint(line: number): void {
-		const model = this.editor.getModel();
+		const model = this.editor.monacoEditor.getModel();
 		if (!model)
 			return;
 
@@ -293,12 +294,12 @@ export class DebugContribution extends Disposable {
 				}
 			}
 		]);
-		const newDecoration = this.editor.getLineDecorations(line)!.find(x => x.id === decorationId)!;
+		const newDecoration = this.editor.monacoEditor.getLineDecorations(line)!.find(x => x.id === decorationId)!;
 		this.breakpointDecorations.set(decorationId, newDecoration);
 	}
 
 	private removeBreakpoint(breakpointDecoration: monaco.editor.IModelDecoration): void {
-		const model = this.editor.getModel();
+		const model = this.editor.monacoEditor.getModel();
 		if (!model)
 			return;
 		model.deltaDecorations([breakpointDecoration.id], []);
@@ -326,12 +327,12 @@ export class DebugContribution extends Disposable {
 	}
 
 	private getBreakpointDecoration(line: number): monaco.editor.IModelDecoration | undefined {
-		const lineDecorations = this.editor.getLineDecorations(line);
+		const lineDecorations = this.editor.monacoEditor.getLineDecorations(line);
 		return lineDecorations?.find(x => this.breakpointDecorations.has(x.id));
 	}
 
 	private getDebugLineDecoration(line: number): monaco.editor.IModelDecoration | undefined {
-		const lineDecorations = this.editor.getLineDecorations(line);
+		const lineDecorations = this.editor.monacoEditor.getLineDecorations(line);
 		return lineDecorations?.find(x => this.currentDebugLineDecorations.has(x));
 	}
 }
