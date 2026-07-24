@@ -94,6 +94,7 @@ export class DebugSession extends Disposable {
 		if (await this.protocol.transport.connect()) {
 			await this.protocol.runtime.enable();
 			await this.protocol.debugger.enable({});
+			await this.protocol.debugger.setPauseOnExceptions({ state: "all" });
 			await this.protocol.runtime.runIfWaitingForDebugger();
 		}
 	}
