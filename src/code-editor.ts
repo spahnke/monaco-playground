@@ -16,9 +16,8 @@ export class CodeEditor extends Disposable {
 	static create(element: HTMLElement, language?: string): CodeEditor {
 		return new CodeEditor(monaco.editor.create(element, {
 			automaticLayout: true,
-			bracketPairColorization: {
-				enabled: true,
-			},
+			// @ts-expect-error The official typed nested option does not work, so we need to use the string version here (see https://github.com/microsoft/monaco-editor/issues/3829).
+			"bracketPairColorization.enabled": false,
 			colorDecorators: true,
 			defaultColorDecorators: "never",
 			definitionLinkOpensInPeek: false,
@@ -27,10 +26,6 @@ export class CodeEditor extends Disposable {
 			fontSize: 13,
 			formatOnPaste: true,
 			formatOnType: true,
-			guides: {
-				bracketPairs: true,
-				bracketPairsHorizontal: false,
-			},
 			inlayHints: {
 				enabled: "offUnlessPressed", // need to press Ctrl+Alt to show them
 			},
