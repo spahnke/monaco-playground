@@ -171,7 +171,20 @@ export class DebugContribution extends Disposable {
 						const wasmModule = this.debugSession.wasmModules.get(location.scriptId);
 						if (wasmModule) {
 							const offset = location.columnNumber ?? 0;
-							line = wasmModule.chunk.bytecodeOffsets.findIndex(o => offset < o); // this is off-by-one in terms of index because monaco lines are 1-based!
+							// Binary search: find the first index where the current offset is smaller than the bytecode
+							// offset entry. This index is the line we are on (strictly speaking we find the index one
+							// past the line, but monaco lines are 1-based so that works out perfectly).
+							let start = 0;
+							let onePastEnd = wasmModule.chunk.bytecodeOffsets.length;
+							while (start < onePastEnd) {
+								const mid = start + ((onePastEnd - start) >> 1);
+								if (offset >= wasmModule.chunk.bytecodeOffsets[mid]) {
+									start = mid + 1;
+								} else {
+									onePastEnd = mid;
+									line = mid;
+								}
+							}
 						}
 						this.displayCurrentlyDebuggedLine({
 							startLineNumber: line,
