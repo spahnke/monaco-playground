@@ -47,7 +47,7 @@ export class CodeEditor extends Disposable {
 				other: false,
 				strings: true,
 			},
-			renderValidationDecorations: "on",
+			renderValidationDecorations: "editable",
 			renderWhitespace: "selection",
 			showDeprecated: true,
 			showUnused: true,

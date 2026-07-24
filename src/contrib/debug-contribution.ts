@@ -111,6 +111,8 @@ export class DebugContribution extends Disposable {
 	private readonly breakpointPreviewDecorations: monaco.editor.IEditorDecorationsCollection;
 	private readonly breakpointDecorations: Map<string, monaco.editor.IModelDecoration> = new Map();
 	private readonly currentDebugLineDecorations: monaco.editor.IEditorDecorationsCollection;
+	/** Dispose to restore original state after debugging. */
+	private originalEditorState?: monaco.IDisposable;
 
 	constructor(private readonly editor: CodeEditor, debugRemoteAddressInput: CodeEditorTextInput) {
 		super();
@@ -134,16 +136,50 @@ export class DebugContribution extends Disposable {
 		const debugActiveContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionActive", false);
 		const debugPausedContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionPaused", false);
 		this.register(this.debugSession.onDidChangeActiveState(active => {
+			if (active) {
+				const originalModel = editor.monacoEditor.getModel();
+				const originalViewState = editor.monacoEditor.saveViewState();
+				const originalReadonly = editor.isReadonly();
+				this.originalEditorState = toDisposable(() => {
+					this.removeDebugLine();
+					editor.monacoEditor.setModel(originalModel);
+					editor.monacoEditor.restoreViewState(originalViewState);
+					editor.setReadonly(originalReadonly);
+				});
+				editor.setReadonly(true);
+			} else {
+				this.originalEditorState?.dispose();
+				this.originalEditorState = undefined;
+			}
 			debugActiveContextKey.set(active);
 			debugRemoteAddressInput.setDisabled(active);
 			debugWidget.updateState(active, debugPausedContextKey.get() ?? false);
-			editor.setReadonly(active);
 		}));
 		this.register(this.debugSession.onDidChangePausedState(paused => {
 			debugPausedContextKey.set(paused);
 			debugWidget.updateState(debugActiveContextKey.get() ?? false, paused);
 			if (paused) {
-				// TODO(seb) Show code and highlight current line
+				const location = this.debugSession.pauseState?.callFrames[0]?.location;
+				if (location) {
+					const currentModel = this.debugSession.scriptModels.get(location.scriptId) ?? null;
+					editor.monacoEditor.setModel(currentModel);
+					if (currentModel) {
+						let line = location.lineNumber + 1;
+						const wasmModule = this.debugSession.wasmModules.get(location.scriptId);
+						if (wasmModule) {
+							const offset = location.columnNumber ?? 0;
+							line = wasmModule.chunk.bytecodeOffsets.findIndex(o => offset < o); // this is off-by-one in terms of index because monaco lines are 1-based!
+						}
+						this.displayCurrentlyDebuggedLine({
+							startLineNumber: line,
+							endLineNumber: line,
+							startColumn: currentModel.getLineFirstNonWhitespaceColumn(line),
+							endColumn: currentModel.getLineLastNonWhitespaceColumn(line),
+						});
+					}
+				}
+			} else {
+				this.removeDebugLine();
 			}
 		}));
 		this.register(editor.monacoEditor.addAction({

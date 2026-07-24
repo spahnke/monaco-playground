@@ -15,6 +15,7 @@ export class DebugSession extends Disposable {
 	readonly scriptMetadata = new Map<string, Protocol.Debugger.ScriptParsedEvent>();
 	readonly scriptModels = new Map<string, monaco.editor.ITextModel>();
 	readonly urlToScriptId = new Map<string, string>();
+	readonly wasmModules = new Map<string, Protocol.Debugger.DisassembleWasmModuleResponse>();
 	executionContext?: Protocol.Runtime.ExecutionContextCreatedEvent;
 	pauseState?: Protocol.Debugger.PausedEvent;
 
@@ -26,6 +27,7 @@ export class DebugSession extends Disposable {
 		}
 		this.scriptModels.clear();
 		this.urlToScriptId.clear();
+		this.wasmModules.clear();
 		this.executionContext = undefined;
 		this.pauseState = undefined;
 	}
@@ -65,14 +67,20 @@ export class DebugSession extends Disposable {
 			if (metadata && !this.scriptModels.has(scriptId)) {
 				if (metadata.scriptLanguage === "JavaScript") {
 					const scriptSource = await this.protocol!.debugger.getScriptSource({ scriptId });
-					const model = monaco.editor.createModel(scriptSource.scriptSource, metadata.scriptLanguage, metadata.url ? monaco.Uri.parse(metadata.url) : undefined);
+					// NOTE(seb) In the createModel call, the uri parameter wins over language and since we don't
+					// necessarily have a proper file extension the model will be plaintext. So set the language
+					// manually afterwards.
+					const model = monaco.editor.createModel(scriptSource.scriptSource, undefined, metadata.url ? monaco.Uri.parse(metadata.url) : undefined);
+					monaco.editor.setModelLanguage(model, "javascript");
 					this.scriptModels.set(scriptId, model);
 				} else if (metadata.scriptLanguage === "WebAssembly") {
 					const wasmModule = await this.protocol!.debugger.disassembleWasmModule({ scriptId });
 					const wat = wasmModule.chunk.lines.join("\n");
+					const model = monaco.editor.createModel(wat, undefined, metadata.url ? monaco.Uri.parse(metadata.url) : undefined);
 					// TODO(seb) Add syntax definition for WAT
-					const model = monaco.editor.createModel(wat, metadata.scriptLanguage, metadata.url ? monaco.Uri.parse(metadata.url) : undefined);
+					monaco.editor.setModelLanguage(model, "wat");
 					this.scriptModels.set(scriptId, model);
+					this.wasmModules.set(scriptId, wasmModule);
 				}
 			}
 			this.pausedEvent.fire(true);
