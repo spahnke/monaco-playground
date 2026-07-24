@@ -77,7 +77,10 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 		button.className = `button codicon codicon-${icon}`;
 		this.setButtonEnabled(button, enabled);
 		this.setButtonVisible(button, visible);
-		button.addEventListener("click", () => this.editor.trigger("debugger", action, null));
+		button.addEventListener("click", () => {
+			this.editor.trigger("debugger", action, null);
+			this.editor.focus();
+		});
 		this.domNode.appendChild(button);
 		return button;
 	}
