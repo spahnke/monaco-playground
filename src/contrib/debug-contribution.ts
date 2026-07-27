@@ -138,6 +138,7 @@ export class DebugContribution extends Disposable {
 
 		const debugActiveContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionActive", false);
 		const debugPausedContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionPaused", false);
+		let currentResolveAndDisplaySourceLineOperation: monaco.CancellationTokenSource | undefined;
 		this.register(this.debugSession.onDidChangeActiveState(active => {
 			if (active) {
 				const originalModel = editor.monacoEditor.getModel();
@@ -158,46 +159,29 @@ export class DebugContribution extends Disposable {
 			debugRemoteAddressInput.setDisabled(active);
 			debugWidget.updateState(active, debugPausedContextKey.get() ?? false);
 		}));
-		this.register(this.debugSession.onDidChangePausedState(paused => {
+		this.register(this.debugSession.onDidChangePausedState(async (paused) => {
+			currentResolveAndDisplaySourceLineOperation?.cancel();
+			currentResolveAndDisplaySourceLineOperation = undefined;
 			debugPausedContextKey.set(paused);
 			debugWidget.updateState(debugActiveContextKey.get() ?? false, paused);
 			if (paused) {
+				if (this.debugSession.pauseState?.reason === "exception") {
+					console.error(this.debugSession.pauseState.data?.description ?? "Unknown exception");
+				}
 				const location = this.debugSession.pauseState?.callFrames[0]?.location;
 				if (location) {
-					const currentModel = this.debugSession.scriptModels.get(location.scriptId) ?? null;
-					editor.monacoEditor.setModel(currentModel);
-					if (currentModel) {
-						let line = location.lineNumber + 1;
-						const wasmModule = this.debugSession.wasmModules.get(location.scriptId);
-						if (wasmModule) {
-							const offset = location.columnNumber ?? 0;
-							// Binary search: find the line of the disassembled code that the offset falls into.
-							let start = 0;
-							let onePastEnd = wasmModule.chunk.bytecodeOffsets.length;
-							while (start < onePastEnd) {
-								const current = start + ((onePastEnd - start) >> 1);
-								const lineStart = wasmModule.chunk.bytecodeOffsets[current];
-								const onePastLineEnd = wasmModule.chunk.bytecodeOffsets[current + 1] ?? Number.MAX_SAFE_INTEGER;
-								if (offset < lineStart) {
-									onePastEnd = current;
-								} else if (offset >= onePastLineEnd) {
-									start = current + 1;
-								} else {
-									line = current + 1; // monaco lines are 1-based
-									break;
-								}
-							}
-						}
+					currentResolveAndDisplaySourceLineOperation = new monaco.CancellationTokenSource();
+					const cancellationToken = currentResolveAndDisplaySourceLineOperation.token;
+					const { model, line } = await this.debugSession.getModelAndLine(location);
+					if (!cancellationToken.isCancellationRequested) {
+						editor.monacoEditor.setModel(model);
 						this.displayCurrentlyDebuggedLine({
 							startLineNumber: line,
 							endLineNumber: line,
-							startColumn: currentModel.getLineFirstNonWhitespaceColumn(line),
-							endColumn: currentModel.getLineLastNonWhitespaceColumn(line),
+							startColumn: model.getLineFirstNonWhitespaceColumn(line),
+							endColumn: model.getLineLastNonWhitespaceColumn(line),
 						});
 					}
-				}
-				if (this.debugSession.pauseState?.reason === "exception") {
-					console.error(this.debugSession.pauseState.data?.description ?? "Unknown exception");
 				}
 			} else {
 				this.removeDebugLine();
