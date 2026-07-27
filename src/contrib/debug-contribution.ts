@@ -272,9 +272,7 @@ export class DebugContribution extends Disposable {
 				}
 			}
 		]);
-
-		this.editor.monacoEditor.setPosition({ lineNumber: debugPosition.startLineNumber, column: 1 });
-		this.editor.monacoEditor.revealLineInCenterIfOutsideViewport(debugPosition.startLineNumber);
+		this.editor.monacoEditor.revealRangeInCenterIfOutsideViewport(debugPosition);
 	}
 
 	private removeDebugLine(): void {
