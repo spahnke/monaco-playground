@@ -1,4 +1,5 @@
-import { patchKeybindings, registerPromiseCanceledErrorHandler } from "./common/monaco-utils.js";
+import { registerPromiseCanceledErrorHandler } from "./common/async.js";
+import { patchKeybindings } from "./common/monaco-utils.js";
 import { registerLanguages } from "./languages/language-registry.js";
 
 type MonacoLocale = "en" | "cs" | "de" | "es" | "fr" | "it" | "ja" | "ko" | "pl" | "pt-br" | "ru" | "tr" | "zh-cn" | "zh-tw";

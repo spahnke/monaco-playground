@@ -3,6 +3,7 @@
 // - https://chromedevtools.github.io/devtools-protocol/1-3/
 // - https://github.com/ChromeDevTools/devtools-protocol/ for the types
 
+import { createCancellablePromise } from "../common/async.js";
 import { type ProtocolProxyApi } from "./protocol-proxy-api";
 
 interface ProtocolApiMap {
@@ -20,6 +21,7 @@ interface PendingDebugProtocolResponse {
 	id: number;
 	resolve(response: unknown): void;
 	reject(reason?: any): void;
+	cancel(): void;
 }
 
 interface DebugProtocolResponseSuccess {
@@ -50,7 +52,11 @@ export class DebugProtocol {
 		transport.onDidReceiveMessage(message => this.onDidReceiveMessage(message));
 		transport.onDidTerminate((reason, error) => {
 			for (const pendingResponse of this.pendingResponses.values()) {
-				pendingResponse.reject(reason === "close" ? "canceled" : error);
+				if (reason === "close") {
+					pendingResponse.cancel();
+				} else {
+					pendingResponse.reject(error);
+				}
 			}
 			this.pendingResponses.clear();
 			this.notificationListeners.clear();
@@ -100,8 +106,8 @@ export class DebugProtocol {
 			method,
 			params,
 		};
-		const { promise, resolve, reject } = Promise.withResolvers();
-		this.pendingResponses.set(request.id, { id: request.id, resolve, reject });
+		const { promise, resolve, reject, cancel } = createCancellablePromise();
+		this.pendingResponses.set(request.id, { id: request.id, resolve, reject, cancel });
 		this.transport.sendMessage(JSON.stringify(request));
 		return promise;
 	}
