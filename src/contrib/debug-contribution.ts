@@ -171,18 +171,20 @@ export class DebugContribution extends Disposable {
 						const wasmModule = this.debugSession.wasmModules.get(location.scriptId);
 						if (wasmModule) {
 							const offset = location.columnNumber ?? 0;
-							// Binary search: find the first index where the current offset is smaller than the bytecode
-							// offset entry. This index is the line we are on (strictly speaking we find the index one
-							// past the line, but monaco lines are 1-based so that works out perfectly).
+							// Binary search: find the line of the disassembled code that the offset falls into.
 							let start = 0;
 							let onePastEnd = wasmModule.chunk.bytecodeOffsets.length;
 							while (start < onePastEnd) {
-								const mid = start + ((onePastEnd - start) >> 1);
-								if (offset >= wasmModule.chunk.bytecodeOffsets[mid]) {
-									start = mid + 1;
+								const current = start + ((onePastEnd - start) >> 1);
+								const lineStart = wasmModule.chunk.bytecodeOffsets[current];
+								const onePastLineEnd = wasmModule.chunk.bytecodeOffsets[current + 1] ?? Number.MAX_SAFE_INTEGER;
+								if (offset < lineStart) {
+									onePastEnd = current;
+								} else if (offset >= onePastLineEnd) {
+									start = current + 1;
 								} else {
-									onePastEnd = mid;
-									line = mid;
+									line = current + 1; // monaco lines are 1-based
+									break;
 								}
 							}
 						}

@@ -77,6 +77,8 @@ export class DebugSession extends Disposable {
 					this.scriptModels.set(scriptId, model);
 				} else if (metadata.scriptLanguage === "WebAssembly") {
 					const wasmModule = await this.protocol!.debugger.disassembleWasmModule({ scriptId });
+					// TODO(seb) Support chunking
+					console.assert(wasmModule.streamId === undefined, "Chunking not supported");
 					const wat = wasmModule.chunk.lines.join("\n");
 					const model = monaco.editor.createModel(wat, undefined, metadata.url ? monaco.Uri.file(metadata.url) : undefined);
 					monaco.editor.setModelLanguage(model, "wat");
