@@ -46,7 +46,7 @@ type DebugProtocolMessage = DebugProtocolResponse | DebugProtocolNotification;
 export class DebugProtocol {
 	private messageId = 1;
 	private readonly notificationListeners = new Map<string, (params: unknown) => void>();
-	private readonly pendingResponses = new Map<number, PendingDebugProtocolResponse>(); // TODO(seb) Can this be a fixed sized array that we wrap around?
+	private readonly pendingResponses = new Map<number, PendingDebugProtocolResponse>();
 
 	constructor(readonly transport: Transport) {
 		transport.onDidReceiveMessage(message => this.onDidReceiveMessage(message));

@@ -188,9 +188,9 @@ export class DebugContribution extends Disposable {
 			precondition: "!debuggerSessionActive",
 			run: () => {
 				const remoteAddress = debugRemoteAddressInput.getText();
-				if (!isValidRemoteAddress(remoteAddress))
-					return;
-				this.debugSession.connect(new WebsocketTransport(remoteAddress));
+				if (isValidRemoteAddress(remoteAddress)) {
+					this.debugSession.connect(new WebsocketTransport(remoteAddress));
+				}
 			}
 		}));
 		this.register(editor.monacoEditor.addAction({
