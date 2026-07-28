@@ -10,9 +10,23 @@
 	<script src="app.js" type="module"></script>
 </head>
 <body>
-	<div id="textInput"></div>
-	<div id="debugRemoteAddressInput"></div>
-	<div class="editor"></div>
-	<div class="statusBar"><span id="zoom"></span><span id="cursor"></span></div>
+	<main>
+		<div id="textInput"></div>
+		<div id="debugRemoteAddressInput"></div>
+		<div class="editorContainer">
+			<div class="editor"></div>
+		</div>
+		<div class="statusBar"><span id="zoom"></span><span id="cursor"></span></div>
+	</main>
+	<aside>
+		<label for="callframeList">
+			Callstack:
+			<select id="callframeList" size="2" disabled></select>
+		</label>
+		<label for="scriptList">
+			Loaded Scripts:
+			<select id="scriptList" size="2" disabled></select>
+		</label>
+	</aside>
 </body>
 </html>
