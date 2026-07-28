@@ -2,6 +2,13 @@ import { Disposable } from "../common/disposable.js";
 import { DebugProtocol, Transport } from "./debug-protocol.js";
 import { type Protocol } from "./protocol";
 
+interface Script {
+	metadata: Protocol.Debugger.ScriptParsedEvent;
+	model: monaco.editor.ITextModel;
+	sourceWasLoaded: boolean;
+	wasm?: Protocol.Debugger.DisassembleWasmModuleResponse;
+}
+
 export class DebugSession extends Disposable {
 	private protocol?: DebugProtocol;
 	private readonly activeEvent = this.register(new monaco.Emitter<boolean>());
@@ -14,21 +21,18 @@ export class DebugSession extends Disposable {
 	// into type/write safety.
 	executionContext?: Protocol.Runtime.ExecutionContextCreatedEvent;
 	pauseState?: Protocol.Debugger.PausedEvent;
-	private readonly scriptMetadata = new Map<string, Protocol.Debugger.ScriptParsedEvent>();
-	private readonly scriptModels = new Map<string, monaco.editor.ITextModel>();
+	private readonly noScriptModel = monaco.editor.createModel("No script available");
+	private readonly scripts = new Map<string, Script>();
 	private readonly uriToScriptId = new Map<string, string>();
-	private readonly wasmModules = new Map<string, Protocol.Debugger.DisassembleWasmModuleResponse>();
 	private readonly breakpoints = new Map<string, Protocol.Debugger.SetBreakpointResponse[]>();
 
 	private resetState(): void {
 		this.protocol = undefined;
-		this.scriptMetadata.clear();
-		for (const model of this.scriptModels.values()) {
-			model.dispose();
+		for (const script of this.scripts.values()) {
+			script.model.dispose();
 		}
-		this.scriptModels.clear();
+		this.scripts.clear();
 		this.uriToScriptId.clear();
-		this.wasmModules.clear();
 		this.breakpoints.clear();
 		this.executionContext = undefined;
 		this.pauseState = undefined;
@@ -57,9 +61,12 @@ export class DebugSession extends Disposable {
 		});
 		this.protocol.runtime.on("consoleAPICalled", DebugSession.handleConsoleApiCall);
 		this.protocol.debugger.on("scriptParsed", params => {
-			this.scriptMetadata.set(params.scriptId, params);
 			if (params.url) {
-				this.uriToScriptId.set(monaco.Uri.file(params.url).toString(), params.scriptId);
+				// NOTE(seb) Only collect scripts with an actual url/name. Scripts without url are typically coming from
+				// expressions evaluated on the fly during debugging and are ephemeral.
+				const model = monaco.editor.createModel("No source code available", undefined, monaco.Uri.file(params.url));
+				this.scripts.set(params.scriptId, { metadata: params, model, sourceWasLoaded: false });
+				this.uriToScriptId.set(model.uri.toString(), params.scriptId);
 			}
 		});
 		this.protocol.debugger.on("paused", async (params) => {
@@ -84,56 +91,53 @@ export class DebugSession extends Disposable {
 	}
 
 	async getModelAndLine(location: Protocol.Debugger.Location): Promise<{ model: monaco.editor.ITextModel; line: number; }> {
-		const scriptId = location.scriptId;
-		let model = this.scriptModels.get(scriptId);
-		if (!model) {
-			const metadata = this.scriptMetadata.get(scriptId);
-			if (metadata?.scriptLanguage === "JavaScript") {
-				const scriptSource = await this.protocol!.debugger.getScriptSource({ scriptId });
-				// NOTE(seb) In the createModel call, the uri parameter wins over language and since we don't
-				// necessarily have a proper file extension the model will be plaintext. So set the language
-				// manually afterwards.
-				model = monaco.editor.createModel(scriptSource.scriptSource, undefined, metadata.url ? monaco.Uri.file(metadata.url) : undefined);
-				monaco.editor.setModelLanguage(model, "javascript");
-			} else if (metadata?.scriptLanguage === "WebAssembly") {
-				const wasmModule = await this.protocol!.debugger.disassembleWasmModule({ scriptId });
-				while (wasmModule.streamId) {
-					const nextChunk = await this.protocol!.debugger.nextWasmDisassemblyChunk({ streamId: wasmModule.streamId });
-					wasmModule.chunk.lines.push(...nextChunk.chunk.lines);
-					wasmModule.chunk.bytecodeOffsets.push(...nextChunk.chunk.bytecodeOffsets);
-					if (nextChunk.chunk.lines.length === 0) {
-						wasmModule.streamId = undefined;
-					}
-				}
-				console.assert(wasmModule.totalNumberOfLines === wasmModule.chunk.lines.length && wasmModule.totalNumberOfLines === wasmModule.chunk.bytecodeOffsets.length, wasmModule);
-				const wat = wasmModule.chunk.lines.join("\n");
-				model = monaco.editor.createModel(wat, undefined, metadata.url ? monaco.Uri.file(metadata.url) : undefined);
-				monaco.editor.setModelLanguage(model, "wat");
-				this.wasmModules.set(scriptId, wasmModule);
-			} else {
-				model = monaco.editor.createModel("No source code available");
-			}
-			this.scriptModels.set(scriptId, model);
-		}
-
+		let model = this.noScriptModel;
 		let line = location.lineNumber + 1; // monaco lines are 1-based
-		const wasmModule = this.wasmModules.get(location.scriptId);
-		if (wasmModule) {
-			const offset = location.columnNumber ?? 0;
-			// Binary search: find the line of the disassembled code that the offset falls into.
-			let start = 0;
-			let onePastEnd = wasmModule.chunk.bytecodeOffsets.length;
-			while (start < onePastEnd) {
-				const current = start + ((onePastEnd - start) >> 1);
-				const lineStart = wasmModule.chunk.bytecodeOffsets[current];
-				const onePastLineEnd = wasmModule.chunk.bytecodeOffsets[current + 1] ?? Number.MAX_SAFE_INTEGER;
-				if (offset < lineStart) {
-					onePastEnd = current;
-				} else if (offset >= onePastLineEnd) {
-					start = current + 1;
-				} else {
-					line = current + 1; // monaco lines are 1-based
-					break;
+
+		const script = this.scripts.get(location.scriptId);
+		if (script) {
+			model = script.model;
+			if (!script.sourceWasLoaded) {
+				script.sourceWasLoaded = true;
+				if (script.metadata.scriptLanguage === "JavaScript") {
+					const scriptSource = await this.protocol!.debugger.getScriptSource({ scriptId: location.scriptId });
+					model.setValue(scriptSource.scriptSource);
+					monaco.editor.setModelLanguage(model, "javascript");
+				} else if (script.metadata.scriptLanguage === "WebAssembly") {
+					const wasmModule = await this.protocol!.debugger.disassembleWasmModule({ scriptId: location.scriptId });
+					script.wasm = wasmModule;
+					while (wasmModule.streamId) {
+						const nextChunk = await this.protocol!.debugger.nextWasmDisassemblyChunk({ streamId: wasmModule.streamId });
+						wasmModule.chunk.lines.push(...nextChunk.chunk.lines);
+						wasmModule.chunk.bytecodeOffsets.push(...nextChunk.chunk.bytecodeOffsets);
+						if (nextChunk.chunk.lines.length === 0) {
+							wasmModule.streamId = undefined;
+						}
+					}
+					console.assert(wasmModule.totalNumberOfLines === wasmModule.chunk.lines.length && wasmModule.totalNumberOfLines === wasmModule.chunk.bytecodeOffsets.length, wasmModule);
+					const wat = wasmModule.chunk.lines.join("\n");
+					model.setValue(wat);
+					monaco.editor.setModelLanguage(model, "wat");
+				}
+			}
+
+			if (script.wasm) {
+				const offset = location.columnNumber ?? 0;
+				// Binary search: find the line of the disassembled code that the offset falls into.
+				let start = 0;
+				let onePastEnd = script.wasm.chunk.bytecodeOffsets.length;
+				while (start < onePastEnd) {
+					const current = start + ((onePastEnd - start) >> 1);
+					const lineStart = script.wasm.chunk.bytecodeOffsets[current];
+					const onePastLineEnd = script.wasm.chunk.bytecodeOffsets[current + 1] ?? Number.MAX_SAFE_INTEGER;
+					if (offset < lineStart) {
+						onePastEnd = current;
+					} else if (offset >= onePastLineEnd) {
+						start = current + 1;
+					} else {
+						line = current + 1; // monaco lines are 1-based
+						break;
+					}
 				}
 			}
 		}
