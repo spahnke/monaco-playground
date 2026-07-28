@@ -19,8 +19,8 @@ export class DebugSession extends Disposable {
 
 	// TODO(seb) Temp shape of state accessible during pause states. Consolidate what we actually need for UI and look
 	// into type/write safety.
-	executionContext?: Protocol.Runtime.ExecutionContextCreatedEvent;
-	pauseState?: Protocol.Debugger.PausedEvent;
+	private executionContext?: Protocol.Runtime.ExecutionContextCreatedEvent;
+	private pauseState?: Protocol.Debugger.PausedEvent;
 	private readonly noScriptModel = monaco.editor.createModel("No script available");
 	private readonly scripts = new Map<string, Script>();
 	private readonly uriToScriptId = new Map<string, string>();
@@ -70,11 +70,13 @@ export class DebugSession extends Disposable {
 			}
 		});
 		this.protocol.debugger.on("paused", async (params) => {
+			if (params.reason === "exception") {
+				console.error(params.data?.description ?? "Unknown exception");
+			}
 			this.pauseState = params;
 			this.pausedEvent.fire(true);
 		});
 		this.protocol.debugger.on("resumed", () => {
-			// TODO(seb) Do we want to clear this or leave it accessible to the UI for rendering?
 			this.pauseState = undefined;
 			this.pausedEvent.fire(false);
 		});
@@ -90,59 +92,23 @@ export class DebugSession extends Disposable {
 		this.protocol?.debugger.resume({});
 	}
 
-	async getModelAndLine(location: Protocol.Debugger.Location): Promise<{ model: monaco.editor.ITextModel; line: number; }> {
+	// TODO(seb) In the long run this will probably be more like "getModelAndRange" to be able to show intermediate
+	// steps on the same line (e.g. in for-loops).
+	getModelAndLineByStackframeIndex(index: number): Promise<{ model: monaco.editor.ITextModel; line: number; }> {
+		const location = this.pauseState?.callFrames[index]?.location ?? { scriptId: "", lineNumber: 0 };
+		return this.getModelAndLineByLocation(location);
+	}
+
+	async getModelByUri(uri: monaco.Uri): Promise<monaco.editor.ITextModel> {
 		let model = this.noScriptModel;
-		let line = location.lineNumber + 1; // monaco lines are 1-based
-
-		const script = this.scripts.get(location.scriptId);
-		if (script) {
-			model = script.model;
-			if (!script.sourceWasLoaded) {
-				script.sourceWasLoaded = true;
-				if (script.metadata.scriptLanguage === "JavaScript") {
-					const scriptSource = await this.protocol!.debugger.getScriptSource({ scriptId: location.scriptId });
-					model.setValue(scriptSource.scriptSource);
-					monaco.editor.setModelLanguage(model, "javascript");
-				} else if (script.metadata.scriptLanguage === "WebAssembly") {
-					const wasmModule = await this.protocol!.debugger.disassembleWasmModule({ scriptId: location.scriptId });
-					script.wasm = wasmModule;
-					while (wasmModule.streamId) {
-						const nextChunk = await this.protocol!.debugger.nextWasmDisassemblyChunk({ streamId: wasmModule.streamId });
-						wasmModule.chunk.lines.push(...nextChunk.chunk.lines);
-						wasmModule.chunk.bytecodeOffsets.push(...nextChunk.chunk.bytecodeOffsets);
-						if (nextChunk.chunk.lines.length === 0) {
-							wasmModule.streamId = undefined;
-						}
-					}
-					console.assert(wasmModule.totalNumberOfLines === wasmModule.chunk.lines.length && wasmModule.totalNumberOfLines === wasmModule.chunk.bytecodeOffsets.length, wasmModule);
-					const wat = wasmModule.chunk.lines.join("\n");
-					model.setValue(wat);
-					monaco.editor.setModelLanguage(model, "wat");
-				}
-			}
-
-			if (script.wasm) {
-				const offset = location.columnNumber ?? 0;
-				// Binary search: find the line of the disassembled code that the offset falls into.
-				let start = 0;
-				let onePastEnd = script.wasm.chunk.bytecodeOffsets.length;
-				while (start < onePastEnd) {
-					const current = start + ((onePastEnd - start) >> 1);
-					const lineStart = script.wasm.chunk.bytecodeOffsets[current];
-					const onePastLineEnd = script.wasm.chunk.bytecodeOffsets[current + 1] ?? Number.MAX_SAFE_INTEGER;
-					if (offset < lineStart) {
-						onePastEnd = current;
-					} else if (offset >= onePastLineEnd) {
-						start = current + 1;
-					} else {
-						line = current + 1; // monaco lines are 1-based
-						break;
-					}
-				}
+		const scriptId = this.uriToScriptId.get(uri.toString());
+		if (scriptId) {
+			const script = await this.getFullyLoadedScriptByScriptId(scriptId);
+			if (script) {
+				model = script.model;
 			}
 		}
-
-		return { model, line };
+		return model;
 	}
 
 	pause(): void {
@@ -194,6 +160,70 @@ export class DebugSession extends Disposable {
 		this.disconnect();
 		this.resetState();
 		super.dispose();
+	}
+
+	private async getFullyLoadedScriptByScriptId(scriptId: string): Promise<Script | undefined> {
+		if (!this.protocol) {
+			return undefined;
+		}
+		const script = this.scripts.get(scriptId);
+		if (script) {
+			if (!script.sourceWasLoaded) {
+				script.sourceWasLoaded = true;
+				if (script.metadata.scriptLanguage === "JavaScript") {
+					const scriptSource = await this.protocol.debugger.getScriptSource({ scriptId });
+					script.model.setValue(scriptSource.scriptSource);
+					monaco.editor.setModelLanguage(script.model, "javascript");
+				} else if (script.metadata.scriptLanguage === "WebAssembly") {
+					const wasmModule = await this.protocol.debugger.disassembleWasmModule({ scriptId });
+					script.wasm = wasmModule;
+					while (wasmModule.streamId) {
+						const nextChunk = await this.protocol.debugger.nextWasmDisassemblyChunk({ streamId: wasmModule.streamId });
+						wasmModule.chunk.lines.push(...nextChunk.chunk.lines);
+						wasmModule.chunk.bytecodeOffsets.push(...nextChunk.chunk.bytecodeOffsets);
+						if (nextChunk.chunk.lines.length === 0) {
+							wasmModule.streamId = undefined;
+						}
+					}
+					console.assert(wasmModule.totalNumberOfLines === wasmModule.chunk.lines.length && wasmModule.totalNumberOfLines === wasmModule.chunk.bytecodeOffsets.length, wasmModule);
+					const wat = wasmModule.chunk.lines.join("\n");
+					script.model.setValue(wat);
+					monaco.editor.setModelLanguage(script.model, "wat");
+				}
+			}
+		}
+		return script;
+	}
+
+	private async getModelAndLineByLocation(location: Protocol.Debugger.Location): Promise<{ model: monaco.editor.ITextModel; line: number; }> {
+		let model = this.noScriptModel;
+		let line = location.lineNumber + 1; // monaco lines are 1-based
+
+		const script = await this.getFullyLoadedScriptByScriptId(location.scriptId);
+		if (script) {
+			model = script.model;
+			if (script.wasm) {
+				const offset = location.columnNumber ?? 0;
+				// Binary search: find the line of the disassembled code that the offset falls into.
+				let start = 0;
+				let onePastEnd = script.wasm.chunk.bytecodeOffsets.length;
+				while (start < onePastEnd) {
+					const current = start + ((onePastEnd - start) >> 1);
+					const lineStart = script.wasm.chunk.bytecodeOffsets[current];
+					const onePastLineEnd = script.wasm.chunk.bytecodeOffsets[current + 1] ?? Number.MAX_SAFE_INTEGER;
+					if (offset < lineStart) {
+						onePastEnd = current;
+					} else if (offset >= onePastLineEnd) {
+						start = current + 1;
+					} else {
+						line = current + 1; // monaco lines are 1-based
+						break;
+					}
+				}
+			}
+		}
+
+		return { model, line };
 	}
 
 	private static handleConsoleApiCall(params: Protocol.Runtime.ConsoleAPICalledEvent): void {
