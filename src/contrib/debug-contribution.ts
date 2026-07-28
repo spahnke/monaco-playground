@@ -165,23 +165,17 @@ export class DebugContribution extends Disposable {
 			debugPausedContextKey.set(paused);
 			debugWidget.updateState(debugActiveContextKey.get() ?? false, paused);
 			if (paused) {
-				if (this.debugSession.pauseState?.reason === "exception") {
-					console.error(this.debugSession.pauseState.data?.description ?? "Unknown exception");
-				}
-				const location = this.debugSession.pauseState?.callFrames[0]?.location;
-				if (location) {
-					currentResolveAndDisplaySourceLineOperation = new monaco.CancellationTokenSource();
-					const cancellationToken = currentResolveAndDisplaySourceLineOperation.token;
-					const { model, line } = await this.debugSession.getModelAndLine(location);
-					if (!cancellationToken.isCancellationRequested) {
-						editor.monacoEditor.setModel(model);
-						this.displayCurrentlyDebuggedLine({
-							startLineNumber: line,
-							endLineNumber: line,
-							startColumn: model.getLineFirstNonWhitespaceColumn(line),
-							endColumn: model.getLineLastNonWhitespaceColumn(line),
-						});
-					}
+				currentResolveAndDisplaySourceLineOperation = new monaco.CancellationTokenSource();
+				const cancellationToken = currentResolveAndDisplaySourceLineOperation.token;
+				const { model, line } = await this.debugSession.getModelAndLineByStackframeIndex(0);
+				if (!cancellationToken.isCancellationRequested) {
+					editor.monacoEditor.setModel(model);
+					this.displayCurrentlyDebuggedLine({
+						startLineNumber: line,
+						endLineNumber: line,
+						startColumn: model.getLineFirstNonWhitespaceColumn(line),
+						endColumn: model.getLineLastNonWhitespaceColumn(line),
+					});
 				}
 			} else {
 				this.removeDebugLine();
