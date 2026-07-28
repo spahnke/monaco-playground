@@ -14,20 +14,46 @@
 }
 
 body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "HelveticaNeue-Light", system-ui, "Ubuntu", "Droid Sans", sans-serif;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 1rem;
+	width: 100vw;
 	height: 100vh;
 	overflow: hidden;
+	display: grid;
+	grid-template-columns: 1fr 300px;
+	gap: 1rem;
+}
+
+main {
 	display: flex;
 	flex-direction: column;
-	gap: 1em;
+	gap: 1rem;
+	/* Some monaco editor side effect forces us to repeat this here even though we have automatic layout enabled... (total - sidebar - gap - 2*padding) */
+	max-width: calc(100vw - 300px - 1rem - 1rem - 1rem);
+}
+
+aside {
+	display: grid;
+	gap: 1rem;
+}
+
+label {
+	display: grid;
+	grid-template-rows: auto 1fr;
+}
+
+.editorContainer {
+	flex: 1;
 }
 
 .editor {
 	position: relative; /* (Hopefully only temp) workaround for the offset copy button in diagnostic popups (see https://github.com/microsoft/monaco-editor/issues/5112). */
-	height: 80%;
+	height: calc(100% - 1rem);
 }
 
 .statusBar {
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "HelveticaNeue-Light", system-ui, "Ubuntu", "Droid Sans", sans-serif;
 	font-size: 14px;
 	display: flex;
 	justify-content: space-between;
