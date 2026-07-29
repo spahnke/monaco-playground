@@ -117,7 +117,7 @@ export class DebugContribution extends Disposable {
 	/** Dispose to restore original state after debugging. */
 	private originalEditorState?: monaco.IDisposable;
 
-	constructor(private readonly editor: CodeEditor, debugRemoteAddressInput: CodeEditorTextInput) {
+	constructor(private readonly editor: CodeEditor, debugRemoteAddressInput: CodeEditorTextInput, callframeListElement: HTMLSelectElement, scriptListElement: HTMLSelectElement) {
 		super();
 		this.breakpointPreviewDecorations = editor.monacoEditor.createDecorationsCollection();
 		this.currentDebugLineDecorations = editor.monacoEditor.createDecorationsCollection();
@@ -158,6 +158,8 @@ export class DebugContribution extends Disposable {
 			debugActiveContextKey.set(active);
 			debugRemoteAddressInput.setDisabled(active);
 			debugWidget.updateState(active, debugPausedContextKey.get() ?? false);
+			callframeListElement.disabled = !active;
+			scriptListElement.disabled = !active;
 		}));
 		this.register(this.debugSession.onDidChangePausedState(async (paused) => {
 			currentResolveAndDisplaySourceLineOperation?.cancel();
@@ -177,10 +179,59 @@ export class DebugContribution extends Disposable {
 						endColumn: model.getLineLastNonWhitespaceColumn(line),
 					});
 				}
+
+				const callframes = this.debugSession.getCallframes();
+				for (let i = 0; i < callframes.length; i++) {
+					const item = document.createElement("option");
+					item.value = String(i);
+					item.text = callframes[i];
+					callframeListElement.appendChild(item);
+				}
+				if (callframes.length > 0) {
+					callframeListElement.selectedIndex = 0;
+				}
+
+				let currentScriptIndex = -1;
+				const scriptUris = this.debugSession.getScriptUris();
+				for (let i = 0; i < scriptUris.length; i++) {
+					const item = document.createElement("option");
+					item.value = scriptUris[i].toString();
+					item.text = scriptUris[i].path;
+					scriptListElement.appendChild(item);
+					if (item.value === editor.monacoEditor.getModel()?.uri.toString()) {
+						currentScriptIndex = i;
+					}
+				}
+				// TODO(seb) We  need to do the same thing when selecting the callframe to keep this in sync.
+				if (currentScriptIndex !== -1) {
+					scriptListElement.selectedIndex = currentScriptIndex;
+				}
 			} else {
 				this.removeDebugLine();
+				// TODO(seb) This of course will lead to flickering, so we need something better in the long run
+				callframeListElement.innerHTML = "";
+				scriptListElement.innerHTML = "";
 			}
 		}));
+		// TODO(seb) Clicking an already selected element in either list to jump back to it doesn't trigger the change
+		// event (nor the input event). Do we need a click handler for that and if so how do we make sure an actual
+		// element was clicked and not just empty space?
+		callframeListElement.addEventListener("change", async () => {
+			// TODO(seb) Do we need to guard this with a cancellation token too? Probably yes?
+			const { model, line } = await this.debugSession.getModelAndLineByStackframeIndex(callframeListElement.selectedIndex);
+			editor.monacoEditor.setModel(model);
+			// TODO(seb) Use different highlighting styles for actual current line where we paused, and lines in other callframes.
+			this.displayCurrentlyDebuggedLine({
+				startLineNumber: line,
+				endLineNumber: line,
+				startColumn: model.getLineFirstNonWhitespaceColumn(line),
+				endColumn: model.getLineLastNonWhitespaceColumn(line),
+			});
+		});
+		scriptListElement.addEventListener("change", async () => {
+			const model = await this.debugSession.getModelByUri(monaco.Uri.parse(scriptListElement.value));
+			editor.monacoEditor.setModel(model);
+		});
 		this.register(editor.monacoEditor.addAction({
 			id: "debugger_start_session",
 			label: "Start Debugging",
