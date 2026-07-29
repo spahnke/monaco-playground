@@ -92,6 +92,31 @@ export class DebugSession extends Disposable {
 		this.protocol?.debugger.resume({});
 	}
 
+	getCallframes(): string[] {
+		const callframes: string[] = [];
+		if (this.pauseState) {
+			for (const callframe of this.pauseState.callFrames) {
+				const script = this.scripts.get(callframe.location.scriptId);
+				if (script) {
+					if (script.metadata.scriptLanguage === "JavaScript") {
+						callframes.push(`${script.metadata.url}:${callframe.location.lineNumber + 1}`);
+					} else if (script.metadata.scriptLanguage === "WebAssembly") {
+						callframes.push(`${script.metadata.url}:${callframe.location.columnNumber}`);
+					}
+				}
+			}
+		}
+		return callframes;
+	}
+
+	getScriptUris(): monaco.Uri[] {
+		const uris: monaco.Uri[] = [];
+		for (const script of this.scripts.values()) {
+			uris.push(script.model.uri);
+		}
+		return uris;
+	}
+
 	// TODO(seb) In the long run this will probably be more like "getModelAndRange" to be able to show intermediate
 	// steps on the same line (e.g. in for-loops).
 	getModelAndLineByStackframeIndex(index: number): Promise<{ model: monaco.editor.ITextModel; line: number; }> {
