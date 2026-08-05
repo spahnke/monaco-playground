@@ -160,12 +160,22 @@ export class DebugContribution extends Disposable {
 			debugWidget.updateState(active, debugPausedContextKey.get() ?? false);
 			callframeListElement.disabled = !active;
 			scriptListElement.disabled = !active;
+			if (!active) {
+				for (const child of callframeListElement.children) {
+					(child as HTMLElement).style.display = "none";
+				}
+				for (const child of scriptListElement.children) {
+					(child as HTMLElement).style.display = "none";
+				}
+			}
 		}));
 		this.register(this.debugSession.onDidChangePausedState(async (paused) => {
 			currentResolveAndDisplaySourceLineOperation?.cancel();
 			currentResolveAndDisplaySourceLineOperation = undefined;
 			debugPausedContextKey.set(paused);
 			debugWidget.updateState(debugActiveContextKey.get() ?? false, paused);
+			// TODO(seb) Disable the two lists when not paused, and maybe even "clear" the callstack list, but only
+			// after a timeout to not impose new flickering
 			if (paused) {
 				currentResolveAndDisplaySourceLineOperation = new monaco.CancellationTokenSource();
 				const cancellationToken = currentResolveAndDisplaySourceLineOperation.token;
@@ -182,10 +192,17 @@ export class DebugContribution extends Disposable {
 
 				const callframes = this.debugSession.getCallframes();
 				for (let i = 0; i < callframes.length; i++) {
-					const item = document.createElement("option");
-					item.value = String(i);
-					item.text = callframes[i];
-					callframeListElement.appendChild(item);
+					let optionElement = callframeListElement.children[i] as (HTMLOptionElement | undefined);
+					if (!optionElement) {
+						optionElement = document.createElement("option");
+						callframeListElement.appendChild(optionElement);
+					}
+					optionElement.value = String(i);
+					optionElement.text = callframes[i];
+					optionElement.style.display = "block";
+				}
+				for (let i = callframes.length; i < callframeListElement.children.length; i++) {
+					(callframeListElement.children[i] as HTMLElement).style.display = "none";
 				}
 				if (callframes.length > 0) {
 					callframeListElement.selectedIndex = 0;
@@ -194,13 +211,20 @@ export class DebugContribution extends Disposable {
 				let currentScriptIndex = -1;
 				const scriptUris = this.debugSession.getScriptUris();
 				for (let i = 0; i < scriptUris.length; i++) {
-					const item = document.createElement("option");
-					item.value = scriptUris[i].toString();
-					item.text = scriptUris[i].path;
-					scriptListElement.appendChild(item);
-					if (item.value === editor.monacoEditor.getModel()?.uri.toString()) {
+					let optionElement = scriptListElement.children[i] as (HTMLOptionElement | undefined);
+					if (!optionElement) {
+						optionElement = document.createElement("option");
+						scriptListElement.appendChild(optionElement);
+					}
+					optionElement.value = scriptUris[i].toString();
+					optionElement.text = scriptUris[i].path;
+					optionElement.style.display = "block";
+					if (optionElement.value === editor.monacoEditor.getModel()?.uri.toString()) {
 						currentScriptIndex = i;
 					}
+				}
+				for (let i = scriptUris.length; i < scriptListElement.children.length; i++) {
+					(scriptListElement.children[i] as HTMLElement).style.display = "none";
 				}
 				// TODO(seb) We  need to do the same thing when selecting the callframe to keep this in sync.
 				if (currentScriptIndex !== -1) {
@@ -208,9 +232,6 @@ export class DebugContribution extends Disposable {
 				}
 			} else {
 				this.removeDebugLine();
-				// TODO(seb) This of course will lead to flickering, so we need something better in the long run
-				callframeListElement.innerHTML = "";
-				scriptListElement.innerHTML = "";
 			}
 		}));
 		// TODO(seb) Clicking an already selected element in either list to jump back to it doesn't trigger the change
