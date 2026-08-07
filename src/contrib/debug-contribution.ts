@@ -106,6 +106,136 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 	}
 }
 
+// NOTE(seb) Inspired by the VSCode internal List widget in src/vs/base/browser/ui/list/listWidget.ts minus the
+// virtualization because we just use unvirtualized DOM elements and only one renderer.
+
+interface IListElementRenderer<TElement, TTemplate> {
+	createTemplate(container: HTMLElement): TTemplate;
+	renderElement(element: TElement, index: number, template: TTemplate): void;
+	disposeTemplate(template: TTemplate): void;
+}
+
+class ListWidget<T> implements monaco.IDisposable {
+	private readonly selectElement: HTMLSelectElement;
+	private readonly templates: unknown[] = [];
+	private readonly onDidSelectItemEmitter = new monaco.Emitter<{ index: number; item: T | undefined; }>();
+
+	constructor(private container: HTMLElement, private renderer: IListElementRenderer<T, unknown>) {
+		this.selectElement = document.createElement("select");
+		this.selectElement.size = 2; // make it into a listbox instead of a dropdown
+		this.selectElement.disabled = true;
+		this.selectElement.classList.add("custom-select");
+		container.appendChild(this.selectElement);
+
+		const handleSelection = (e: Event) => {
+			let optionElement: HTMLOptionElement | undefined;
+			let target = e.target as HTMLElement | null;
+			while (target && target !== this.selectElement) {
+				if (target.tagName === "OPTION") {
+					optionElement = target as HTMLOptionElement;
+					break;
+				}
+				target = target.parentElement;
+			}
+			if (optionElement) {
+				const index = Number(optionElement.dataset.index);
+				if (this.selectElement.selectedIndex === index) {
+					// prevent deselection of selected elements and trigger change event on them instead
+					e.preventDefault();
+					e.stopPropagation();
+					this.selectElement.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }));
+				}
+			}
+		};
+		this.selectElement.addEventListener("click", handleSelection);
+		this.selectElement.addEventListener("keydown", e => {
+			if (e.code === "Space" || e.code === "Enter") {
+				handleSelection(e);
+			}
+		});
+		this.selectElement.addEventListener("change", e => this.onDidSelectItemEmitter.fire({ index: this.selectedIndex, item: this.selectedItem }));
+	}
+
+	get disabled(): boolean { return this.selectElement.disabled; }
+	set disabled(value: boolean) { this.selectElement.disabled = value; }
+
+	readonly items: T[] = [];
+	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
+
+	get selectedIndex(): number { return this.selectElement.selectedIndex; }
+	set selectedIndex(value: number) { this.selectElement.selectedIndex = value; }
+
+	get selectedItem(): T | undefined {
+		return this.selectedIndex >= 0 ? this.items[this.selectedIndex] : undefined;
+	}
+
+	render(items: T[] = []): void {
+		while (this.selectElement.children.length < items.length) {
+			this.createOptionElement();
+		}
+		for (let i = 0; i < items.length; i++) {
+			const optionElement = this.selectElement.children[i] as HTMLOptionElement;
+			const template = this.templates[i];
+			optionElement.style.display = "";
+			this.renderer.renderElement(items[i], i, template);
+		}
+		for (let i = items.length; i < this.selectElement.children.length; i++) {
+			(this.selectElement.children[i] as HTMLOptionElement).style.display = "none";
+		}
+		this.items.splice(0, this.items.length, ...items);
+	}
+
+	dispose(): void {
+		this.selectElement.remove();
+		this.onDidSelectItemEmitter.dispose();
+	}
+
+	private createOptionElement(): void {
+		const optionElement = document.createElement("option");
+		optionElement.dataset.index = String(this.selectElement.childElementCount);
+		const template = this.renderer.createTemplate(optionElement);
+		this.templates.push(template);
+		this.selectElement.appendChild(optionElement);
+		console.assert(this.templates.length === this.selectElement.childElementCount);
+	}
+}
+
+class CallframeRenderer implements IListElementRenderer<string, HTMLSpanElement> {
+	createTemplate(container: HTMLElement): HTMLSpanElement {
+		const span = document.createElement("span");
+		span.style.fontSize = "smaller";
+		container.appendChild(span);
+		return span;
+	}
+
+	renderElement(element: string, index: number, template: HTMLSpanElement): void {
+		template.innerText = element;
+		template.title = element;
+	}
+
+	disposeTemplate(template: HTMLSpanElement): void {
+		template.remove();
+	}
+}
+
+class ScriptRenderer implements IListElementRenderer<monaco.Uri, HTMLSpanElement> {
+	createTemplate(container: HTMLElement): HTMLSpanElement {
+		const span = document.createElement("span");
+		span.style.fontSize = "smaller";
+		container.appendChild(span);
+		return span;
+	}
+
+	renderElement(element: monaco.Uri, index: number, template: HTMLSpanElement): void {
+		template.innerText = element.path;
+		template.title = element.path;
+	}
+
+	disposeTemplate(template: HTMLSpanElement): void {
+		template.remove();
+	}
+}
+
 /**
  * Adds debug UI capabilities to the editor.
  */
@@ -117,7 +247,7 @@ export class DebugContribution extends Disposable {
 	/** Dispose to restore original state after debugging. */
 	private originalEditorState?: monaco.IDisposable;
 
-	constructor(private readonly editor: CodeEditor, debugRemoteAddressInput: CodeEditorTextInput, callframeListElement: HTMLSelectElement, scriptListElement: HTMLSelectElement) {
+	constructor(private readonly editor: CodeEditor, debugRemoteAddressInput: CodeEditorTextInput, callframeListElementContainer: HTMLElement, scriptListElementContainer: HTMLElement) {
 		super();
 		this.breakpointPreviewDecorations = editor.monacoEditor.createDecorationsCollection();
 		this.currentDebugLineDecorations = editor.monacoEditor.createDecorationsCollection();
@@ -135,6 +265,9 @@ export class DebugContribution extends Disposable {
 		this.register(debugRemoteAddressInput.onDidChangeText(maybeUrl => debugWidget.setVisible(isValidRemoteAddress(maybeUrl))));
 		editor.monacoEditor.addOverlayWidget(debugWidget);
 		this.register(toDisposable(() => editor.monacoEditor.removeOverlayWidget(debugWidget)));
+
+		const callframeListWidget = new ListWidget<string>(callframeListElementContainer, new CallframeRenderer());
+		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListElementContainer, new ScriptRenderer());
 
 		const debugActiveContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionActive", false);
 		const debugPausedContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionPaused", false);
@@ -158,15 +291,11 @@ export class DebugContribution extends Disposable {
 			debugActiveContextKey.set(active);
 			debugRemoteAddressInput.setDisabled(active);
 			debugWidget.updateState(active, debugPausedContextKey.get() ?? false);
-			callframeListElement.disabled = !active;
-			scriptListElement.disabled = !active;
+			callframeListWidget.disabled = !active;
+			scriptListWidget.disabled = !active;
 			if (!active) {
-				for (const child of callframeListElement.children) {
-					(child as HTMLElement).style.display = "none";
-				}
-				for (const child of scriptListElement.children) {
-					(child as HTMLElement).style.display = "none";
-				}
+				callframeListWidget.render([]);
+				scriptListWidget.render([]);
 			}
 		}));
 		this.register(this.debugSession.onDidChangePausedState(async (paused) => {
@@ -191,67 +320,42 @@ export class DebugContribution extends Disposable {
 				}
 
 				const callframes = this.debugSession.getCallframes();
-				for (let i = 0; i < callframes.length; i++) {
-					let optionElement = callframeListElement.children[i] as (HTMLOptionElement | undefined);
-					if (!optionElement) {
-						optionElement = document.createElement("option");
-						callframeListElement.appendChild(optionElement);
-					}
-					optionElement.value = String(i);
-					optionElement.text = callframes[i];
-					optionElement.style.display = "block";
-				}
-				for (let i = callframes.length; i < callframeListElement.children.length; i++) {
-					(callframeListElement.children[i] as HTMLElement).style.display = "none";
-				}
-				if (callframes.length > 0) {
-					callframeListElement.selectedIndex = 0;
-				}
+				callframeListWidget.render(callframes);
+				callframeListWidget.selectedIndex = callframes.length > 0 ? 0 : -1;
 
 				let currentScriptIndex = -1;
 				const scriptUris = this.debugSession.getScriptUris();
+				scriptListWidget.render(scriptUris);
 				for (let i = 0; i < scriptUris.length; i++) {
-					let optionElement = scriptListElement.children[i] as (HTMLOptionElement | undefined);
-					if (!optionElement) {
-						optionElement = document.createElement("option");
-						scriptListElement.appendChild(optionElement);
-					}
-					optionElement.value = scriptUris[i].toString();
-					optionElement.text = scriptUris[i].path;
-					optionElement.style.display = "block";
-					if (optionElement.value === editor.monacoEditor.getModel()?.uri.toString()) {
+					if (scriptUris[i].toString() === editor.monacoEditor.getModel()?.uri.toString()) {
 						currentScriptIndex = i;
 					}
 				}
-				for (let i = scriptUris.length; i < scriptListElement.children.length; i++) {
-					(scriptListElement.children[i] as HTMLElement).style.display = "none";
-				}
 				// TODO(seb) We  need to do the same thing when selecting the callframe to keep this in sync.
-				if (currentScriptIndex !== -1) {
-					scriptListElement.selectedIndex = currentScriptIndex;
-				}
+				scriptListWidget.selectedIndex = currentScriptIndex;
 			} else {
 				this.removeDebugLine();
 			}
 		}));
-		// TODO(seb) Clicking an already selected element in either list to jump back to it doesn't trigger the change
-		// event (nor the input event). Do we need a click handler for that and if so how do we make sure an actual
-		// element was clicked and not just empty space?
-		callframeListElement.addEventListener("change", async () => {
-			// TODO(seb) Do we need to guard this with a cancellation token too? Probably yes?
-			const { model, line } = await this.debugSession.getModelAndLineByStackframeIndex(callframeListElement.selectedIndex);
-			editor.monacoEditor.setModel(model);
-			// TODO(seb) Use different highlighting styles for actual current line where we paused, and lines in other callframes.
-			this.displayCurrentlyDebuggedLine({
-				startLineNumber: line,
-				endLineNumber: line,
-				startColumn: model.getLineFirstNonWhitespaceColumn(line),
-				endColumn: model.getLineLastNonWhitespaceColumn(line),
-			});
+		callframeListWidget.onDidSelectItem(async e => {
+			if (e.index !== -1) {
+				// TODO(seb) Do we need to guard this with a cancellation token too? Probably yes?
+				const { model, line } = await this.debugSession.getModelAndLineByStackframeIndex(e.index);
+				editor.monacoEditor.setModel(model);
+				// TODO(seb) Use different highlighting styles for actual current line where we paused, and lines in other callframes.
+				this.displayCurrentlyDebuggedLine({
+					startLineNumber: line,
+					endLineNumber: line,
+					startColumn: model.getLineFirstNonWhitespaceColumn(line),
+					endColumn: model.getLineLastNonWhitespaceColumn(line),
+				});
+			}
 		});
-		scriptListElement.addEventListener("change", async () => {
-			const model = await this.debugSession.getModelByUri(monaco.Uri.parse(scriptListElement.value));
-			editor.monacoEditor.setModel(model);
+		scriptListWidget.onDidSelectItem(async e => {
+			if (e.item) {
+				const model = await this.debugSession.getModelByUri(e.item);
+				editor.monacoEditor.setModel(model);
+			}
 		});
 		this.register(editor.monacoEditor.addAction({
 			id: "debugger_start_session",
