@@ -37,15 +37,47 @@ main {
 aside {
 	display: grid;
 	gap: 1rem;
+	grid-auto-rows: 1fr; /* Only necessary when using the customizable select. */
 }
 
-label {
+/*
+Currently no Firefox support for this but it seems the fallback works correctly even with using span elements inside
+option. See
+- https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Customizable_select#browser_compatibility
+- https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Customizable_select_listboxes
+
+Using the customizable select makes things so much harder than it should because we now have several more issues than
+just implementing everything (mouse, keyboard, accessibility) ourselves:
+- not supported in all browsers
+- weird styling issues with surrounding elements
+- elements can be deselected which you can't prevent(?) -> can be prevented with hacks (see the click handler)
+*/
+.custom-select {
+	appearance: base-select;
+	height: auto;
+	overflow: auto;
+}
+
+.custom-select option {
+	padding: 0;
+}
+
+.custom-select option::checkmark {
+	content: "";
+}
+
+.custom-select option:hover,
+.custom-select option:focus {
+	background-color: #eee;
+}
+
+.custom-select option:checked {
+	background-color: #ddd;
+}
+
+.sidebarElement {
 	display: grid;
 	grid-template-rows: auto 1fr;
-}
-
-select {
-	overflow: auto;
 }
 
 .editorContainer {
