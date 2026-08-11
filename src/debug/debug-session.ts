@@ -101,6 +101,7 @@ export class DebugSession extends Disposable {
 					if (script.metadata.scriptLanguage === "JavaScript") {
 						callframes.push(`${script.metadata.url}:${callframe.location.lineNumber + 1}`);
 					} else if (script.metadata.scriptLanguage === "WebAssembly") {
+						// TODO(seb) Can we convert this offset to a proper line number? Is that useful? Keep the offset in addition to line number?
 						callframes.push(`${script.metadata.url}:${callframe.location.columnNumber}`);
 					}
 				}

@@ -337,7 +337,7 @@ export class DebugContribution extends Disposable {
 				this.removeDebugLine();
 			}
 		}));
-		callframeListWidget.onDidSelectItem(async e => {
+		this.register(callframeListWidget.onDidSelectItem(async e => {
 			if (e.index !== -1) {
 				// TODO(seb) Do we need to guard this with a cancellation token too? Probably yes?
 				const { model, line } = await this.debugSession.getModelAndLineByStackframeIndex(e.index);
@@ -350,13 +350,13 @@ export class DebugContribution extends Disposable {
 					endColumn: model.getLineLastNonWhitespaceColumn(line),
 				});
 			}
-		});
-		scriptListWidget.onDidSelectItem(async e => {
+		}));
+		this.register(scriptListWidget.onDidSelectItem(async e => {
 			if (e.item) {
 				const model = await this.debugSession.getModelByUri(e.item);
 				editor.monacoEditor.setModel(model);
 			}
-		});
+		}));
 		this.register(editor.monacoEditor.addAction({
 			id: "debugger_start_session",
 			label: "Start Debugging",
