@@ -67,6 +67,11 @@ aside {
 	text-wrap: nowrap;
 }
 
+.list-widget[aria-disabled="true"] {
+	background-color: var(--monaco-widget-disabled-background-color);
+	color: var(--monaco-widget-disabled-foreground-color);
+}
+
 .list-widget:focus {
 	outline-color: var(--monaco-widget-focus-border-color);
 }
