@@ -35,49 +35,44 @@ main {
 }
 
 aside {
-	display: grid;
-	gap: 1rem;
-	grid-auto-rows: calc((100% - 2rem) / 3); /* Only necessary when using the customizable select because auto or 1fr does not work to constrain the contents. */
+	display: block;
 }
 
 .sidebarElement {
 	display: grid;
 	grid-template-rows: auto 1fr;
+	height: calc((100% - 2rem) / 3); /* 3 rows = 2 gaps of 1rem */
+	margin: 1rem 0; /* margins between elements are collapsed automatically so we can set the full gap height here */
 }
 
-/*
-Currently no Firefox support for this but it seems the fallback works correctly even with using span elements inside
-option. See
-- https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Customizable_select#browser_compatibility
-- https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Customizable_select_listboxes
+.sidebarElement:first-child {
+	margin-top: 0;
+}
 
-Using the customizable select makes things so much harder than it should because we now have several more issues than
-just implementing everything (mouse, keyboard, accessibility) ourselves:
-- not supported in all browsers
-- weird styling issues with surrounding elements
-- elements can be deselected which you can't prevent(?) -> can be prevented with hacks (see the click handler)
-*/
+.sidebarElement:last-child {
+	margin-bottom: 0;
+}
+
 .list-widget {
-	appearance: base-select;
-	height: auto;
+	display: block;
 	overflow: auto;
+	border-radius: 2px;
+	border: 1px solid var(--monaco-single-line-border-color);
 	font-size: smaller;
+	text-wrap: nowrap;
 }
 
-.list-widget > option {
-	padding: 0;
+.list-widget > .list-widget-item {
+	display: block;
+	padding: 0.5ex;
 }
 
-.list-widget > option::checkmark {
-	content: "";
-}
-
-.list-widget > option:hover,
-.list-widget > option:focus {
+.list-widget > .list-widget-item:hover,
+.list-widget > .list-widget-item:focus {
 	background-color: #eee;
 }
 
-.list-widget > option:checked {
+.list-widget > .list-widget-item.selected {
 	background-color: #ddd;
 }
 
