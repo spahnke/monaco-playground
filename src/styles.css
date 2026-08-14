@@ -35,6 +35,11 @@ main {
 }
 
 aside {
+	/*
+	NOTE(seb) I have no clue how to make this work with flex or grid while keeping all sidebar elements the same fixed
+	and ungrowable/unshrinkable height, so that we have no layout jumps and the individual lists get a proper scrollbar.
+	Until I do the manual layouting needs to suffice.
+	*/
 	display: block;
 }
 
