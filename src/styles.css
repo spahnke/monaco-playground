@@ -7,10 +7,10 @@
 	--monaco-debug-stop-color: #a1260d;
 	--monaco-todo-background-color: hsl(100, 75%, 30%);
 	--monaco-todo-color: #fff;
-	--monaco-single-line-border-color: #cecece;
-	--monaco-single-line-focus-border-color: #0090f1;
-	--monaco-single-line-disabled-background-color: #eeeeee;
-	--monaco-single-line-disabled-foreground-color: #666666;
+	--monaco-widget-border-color: #cecece;
+	--monaco-widget-focus-border-color: #0090f1;
+	--monaco-widget-disabled-background-color: #eeeeee;
+	--monaco-widget-disabled-foreground-color: #666666;
 }
 
 body {
@@ -57,9 +57,13 @@ aside {
 	display: block;
 	overflow: auto;
 	border-radius: 2px;
-	border: 1px solid var(--monaco-single-line-border-color);
+	outline: 1px solid var(--monaco-widget-border-color);
 	font-size: smaller;
 	text-wrap: nowrap;
+}
+
+.list-widget:focus {
+	outline-color: var(--monaco-widget-focus-border-color);
 }
 
 .list-widget > .list-widget-item {
@@ -159,26 +163,26 @@ aside {
 	position: relative;
 	padding: 4px 6px;
 	border-radius: 2px;
-	border: 1px solid var(--monaco-single-line-border-color);
+	outline: 1px solid var(--monaco-widget-border-color);
 }
 
 .monaco-single-line[aria-disabled="true"] {
-	background-color: var(--monaco-single-line-disabled-background-color);
+	background-color: var(--monaco-widget-disabled-background-color);
 }
 
 .monaco-single-line[aria-disabled="true"] .monaco-editor {
-	--vscode-editor-foreground: var(--monaco-single-line-disabled-foreground-color);
-	--vscode-editor-background: var(--monaco-single-line-disabled-background-color);
-	--vscode-editorGutter-background: var(--monaco-single-line-disabled-background-color);
+	--vscode-editor-foreground: var(--monaco-widget-disabled-foreground-color);
+	--vscode-editor-background: var(--monaco-widget-disabled-background-color);
+	--vscode-editorGutter-background: var(--monaco-widget-disabled-background-color);
 }
 
 .monaco-single-line[aria-disabled="true"] .monaco-editor .mtk1 {
-	color: var(--monaco-single-line-disabled-foreground-color);
+	color: var(--monaco-widget-disabled-foreground-color);
 }
 
 
 .monaco-single-line.focus {
-	border-color: var(--monaco-single-line-focus-border-color);
+	outline-color: var(--monaco-widget-focus-border-color);
 }
 
 .monaco-single-line-slash-command {
