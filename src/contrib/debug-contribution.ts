@@ -116,86 +116,89 @@ interface IListElementRenderer<TElement, TTemplate> {
 }
 
 class ListWidget<T> implements monaco.IDisposable {
-	private readonly selectElement: HTMLSelectElement;
+	private readonly listElement: HTMLElement;
 	private readonly templates: unknown[] = [];
 	private readonly onDidSelectItemEmitter = new monaco.Emitter<{ index: number; item: T | undefined; }>();
 
 	constructor(container: HTMLElement, private renderer: IListElementRenderer<T, unknown>) {
-		this.selectElement = document.createElement("select");
-		this.selectElement.size = 2; // make it into a listbox instead of a dropdown
-		this.selectElement.classList.add("list-widget");
-		container.appendChild(this.selectElement);
+		this.listElement = document.createElement("div");
+		this.listElement.tabIndex = 0;
+		this.listElement.role = "list";
+		this.listElement.classList.add("list-widget");
+		container.appendChild(this.listElement);
 
-		const handleSelection = (e: Event) => {
-			let optionElement: HTMLOptionElement | undefined;
-			let target = e.target as HTMLElement | null;
-			while (target && target !== this.selectElement) {
-				if (target.tagName === "OPTION") {
-					optionElement = target as HTMLOptionElement;
-					break;
-				}
-				target = target.parentElement;
-			}
-			if (optionElement) {
-				const index = Number(optionElement.dataset.index);
-				if (this.selectElement.selectedIndex === index) {
-					// prevent deselection of selected elements and trigger change event on them instead
-					e.preventDefault();
-					e.stopPropagation();
-					this.selectElement.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }));
-				}
-			}
-		};
-		this.selectElement.addEventListener("click", handleSelection);
-		this.selectElement.addEventListener("keydown", e => {
-			if (e.code === "Space" || e.code === "Enter") {
-				handleSelection(e);
-			}
-		});
-		this.selectElement.addEventListener("change", e => this.onDidSelectItemEmitter.fire({ index: this.selectedIndex, item: this.selectedItem }));
+		// const handleSelection = (e: Event) => {
+		// 	let optionElement: HTMLOptionElement | undefined;
+		// 	let target = e.target as HTMLElement | null;
+		// 	while (target && target !== this.listElement) {
+		// 		if (target.tagName === "OPTION") {
+		// 			optionElement = target as HTMLOptionElement;
+		// 			break;
+		// 		}
+		// 		target = target.parentElement;
+		// 	}
+		// 	if (optionElement) {
+		// 		const index = Number(optionElement.dataset.index);
+		// 		if (this.listElement.selectedIndex === index) {
+		// 			// prevent deselection of selected elements and trigger change event on them instead
+		// 			e.preventDefault();
+		// 			e.stopPropagation();
+		// 			this.listElement.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }));
+		// 		}
+		// 	}
+		// };
+		// this.listElement.addEventListener("click", handleSelection);
+		// this.listElement.addEventListener("keydown", e => {
+		// 	if (e.code === "Space" || e.code === "Enter") {
+		// 		handleSelection(e);
+		// 	}
+		// });
+		// this.listElement.addEventListener("change", e => this.onDidSelectItemEmitter.fire({ index: this.selectedIndex, item: this.selectedItem }));
 	}
 
-	get disabled(): boolean { return this.selectElement.disabled; }
-	set disabled(value: boolean) { this.selectElement.disabled = value; }
+	get disabled(): boolean { return this.listElement.inert; }
+	set disabled(value: boolean) { this.listElement.inert = value; }
 
 	readonly items: T[] = [];
 	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
 
-	get selectedIndex(): number { return this.selectElement.selectedIndex; }
-	set selectedIndex(value: number) { this.selectElement.selectedIndex = value; }
+	get selectedIndex(): number { return -1; }
+	set selectedIndex(value: number) { }
 
 	get selectedItem(): T | undefined {
 		return this.selectedIndex >= 0 ? this.items[this.selectedIndex] : undefined;
 	}
 
 	render(items: T[] = []): void {
-		while (this.selectElement.children.length < items.length) {
-			this.createOptionElement();
+		while (this.listElement.children.length < items.length) {
+			this.createListItem();
 		}
 		for (let i = 0; i < items.length; i++) {
-			const optionElement = this.selectElement.children[i] as HTMLOptionElement;
+			const listItemElement = this.listElement.children[i] as HTMLElement;
 			const template = this.templates[i];
-			optionElement.style.display = "";
+			listItemElement.style.display = "";
 			this.renderer.renderElement(items[i], i, template);
 		}
-		for (let i = items.length; i < this.selectElement.children.length; i++) {
-			(this.selectElement.children[i] as HTMLOptionElement).style.display = "none";
+		for (let i = items.length; i < this.listElement.children.length; i++) {
+			(this.listElement.children[i] as HTMLElement).style.display = "none";
 		}
 		this.items.splice(0, this.items.length, ...items);
 	}
 
 	dispose(): void {
-		this.selectElement.remove();
+		this.listElement.remove();
 		this.onDidSelectItemEmitter.dispose();
 	}
 
-	private createOptionElement(): void {
-		const optionElement = document.createElement("option");
-		optionElement.dataset.index = String(this.selectElement.childElementCount);
-		const template = this.renderer.createTemplate(optionElement);
+	private createListItem(): void {
+		const listItemElement = document.createElement("div");
+		listItemElement.role = "listitem";
+		listItemElement.classList.add("list-widget-item");
+		listItemElement.dataset.index = String(this.listElement.childElementCount);
+		const template = this.renderer.createTemplate(listItemElement);
 		this.templates.push(template);
-		this.selectElement.appendChild(optionElement);
-		console.assert(this.templates.length === this.selectElement.childElementCount);
+		this.listElement.appendChild(listItemElement);
+		console.assert(this.templates.length === this.listElement.childElementCount);
 	}
 }
 
