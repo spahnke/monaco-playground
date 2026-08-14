@@ -17,7 +17,7 @@ const editor = CodeEditor.create(document.querySelector<HTMLElement>(".editor")!
 
 editor.register(new TodoContribution());
 editor.register(new PlaygroundContribution(editor));
-editor.register(new DebugContribution(editor, debugRemoteAddressTextInput, document.querySelector<HTMLElement>("#callframeList")!, document.querySelector<HTMLElement>("#scriptList")!));
+editor.register(new DebugContribution(editor, debugRemoteAddressTextInput, document.querySelector<HTMLElement>("#callframeList")!, document.querySelector<HTMLElement>("#variableTree")!, document.querySelector<HTMLElement>("#scriptList")!));
 
 editor.addLibrary({
 	contents: `

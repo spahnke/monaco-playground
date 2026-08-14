@@ -37,7 +37,12 @@ main {
 aside {
 	display: grid;
 	gap: 1rem;
-	grid-auto-rows: 1fr; /* Only necessary when using the customizable select. */
+	grid-auto-rows: calc((100% - 2rem) / 3); /* Only necessary when using the customizable select because auto or 1fr does not work to constrain the contents. */
+}
+
+.sidebarElement {
+	display: grid;
+	grid-template-rows: auto 1fr;
 }
 
 /*
@@ -52,32 +57,37 @@ just implementing everything (mouse, keyboard, accessibility) ourselves:
 - weird styling issues with surrounding elements
 - elements can be deselected which you can't prevent(?) -> can be prevented with hacks (see the click handler)
 */
-.custom-select {
+.list-widget {
 	appearance: base-select;
 	height: auto;
 	overflow: auto;
+	font-size: smaller;
 }
 
-.custom-select option {
+.list-widget > option {
 	padding: 0;
 }
 
-.custom-select option::checkmark {
+.list-widget > option::checkmark {
 	content: "";
 }
 
-.custom-select option:hover,
-.custom-select option:focus {
+.list-widget > option:hover,
+.list-widget > option:focus {
 	background-color: #eee;
 }
 
-.custom-select option:checked {
+.list-widget > option:checked {
 	background-color: #ddd;
 }
 
-.sidebarElement {
-	display: grid;
-	grid-template-rows: auto 1fr;
+.tree-widget-node {
+	display: flex;
+	align-items: flex-end;
+}
+
+.tree-widget-node > .codicon {
+	width: 1rem;
 }
 
 .editorContainer {

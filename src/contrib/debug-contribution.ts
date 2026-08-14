@@ -120,11 +120,10 @@ class ListWidget<T> implements monaco.IDisposable {
 	private readonly templates: unknown[] = [];
 	private readonly onDidSelectItemEmitter = new monaco.Emitter<{ index: number; item: T | undefined; }>();
 
-	constructor(private container: HTMLElement, private renderer: IListElementRenderer<T, unknown>) {
+	constructor(container: HTMLElement, private renderer: IListElementRenderer<T, unknown>) {
 		this.selectElement = document.createElement("select");
 		this.selectElement.size = 2; // make it into a listbox instead of a dropdown
-		this.selectElement.disabled = true;
-		this.selectElement.classList.add("custom-select");
+		this.selectElement.classList.add("list-widget");
 		container.appendChild(this.selectElement);
 
 		const handleSelection = (e: Event) => {
@@ -200,10 +199,112 @@ class ListWidget<T> implements monaco.IDisposable {
 	}
 }
 
+interface TreeNode<T> {
+	level: number;
+	open: boolean;
+	data: T;
+	children: TreeNode<T>[];
+}
+
+interface TreeNodeTemplate {
+	span: HTMLSpanElement;
+	chevron: HTMLSpanElement;
+	innerTemplate: unknown;
+}
+
+class TreeWidget<T> extends Disposable {
+	private readonly listWidget: ListWidget<TreeNode<T>>;
+	private readonly onDidExpandItemEmitter = this.register(new monaco.Emitter<TreeNode<T> | undefined>());
+	private readonly onDidSelectItemEmitter = this.register(new monaco.Emitter<TreeNode<T> | undefined>());
+
+	constructor(container: HTMLElement, renderer: IListElementRenderer<T, unknown>) {
+		super();
+		this.listWidget = this.register(new ListWidget(container, new class implements IListElementRenderer<TreeNode<T>, TreeNodeTemplate> {
+			createTemplate(container: HTMLElement): TreeNodeTemplate {
+				const span = document.createElement("span");
+				span.classList.add("tree-widget-node");
+				container.appendChild(span);
+				const chevron = document.createElement("span");
+				chevron.classList.add("codicon");
+				span.appendChild(chevron);
+				const innerTemplate = renderer.createTemplate(span);
+				return { span, chevron, innerTemplate };
+			}
+
+			renderElement(element: TreeNode<T>, index: number, template: TreeNodeTemplate): void {
+				renderer.renderElement(element.data, index, template.innerTemplate);
+				template.span.style.marginLeft = `${element.level * 1}rem`;
+				template.chevron.classList.remove("codicon-chevron-right", "codicon-chevron-down");
+				if (element.children.length > 0) {
+					template.chevron.classList.add(element.open ? "codicon-chevron-down" : "codicon-chevron-right");
+				}
+			}
+
+			disposeTemplate(template: TreeNodeTemplate): void {
+				renderer.disposeTemplate(template.innerTemplate);
+				template.span.remove();
+			}
+		}));
+		this.register(this.listWidget.onDidSelectItem(e => {
+			if (e.item) {
+				if (e.item.children.length === 0) {
+					this.onDidSelectItemEmitter.fire(this.listWidget.selectedItem);
+				} else {
+					e.item.open = !e.item.open;
+					if (e.item.open) {
+						this.onDidExpandItemEmitter.fire(e.item);
+					}
+					// TODO(seb) How to compute and insert the new list items as tree nodes and rendering them here?
+					// This is probably the use-case for an actual splice operation on ListWidget<T>.
+					this.render(this.root); // TODO(seb) Temp
+				}
+			}
+		}));
+	}
+
+	root: TreeNode<T> | undefined;
+	readonly onDidExpandItem = this.onDidExpandItemEmitter.event;
+	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
+
+	render(root: TreeNode<T> | undefined): void {
+		const list: TreeNode<T>[] = [];
+		if (root) {
+			const stack: TreeNode<T>[] = [root];
+			while (stack.length > 0) {
+				const node = stack.pop()!;
+				list.push(node);
+				if (node.children.length > 0 && node.open) {
+					for (let i = node.children.length - 1; i >= 0; i--) {
+						stack.push(node.children[i]);
+					}
+				}
+			}
+		}
+		this.listWidget.render(list);
+		this.root = root;
+	}
+}
+
 class CallframeRenderer implements IListElementRenderer<string, HTMLSpanElement> {
 	createTemplate(container: HTMLElement): HTMLSpanElement {
 		const span = document.createElement("span");
-		span.style.fontSize = "smaller";
+		container.appendChild(span);
+		return span;
+	}
+
+	renderElement(element: string, index: number, template: HTMLSpanElement): void {
+		template.innerText = element;
+		template.title = element;
+	}
+
+	disposeTemplate(template: HTMLSpanElement): void {
+		template.remove();
+	}
+}
+
+class VariableRenderer implements IListElementRenderer<string, HTMLSpanElement> {
+	createTemplate(container: HTMLElement): HTMLSpanElement {
+		const span = document.createElement("span");
 		container.appendChild(span);
 		return span;
 	}
@@ -221,7 +322,6 @@ class CallframeRenderer implements IListElementRenderer<string, HTMLSpanElement>
 class ScriptRenderer implements IListElementRenderer<monaco.Uri, HTMLSpanElement> {
 	createTemplate(container: HTMLElement): HTMLSpanElement {
 		const span = document.createElement("span");
-		span.style.fontSize = "smaller";
 		container.appendChild(span);
 		return span;
 	}
@@ -247,7 +347,7 @@ export class DebugContribution extends Disposable {
 	/** Dispose to restore original state after debugging. */
 	private originalEditorState?: monaco.IDisposable;
 
-	constructor(private readonly editor: CodeEditor, debugRemoteAddressInput: CodeEditorTextInput, callframeListElementContainer: HTMLElement, scriptListElementContainer: HTMLElement) {
+	constructor(private readonly editor: CodeEditor, debugRemoteAddressInput: CodeEditorTextInput, callframeListContainer: HTMLElement, variableTreeContainer: HTMLElement, scriptListContainer: HTMLElement) {
 		super();
 		this.breakpointPreviewDecorations = editor.monacoEditor.createDecorationsCollection();
 		this.currentDebugLineDecorations = editor.monacoEditor.createDecorationsCollection();
@@ -266,8 +366,94 @@ export class DebugContribution extends Disposable {
 		editor.monacoEditor.addOverlayWidget(debugWidget);
 		this.register(toDisposable(() => editor.monacoEditor.removeOverlayWidget(debugWidget)));
 
-		const callframeListWidget = new ListWidget<string>(callframeListElementContainer, new CallframeRenderer());
-		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListElementContainer, new ScriptRenderer());
+		const callframeListWidget = new ListWidget<string>(callframeListContainer, new CallframeRenderer());
+		const variableTreeWidget = new TreeWidget<string>(variableTreeContainer, new VariableRenderer());
+		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListContainer, new ScriptRenderer());
+
+		callframeListWidget.disabled = true;
+		scriptListWidget.disabled = true;
+		variableTreeWidget.render({
+			level: 0,
+			open: true,
+			data: "root",
+			children: [
+				{
+					level: 1,
+					open: false,
+					data: "child1",
+					children: [],
+				},
+				{
+					level: 1,
+					open: true,
+					data: "child2",
+					children: [
+						{
+							level: 2,
+							open: false,
+							data: "child1",
+							children: [],
+						},
+						{
+							level: 2,
+							open: false,
+							data: "child2",
+							children: [],
+						},
+						{
+							level: 2,
+							open: false,
+							data: "child3",
+							children: [
+								{
+									level: 3,
+									open: true,
+									data: "child1",
+									children: [
+										{
+											level: 4,
+											open: false,
+											data: "child1",
+											children: [],
+										},
+										{
+											level: 4,
+											open: false,
+											data: "child2 with a very long name that most certainly is wider than the tree widget",
+											children: [],
+										},
+										{
+											level: 4,
+											open: false,
+											data: "child3",
+											children: [],
+										},
+									],
+								},
+								{
+									level: 3,
+									open: false,
+									data: "child2",
+									children: [],
+								},
+								{
+									level: 3,
+									open: false,
+									data: "child3",
+									children: [],
+								},
+							],
+						},
+					],
+				},
+				{
+					level: 1,
+					open: false,
+					data: "child3",
+					children: [],
+				},
+			],
+		});
 
 		const debugActiveContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionActive", false);
 		const debugPausedContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionPaused", false);
