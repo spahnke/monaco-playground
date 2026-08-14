@@ -156,8 +156,14 @@ class ListWidget<T> implements monaco.IDisposable {
 		// this.listElement.addEventListener("change", e => this.onDidSelectItemEmitter.fire({ index: this.selectedIndex, item: this.selectedItem }));
 	}
 
-	get disabled(): boolean { return this.listElement.inert; }
-	set disabled(value: boolean) { this.listElement.inert = value; }
+	get disabled(): boolean {
+		return this.listElement.inert;
+	}
+
+	set disabled(value: boolean) {
+		this.listElement.inert = value;
+		this.listElement.ariaDisabled = value ? "true" : "false";
+	}
 
 	readonly items: T[] = [];
 	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
@@ -264,6 +270,9 @@ class TreeWidget<T> extends Disposable {
 			}
 		}));
 	}
+
+	get disabled(): boolean { return this.listWidget.disabled; }
+	set disabled(value: boolean) { this.listWidget.disabled = value; }
 
 	root: TreeNode<T> | undefined;
 	readonly onDidExpandItem = this.onDidExpandItemEmitter.event;
