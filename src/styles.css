@@ -18,11 +18,13 @@ body {
 	box-sizing: border-box;
 	margin: 0;
 	padding: 1rem;
-	width: 100vw;
+	width: 100%;
 	height: 100vh;
 	overflow: hidden;
 	display: grid;
-	grid-template-columns: 1fr 350px;
+	/* Some monaco editor side effect forces us to calculate here instead of using "1fr 350px" even though we have automatic layout enabled... (total - sidebar - gap) */
+	grid-template-columns: calc(100% - 350px - 1rem) auto;
+	grid-template-rows: 100%; /* force the one single row we have to be a fixed height */
 	gap: 1rem;
 }
 
@@ -30,32 +32,17 @@ main {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
-	/* Some monaco editor side effect forces us to repeat this here even though we have automatic layout enabled... (total - sidebar - gap - 2*padding) */
-	max-width: calc(100vw - 350px - 1rem - 1rem - 1rem);
 }
 
 aside {
-	/*
-	NOTE(seb) I have no clue how to make this work with flex or grid while keeping all sidebar elements the same fixed
-	and ungrowable/unshrinkable height, so that we have no layout jumps and the individual lists get a proper scrollbar.
-	Until I do the manual layouting needs to suffice.
-	*/
-	display: block;
+	display: grid;
+	gap: 1rem;
+	grid-auto-rows: calc((100% - 2rem) / 3); /* 3 rows = 2 gaps of 1rem; 1fr or auto don't work at keeping the heights of the children fixed */
 }
 
 .sidebarElement {
 	display: grid;
 	grid-template-rows: auto 1fr;
-	height: calc((100% - 2rem) / 3); /* 3 rows = 2 gaps of 1rem */
-	margin: 1rem 0; /* margins between elements are collapsed automatically so we can set the full gap height here */
-}
-
-.sidebarElement:first-child {
-	margin-top: 0;
-}
-
-.sidebarElement:last-child {
-	margin-bottom: 0;
 }
 
 .list-widget {
