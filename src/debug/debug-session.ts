@@ -232,17 +232,17 @@ export class DebugSession extends Disposable {
 				const offset = location.columnNumber ?? 0;
 				// Binary search: find the line of the disassembled code that the offset falls into.
 				let start = 0;
-				let onePastEnd = script.wasm.chunk.bytecodeOffsets.length;
-				while (start < onePastEnd) {
-					const current = start + ((onePastEnd - start) >> 1);
-					const lineStart = script.wasm.chunk.bytecodeOffsets[current];
-					const onePastLineEnd = script.wasm.chunk.bytecodeOffsets[current + 1] ?? Number.MAX_SAFE_INTEGER;
+				let end = script.wasm.chunk.bytecodeOffsets.length - 1;
+				while (start <= end) {
+					const mid = start + ((end - start) >> 1);
+					const lineStart = script.wasm.chunk.bytecodeOffsets[mid];
+					const onePastLineEnd = script.wasm.chunk.bytecodeOffsets[mid + 1] ?? Number.MAX_SAFE_INTEGER;
 					if (offset < lineStart) {
-						onePastEnd = current;
+						end = mid - 1;
 					} else if (offset >= onePastLineEnd) {
-						start = current + 1;
+						start = mid + 1;
 					} else {
-						line = current + 1; // monaco lines are 1-based
+						line = mid + 1; // monaco lines are 1-based
 						break;
 					}
 				}
