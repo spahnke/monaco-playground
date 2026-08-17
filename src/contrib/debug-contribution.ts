@@ -117,6 +117,9 @@ class ListWidget<T> implements monaco.IDisposable {
 	private readonly templates: unknown[] = [];
 	private readonly onDidSelectItemEmitter = new monaco.Emitter<{ index: number; item: T | undefined; }>();
 
+	private selected = -1;
+	private current = -1;
+
 	constructor(container: HTMLElement, private renderer: IListElementRenderer<T, unknown>) {
 		this.listElement = document.createElement("div");
 		this.listElement.tabIndex = 0;
@@ -124,7 +127,7 @@ class ListWidget<T> implements monaco.IDisposable {
 		this.listElement.classList.add("list-widget");
 		container.appendChild(this.listElement);
 
-		const handleSelection = (e: Event) => {
+		this.listElement.addEventListener("click", e => {
 			let listItemElement: HTMLElement | undefined;
 			let target = e.target as HTMLElement | null;
 			while (target && target !== this.listElement) {
@@ -140,13 +143,36 @@ class ListWidget<T> implements monaco.IDisposable {
 				this.selectedIndex = index;
 				this.onDidSelectItemEmitter.fire({ index, item: this.items[index] });
 			}
-		};
-		this.listElement.addEventListener("click", handleSelection);
-		// this.listElement.addEventListener("keydown", e => {
-		// 	if (e.code === "Space" || e.code === "Enter") {
-		// 		handleSelection(e);
-		// 	}
-		// });
+		});
+		this.listElement.addEventListener("keydown", e => {
+			switch (e.code) {
+				case "Space":
+				case "Enter": {
+					const listItemElement = this.listElement.children[this.current];
+					if (listItemElement) {
+						this.selectedIndex = this.current;
+						this.onDidSelectItemEmitter.fire({ index: this.current, item: this.items[this.current] });
+					}
+					e.preventDefault();
+				} break;
+				case "ArrowUp": {
+					this.makeCurrent(Math.max(0, this.current - 1));
+					e.preventDefault();
+				} break;
+				case "ArrowDown": {
+					this.makeCurrent(Math.min(this.current + 1, this.listElement.children.length - 1));
+					e.preventDefault();
+				} break;
+				case "Home": {
+					this.makeCurrent(0);
+					e.preventDefault();
+				} break;
+				case "End": {
+					this.makeCurrent(this.listElement.children.length - 1);
+					e.preventDefault();
+				} break;
+			}
+		});
 	}
 
 	get disabled(): boolean {
@@ -162,22 +188,12 @@ class ListWidget<T> implements monaco.IDisposable {
 	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
 
 	get selectedIndex(): number {
-		let index = -1;
-		const selectedElement = this.getSelectedListItemElement();
-		if (selectedElement) {
-			index = Number(selectedElement.dataset.index);
-		}
-		return index;
+		return this.selected;
 	}
 
 	set selectedIndex(value: number) {
-		const selectedElement = this.getSelectedListItemElement();
-		if (selectedElement) {
-			selectedElement.ariaCurrent = null;
-		}
-		if (value >= 0 && value < this.listElement.children.length) {
-			this.listElement.children[value].ariaCurrent = "true"; // TODO(seb) For keyboard navigation probably use ariaSelected to indicate the currently pointed to element
-		}
+		this.makeCurrent(value);
+		this.makeSelected(value);
 	}
 
 	render(items: T[] = []): void {
@@ -212,8 +228,32 @@ class ListWidget<T> implements monaco.IDisposable {
 		console.assert(this.templates.length === this.listElement.childElementCount);
 	}
 
-	private getSelectedListItemElement(): HTMLElement | null {
-		return this.listElement.querySelector<HTMLElement>(".list-widget-item[aria-current]");
+	private makeCurrent(index: number): void {
+		const currentElement = this.listElement.children[this.current];
+		if (currentElement) {
+			currentElement.ariaSelected = null;
+		}
+		if (index >= 0 && index < this.listElement.children.length) {
+			this.listElement.children[index].ariaSelected = "true"; // aria-selected = element with "focus"
+			this.listElement.children[index].scrollIntoView({ block: "nearest" });
+			this.current = index;
+		} else {
+			this.current = -1;
+		}
+	}
+
+	private makeSelected(index: number): void {
+		const selectedElement = this.listElement.children[this.selected];
+		if (selectedElement) {
+			selectedElement.ariaCurrent = null;
+		}
+		if (index >= 0 && index < this.listElement.children.length) {
+			this.listElement.children[index].ariaCurrent = "true"; // aria-current = actually selected/active element
+			this.listElement.children[index].scrollIntoView({ block: "nearest" });
+			this.selected = index;
+		} else {
+			this.selected = -1;
+		}
 	}
 }
 
@@ -440,6 +480,7 @@ export class DebugContribution extends Disposable {
 										{
 											level: 4,
 											open: false,
+											// TODO(seb) This now for some reason doesn't have proper spacing anymore on the left side
 											data: "child2 with a very long name that most certainly is wider than the tree widget",
 											children: [],
 										},
