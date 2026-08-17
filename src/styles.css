@@ -79,6 +79,7 @@ aside {
 .list-widget > .list-widget-item {
 	display: block;
 	padding: 0.5ex;
+	cursor: pointer;
 }
 
 .list-widget > .list-widget-item:hover,
@@ -86,7 +87,7 @@ aside {
 	background-color: #eee;
 }
 
-.list-widget > .list-widget-item.selected {
+.list-widget > .list-widget-item[aria-current] {
 	background-color: #ddd;
 }
 

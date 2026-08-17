@@ -106,9 +106,6 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 	}
 }
 
-// NOTE(seb) Inspired by the VSCode internal List widget in src/vs/base/browser/ui/list/listWidget.ts minus the
-// virtualization because we just use unvirtualized DOM elements and only one renderer.
-
 interface IListElementRenderer<TElement, TTemplate> {
 	createTemplate(container: HTMLElement): TTemplate;
 	renderElement(element: TElement, index: number, template: TTemplate): void;
@@ -127,33 +124,29 @@ class ListWidget<T> implements monaco.IDisposable {
 		this.listElement.classList.add("list-widget");
 		container.appendChild(this.listElement);
 
-		// const handleSelection = (e: Event) => {
-		// 	let optionElement: HTMLOptionElement | undefined;
-		// 	let target = e.target as HTMLElement | null;
-		// 	while (target && target !== this.listElement) {
-		// 		if (target.tagName === "OPTION") {
-		// 			optionElement = target as HTMLOptionElement;
-		// 			break;
-		// 		}
-		// 		target = target.parentElement;
-		// 	}
-		// 	if (optionElement) {
-		// 		const index = Number(optionElement.dataset.index);
-		// 		if (this.listElement.selectedIndex === index) {
-		// 			// prevent deselection of selected elements and trigger change event on them instead
-		// 			e.preventDefault();
-		// 			e.stopPropagation();
-		// 			this.listElement.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }));
-		// 		}
-		// 	}
-		// };
-		// this.listElement.addEventListener("click", handleSelection);
+		const handleSelection = (e: Event) => {
+			let listItemElement: HTMLElement | undefined;
+			let target = e.target as HTMLElement | null;
+			while (target && target !== this.listElement) {
+				if (target.role === "listitem") {
+					listItemElement = target as HTMLElement;
+					break;
+				}
+				target = target.parentElement;
+			}
+			if (listItemElement) {
+				console.assert(listItemElement.classList.contains("list-widget-item"));
+				const index = Number(listItemElement.dataset.index);
+				this.selectedIndex = index;
+				this.onDidSelectItemEmitter.fire({ index, item: this.items[index] });
+			}
+		};
+		this.listElement.addEventListener("click", handleSelection);
 		// this.listElement.addEventListener("keydown", e => {
 		// 	if (e.code === "Space" || e.code === "Enter") {
 		// 		handleSelection(e);
 		// 	}
 		// });
-		// this.listElement.addEventListener("change", e => this.onDidSelectItemEmitter.fire({ index: this.selectedIndex, item: this.selectedItem }));
 	}
 
 	get disabled(): boolean {
@@ -168,11 +161,23 @@ class ListWidget<T> implements monaco.IDisposable {
 	readonly items: T[] = [];
 	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
 
-	get selectedIndex(): number { return -1; }
-	set selectedIndex(value: number) { }
+	get selectedIndex(): number {
+		let index = -1;
+		const selectedElement = this.getSelectedListItemElement();
+		if (selectedElement) {
+			index = Number(selectedElement.dataset.index);
+		}
+		return index;
+	}
 
-	get selectedItem(): T | undefined {
-		return this.selectedIndex >= 0 ? this.items[this.selectedIndex] : undefined;
+	set selectedIndex(value: number) {
+		const selectedElement = this.getSelectedListItemElement();
+		if (selectedElement) {
+			selectedElement.ariaCurrent = null;
+		}
+		if (value >= 0 && value < this.listElement.children.length) {
+			this.listElement.children[value].ariaCurrent = "true"; // TODO(seb) For keyboard navigation probably use ariaSelected to indicate the currently pointed to element
+		}
 	}
 
 	render(items: T[] = []): void {
@@ -205,6 +210,10 @@ class ListWidget<T> implements monaco.IDisposable {
 		this.templates.push(template);
 		this.listElement.appendChild(listItemElement);
 		console.assert(this.templates.length === this.listElement.childElementCount);
+	}
+
+	private getSelectedListItemElement(): HTMLElement | null {
+		return this.listElement.querySelector<HTMLElement>(".list-widget-item[aria-current]");
 	}
 }
 
@@ -257,7 +266,7 @@ class TreeWidget<T> extends Disposable {
 		this.register(this.listWidget.onDidSelectItem(e => {
 			if (e.item) {
 				if (e.item.children.length === 0) {
-					this.onDidSelectItemEmitter.fire(this.listWidget.selectedItem);
+					this.onDidSelectItemEmitter.fire(this.listWidget.items[this.listWidget.selectedIndex]);
 				} else {
 					e.item.open = !e.item.open;
 					if (e.item.open) {
