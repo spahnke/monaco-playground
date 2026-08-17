@@ -341,7 +341,9 @@ class TreeWidget<T> extends Disposable {
 						this.onDidExpandItemEmitter.fire(e.item);
 					}
 					// TODO(seb) How to compute and insert the new list items as tree nodes and rendering them here?
-					// This is probably the use-case for an actual splice operation on ListWidget<T>.
+					// This is probably the use-case for an actual splice operation on ListWidget<T>. Splicing would
+					// then also correct the selected element not being preserved correctly currently, when expanding
+					// collapsing tree elements (which is a problem with the list when inserting/deleting elements).
 					this.render(this.root); // TODO(seb) Temp
 				}
 			}
