@@ -208,23 +208,27 @@ class ListWidget<T> implements monaco.IDisposable {
 		this.makeSelected(value);
 	}
 
-	render(items: T[] = []): void {
-		while (this.listElement.children.length < items.length) {
+	splice(start: number, deleteCount: number, items: T[] = []): void {
+		// TODO(seb) This is the easy implementation where we rerender everything. Can we write it in a more efficient
+		// way that only changes the items that need to be changed?
+		this.items.splice(start, deleteCount, ...items);
+		while (this.listElement.children.length < this.items.length) {
 			this.createListItem();
 		}
-		for (let i = 0; i < items.length; i++) {
+		for (let i = 0; i < this.items.length; i++) {
 			const listItemElement = this.listElement.children[i] as HTMLElement;
 			const template = this.templates[i];
 			listItemElement.style.display = "";
-			listItemElement.ariaLabel = this.renderer.getAriaLabel(items[i], i);
-			this.renderer.renderElement(items[i], i, template);
+			listItemElement.ariaLabel = this.renderer.getAriaLabel(this.items[i], i);
+			this.renderer.renderElement(this.items[i], i, template);
 		}
-		for (let i = items.length; i < this.listElement.children.length; i++) {
+		for (let i = this.items.length; i < this.listElement.children.length; i++) {
 			const listItemElement = this.listElement.children[i] as HTMLElement;
 			listItemElement.style.display = "none";
 			listItemElement.ariaLabel = null;
 		}
-		this.items.splice(0, this.items.length, ...items);
+		// TODO(seb) Adjust selected and current index accordingly when they fall out of bounds, or, in the case of a
+		// tree, were inside a now collapsed element.
 	}
 
 	dispose(): void {
@@ -336,15 +340,11 @@ class TreeWidget<T> extends Disposable {
 				if (e.item.children.length === 0) {
 					this.onDidSelectItemEmitter.fire(this.listWidget.items[this.listWidget.selectedIndex]);
 				} else {
-					e.item.open = !e.item.open;
 					if (e.item.open) {
-						this.onDidExpandItemEmitter.fire(e.item);
+						this.collapseNode(e.item, e.index);
+					} else {
+						this.expandNode(e.item, e.index);
 					}
-					// TODO(seb) How to compute and insert the new list items as tree nodes and rendering them here?
-					// This is probably the use-case for an actual splice operation on ListWidget<T>. Splicing would
-					// then also correct the selected element not being preserved correctly currently, when expanding
-					// collapsing tree elements (which is a problem with the list when inserting/deleting elements).
-					this.render(this.root); // TODO(seb) Temp
 				}
 			}
 		}));
@@ -352,18 +352,15 @@ class TreeWidget<T> extends Disposable {
 			switch (e.code) {
 				case "ArrowLeft": {
 					const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
-					if (treeNode && treeNode.children.length > 0 && treeNode.open) {
-						treeNode.open = false;
-						this.render(this.root); // TODO(seb) Temp
+					if (treeNode) {
+						this.collapseNode(treeNode, this.listWidget.focusedIndex);
 					}
 					e.preventDefault();
 				} break;
 				case "ArrowRight": {
 					const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
-					if (treeNode && treeNode.children.length > 0 && !treeNode.open) {
-						treeNode.open = true;
-						this.onDidExpandItemEmitter.fire(treeNode);
-						this.render(this.root); // TODO(seb) Temp
+					if (treeNode) {
+						this.expandNode(treeNode, this.listWidget.focusedIndex);
 					}
 					e.preventDefault();
 				} break;
@@ -374,26 +371,46 @@ class TreeWidget<T> extends Disposable {
 	get disabled(): boolean { return this.listWidget.disabled; }
 	set disabled(value: boolean) { this.listWidget.disabled = value; }
 
-	root: TreeNode<T> | undefined;
 	readonly onDidExpandItem = this.onDidExpandItemEmitter.event;
 	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
 
 	render(root: TreeNode<T> | undefined): void {
+		this.listWidget.splice(0, this.listWidget.items.length, this.getSubtreeListNodes(root));
+	}
+
+	private collapseNode(node: TreeNode<T>, index: number): void {
+		if (node.children.length > 0 && node.open) {
+			const subtreeList = this.getSubtreeListNodes(node);
+			node.open = false;
+			this.listWidget.splice(index, subtreeList.length, [node]);
+		}
+	}
+
+	private expandNode(node: TreeNode<T>, index: number): void {
+		if (node.children.length > 0 && !node.open) {
+			node.open = true;
+			const subtreeList = this.getSubtreeListNodes(node);
+			this.listWidget.splice(index, 1, subtreeList);
+			this.onDidExpandItemEmitter.fire(node);
+		}
+	}
+
+	/** Returns a flat list of all nodes in the subtree including the passed `node`. */
+	private getSubtreeListNodes(node: TreeNode<T> | undefined): TreeNode<T>[] {
 		const list: TreeNode<T>[] = [];
-		if (root) {
-			const stack: TreeNode<T>[] = [root];
+		if (node) {
+			const stack: TreeNode<T>[] = [node];
 			while (stack.length > 0) {
-				const node = stack.pop()!;
-				list.push(node);
-				if (node.children.length > 0 && node.open) {
-					for (let i = node.children.length - 1; i >= 0; i--) {
-						stack.push(node.children[i]);
+				const currentNode = stack.pop()!;
+				list.push(currentNode);
+				if (currentNode.children.length > 0 && currentNode.open) {
+					for (let i = currentNode.children.length - 1; i >= 0; i--) {
+						stack.push(currentNode.children[i]);
 					}
 				}
 			}
 		}
-		this.listWidget.render(list);
-		this.root = root;
+		return list;
 	}
 }
 
@@ -605,8 +622,8 @@ export class DebugContribution extends Disposable {
 			callframeListWidget.disabled = !active;
 			scriptListWidget.disabled = !active;
 			if (!active) {
-				callframeListWidget.render([]);
-				scriptListWidget.render([]);
+				callframeListWidget.splice(0, callframeListWidget.items.length);
+				scriptListWidget.splice(0, scriptListWidget.items.length);
 			}
 		}));
 		this.register(this.debugSession.onDidChangePausedState(async (paused) => {
@@ -631,12 +648,12 @@ export class DebugContribution extends Disposable {
 				}
 
 				const callframes = this.debugSession.getCallframes();
-				callframeListWidget.render(callframes);
+				callframeListWidget.splice(0, callframeListWidget.items.length, callframes);
 				callframeListWidget.selectedIndex = callframes.length > 0 ? 0 : -1;
 
 				let currentScriptIndex = -1;
 				const scriptUris = this.debugSession.getScriptUris();
-				scriptListWidget.render(scriptUris);
+				scriptListWidget.splice(0, scriptListWidget.items.length, scriptUris);
 				for (let i = 0; i < scriptUris.length; i++) {
 					if (scriptUris[i].toString() === editor.monacoEditor.getModel()?.uri.toString()) {
 						currentScriptIndex = i;
