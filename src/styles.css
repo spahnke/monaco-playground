@@ -89,11 +89,11 @@ aside {
 	background-color: #eee;
 }
 
-.list-widget > .list-widget-item[aria-selected] {
+.list-widget > .list-widget-item[aria-selected="true"] {
 	background-color: #ddd;
 }
 
-.list-widget > .list-widget-item[aria-current] {
+.list-widget > .list-widget-item[aria-current="true"] {
 	outline: 1px solid var(--monaco-widget-focus-border-color);
 	outline-offset: -1px;
 	border-radius: var(--monaco-widget-border-radius);

@@ -108,8 +108,15 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 
 interface IListElementRenderer<TElement, TTemplate> {
 	createTemplate(container: HTMLElement): TTemplate;
+	getAriaLabel(element: TElement, index: number): string;
 	renderElement(element: TElement, index: number, template: TTemplate): void;
 	disposeTemplate(template: TTemplate): void;
+}
+
+interface AccessibilityOptions {
+	ariaLabel?: string;
+	ariaRole?: string;
+	ariaItemRole?: string;
 }
 
 class ListWidget<T> implements monaco.IDisposable {
@@ -120,10 +127,11 @@ class ListWidget<T> implements monaco.IDisposable {
 	private selected = -1;
 	private current = -1;
 
-	constructor(container: HTMLElement, private renderer: IListElementRenderer<T, unknown>) {
+	constructor(container: HTMLElement, private renderer: IListElementRenderer<T, unknown>, readonly options?: AccessibilityOptions) {
 		this.listElement = document.createElement("div");
 		this.listElement.tabIndex = 0;
-		this.listElement.role = "list";
+		this.listElement.role = options?.ariaRole ?? "list";
+		this.listElement.ariaLabel = options?.ariaLabel ?? "Listview";
 		this.listElement.classList.add("list-widget");
 		container.appendChild(this.listElement);
 
@@ -131,7 +139,7 @@ class ListWidget<T> implements monaco.IDisposable {
 			let listItemElement: HTMLElement | undefined;
 			let target = e.target as HTMLElement | null;
 			while (target && target !== this.listElement) {
-				if (target.role === "listitem") {
+				if (target.classList.contains("list-widget-item")) {
 					listItemElement = target as HTMLElement;
 					break;
 				}
@@ -208,10 +216,13 @@ class ListWidget<T> implements monaco.IDisposable {
 			const listItemElement = this.listElement.children[i] as HTMLElement;
 			const template = this.templates[i];
 			listItemElement.style.display = "";
+			listItemElement.ariaLabel = this.renderer.getAriaLabel(items[i], i);
 			this.renderer.renderElement(items[i], i, template);
 		}
 		for (let i = items.length; i < this.listElement.children.length; i++) {
-			(this.listElement.children[i] as HTMLElement).style.display = "none";
+			const listItemElement = this.listElement.children[i] as HTMLElement;
+			listItemElement.style.display = "none";
+			listItemElement.ariaLabel = null;
 		}
 		this.items.splice(0, this.items.length, ...items);
 	}
@@ -223,7 +234,7 @@ class ListWidget<T> implements monaco.IDisposable {
 
 	private createListItem(): void {
 		const listItemElement = document.createElement("div");
-		listItemElement.role = "listitem";
+		listItemElement.role = this.options?.ariaItemRole ?? "listitem";
 		listItemElement.classList.add("list-widget-item");
 		listItemElement.dataset.index = String(this.listElement.childElementCount);
 		const template = this.renderer.createTemplate(listItemElement);
@@ -269,6 +280,7 @@ interface TreeNode<T> {
 }
 
 interface TreeNodeTemplate {
+	listElement: HTMLElement;
 	span: HTMLSpanElement;
 	chevron: HTMLSpanElement;
 	innerTemplate: unknown;
@@ -279,7 +291,7 @@ class TreeWidget<T> extends Disposable {
 	private readonly onDidExpandItemEmitter = this.register(new monaco.Emitter<TreeNode<T> | undefined>());
 	private readonly onDidSelectItemEmitter = this.register(new monaco.Emitter<TreeNode<T> | undefined>());
 
-	constructor(container: HTMLElement, renderer: IListElementRenderer<T, unknown>) {
+	constructor(container: HTMLElement, renderer: IListElementRenderer<T, unknown>, options?: AccessibilityOptions) {
 		super();
 		this.listWidget = this.register(new ListWidget(container, new class implements IListElementRenderer<TreeNode<T>, TreeNodeTemplate> {
 			createTemplate(container: HTMLElement): TreeNodeTemplate {
@@ -290,14 +302,21 @@ class TreeWidget<T> extends Disposable {
 				chevron.classList.add("codicon");
 				span.appendChild(chevron);
 				const innerTemplate = renderer.createTemplate(span);
-				return { span, chevron, innerTemplate };
+				return { listElement: container, span, chevron, innerTemplate };
+			}
+
+			getAriaLabel(element: TreeNode<T>, index: number): string {
+				return renderer.getAriaLabel(element.data, index);
 			}
 
 			renderElement(element: TreeNode<T>, index: number, template: TreeNodeTemplate): void {
 				renderer.renderElement(element.data, index, template.innerTemplate);
+				template.listElement.ariaExpanded = null;
+				template.listElement.ariaLevel = String(element.level + 1);
 				template.span.style.marginLeft = `${element.level * 1}rem`;
 				template.chevron.classList.remove("codicon-chevron-right", "codicon-chevron-down");
 				if (element.children.length > 0) {
+					template.listElement.ariaExpanded = element.open ? "true" : "false";
 					template.chevron.classList.add(element.open ? "codicon-chevron-down" : "codicon-chevron-right");
 				}
 			}
@@ -306,6 +325,11 @@ class TreeWidget<T> extends Disposable {
 				renderer.disposeTemplate(template.innerTemplate);
 				template.span.remove();
 			}
+		}, {
+			ariaLabel: "Treeview",
+			ariaRole: "tree",
+			ariaItemRole: "treeitem",
+			...options,
 		}));
 		this.register(this.listWidget.onDidSelectItem(e => {
 			if (e.item) {
@@ -378,6 +402,10 @@ class CallframeRenderer implements IListElementRenderer<string, HTMLSpanElement>
 		return span;
 	}
 
+	getAriaLabel(element: string, index: number): string {
+		return element;
+	}
+
 	renderElement(element: string, index: number, template: HTMLSpanElement): void {
 		template.innerText = element;
 		template.title = element;
@@ -395,6 +423,10 @@ class VariableRenderer implements IListElementRenderer<string, HTMLSpanElement> 
 		return span;
 	}
 
+	getAriaLabel(element: string, index: number): string {
+		return element;
+	}
+
 	renderElement(element: string, index: number, template: HTMLSpanElement): void {
 		template.innerText = element;
 		template.title = element;
@@ -410,6 +442,10 @@ class ScriptRenderer implements IListElementRenderer<monaco.Uri, HTMLSpanElement
 		const span = document.createElement("span");
 		container.appendChild(span);
 		return span;
+	}
+
+	getAriaLabel(element: monaco.Uri, index: number): string {
+		return element.path;
 	}
 
 	renderElement(element: monaco.Uri, index: number, template: HTMLSpanElement): void {
@@ -452,9 +488,9 @@ export class DebugContribution extends Disposable {
 		editor.monacoEditor.addOverlayWidget(debugWidget);
 		this.register(toDisposable(() => editor.monacoEditor.removeOverlayWidget(debugWidget)));
 
-		const callframeListWidget = new ListWidget<string>(callframeListContainer, new CallframeRenderer());
-		const variableTreeWidget = new TreeWidget<string>(variableTreeContainer, new VariableRenderer());
-		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListContainer, new ScriptRenderer());
+		const callframeListWidget = new ListWidget<string>(callframeListContainer, new CallframeRenderer(), { ariaLabel: "Callstack" });
+		const variableTreeWidget = new TreeWidget<string>(variableTreeContainer, new VariableRenderer(), { ariaLabel: "Variables" });
+		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListContainer, new ScriptRenderer(), { ariaLabel: "Loaded Scripts" });
 
 		callframeListWidget.disabled = true;
 		scriptListWidget.disabled = true;
