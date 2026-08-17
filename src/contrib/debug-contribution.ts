@@ -187,6 +187,10 @@ class ListWidget<T> implements monaco.IDisposable {
 	readonly items: T[] = [];
 	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
 
+	get focusedIndex(): number {
+		return this.current;
+	}
+
 	get selectedIndex(): number {
 		return this.selected;
 	}
@@ -318,6 +322,27 @@ class TreeWidget<T> extends Disposable {
 				}
 			}
 		}));
+		container.addEventListener("keydown", e => {
+			switch (e.code) {
+				case "ArrowLeft": {
+					const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
+					if (treeNode && treeNode.children.length > 0 && treeNode.open) {
+						treeNode.open = false;
+						this.render(this.root); // TODO(seb) Temp
+					}
+					e.preventDefault();
+				} break;
+				case "ArrowRight": {
+					const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
+					if (treeNode && treeNode.children.length > 0 && !treeNode.open) {
+						treeNode.open = true;
+						this.onDidExpandItemEmitter.fire(treeNode);
+						this.render(this.root); // TODO(seb) Temp
+					}
+					e.preventDefault();
+				} break;
+			}
+		});
 	}
 
 	get disabled(): boolean { return this.listWidget.disabled; }
