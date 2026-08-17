@@ -22,6 +22,7 @@ button, input, select, textarea {
 	--monaco-debug-stop-color: #a1260d;
 	--monaco-todo-background-color: hsl(100, 75%, 30%);
 	--monaco-todo-color: #fff;
+	--monaco-widget-border-radius: 2px;
 	--monaco-widget-border-color: #cecece;
 	--monaco-widget-focus-border-color: #0090f1;
 	--monaco-widget-disabled-background-color: #eeeeee;
@@ -61,7 +62,7 @@ aside {
 .list-widget {
 	display: block;
 	overflow: auto;
-	border-radius: 2px;
+	border-radius: var(--monaco-widget-border-radius);
 	outline: 1px solid var(--monaco-widget-border-color);
 	font-size: smaller;
 	text-wrap: nowrap;
@@ -80,6 +81,7 @@ aside {
 	display: block;
 	padding: 0.5ex;
 	cursor: pointer;
+	user-select: none;
 }
 
 .list-widget > .list-widget-item:hover,
@@ -87,8 +89,14 @@ aside {
 	background-color: #eee;
 }
 
-.list-widget > .list-widget-item[aria-current] {
+.list-widget > .list-widget-item[aria-selected] {
 	background-color: #ddd;
+}
+
+.list-widget > .list-widget-item[aria-current] {
+	outline: 1px solid var(--monaco-widget-focus-border-color);
+	outline-offset: -1px;
+	border-radius: var(--monaco-widget-border-radius);
 }
 
 .tree-widget-node {
@@ -174,7 +182,7 @@ aside {
 	align-items: center;
 	position: relative;
 	padding: 4px 6px;
-	border-radius: 2px;
+	border-radius: var(--monaco-widget-border-radius);
 	outline: 1px solid var(--monaco-widget-border-color);
 }
 
