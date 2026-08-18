@@ -215,9 +215,6 @@ class ListWidget<T> extends Disposable {
 		} else {
 			this.selected = -1;
 		}
-		if (index !== this.focused) {
-			this.focus(index);
-		}
 	}
 
 	splice(start: number, deleteCount: number, items: T[] = []): void {
@@ -264,7 +261,9 @@ class ListWidget<T> extends Disposable {
 	private registerEvents(): monaco.IDisposable {
 		const focusEvent = (e: FocusEvent) => {
 			if (this.focused === -1 && this.listElement.children.length > 0) {
-				this.focus(0);
+				// If nothing is focused yet focus the currently selected element if one exists, otherwise focus the
+				// first element.
+				this.focus(this.selected !== -1 ? this.selected : 0);
 			} else {
 				this.focus(this.focused);
 			}
@@ -283,6 +282,7 @@ class ListWidget<T> extends Disposable {
 				console.assert(listItemElement.classList.contains("list-widget-item"));
 				const index = Number(listItemElement.dataset.index);
 				this.select(index);
+				this.focus(index);
 			}
 			this.onClickEmitter.fire(e);
 		};
@@ -720,6 +720,7 @@ export class DebugContribution extends Disposable {
 				const callframes = this.debugSession.getCallframes();
 				callframeListWidget.splice(0, callframeListWidget.items.length, callframes);
 				callframeListWidget.select(callframes.length > 0 ? 0 : -1);
+				callframeListWidget.focus(callframes.length > 0 ? 0 : -1);
 
 				let currentScriptIndex = -1;
 				const scriptUris = this.debugSession.getScriptUris();
@@ -731,6 +732,7 @@ export class DebugContribution extends Disposable {
 				}
 				// TODO(seb) We  need to do the same thing when selecting the callframe to keep this in sync.
 				scriptListWidget.select(currentScriptIndex);
+				scriptListWidget.focus(currentScriptIndex);
 			} else {
 				this.removeDebugLine();
 			}
