@@ -108,10 +108,7 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 
 interface IListElementRenderer<TElement, TTemplate> {
 	createTemplate(container: HTMLElement): TTemplate;
-	// TODO(seb) Consider making getAriaLabel optional and in most cases use "aria-hidden" in the individual renderers
-	// to hide cosmetic element contents (e.g. the chevron in the tree) and therefore use the DOM text content as label
-	// automatically.
-	getAriaLabel(element: TElement, index: number): string;
+	getAriaLabel?(element: TElement, index: number): string;
 	renderElement(element: TElement, index: number, template: TTemplate): void;
 	disposeTemplate(template: TTemplate): void;
 }
@@ -220,7 +217,9 @@ class ListWidget<T> implements monaco.IDisposable {
 			const listItemElement = this.listElement.children[i] as HTMLElement;
 			const template = this.templates[i];
 			listItemElement.style.display = "";
-			listItemElement.ariaLabel = this.renderer.getAriaLabel(this.items[i], i);
+			if (this.renderer.getAriaLabel) {
+				listItemElement.ariaLabel = this.renderer.getAriaLabel(this.items[i], i);
+			}
 			this.renderer.renderElement(this.items[i], i, template);
 		}
 		for (let i = this.items.length; i < this.listElement.children.length; i++) {
@@ -339,14 +338,15 @@ class TreeWidget<T> extends Disposable {
 				container.appendChild(span);
 				const chevron = document.createElement("span");
 				chevron.classList.add("codicon");
+				chevron.ariaHidden = "true";
 				span.appendChild(chevron);
 				const innerTemplate = renderer.createTemplate(span);
 				return { listElement: container, span, chevron, innerTemplate };
 			}
 
-			getAriaLabel(element: TreeNode<T>, index: number): string {
-				return renderer.getAriaLabel(element.data, index);
-			}
+			getAriaLabel = !renderer.getAriaLabel ? undefined : (element: TreeNode<T>, index: number): string => {
+				return renderer.getAriaLabel!(element.data, index);
+			};
 
 			renderElement(element: TreeNode<T>, index: number, template: TreeNodeTemplate): void {
 				renderer.renderElement(element.data, index, template.innerTemplate);
@@ -456,10 +456,6 @@ class CallframeRenderer implements IListElementRenderer<string, HTMLSpanElement>
 		return span;
 	}
 
-	getAriaLabel(element: string, index: number): string {
-		return element;
-	}
-
 	renderElement(element: string, index: number, template: HTMLSpanElement): void {
 		template.innerText = element;
 		template.title = element;
@@ -477,10 +473,6 @@ class VariableRenderer implements IListElementRenderer<string, HTMLSpanElement> 
 		return span;
 	}
 
-	getAriaLabel(element: string, index: number): string {
-		return element;
-	}
-
 	renderElement(element: string, index: number, template: HTMLSpanElement): void {
 		template.innerText = element;
 		template.title = element;
@@ -496,10 +488,6 @@ class ScriptRenderer implements IListElementRenderer<monaco.Uri, HTMLSpanElement
 		const span = document.createElement("span");
 		container.appendChild(span);
 		return span;
-	}
-
-	getAriaLabel(element: monaco.Uri, index: number): string {
-		return element.path;
 	}
 
 	renderElement(element: monaco.Uri, index: number, template: HTMLSpanElement): void {
