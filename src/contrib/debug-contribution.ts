@@ -121,10 +121,14 @@ interface AccessibilityOptions {
 }
 
 class ListWidget<T> extends Disposable {
+	// For accessibility and behavioral (e.g. keyboard interaction) requirements see
+	// https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/listbox_role
+
 	private readonly listElement: HTMLElement;
 	private readonly templates: unknown[] = [];
 	private readonly onDidFocusItemEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
 	private readonly onDidSelectItemEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
+	private readonly onClickEmitter = this.register(new monaco.Emitter<PointerEvent>());
 	private readonly onKeyDownEmitter = this.register(new monaco.Emitter<KeyboardEvent>());
 	private domEvents: monaco.IDisposable;
 	/** Never set this outside of focus(index). */
@@ -189,6 +193,7 @@ class ListWidget<T> extends Disposable {
 	readonly items: T[] = [];
 	readonly onDidFocusItem = this.onDidFocusItemEmitter.event;
 	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
+	readonly onClick = this.onClickEmitter.event;
 	readonly onKeyDown = this.onKeyDownEmitter.event;
 
 	get selectedIndex(): number {
@@ -279,6 +284,7 @@ class ListWidget<T> extends Disposable {
 				const index = Number(listItemElement.dataset.index);
 				this.select(index);
 			}
+			this.onClickEmitter.fire(e);
 		};
 		const keyboardEvent = (e: KeyboardEvent) => {
 			switch (e.code) {
@@ -332,6 +338,9 @@ interface TreeNodeTemplate {
 }
 
 class TreeWidget<T> extends Disposable {
+	// For accessibility and behavioral (e.g. keyboard interaction) requirements see
+	// https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/tree_role
+
 	private readonly listWidget: ListWidget<TreeNode<T>>;
 	private readonly onDidExpandItemEmitter = this.register(new monaco.Emitter<TreeNode<T> | undefined>());
 
@@ -376,11 +385,21 @@ class TreeWidget<T> extends Disposable {
 			ariaItemRole: "treeitem",
 			...options,
 		}));
+		this.register(this.listWidget.onClick(e => {
+			const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
+			if (treeNode && treeNode.children.length > 0) {
+				if (treeNode.open) {
+					this.collapseNode(treeNode, this.listWidget.focusedIndex);
+				} else {
+					this.expandNode(treeNode, this.listWidget.focusedIndex);
+				}
+			}
+		}));
 		this.register(this.listWidget.onKeyDown(e => {
 			switch (e.code) {
 				case "Enter": {
 					const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
-					if (treeNode) {
+					if (treeNode && treeNode.children.length > 0) {
 						if (treeNode.open) {
 							this.collapseNode(treeNode, this.listWidget.focusedIndex);
 						} else {
@@ -392,14 +411,32 @@ class TreeWidget<T> extends Disposable {
 				case "ArrowLeft": {
 					const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
 					if (treeNode) {
-						this.collapseNode(treeNode, this.listWidget.focusedIndex);
+						if (treeNode.children.length > 0 && treeNode.open) {
+							// When focus is on an open node, closes the node.
+							this.collapseNode(treeNode, this.listWidget.focusedIndex);
+						} else {
+							// When focus is on a child node that is also either an end node or a closed node, moves focus to its parent node.
+							let parent: TreeNode<T> | null = null; // TODO(seb) find parent node
+							if (parent) {
+							}
+							// When focus is on a closed tree, does nothing.
+						}
 					}
 					e.preventDefault();
 				} break;
 				case "ArrowRight": {
 					const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
 					if (treeNode) {
-						this.expandNode(treeNode, this.listWidget.focusedIndex);
+						if (treeNode.children.length > 0) {
+							if (!treeNode.open) {
+								// When focus is on a closed node, opens the node; focus does not move.
+								this.expandNode(treeNode, this.listWidget.focusedIndex);
+							} else {
+								// When focus is on an open node, moves focus to the first child node.
+							}
+						} else {
+							// When focus is on an end node (a tree item with no children), does nothing.
+						}
 					}
 					e.preventDefault();
 				} break;
