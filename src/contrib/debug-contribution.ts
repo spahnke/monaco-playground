@@ -170,7 +170,7 @@ class ListWidget<T> extends Disposable {
 		return this.focused;
 	}
 
-	focus(index: number): void {
+	focus(index: number, preventEventFire = false): void {
 		const focusedElement = this.listElement.children[this.focused];
 		if (focusedElement) {
 			this.listElement.ariaActiveDescendantElement = null;
@@ -182,7 +182,7 @@ class ListWidget<T> extends Disposable {
 			listItemElement.classList.add("focused");
 			listItemElement.scrollIntoView({ block: "nearest" });
 			this.focused = index;
-			if (!this.disabled) {
+			if (!this.disabled && !preventEventFire) {
 				this.onDidFocusItemEmitter.fire({ index, item: this.items[index] });
 			}
 		} else {
@@ -200,7 +200,7 @@ class ListWidget<T> extends Disposable {
 		return this.selected;
 	}
 
-	select(index: number): void {
+	select(index: number, preventEventFire = false): void {
 		const selectedElement = this.listElement.children[this.selected];
 		if (selectedElement) {
 			selectedElement.ariaSelected = null;
@@ -209,7 +209,7 @@ class ListWidget<T> extends Disposable {
 			const listItemElement = this.listElement.children[index] as HTMLElement;
 			listItemElement.ariaSelected = "true";
 			this.selected = index;
-			if (!this.disabled) {
+			if (!this.disabled && !preventEventFire) {
 				this.onDidSelectItemEmitter.fire({ index, item: this.items[index] });
 			}
 		} else {
@@ -238,8 +238,44 @@ class ListWidget<T> extends Disposable {
 			listItemElement.style.display = "none";
 			listItemElement.ariaLabel = null;
 		}
-		// TODO(seb) Adjust selected and current index accordingly when they fall out of bounds, or, in the case of a
-		// tree, were inside a now collapsed element.
+
+		if (this.focused <= start) {
+			// Focused element was before or on the first of the spliced elements -> keep it if the index is still
+			// valid otherwise remove focus.
+			if (this.focused >= this.items.length) {
+				this.focus(-1);
+			}
+		} else {
+			if (this.focused >= start + deleteCount) {
+				// Focused element was after the entire block of spliced elements -> move focus without triggering
+				// event.
+				this.focus(this.focused + items.length - deleteCount, true);
+			} else {
+				// Focused element was among the spliced elements -> remove focus
+				this.focus(-1);
+				// TODO(seb) If we completely exchange all elements (i.e. deleteCount = items.length, e.g. when
+				// recreating the entire list), the current behavior is to have nothing focused (or selected). Do we
+				// want that? Do we need to detect "sameness" to keep focus/selection? Do we always keep focus/selection
+				// if the element index itself is still occupied by a new element after the slicing? When do we fire
+				// events? Ditto below.
+			}
+		}
+		if (this.selected <= start) {
+			// Selected element was before or on the first of the spliced elements -> keep it if the index is still
+			// valid otherwise remove selection.
+			if (this.selected >= this.items.length) {
+				this.select(-1);
+			}
+		} else {
+			if (this.selected >= start + deleteCount) {
+				// Selected element was after the entire block of spliced elements -> move selection without triggering
+				// event.
+				this.select(this.selected + items.length - deleteCount, true);
+			} else {
+				// Selected element was among the spliced elements -> remove selection
+				this.select(-1);
+			}
+		}
 	}
 
 	override dispose(): void {
