@@ -123,7 +123,9 @@ interface AccessibilityOptions {
 class ListWidget<T> extends Disposable {
 	private readonly listElement: HTMLElement;
 	private readonly templates: unknown[] = [];
+	private readonly onDidFocusItemEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
 	private readonly onDidSelectItemEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
+	private readonly onKeyDownEmitter = this.register(new monaco.Emitter<KeyboardEvent>());
 	private domEvents: monaco.IDisposable;
 	/** Never set this outside of focus(index). */
 	private focused = -1;
@@ -176,13 +178,18 @@ class ListWidget<T> extends Disposable {
 			listItemElement.classList.add("focused");
 			listItemElement.scrollIntoView({ block: "nearest" });
 			this.focused = index;
+			if (!this.disabled) {
+				this.onDidFocusItemEmitter.fire({ index, item: this.items[index] });
+			}
 		} else {
 			this.focused = -1;
 		}
 	}
 
 	readonly items: T[] = [];
+	readonly onDidFocusItem = this.onDidFocusItemEmitter.event;
 	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
+	readonly onKeyDown = this.onKeyDownEmitter.event;
 
 	get selectedIndex(): number {
 		return this.selected;
@@ -275,8 +282,6 @@ class ListWidget<T> extends Disposable {
 		};
 		const keyboardEvent = (e: KeyboardEvent) => {
 			switch (e.code) {
-				// TODO(seb) Space and Enter should select the focused element and raise events for that. In the tree,
-				// however, Space should only select but not toggle collapse/expansion.
 				case "Space":
 				case "Enter": {
 					this.select(this.focused);
@@ -299,6 +304,7 @@ class ListWidget<T> extends Disposable {
 					e.preventDefault();
 				} break;
 			}
+			this.onKeyDownEmitter.fire(e);
 		};
 		this.listElement.addEventListener("focus", focusEvent);
 		this.listElement.addEventListener("click", clickEvent);
@@ -328,7 +334,6 @@ interface TreeNodeTemplate {
 class TreeWidget<T> extends Disposable {
 	private readonly listWidget: ListWidget<TreeNode<T>>;
 	private readonly onDidExpandItemEmitter = this.register(new monaco.Emitter<TreeNode<T> | undefined>());
-	private readonly onDidSelectItemEmitter = this.register(new monaco.Emitter<TreeNode<T> | undefined>());
 
 	constructor(container: HTMLElement, renderer: IListElementRenderer<T, unknown>, options?: AccessibilityOptions) {
 		super();
@@ -371,21 +376,19 @@ class TreeWidget<T> extends Disposable {
 			ariaItemRole: "treeitem",
 			...options,
 		}));
-		this.register(this.listWidget.onDidSelectItem(e => {
-			if (e.item) {
-				if (e.item.children.length === 0) {
-					this.onDidSelectItemEmitter.fire(this.listWidget.items[this.listWidget.selectedIndex]);
-				} else {
-					if (e.item.open) {
-						this.collapseNode(e.item, e.index);
-					} else {
-						this.expandNode(e.item, e.index);
-					}
-				}
-			}
-		}));
-		container.addEventListener("keydown", e => {
+		this.register(this.listWidget.onKeyDown(e => {
 			switch (e.code) {
+				case "Enter": {
+					const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
+					if (treeNode) {
+						if (treeNode.open) {
+							this.collapseNode(treeNode, this.listWidget.focusedIndex);
+						} else {
+							this.expandNode(treeNode, this.listWidget.focusedIndex);
+						}
+					}
+					e.preventDefault();
+				} break;
 				case "ArrowLeft": {
 					const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
 					if (treeNode) {
@@ -401,14 +404,15 @@ class TreeWidget<T> extends Disposable {
 					e.preventDefault();
 				} break;
 			}
-		});
+		}));
 	}
 
 	get disabled(): boolean { return this.listWidget.disabled; }
 	set disabled(value: boolean) { this.listWidget.disabled = value; }
 
 	readonly onDidExpandItem = this.onDidExpandItemEmitter.event;
-	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
+	get onDidFocusItem() { return this.listWidget.onDidFocusItem; }
+	get onDidSelectItem() { return this.listWidget.onDidSelectItem; }
 
 	render(root: TreeNode<T> | undefined): void {
 		this.listWidget.splice(0, this.listWidget.items.length, this.getSubtreeListNodes(root));
