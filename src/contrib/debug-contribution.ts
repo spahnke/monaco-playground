@@ -163,14 +163,14 @@ class ListWidget<T> implements monaco.IDisposable {
 	}
 
 	focus(index: number): void {
-		// TODO(seb) Hook up the focused element with aria-activedescendant on the parent (don't use tabindex and
-		// focus() for option elements). This requires IDs for every list item element though.
 		const focusedElement = this.listElement.children[this.focused];
 		if (focusedElement) {
+			this.listElement.ariaActiveDescendantElement = null;
 			focusedElement.classList.remove("focused");
 		}
 		if (index >= 0 && index < this.listElement.children.length) {
 			const listItemElement = this.listElement.children[index] as HTMLElement;
+			this.listElement.ariaActiveDescendantElement = listItemElement;
 			listItemElement.classList.add("focused");
 			listItemElement.scrollIntoView({ block: "nearest" });
 			this.focused = index;
