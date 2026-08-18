@@ -118,7 +118,7 @@ interface IListElementRenderer<TElement, TTemplate> {
 
 interface AccessibilityOptions {
 	ariaLabel?: string;
-	ariaLabelledBy?: string; // TODO(seb) Support and prefer this because there's a visible label for our controls
+	ariaLabelledBy?: Element | null;
 	ariaRole?: string;
 	ariaItemRole?: string;
 }
@@ -137,7 +137,11 @@ class ListWidget<T> implements monaco.IDisposable {
 		this.listElement = document.createElement("div");
 		this.listElement.tabIndex = 0;
 		this.listElement.role = options?.ariaRole ?? "listbox";
-		this.listElement.ariaLabel = options?.ariaLabel ?? "Listview";
+		if (options?.ariaLabelledBy) {
+			this.listElement.ariaLabelledByElements = [options.ariaLabelledBy];
+		} else {
+			this.listElement.ariaLabel = options?.ariaLabel ?? "Listview";
+		}
 		this.listElement.classList.add("list-widget");
 		container.appendChild(this.listElement);
 
@@ -519,9 +523,9 @@ export class DebugContribution extends Disposable {
 		editor.monacoEditor.addOverlayWidget(debugWidget);
 		this.register(toDisposable(() => editor.monacoEditor.removeOverlayWidget(debugWidget)));
 
-		const callframeListWidget = new ListWidget<string>(callframeListContainer, new CallframeRenderer(), { ariaLabel: "Callstack" });
-		const variableTreeWidget = new TreeWidget<string>(variableTreeContainer, new VariableRenderer(), { ariaLabel: "Variables" });
-		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListContainer, new ScriptRenderer(), { ariaLabel: "Loaded Scripts" });
+		const callframeListWidget = new ListWidget<string>(callframeListContainer, new CallframeRenderer(), { ariaLabelledBy: callframeListContainer.firstElementChild });
+		const variableTreeWidget = new TreeWidget<string>(variableTreeContainer, new VariableRenderer(), { ariaLabelledBy: variableTreeContainer.firstElementChild });
+		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListContainer, new ScriptRenderer(), { ariaLabelledBy: scriptListContainer.firstElementChild });
 
 		callframeListWidget.disabled = true;
 		scriptListWidget.disabled = true;
