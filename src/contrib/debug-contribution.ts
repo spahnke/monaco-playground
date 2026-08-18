@@ -120,10 +120,10 @@ interface AccessibilityOptions {
 	ariaItemRole?: string;
 }
 
-class ListWidget<T> implements monaco.IDisposable {
+class ListWidget<T> extends Disposable {
 	private readonly listElement: HTMLElement;
 	private readonly templates: unknown[] = [];
-	private readonly onDidSelectItemEmitter = new monaco.Emitter<{ index: number; item: T | undefined; }>();
+	private readonly onDidSelectItemEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
 	private domEvents: monaco.IDisposable;
 	/** Never set this outside of focus(index). */
 	private focused = -1;
@@ -131,6 +131,7 @@ class ListWidget<T> implements monaco.IDisposable {
 	private selected = -1;
 
 	constructor(container: HTMLElement, private renderer: IListElementRenderer<T, unknown>, readonly options?: AccessibilityOptions) {
+		super();
 		this.listElement = document.createElement("div");
 		this.listElement.tabIndex = 0;
 		this.listElement.role = options?.ariaRole ?? "listbox";
@@ -141,6 +142,7 @@ class ListWidget<T> implements monaco.IDisposable {
 		}
 		this.listElement.classList.add("list-widget");
 		container.appendChild(this.listElement);
+		this.register(toDisposable(() => this.listElement.remove()));
 		this.domEvents = this.registerEvents();
 	}
 
@@ -231,10 +233,9 @@ class ListWidget<T> implements monaco.IDisposable {
 		// tree, were inside a now collapsed element.
 	}
 
-	dispose(): void {
+	override dispose(): void {
 		this.domEvents.dispose();
-		this.listElement.remove();
-		this.onDidSelectItemEmitter.dispose();
+		super.dispose();
 	}
 
 	private createListItem(): void {
