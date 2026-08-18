@@ -124,7 +124,7 @@ class ListWidget<T> extends Disposable {
 	// For accessibility and behavioral (e.g. keyboard interaction) requirements see
 	// https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/listbox_role
 
-	private readonly listElement: HTMLElement;
+	readonly listElement: HTMLElement;
 	private readonly templates: unknown[] = [];
 	private readonly onDidFocusItemEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
 	private readonly onDidSelectItemEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
@@ -416,8 +416,14 @@ class TreeWidget<T> extends Disposable {
 							this.collapseNode(treeNode, this.listWidget.focusedIndex);
 						} else {
 							// When focus is on a child node that is also either an end node or a closed node, moves focus to its parent node.
-							let parent: TreeNode<T> | null = null; // TODO(seb) find parent node
+							const focusedListItemElement = this.listWidget.listElement.children[this.listWidget.focusedIndex];
+							console.assert(Boolean(focusedListItemElement), "Couldn't find the list item of a focused index");
+							let parent = focusedListItemElement as HTMLElement | null;
+							while (parent && Number(parent.ariaLevel) >= Number(focusedListItemElement.ariaLevel)) {
+								parent = parent.previousElementSibling as HTMLElement | null;
+							}
 							if (parent) {
+								this.listWidget.focus(Number(parent.dataset.index));
 							}
 							// When focus is on a closed tree, does nothing.
 						}
@@ -433,10 +439,10 @@ class TreeWidget<T> extends Disposable {
 								this.expandNode(treeNode, this.listWidget.focusedIndex);
 							} else {
 								// When focus is on an open node, moves focus to the first child node.
+								this.listWidget.focus(this.listWidget.focusedIndex + 1);
 							}
-						} else {
-							// When focus is on an end node (a tree item with no children), does nothing.
 						}
+						// When focus is on an end node (a tree item with no children), does nothing.
 					}
 					e.preventDefault();
 				} break;
@@ -625,7 +631,6 @@ export class DebugContribution extends Disposable {
 										{
 											level: 4,
 											open: false,
-											// TODO(seb) This now for some reason doesn't have proper spacing anymore on the left side
 											data: "child2 with a very long name that most certainly is wider than the tree widget",
 											children: [],
 										},

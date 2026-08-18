@@ -112,6 +112,7 @@ aside {
 
 .tree-widget-node > .codicon {
 	width: 1rem;
+	flex-shrink: 0;
 }
 
 .editorContainer {
