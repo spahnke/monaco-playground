@@ -127,11 +127,11 @@ class ListWidget<T> implements monaco.IDisposable {
 	private readonly listElement: HTMLElement;
 	private readonly templates: unknown[] = [];
 	private readonly onDidSelectItemEmitter = new monaco.Emitter<{ index: number; item: T | undefined; }>();
-
-	/** Never set this outside of select(index). */
-	private selected = -1;
+	private domEvents: monaco.IDisposable;
 	/** Never set this outside of focus(index). */
 	private focused = -1;
+	/** Never set this outside of select(index). */
+	private selected = -1;
 
 	constructor(container: HTMLElement, private renderer: IListElementRenderer<T, unknown>, readonly options?: AccessibilityOptions) {
 		this.listElement = document.createElement("div");
@@ -144,66 +144,21 @@ class ListWidget<T> implements monaco.IDisposable {
 		}
 		this.listElement.classList.add("list-widget");
 		container.appendChild(this.listElement);
-
-		this.listElement.addEventListener("focus", e => {
-			if (this.focused === -1 && this.listElement.children.length > 0) {
-				this.focus(0);
-			} else {
-				this.focus(this.focused);
-			}
-		});
-		this.listElement.addEventListener("click", e => {
-			let listItemElement: HTMLElement | undefined;
-			let target = e.target as HTMLElement | null;
-			while (target && target !== this.listElement) {
-				if (target.classList.contains("list-widget-item")) {
-					listItemElement = target as HTMLElement;
-					break;
-				}
-				target = target.parentElement;
-			}
-			if (listItemElement) {
-				console.assert(listItemElement.classList.contains("list-widget-item"));
-				const index = Number(listItemElement.dataset.index);
-				this.select(index);
-			}
-		});
-		this.listElement.addEventListener("keydown", e => {
-			switch (e.code) {
-				// TODO(seb) Space and Enter should select the focused element and raise events for that. In the tree,
-				// however, Space should only select but not toggle collapse/expansion.
-				case "Space":
-				case "Enter": {
-					this.select(this.focused);
-					e.preventDefault();
-				} break;
-				case "ArrowUp": {
-					this.focus(Math.max(0, this.focused - 1));
-					e.preventDefault();
-				} break;
-				case "ArrowDown": {
-					this.focus(Math.min(this.focused + 1, this.listElement.children.length - 1));
-					e.preventDefault();
-				} break;
-				case "Home": {
-					this.focus(0);
-					e.preventDefault();
-				} break;
-				case "End": {
-					this.focus(this.listElement.children.length - 1);
-					e.preventDefault();
-				} break;
-			}
-		});
+		this.domEvents = this.registerEvents();
 	}
 
 	get disabled(): boolean {
-		return this.listElement.inert;
+		return this.listElement.ariaDisabled === "true";
 	}
 
 	set disabled(value: boolean) {
-		this.listElement.inert = value;
+		this.listElement.tabIndex = value ? -1 : 0;
 		this.listElement.ariaDisabled = value ? "true" : "false";
+		if (value) {
+			this.domEvents.dispose();
+		} else {
+			this.domEvents = this.registerEvents();
+		}
 	}
 
 	get focusedIndex(): number {
@@ -243,7 +198,9 @@ class ListWidget<T> implements monaco.IDisposable {
 			const listItemElement = this.listElement.children[index] as HTMLElement;
 			listItemElement.ariaSelected = "true";
 			this.selected = index;
-			this.onDidSelectItemEmitter.fire({ index, item: this.items[index] });
+			if (!this.disabled) {
+				this.onDidSelectItemEmitter.fire({ index, item: this.items[index] });
+			}
 		} else {
 			this.selected = -1;
 		}
@@ -276,6 +233,7 @@ class ListWidget<T> implements monaco.IDisposable {
 	}
 
 	dispose(): void {
+		this.domEvents.dispose();
 		this.listElement.remove();
 		this.onDidSelectItemEmitter.dispose();
 	}
@@ -289,6 +247,67 @@ class ListWidget<T> implements monaco.IDisposable {
 		this.templates.push(template);
 		this.listElement.appendChild(listItemElement);
 		console.assert(this.templates.length === this.listElement.childElementCount);
+	}
+
+	private registerEvents(): monaco.IDisposable {
+		const focusEvent = (e: FocusEvent) => {
+			if (this.focused === -1 && this.listElement.children.length > 0) {
+				this.focus(0);
+			} else {
+				this.focus(this.focused);
+			}
+		};
+		const clickEvent = (e: PointerEvent) => {
+			let listItemElement: HTMLElement | undefined;
+			let target = e.target as HTMLElement | null;
+			while (target && target !== this.listElement) {
+				if (target.classList.contains("list-widget-item")) {
+					listItemElement = target as HTMLElement;
+					break;
+				}
+				target = target.parentElement;
+			}
+			if (listItemElement) {
+				console.assert(listItemElement.classList.contains("list-widget-item"));
+				const index = Number(listItemElement.dataset.index);
+				this.select(index);
+			}
+		};
+		const keyboardEvent = (e: KeyboardEvent) => {
+			switch (e.code) {
+				// TODO(seb) Space and Enter should select the focused element and raise events for that. In the tree,
+				// however, Space should only select but not toggle collapse/expansion.
+				case "Space":
+				case "Enter": {
+					this.select(this.focused);
+					e.preventDefault();
+				} break;
+				case "ArrowUp": {
+					this.focus(Math.max(0, this.focused - 1));
+					e.preventDefault();
+				} break;
+				case "ArrowDown": {
+					this.focus(Math.min(this.focused + 1, this.listElement.children.length - 1));
+					e.preventDefault();
+				} break;
+				case "Home": {
+					this.focus(0);
+					e.preventDefault();
+				} break;
+				case "End": {
+					this.focus(this.listElement.children.length - 1);
+					e.preventDefault();
+				} break;
+			}
+		};
+		this.listElement.addEventListener("focus", focusEvent);
+		this.listElement.addEventListener("click", clickEvent);
+		this.listElement.addEventListener("keydown", keyboardEvent);
+		return toDisposable(() => {
+			this.listElement.removeEventListener("focus", focusEvent);
+			this.listElement.removeEventListener("click", clickEvent);
+			this.listElement.removeEventListener("keydown", keyboardEvent);
+		});
 	}
 }
 
