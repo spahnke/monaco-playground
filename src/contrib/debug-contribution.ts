@@ -108,6 +108,9 @@ class DebugWidget extends Disposable implements monaco.editor.IOverlayWidget {
 
 interface IListElementRenderer<TElement, TTemplate> {
 	createTemplate(container: HTMLElement): TTemplate;
+	// TODO(seb) Consider making getAriaLabel optional and in most cases use "aria-hidden" in the individual renderers
+	// to hide cosmetic element contents (e.g. the chevron in the tree) and therefore use the DOM text content as label
+	// automatically.
 	getAriaLabel(element: TElement, index: number): string;
 	renderElement(element: TElement, index: number, template: TTemplate): void;
 	disposeTemplate(template: TTemplate): void;
@@ -115,6 +118,7 @@ interface IListElementRenderer<TElement, TTemplate> {
 
 interface AccessibilityOptions {
 	ariaLabel?: string;
+	ariaLabelledBy?: string; // TODO(seb) Support and prefer this because there's a visible label for our controls
 	ariaRole?: string;
 	ariaItemRole?: string;
 }
@@ -124,17 +128,26 @@ class ListWidget<T> implements monaco.IDisposable {
 	private readonly templates: unknown[] = [];
 	private readonly onDidSelectItemEmitter = new monaco.Emitter<{ index: number; item: T | undefined; }>();
 
+	/** Never set this outside of select(index). */
 	private selected = -1;
-	private current = -1;
+	/** Never set this outside of focus(index). */
+	private focused = -1;
 
 	constructor(container: HTMLElement, private renderer: IListElementRenderer<T, unknown>, readonly options?: AccessibilityOptions) {
 		this.listElement = document.createElement("div");
 		this.listElement.tabIndex = 0;
-		this.listElement.role = options?.ariaRole ?? "list";
+		this.listElement.role = options?.ariaRole ?? "listbox";
 		this.listElement.ariaLabel = options?.ariaLabel ?? "Listview";
 		this.listElement.classList.add("list-widget");
 		container.appendChild(this.listElement);
 
+		this.listElement.addEventListener("focus", e => {
+			if (this.focused === -1 && this.listElement.children.length > 0) {
+				this.focus(0);
+			} else {
+				this.focus(this.focused);
+			}
+		});
 		this.listElement.addEventListener("click", e => {
 			let listItemElement: HTMLElement | undefined;
 			let target = e.target as HTMLElement | null;
@@ -148,35 +161,32 @@ class ListWidget<T> implements monaco.IDisposable {
 			if (listItemElement) {
 				console.assert(listItemElement.classList.contains("list-widget-item"));
 				const index = Number(listItemElement.dataset.index);
-				this.selectedIndex = index;
-				this.onDidSelectItemEmitter.fire({ index, item: this.items[index] });
+				this.select(index);
 			}
 		});
 		this.listElement.addEventListener("keydown", e => {
 			switch (e.code) {
+				// TODO(seb) Space and Enter should select the focused element and raise events for that. In the tree,
+				// however, Space should only select but not toggle collapse/expansion.
 				case "Space":
 				case "Enter": {
-					const listItemElement = this.listElement.children[this.current];
-					if (listItemElement) {
-						this.selectedIndex = this.current;
-						this.onDidSelectItemEmitter.fire({ index: this.current, item: this.items[this.current] });
-					}
+					this.select(this.focused);
 					e.preventDefault();
 				} break;
 				case "ArrowUp": {
-					this.makeCurrent(Math.max(0, this.current - 1));
+					this.focus(Math.max(0, this.focused - 1));
 					e.preventDefault();
 				} break;
 				case "ArrowDown": {
-					this.makeCurrent(Math.min(this.current + 1, this.listElement.children.length - 1));
+					this.focus(Math.min(this.focused + 1, this.listElement.children.length - 1));
 					e.preventDefault();
 				} break;
 				case "Home": {
-					this.makeCurrent(0);
+					this.focus(0);
 					e.preventDefault();
 				} break;
 				case "End": {
-					this.makeCurrent(this.listElement.children.length - 1);
+					this.focus(this.listElement.children.length - 1);
 					e.preventDefault();
 				} break;
 			}
@@ -192,20 +202,50 @@ class ListWidget<T> implements monaco.IDisposable {
 		this.listElement.ariaDisabled = value ? "true" : "false";
 	}
 
+	get focusedIndex(): number {
+		return this.focused;
+	}
+
+	focus(index: number): void {
+		// TODO(seb) Hook up the focused element with aria-activedescendant on the parent (don't use tabindex and
+		// focus() for option elements). This requires IDs for every list item element though.
+		const focusedElement = this.listElement.children[this.focused];
+		if (focusedElement) {
+			focusedElement.classList.remove("focused");
+		}
+		if (index >= 0 && index < this.listElement.children.length) {
+			const listItemElement = this.listElement.children[index] as HTMLElement;
+			listItemElement.classList.add("focused");
+			listItemElement.scrollIntoView({ block: "nearest" });
+			this.focused = index;
+		} else {
+			this.focused = -1;
+		}
+	}
+
 	readonly items: T[] = [];
 	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
-
-	get focusedIndex(): number {
-		return this.current;
-	}
 
 	get selectedIndex(): number {
 		return this.selected;
 	}
 
-	set selectedIndex(value: number) {
-		this.makeCurrent(value);
-		this.makeSelected(value);
+	select(index: number): void {
+		const selectedElement = this.listElement.children[this.selected];
+		if (selectedElement) {
+			selectedElement.ariaSelected = null;
+		}
+		if (index >= 0 && index < this.listElement.children.length) {
+			const listItemElement = this.listElement.children[index] as HTMLElement;
+			listItemElement.ariaSelected = "true";
+			this.selected = index;
+			this.onDidSelectItemEmitter.fire({ index, item: this.items[index] });
+		} else {
+			this.selected = -1;
+		}
+		if (index !== this.focused) {
+			this.focus(index);
+		}
 	}
 
 	splice(start: number, deleteCount: number, items: T[] = []): void {
@@ -238,41 +278,13 @@ class ListWidget<T> implements monaco.IDisposable {
 
 	private createListItem(): void {
 		const listItemElement = document.createElement("div");
-		listItemElement.role = this.options?.ariaItemRole ?? "listitem";
+		listItemElement.role = this.options?.ariaItemRole ?? "option";
 		listItemElement.classList.add("list-widget-item");
 		listItemElement.dataset.index = String(this.listElement.childElementCount);
 		const template = this.renderer.createTemplate(listItemElement);
 		this.templates.push(template);
 		this.listElement.appendChild(listItemElement);
 		console.assert(this.templates.length === this.listElement.childElementCount);
-	}
-
-	private makeCurrent(index: number): void {
-		const currentElement = this.listElement.children[this.current];
-		if (currentElement) {
-			currentElement.ariaSelected = null;
-		}
-		if (index >= 0 && index < this.listElement.children.length) {
-			this.listElement.children[index].ariaSelected = "true"; // aria-selected = element with "focus"
-			this.listElement.children[index].scrollIntoView({ block: "nearest" });
-			this.current = index;
-		} else {
-			this.current = -1;
-		}
-	}
-
-	private makeSelected(index: number): void {
-		const selectedElement = this.listElement.children[this.selected];
-		if (selectedElement) {
-			selectedElement.ariaCurrent = null;
-		}
-		if (index >= 0 && index < this.listElement.children.length) {
-			this.listElement.children[index].ariaCurrent = "true"; // aria-current = actually selected/active element
-			this.listElement.children[index].scrollIntoView({ block: "nearest" });
-			this.selected = index;
-		} else {
-			this.selected = -1;
-		}
 	}
 }
 
@@ -649,7 +661,7 @@ export class DebugContribution extends Disposable {
 
 				const callframes = this.debugSession.getCallframes();
 				callframeListWidget.splice(0, callframeListWidget.items.length, callframes);
-				callframeListWidget.selectedIndex = callframes.length > 0 ? 0 : -1;
+				callframeListWidget.select(callframes.length > 0 ? 0 : -1);
 
 				let currentScriptIndex = -1;
 				const scriptUris = this.debugSession.getScriptUris();
@@ -660,7 +672,7 @@ export class DebugContribution extends Disposable {
 					}
 				}
 				// TODO(seb) We  need to do the same thing when selecting the callframe to keep this in sync.
-				scriptListWidget.selectedIndex = currentScriptIndex;
+				scriptListWidget.select(currentScriptIndex);
 			} else {
 				this.removeDebugLine();
 			}

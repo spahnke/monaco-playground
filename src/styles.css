@@ -84,16 +84,19 @@ aside {
 	user-select: none;
 }
 
-.list-widget > .list-widget-item:hover,
-.list-widget > .list-widget-item:focus {
+.list-widget > .list-widget-item:hover {
 	background-color: #eee;
 }
 
-.list-widget > .list-widget-item[aria-selected="true"] {
+.list-widget > .list-widget-item.focused {
+	background-color: #eee;
+}
+
+.list-widget:focus > .list-widget-item.focused {
 	background-color: #ddd;
 }
 
-.list-widget > .list-widget-item[aria-current="true"] {
+.list-widget > .list-widget-item[aria-selected="true"] {
 	outline: 1px solid var(--monaco-widget-focus-border-color);
 	outline-offset: -1px;
 	border-radius: var(--monaco-widget-border-radius);
