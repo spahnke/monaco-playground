@@ -80,23 +80,26 @@ aside {
 .list-widget > .list-widget-item {
 	display: block;
 	padding: 0.5ex;
-	cursor: pointer;
 	user-select: none;
 }
 
-.list-widget > .list-widget-item:hover {
+.list-widget:not([aria-disabled="true"]) > .list-widget-item {
+	cursor: pointer;
+}
+
+.list-widget:not([aria-disabled="true"]) > .list-widget-item:hover {
 	background-color: #eee;
 }
 
-.list-widget > .list-widget-item.focused {
+.list-widget:not([aria-disabled="true"]) > .list-widget-item.focused {
 	background-color: #eee;
 }
 
-.list-widget:focus > .list-widget-item.focused {
+.list-widget:not([aria-disabled="true"]):focus > .list-widget-item.focused {
 	background-color: #ddd;
 }
 
-.list-widget > .list-widget-item[aria-selected="true"] {
+.list-widget:not([aria-disabled="true"]) > .list-widget-item[aria-selected="true"] {
 	outline: 1px solid var(--monaco-widget-focus-border-color);
 	outline-offset: -1px;
 	border-radius: var(--monaco-widget-border-radius);
