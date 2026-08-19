@@ -126,9 +126,9 @@ class ListWidget<T> extends Disposable {
 
 	readonly listElement: HTMLElement;
 	private readonly templates: unknown[] = [];
-	private readonly onDidFocusItemEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
-	private readonly onDidSelectItemEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
-	private readonly onClickEmitter = this.register(new monaco.Emitter<PointerEvent>());
+	private readonly onDidChangeFocusEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
+	private readonly onDidChangeSelectionEmitter = this.register(new monaco.Emitter<{ index: number; item: T | undefined; }>());
+	private readonly onMouseClickEmitter = this.register(new monaco.Emitter<PointerEvent>());
 	private readonly onKeyDownEmitter = this.register(new monaco.Emitter<KeyboardEvent>());
 	private domEvents: monaco.IDisposable;
 	/** Never set this outside of focus(index). */
@@ -170,7 +170,7 @@ class ListWidget<T> extends Disposable {
 		return this.focused;
 	}
 
-	focus(index: number, preventEventFire = false): void {
+	focus(index: number): void {
 		const focusedElement = this.listElement.children[this.focused];
 		if (focusedElement) {
 			this.listElement.ariaActiveDescendantElement = null;
@@ -182,25 +182,25 @@ class ListWidget<T> extends Disposable {
 			listItemElement.classList.add("focused");
 			listItemElement.scrollIntoView({ block: "nearest" });
 			this.focused = index;
-			if (!this.disabled && !preventEventFire) {
-				this.onDidFocusItemEmitter.fire({ index, item: this.items[index] });
-			}
 		} else {
 			this.focused = -1;
+		}
+		if (!this.disabled) {
+			this.onDidChangeFocusEmitter.fire({ index: this.focused, item: this.items[this.focused] });
 		}
 	}
 
 	readonly items: T[] = [];
-	readonly onDidFocusItem = this.onDidFocusItemEmitter.event;
-	readonly onDidSelectItem = this.onDidSelectItemEmitter.event;
-	readonly onClick = this.onClickEmitter.event;
+	readonly onDidChangeFocus = this.onDidChangeFocusEmitter.event;
+	readonly onDidChangeSelection = this.onDidChangeSelectionEmitter.event;
+	readonly onMouseClick = this.onMouseClickEmitter.event;
 	readonly onKeyDown = this.onKeyDownEmitter.event;
 
 	get selectedIndex(): number {
 		return this.selected;
 	}
 
-	select(index: number, preventEventFire = false): void {
+	select(index: number): void {
 		const selectedElement = this.listElement.children[this.selected];
 		if (selectedElement) {
 			selectedElement.ariaSelected = null;
@@ -209,17 +209,18 @@ class ListWidget<T> extends Disposable {
 			const listItemElement = this.listElement.children[index] as HTMLElement;
 			listItemElement.ariaSelected = "true";
 			this.selected = index;
-			if (!this.disabled && !preventEventFire) {
-				this.onDidSelectItemEmitter.fire({ index, item: this.items[index] });
-			}
 		} else {
 			this.selected = -1;
+		}
+		if (!this.disabled) {
+			this.onDidChangeSelectionEmitter.fire({ index: this.selected, item: this.items[this.selected] });
 		}
 	}
 
 	splice(start: number, deleteCount: number, items: T[] = []): void {
 		// TODO(seb) This is the easy implementation where we rerender everything. Can we write it in a more efficient
-		// way that only changes the items that need to be changed?
+		// way that only changes the items that need to be changed? -> Necessary to do updates of individual elements
+		// using splice.
 		this.items.splice(start, deleteCount, ...items);
 		while (this.listElement.children.length < this.items.length) {
 			this.createListItem();
@@ -247,9 +248,8 @@ class ListWidget<T> extends Disposable {
 			}
 		} else {
 			if (this.focused >= start + deleteCount) {
-				// Focused element was after the entire block of spliced elements -> move focus without triggering
-				// event.
-				this.focus(this.focused + items.length - deleteCount, true);
+				// Focused element was after the entire block of spliced elements -> move focus.
+				this.focus(this.focused + items.length - deleteCount);
 			} else {
 				// Focused element was among the spliced elements -> remove focus
 				this.focus(-1);
@@ -268,9 +268,8 @@ class ListWidget<T> extends Disposable {
 			}
 		} else {
 			if (this.selected >= start + deleteCount) {
-				// Selected element was after the entire block of spliced elements -> move selection without triggering
-				// event.
-				this.select(this.selected + items.length - deleteCount, true);
+				// Selected element was after the entire block of spliced elements -> move selection.
+				this.select(this.selected + items.length - deleteCount);
 			} else {
 				// Selected element was among the spliced elements -> remove selection
 				this.select(-1);
@@ -320,7 +319,7 @@ class ListWidget<T> extends Disposable {
 				this.select(index);
 				this.focus(index);
 			}
-			this.onClickEmitter.fire(e);
+			this.onMouseClickEmitter.fire(e);
 		};
 		const keyboardEvent = (e: KeyboardEvent) => {
 			switch (e.code) {
@@ -421,7 +420,7 @@ class TreeWidget<T> extends Disposable {
 			ariaItemRole: "treeitem",
 			...options,
 		}));
-		this.register(this.listWidget.onClick(e => {
+		this.register(this.listWidget.onMouseClick(e => {
 			const treeNode = this.listWidget.items[this.listWidget.focusedIndex];
 			if (treeNode && treeNode.children.length > 0) {
 				if (treeNode.open) {
@@ -489,9 +488,9 @@ class TreeWidget<T> extends Disposable {
 	get disabled(): boolean { return this.listWidget.disabled; }
 	set disabled(value: boolean) { this.listWidget.disabled = value; }
 
+	get onDidChangeFocus() { return this.listWidget.onDidChangeFocus; }
+	get onDidChangeSelection() { return this.listWidget.onDidChangeSelection; }
 	readonly onDidExpandItem = this.onDidExpandItemEmitter.event;
-	get onDidFocusItem() { return this.listWidget.onDidFocusItem; }
-	get onDidSelectItem() { return this.listWidget.onDidSelectItem; }
 
 	render(root: TreeNode<T> | undefined): void {
 		this.listWidget.splice(0, this.listWidget.items.length, this.getSubtreeListNodes(root));
@@ -773,7 +772,7 @@ export class DebugContribution extends Disposable {
 				this.removeDebugLine();
 			}
 		}));
-		this.register(callframeListWidget.onDidSelectItem(async e => {
+		this.register(callframeListWidget.onDidChangeSelection(async e => {
 			if (e.index !== -1) {
 				// TODO(seb) Do we need to guard this with a cancellation token too? Probably yes?
 				const { model, line } = await this.debugSession.getModelAndLineByStackframeIndex(e.index);
@@ -787,7 +786,7 @@ export class DebugContribution extends Disposable {
 				});
 			}
 		}));
-		this.register(scriptListWidget.onDidSelectItem(async e => {
+		this.register(scriptListWidget.onDidChangeSelection(async e => {
 			if (e.item) {
 				const model = await this.debugSession.getModelByUri(e.item);
 				editor.monacoEditor.setModel(model);
