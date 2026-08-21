@@ -120,6 +120,20 @@ export class DebugSession extends Disposable {
 		return callframes;
 	}
 
+	// TODO(seb) Temp return type
+	async getProperties(remoteObject: Protocol.Runtime.RemoteObject): Promise<Protocol.Runtime.PropertyDescriptor[]> {
+		let result: Protocol.Runtime.PropertyDescriptor[] = [];
+		if (remoteObject.objectId && this.protocol) {
+			const response = await this.protocol.runtime.getProperties({
+				objectId: remoteObject.objectId,
+				ownProperties: true,
+				generatePreview: true,
+			});
+			result = response.result;
+		}
+		return result;
+	}
+
 	getScriptUris(): monaco.Uri[] {
 		const uris: monaco.Uri[] = [];
 		for (const script of this.scripts.values()) {

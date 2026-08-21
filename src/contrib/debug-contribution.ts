@@ -492,13 +492,13 @@ class TreeWidget<T> extends Disposable {
 	get onDidChangeSelection() { return this.listWidget.onDidChangeSelection; }
 	readonly onDidExpandItem = this.onDidExpandItemEmitter.event;
 
-	render(root: TreeNode<T> | undefined): void {
-		this.listWidget.splice(0, this.listWidget.items.length, this.getSubtreeListNodes(root));
+	render(nodes: TreeNode<T>[]): void {
+		this.listWidget.splice(0, this.listWidget.items.length, this.getSubtreeListNodes(nodes));
 	}
 
 	private collapseNode(node: TreeNode<T>, index: number): void {
 		if (node.children.length > 0 && node.open) {
-			const subtreeList = this.getSubtreeListNodes(node);
+			const subtreeList = this.getSubtreeListNodes([node]);
 			node.open = false;
 			this.listWidget.splice(index, subtreeList.length, [node]);
 		}
@@ -507,16 +507,16 @@ class TreeWidget<T> extends Disposable {
 	private expandNode(node: TreeNode<T>, index: number): void {
 		if (node.children.length > 0 && !node.open) {
 			node.open = true;
-			const subtreeList = this.getSubtreeListNodes(node);
+			const subtreeList = this.getSubtreeListNodes([node]);
 			this.listWidget.splice(index, 1, subtreeList);
 			this.onDidExpandItemEmitter.fire(node);
 		}
 	}
 
-	/** Returns a flat list of all nodes in the subtree including the passed `node`. */
-	private getSubtreeListNodes(node: TreeNode<T> | undefined): TreeNode<T>[] {
+	/** Returns a flat list of all passed `nodes` and their respective subtrees. */
+	private getSubtreeListNodes(nodes: TreeNode<T>[]): TreeNode<T>[] {
 		const list: TreeNode<T>[] = [];
-		if (node) {
+		for (const node of nodes) {
 			const stack: TreeNode<T>[] = [node];
 			while (stack.length > 0) {
 				const currentNode = stack.pop()!;
@@ -641,8 +641,9 @@ export class DebugContribution extends Disposable {
 		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListContainer, new ScriptRenderer(), { ariaLabelledBy: scriptListContainer.firstElementChild });
 
 		callframeListWidget.disabled = true;
+		// variableTreeWidget.disabled = true;
 		scriptListWidget.disabled = true;
-		variableTreeWidget.render({
+		variableTreeWidget.render([{
 			level: 0,
 			open: true,
 			data: "root",
@@ -723,7 +724,7 @@ export class DebugContribution extends Disposable {
 					children: [],
 				},
 			],
-		});
+		}]);
 
 		const debugActiveContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionActive", false);
 		const debugPausedContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionPaused", false);
@@ -748,9 +749,11 @@ export class DebugContribution extends Disposable {
 			debugRemoteAddressInput.setDisabled(active);
 			debugWidget.updateState(active, debugPausedContextKey.get() ?? false);
 			callframeListWidget.disabled = !active;
+			variableTreeWidget.disabled = !active;
 			scriptListWidget.disabled = !active;
 			if (!active) {
 				callframeListWidget.splice(0, callframeListWidget.items.length);
+				variableTreeWidget.render([]);
 				scriptListWidget.splice(0, scriptListWidget.items.length);
 			}
 		}));
@@ -779,6 +782,48 @@ export class DebugContribution extends Disposable {
 				callframeListWidget.splice(0, callframeListWidget.items.length, callframes);
 				callframeListWidget.select(callframes.length > 0 ? 0 : -1);
 				callframeListWidget.focus(callframes.length > 0 ? 0 : -1);
+
+				const variableTree: TreeNode<string>[] = [];
+				if (callframes.length > 0) {
+					const callframe = callframes[0];
+					for (const scope of callframe.scopeChain) {
+						const children: TreeNode<string>[] = [];
+						const properties = await this.debugSession.getProperties(scope.object);
+						for (const property of properties) {
+							const label = property.name;
+							let value = "";
+							if (property.value) {
+								if (property.value.description) {
+									let description = property.value.description;
+									const openBrace = description.indexOf("{");
+									if (openBrace >= 0) {
+										description = description.substring(0, openBrace + 1) + "...}";
+									}
+									value += description.trim();
+								}
+								if (property.value.type === "function" && property.value.className === "Function" && value.startsWith("function")) {
+									value = "ƒ" + value.substring(8);
+								}
+							}
+							if (!value) {
+								value = "<value unavailable>";
+							}
+							children.push({
+								level: 1,
+								open: false,
+								data: label + ": " + value,
+								children: [],
+							});
+						}
+						variableTree.push({
+							level: 0,
+							open: scope.type === "script" || scope.type === "local",
+							data: scope.type,
+							children,
+						});
+					}
+				}
+				variableTreeWidget.render(variableTree);
 
 				let currentScriptIndex = -1;
 				const scriptUris = this.debugSession.getScriptUris();
