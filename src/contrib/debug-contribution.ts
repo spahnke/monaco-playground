@@ -1,7 +1,7 @@
 import { Disposable, toDisposable } from "../common/disposable.js";
 import { isComment } from "../common/monaco-utils.js";
 import { WebsocketTransport } from "../debug/debug-protocol.js";
-import { DebugSession } from "../debug/debug-session.js";
+import { Callframe, DebugSession } from "../debug/debug-session.js";
 import { CodeEditor } from "../code-editor.js";
 import { CodeEditorTextInput } from "../code-editor-text-input.js";
 
@@ -532,20 +532,43 @@ class TreeWidget<T> extends Disposable {
 	}
 }
 
-class CallframeRenderer implements IListElementRenderer<string, HTMLSpanElement> {
-	createTemplate(container: HTMLElement): HTMLSpanElement {
-		const span = document.createElement("span");
-		container.appendChild(span);
-		return span;
+interface CallframeTemplate {
+	element: HTMLSpanElement;
+	name: HTMLSpanElement;
+	location: HTMLSpanElement;
+}
+
+class CallframeRenderer implements IListElementRenderer<Callframe, CallframeTemplate> {
+	createTemplate(container: HTMLElement): CallframeTemplate {
+		const element = document.createElement("span");
+		// TODO(seb) Use CSS for styling
+		element.style.display = "flex";
+		element.style.flexDirection = "column";
+		container.appendChild(element);
+		const name = document.createElement("span");
+		name.style.overflow = "hidden";
+		name.style.textOverflow = "ellipsis";
+		name.style.whiteSpace = "nowrap";
+		element.appendChild(name);
+		const location = document.createElement("span");
+		location.style.color = "#666";
+		location.style.fontSize = "smaller";
+		location.style.overflow = "hidden";
+		location.style.textOverflow = "ellipsis";
+		location.style.whiteSpace = "nowrap";
+		element.appendChild(location);
+		return { element, name, location };
 	}
 
-	renderElement(element: string, index: number, template: HTMLSpanElement): void {
-		template.innerText = element;
-		template.title = element;
+	renderElement(element: Callframe, index: number, template: CallframeTemplate): void {
+		template.element.title = element.name;
+		template.name.innerText = element.name;
+		template.location.innerText = element.location;
+		template.location.title = element.location;
 	}
 
-	disposeTemplate(template: HTMLSpanElement): void {
-		template.remove();
+	disposeTemplate(template: CallframeTemplate): void {
+		template.element.remove();
 	}
 }
 
@@ -613,7 +636,7 @@ export class DebugContribution extends Disposable {
 		editor.monacoEditor.addOverlayWidget(debugWidget);
 		this.register(toDisposable(() => editor.monacoEditor.removeOverlayWidget(debugWidget)));
 
-		const callframeListWidget = new ListWidget<string>(callframeListContainer, new CallframeRenderer(), { ariaLabelledBy: callframeListContainer.firstElementChild });
+		const callframeListWidget = new ListWidget<Callframe>(callframeListContainer, new CallframeRenderer(), { ariaLabelledBy: callframeListContainer.firstElementChild });
 		const variableTreeWidget = new TreeWidget<string>(variableTreeContainer, new VariableRenderer(), { ariaLabelledBy: variableTreeContainer.firstElementChild });
 		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListContainer, new ScriptRenderer(), { ariaLabelledBy: scriptListContainer.firstElementChild });
 

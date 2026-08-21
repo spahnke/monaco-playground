@@ -9,6 +9,12 @@ interface Script {
 	wasm?: Protocol.Debugger.DisassembleWasmModuleResponse;
 }
 
+export interface Callframe {
+	name: string;
+	location: string;
+	scopeChain: Protocol.Debugger.Scope[]; // temp
+}
+
 export class DebugSession extends Disposable {
 	private protocol?: DebugProtocol;
 	private readonly activeEvent = this.register(new monaco.Emitter<boolean>());
@@ -92,18 +98,22 @@ export class DebugSession extends Disposable {
 		this.protocol?.debugger.resume({});
 	}
 
-	getCallframes(): string[] {
-		const callframes: string[] = [];
+	getCallframes(): Callframe[] {
+		const callframes: Callframe[] = [];
 		if (this.pauseState) {
 			for (const callframe of this.pauseState.callFrames) {
 				const script = this.scripts.get(callframe.location.scriptId);
 				if (script) {
-					if (script.metadata.scriptLanguage === "JavaScript") {
-						callframes.push(`${script.metadata.url}:${callframe.location.lineNumber + 1}`);
-					} else if (script.metadata.scriptLanguage === "WebAssembly") {
-						// TODO(seb) Can we convert this offset to a proper line number? Is that useful? Keep the offset in addition to line number?
-						callframes.push(`${script.metadata.url}:${callframe.location.columnNumber}`);
-					}
+					// TODO(seb) Can we convert the WASM offset to a proper line number? Is that useful? Keep the offset
+					// in addition to line number? Chromium shows the offset in hex and also doesn't have line numbers
+					// for the WAT code but instead shows the hex offset range of a line.
+					callframes.push({
+						name: callframe.functionName || "(anonymous)",
+						location: script.metadata.scriptLanguage === "JavaScript"
+							? `${script.metadata.url}:${callframe.location.lineNumber + 1}`
+							: `${script.metadata.url}:0x${(callframe.location.columnNumber ?? 0).toString(16).padStart(4, "0")}`,
+						scopeChain: callframe.scopeChain,
+					});
 				}
 			}
 		}
