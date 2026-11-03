@@ -9,7 +9,7 @@ type MonacoLocale = "en" | "cs" | "de" | "es" | "fr" | "it" | "ja" | "ko" | "pl"
  */
 export async function loadMonaco(locale: MonacoLocale = "en"): Promise<void> {
 	if (locale !== "en") {
-		await import(`/lib/monaco-editor/nls.messages.${locale}.js`);
+		await import(`/lib/monaco-editor/${locale}.js`);
 	}
 	// NOTE Using a variable a) avoid TS errors because this module only exists at runtime and b) to prevent any bundler
 	// from trying to inline import the file here.

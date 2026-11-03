@@ -18,7 +18,7 @@ console.log(`Overwritten monaco bundled dompurify here '${monacoDomPurifyPath}'`
 
 const watch = process.argv.includes("watch");
 
-for (const srcPath of fs.globSync("node_modules/monaco-editor/esm/nls.messages.*.js")) {
+for (const srcPath of fs.globSync("node_modules/monaco-editor/esm/vs/nls/lang/*.js")) {
 	const destPath = `wwwroot/lib/monaco-editor/${path.basename(srcPath)}`;
 	fs.mkdirSync(path.dirname(destPath), { recursive: true });
 	fs.copyFileSync(srcPath, destPath);
