@@ -1,13 +1,20 @@
 import esbuild from "esbuild";
 import fs from "fs";
 import path from "path";
-import { styleText } from "node:util"
+import url from "url";
+import util from "util";
 
 if (process.argv.includes("clean")) {
 	fs.rmSync("test/dist", { recursive: true, force: true });
 	fs.rmSync("wwwroot", { recursive: true, force: true });
 	process.exit();
 }
+
+// NOTE(seb) Temp workaround for https://github.com/microsoft/monaco-editor/issues/5517 (see also the override in package.json)
+const monacoDomPurifyUrl = import.meta.resolve("monaco-editor/base/browser/dompurify/dompurify.js");
+const monacoDomPurifyPath = url.fileURLToPath(monacoDomPurifyUrl);
+fs.writeFileSync(monacoDomPurifyPath, 'export { default } from "dompurify";');
+console.log(`Overwritten monaco bundled dompurify here '${monacoDomPurifyPath}'`);
 
 const watch = process.argv.includes("watch");
 
@@ -25,9 +32,9 @@ for (const srcPath of staticFiles) {
 	if (watch) {
 		fs.watch(srcPath, undefined, (event, fileNameWithoutPath) => {
 			if (event === "change") {
-				console.error(styleText("white", `[watch] build started (change: "${srcPath}")`));
+				console.error(util.styleText("white", `[watch] build started (change: "${srcPath}")`));
 				fs.copyFileSync(srcPath, destPath);
-				console.error(styleText("white", "[watch] build finished"));
+				console.error(util.styleText("white", "[watch] build finished"));
 			} else {
 				console.warn("[watch] renames not supported");
 			}
