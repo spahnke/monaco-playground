@@ -2,8 +2,7 @@
 
 ## Building ESLint
 
-> [!NOTE]
-> Ideally clone ESLint into a sibling folder to this project so all the steps work without changes to paths.
+Ideally clone ESLint into a sibling folder to this project so all the steps work without changes to paths.
 
 Make sure you have the latest sources by either cloning or pulling on the branch `latest` and ran `npm install`, e.g.:
 
@@ -11,7 +10,7 @@ Make sure you have the latest sources by either cloning or pulling on the branch
 git clone https://github.com/eslint/eslint.git
 cd eslint
 git switch latest
-npm install
+npm install --ignore-scripts
 ```
 
 Then patch the Webpack config, build, and copy the build result over. The patch is necessary because ESLint gets loaded
@@ -23,5 +22,4 @@ npm run build:webpack
 cp build/eslint.js ../monaco-playground/src/worker/eslint
 ```
 
-> [!NOTE]
-> To build a minified version use `npm run build:webpack -- -- production` instead.
+To build a minified version use `npm run build:webpack -- -- production` instead.
