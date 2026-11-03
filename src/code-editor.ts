@@ -21,7 +21,7 @@ export class CodeEditor extends Disposable {
 			colorDecorators: true,
 			defaultColorDecorators: "never",
 			definitionLinkOpensInPeek: false,
-			fixedOverflowWidgets: true,
+			fixedOverflowWidgets: false, // TODO(seb) Temporarily off as a workaround because of https://github.com/microsoft/monaco-editor/issues/5511
 			fontLigatures: true,
 			fontSize: 13,
 			formatOnPaste: true,

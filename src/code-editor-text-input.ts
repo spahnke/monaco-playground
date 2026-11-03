@@ -15,7 +15,7 @@ export class CodeEditorTextInput extends Disposable {
 			automaticLayout: true,
 			contextmenu: false,
 			cursorStyle: "line-thin",
-			fixedOverflowWidgets: true,
+			fixedOverflowWidgets: false, // TODO(seb) Temporarily off as a workaround because of https://github.com/microsoft/monaco-editor/issues/5511; is this even necessary here at all since we disable the context menu?
 			folding: false,
 			fontFamily: useMonospaceFont ? undefined : `-apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "HelveticaNeue-Light", system-ui, "Ubuntu", "Droid Sans", sans-serif`,
 			fontLigatures: true,
