@@ -1,9 +1,8 @@
 {
 	"compilerOptions": {
-		"module": "es2022",
-		"target": "es2022",
+		"target": "es2024",
 		"moduleResolution": "bundler",
-		"lib": ["ES2022", "WebWorker"],
+		"lib": ["ES2024", "WebWorker"],
 		"types": [],
 		"sourceMap": true,
 		"checkJs": false,
