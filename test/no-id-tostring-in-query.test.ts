@@ -1,5 +1,5 @@
-import { RuleTester } from "eslint";
 import rule from "../src/rules/no-id-tostring-in-query.js";
+import { RuleTester } from "./rule-tester.js";
 
 rule.create = rule.create.bind(rule);
 

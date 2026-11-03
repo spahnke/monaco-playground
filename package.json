@@ -19,7 +19,6 @@
 		"@types/estree": "1.0.10",
 		"@types/node": "26.6.6",
 		"esbuild": "0.28.2",
-		"eslint": "10.14.0",
 		"monaco-editor": "0.57.0",
 		"typescript": "7.0.2"
 	},
