@@ -157,12 +157,14 @@ class ListWidget<T> extends Disposable {
 	}
 
 	set disabled(value: boolean) {
-		this.listElement.tabIndex = value ? -1 : 0;
-		this.listElement.ariaDisabled = value ? "true" : "false";
-		if (value) {
-			this.domEvents.dispose();
-		} else {
-			this.domEvents = this.registerEvents();
+		if (this.disabled !== value) {
+			this.listElement.tabIndex = value ? -1 : 0;
+			this.listElement.ariaDisabled = value ? "true" : "false";
+			if (value) {
+				this.domEvents.dispose();
+			} else {
+				this.domEvents = this.registerEvents();
+			}
 		}
 	}
 
