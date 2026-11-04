@@ -15,6 +15,8 @@ export interface Callframe {
 	scopeChain: Protocol.Debugger.Scope[]; // temp
 }
 
+export type PropertyDescriptor = Protocol.Runtime.PropertyDescriptor; // temp
+
 export class DebugSession extends Disposable {
 	private protocol?: DebugProtocol;
 	private readonly activeEvent = this.register(new monaco.Emitter<boolean>());
@@ -120,9 +122,9 @@ export class DebugSession extends Disposable {
 		return callframes;
 	}
 
-	// TODO(seb) Temp return type
-	async getProperties(remoteObject: Protocol.Runtime.RemoteObject): Promise<Protocol.Runtime.PropertyDescriptor[]> {
-		let result: Protocol.Runtime.PropertyDescriptor[] = [];
+	// TODO(seb) Temp types
+	async getProperties(remoteObject: Protocol.Runtime.RemoteObject): Promise<PropertyDescriptor[]> {
+		let result: PropertyDescriptor[] = [];
 		if (remoteObject.objectId && this.protocol) {
 			const response = await this.protocol.runtime.getProperties({
 				objectId: remoteObject.objectId,

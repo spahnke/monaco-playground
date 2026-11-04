@@ -1,7 +1,7 @@
 import { Disposable, toDisposable } from "../common/disposable.js";
 import { isComment } from "../common/monaco-utils.js";
 import { WebsocketTransport } from "../debug/debug-protocol.js";
-import { Callframe, DebugSession } from "../debug/debug-session.js";
+import { Callframe, DebugSession, PropertyDescriptor } from "../debug/debug-session.js";
 import { CodeEditor } from "../code-editor.js";
 import { CodeEditorTextInput } from "../code-editor-text-input.js";
 
@@ -611,16 +611,39 @@ class CallframeRenderer implements IListElementRenderer<Callframe, CallframeTemp
 	}
 }
 
-class VariableRenderer implements IListElementRenderer<string, HTMLSpanElement> {
+class VariableRenderer implements IListElementRenderer<PropertyDescriptor | string, HTMLSpanElement> {
 	createTemplate(container: HTMLElement): HTMLSpanElement {
 		const span = document.createElement("span");
 		container.appendChild(span);
 		return span;
 	}
 
-	renderElement(element: string, index: number, template: HTMLSpanElement): void {
-		template.innerText = element;
-		template.title = element;
+	renderElement(property: PropertyDescriptor | string, index: number, template: HTMLSpanElement): void {
+		if (typeof property === "string") {
+			template.innerText = property;
+			template.title = property;
+		} else {
+			const label = property.name;
+			let value = "";
+			if (property.value) {
+				if (property.value.description) {
+					let description = property.value.description;
+					const openBrace = description.indexOf("{");
+					if (openBrace >= 0) {
+						description = description.substring(0, openBrace + 1) + "...}";
+					}
+					value += description.trim();
+				}
+				if (property.value.type === "function" && property.value.className === "Function" && value.startsWith("function")) {
+					value = "ƒ" + value.substring(8);
+				}
+			}
+			if (!value) {
+				value = "<value unavailable>";
+			}
+			template.innerText = label + ": " + value;
+			template.title = property.value?.description ?? value;
+		}
 	}
 
 	disposeTemplate(template: HTMLSpanElement): void {
@@ -676,7 +699,7 @@ export class DebugContribution extends Disposable {
 		this.register(toDisposable(() => editor.monacoEditor.removeOverlayWidget(debugWidget)));
 
 		const callframeListWidget = new ListWidget<Callframe>(callframeListContainer, new CallframeRenderer(), { ariaLabelledBy: callframeListContainer.firstElementChild });
-		const variableTreeWidget = new TreeWidget<string>(variableTreeContainer, new VariableRenderer(), { ariaLabelledBy: variableTreeContainer.firstElementChild });
+		const variableTreeWidget = new TreeWidget<PropertyDescriptor | string>(variableTreeContainer, new VariableRenderer(), { ariaLabelledBy: variableTreeContainer.firstElementChild });
 		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListContainer, new ScriptRenderer(), { ariaLabelledBy: scriptListContainer.firstElementChild });
 
 		callframeListWidget.disabled = true;
@@ -740,43 +763,25 @@ export class DebugContribution extends Disposable {
 				callframeListWidget.select(callframes.length > 0 ? 0 : -1);
 				callframeListWidget.focus(callframes.length > 0 ? 0 : -1);
 
-				const variableTree: TreeNode<string>[] = [];
+				const variableTree: TreeNode<PropertyDescriptor | string>[] = [];
 				if (callframes.length > 0) {
 					const callframe = callframes[0];
 					for (const scope of callframe.scopeChain) {
-						const children: TreeNode<string>[] = [];
-						const properties = await this.debugSession.getProperties(scope.object);
-						for (const property of properties) {
-							const label = property.name;
-							let value = "";
-							if (property.value) {
-								if (property.value.description) {
-									let description = property.value.description;
-									const openBrace = description.indexOf("{");
-									if (openBrace >= 0) {
-										description = description.substring(0, openBrace + 1) + "...}";
-									}
-									value += description.trim();
-								}
-								if (property.value.type === "function" && property.value.className === "Function" && value.startsWith("function")) {
-									value = "ƒ" + value.substring(8);
-								}
-							}
-							if (!value) {
-								value = "<value unavailable>";
-							}
-							children.push({
-								level: 1,
-								open: false,
-								data: label + ": " + value,
-								children: [],
-							});
-						}
 						variableTree.push({
 							level: 0,
 							open: false,
 							data: scope.type,
-							children,
+							children: [{
+								level: 1,
+								open: false,
+								data: {
+									name: "Loading...",
+									value: scope.object,
+									configurable: false,
+									enumerable: false,
+								},
+								children: [],
+							}],
 						});
 					}
 				}
@@ -817,7 +822,22 @@ export class DebugContribution extends Disposable {
 			}
 		}));
 		this.register(variableTreeWidget.onDidExpandItem(async e => {
-			console.log("Expanded", e);
+			if (e) {
+				// TODO(seb) This is very jank, how can we indicate a yet to be loaded node? Also, can we possibly have
+				// a "onWillExpand" instead and get and update the children before the node is actually expanded?
+				if (e.children.length === 1 && typeof e.children[0].data !== "string" && e.children[0].data.name === "Loading..." && e.children[0].data.value) {
+					const properties = await this.debugSession.getProperties(e.children[0].data.value);
+					const children = properties.map(p => {
+						return {
+							level: e.level + 1,
+							data: p,
+							open: false,
+							children: [],
+						};
+					});
+					variableTreeWidget.update(e, children);
+				}
+			}
 		}));
 		this.register(scriptListWidget.onDidChangeSelection(async e => {
 			if (e.item) {
