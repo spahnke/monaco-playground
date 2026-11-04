@@ -335,7 +335,7 @@ class ListWidget<T> extends Disposable {
 					e.preventDefault();
 				} break;
 				case "ArrowDown": {
-					this.focus(Math.min(this.focused + 1, this.listElement.children.length - 1));
+					this.focus(Math.min(this.focused + 1, this.items.length - 1));
 					e.preventDefault();
 				} break;
 				case "Home": {
@@ -343,7 +343,7 @@ class ListWidget<T> extends Disposable {
 					e.preventDefault();
 				} break;
 				case "End": {
-					this.focus(this.listElement.children.length - 1);
+					this.focus(this.items.length - 1);
 					e.preventDefault();
 				} break;
 			}
