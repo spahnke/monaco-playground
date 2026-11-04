@@ -498,6 +498,43 @@ class TreeWidget<T> extends Disposable {
 		this.listWidget.splice(0, this.listWidget.items.length, this.getSubtreeListNodes(nodes));
 	}
 
+	// TODO(seb) It might be nice to expand the entire path for expanding, focusing and selecting, but for now we only
+	// support already visible nodes.
+	expand(node: TreeNode<T> | null | undefined): void {
+		if (node) {
+			const index = this.listWidget.items.findIndex(x => x === node);
+			if (index !== -1) {
+				this.expandNode(node, index);
+			}
+		}
+	}
+
+	focus(node: TreeNode<T> | null | undefined): void {
+		let index = -1;
+		if (node) {
+			index = this.listWidget.items.findIndex(x => x === node);
+		}
+		this.listWidget.focus(index);
+	}
+
+	select(node: TreeNode<T> | null | undefined): void {
+		let index = -1;
+		if (node) {
+			index = this.listWidget.items.findIndex(x => x === node);
+		}
+		this.listWidget.select(index);
+	}
+
+	update(node: TreeNode<T>, children: TreeNode<T>[]): void {
+		const index = this.listWidget.items.findIndex(x => x === node);
+		if (index !== -1) {
+			const currentSubTreeListCount = this.getSubtreeListNodes([node]).length;
+			node.children = children;
+			const newSubTreeList = this.getSubtreeListNodes([node]);
+			this.listWidget.splice(index, currentSubTreeListCount, newSubTreeList);
+		}
+	}
+
 	private collapseNode(node: TreeNode<T>, index: number): void {
 		if (node.children.length > 0 && node.open) {
 			const subtreeList = this.getSubtreeListNodes([node]);
@@ -643,90 +680,8 @@ export class DebugContribution extends Disposable {
 		const scriptListWidget = new ListWidget<monaco.Uri>(scriptListContainer, new ScriptRenderer(), { ariaLabelledBy: scriptListContainer.firstElementChild });
 
 		callframeListWidget.disabled = true;
-		// variableTreeWidget.disabled = true;
+		variableTreeWidget.disabled = true;
 		scriptListWidget.disabled = true;
-		variableTreeWidget.render([{
-			level: 0,
-			open: true,
-			data: "root",
-			children: [
-				{
-					level: 1,
-					open: false,
-					data: "child1",
-					children: [],
-				},
-				{
-					level: 1,
-					open: true,
-					data: "child2",
-					children: [
-						{
-							level: 2,
-							open: false,
-							data: "child1",
-							children: [],
-						},
-						{
-							level: 2,
-							open: false,
-							data: "child2",
-							children: [],
-						},
-						{
-							level: 2,
-							open: false,
-							data: "child3",
-							children: [
-								{
-									level: 3,
-									open: true,
-									data: "child1",
-									children: [
-										{
-											level: 4,
-											open: false,
-											data: "child1",
-											children: [],
-										},
-										{
-											level: 4,
-											open: false,
-											data: "child2 with a very long name that most certainly is wider than the tree widget",
-											children: [],
-										},
-										{
-											level: 4,
-											open: false,
-											data: "child3",
-											children: [],
-										},
-									],
-								},
-								{
-									level: 3,
-									open: false,
-									data: "child2",
-									children: [],
-								},
-								{
-									level: 3,
-									open: false,
-									data: "child3",
-									children: [],
-								},
-							],
-						},
-					],
-				},
-				{
-					level: 1,
-					open: false,
-					data: "child3",
-					children: [],
-				},
-			],
-		}]);
 
 		const debugActiveContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionActive", false);
 		const debugPausedContextKey = editor.monacoEditor.createContextKey<boolean>("debuggerSessionPaused", false);
@@ -819,13 +774,18 @@ export class DebugContribution extends Disposable {
 						}
 						variableTree.push({
 							level: 0,
-							open: scope.type === "script" || scope.type === "local",
+							open: false,
 							data: scope.type,
 							children,
 						});
 					}
 				}
 				variableTreeWidget.render(variableTree);
+				if (variableTree[0]?.data === "script") {
+					variableTreeWidget.expand(variableTree[0]);
+				}
+				variableTreeWidget.focus(variableTree[0]);
+				variableTreeWidget.select(variableTree[0]);
 
 				let currentScriptIndex = -1;
 				const scriptUris = this.debugSession.getScriptUris();
@@ -855,6 +815,9 @@ export class DebugContribution extends Disposable {
 					endColumn: model.getLineLastNonWhitespaceColumn(line),
 				});
 			}
+		}));
+		this.register(variableTreeWidget.onDidExpandItem(async e => {
+			console.log("Expanded", e);
 		}));
 		this.register(scriptListWidget.onDidChangeSelection(async e => {
 			if (e.item) {
