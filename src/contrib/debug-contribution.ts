@@ -318,6 +318,10 @@ class ListWidget<T> extends Disposable {
 				const index = Number(listItemElement.dataset.index);
 				this.select(index);
 				this.focus(index);
+			} else {
+				// We didn't hit an actual list item so remove selection and focus.
+				this.select(-1);
+				this.focus(-1);
 			}
 			this.onMouseClickEmitter.fire(e);
 		};
