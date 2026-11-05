@@ -301,8 +301,6 @@ class ListWidget<T> extends Disposable {
 				// If nothing is focused yet focus the currently selected element if one exists, otherwise focus the
 				// first element.
 				this.focus(this.selected !== -1 ? this.selected : 0);
-			} else {
-				this.focus(this.focused);
 			}
 		};
 		const clickEvent = (e: PointerEvent) => {
