@@ -502,30 +502,30 @@ class TreeWidget<T> extends Disposable {
 
 	// TODO(seb) It might be nice to expand the entire path for expanding, focusing and selecting, but for now we only
 	// support already visible nodes.
-	expand(node: TreeNode<T> | null | undefined): void {
-		if (node) {
-			const index = this.listWidget.items.findIndex(x => x === node);
-			if (index !== -1) {
-				this.expandNode(node, index);
-			}
-		}
-	}
+	// expand(node: TreeNode<T> | null | undefined): void {
+	// 	if (node) {
+	// 		const index = this.listWidget.items.findIndex(x => x === node);
+	// 		if (index !== -1) {
+	// 			this.expandNode(node, index);
+	// 		}
+	// 	}
+	// }
 
-	focus(node: TreeNode<T> | null | undefined): void {
-		let index = -1;
-		if (node) {
-			index = this.listWidget.items.findIndex(x => x === node);
-		}
-		this.listWidget.focus(index);
-	}
+	// focus(node: TreeNode<T> | null | undefined): void {
+	// 	let index = -1;
+	// 	if (node) {
+	// 		index = this.listWidget.items.findIndex(x => x === node);
+	// 	}
+	// 	this.listWidget.focus(index);
+	// }
 
-	select(node: TreeNode<T> | null | undefined): void {
-		let index = -1;
-		if (node) {
-			index = this.listWidget.items.findIndex(x => x === node);
-		}
-		this.listWidget.select(index);
-	}
+	// select(node: TreeNode<T> | null | undefined): void {
+	// 	let index = -1;
+	// 	if (node) {
+	// 		index = this.listWidget.items.findIndex(x => x === node);
+	// 	}
+	// 	this.listWidget.select(index);
+	// }
 
 	update(node: TreeNode<T>, children: TreeNode<T>[]): void {
 		const index = this.listWidget.items.findIndex(x => x === node);
@@ -787,12 +787,17 @@ export class DebugContribution extends Disposable {
 						});
 					}
 				}
+				// TODO(sepa) This is not good and we should not use `expand` here. Instead the debug session should
+				// build the correct tree with all necessary child nodes for us, and for that retain a list of expanded
+				// paths and selected/focused nodes of the tree. So that on every pause we can already build the
+				// necessary tree structure before we even render it. Otherwise we will have to deal with the more
+				// complicated problem of cascading expansions/async calls.
 				variableTreeWidget.render(variableTree);
-				if (variableTree[0]?.data === "script") {
-					variableTreeWidget.expand(variableTree[0]);
-				}
-				variableTreeWidget.focus(variableTree[0]);
-				variableTreeWidget.select(variableTree[0]);
+				// if (variableTree[0]?.data === "script") {
+				// 	variableTreeWidget.expand(variableTree[0]);
+				// }
+				// variableTreeWidget.focus(variableTree[0]);
+				// variableTreeWidget.select(variableTree[0]);
 
 				let currentScriptIndex = -1;
 				const scriptUris = this.debugSession.getScriptUris();
@@ -827,14 +832,30 @@ export class DebugContribution extends Disposable {
 			if (e) {
 				// TODO(seb) This is very jank, how can we indicate a yet to be loaded node? Also, can we possibly have
 				// a "onWillExpand" instead and get and update the children before the node is actually expanded?
+				// Probably also better to not have an `update` at all, but a `rerender` (so widget keeps a reference to
+				// all the root nodes internally) and just change the property value of `children`.
 				if (e.children.length === 1 && typeof e.children[0].data !== "string" && e.children[0].data.name === "Loading..." && e.children[0].data.value) {
 					const properties = await this.debugSession.getProperties(e.children[0].data.value);
 					const children = properties.map(p => {
+						let innerChildren: TreeNode<PropertyDescriptor>[] = [];
+						if (p.value?.type === "object" && p.value.subtype !== "null") {
+							innerChildren = [{
+								level: e.level + 2,
+								open: false,
+								data: {
+									name: "Loading...",
+									value: p.value,
+									configurable: false,
+									enumerable: false,
+								},
+								children: [],
+							}];
+						}
 						return {
 							level: e.level + 1,
 							data: p,
 							open: false,
-							children: [],
+							children: innerChildren,
 						};
 					});
 					variableTreeWidget.update(e, children);
